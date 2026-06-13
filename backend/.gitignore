@@ -1,0 +1,42 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+
+# Test / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+tests/reports/
+tests/.tmp/
+
+# App runtime
+data/*.db
+data/*.db-journal
+logs/*.log
+logs/*.log.*
+
+# IDE
+.vscode/
+.idea/
+.DS_Store
+
+# Local env
+.env
+.env.local
+.env.*.local
+
+# Docker
+.data/
+.logs/
+.redis/
+
+# Launch helper (for sandboxed CLI testing only)
+_launch_uvicorn.py
+*.pid

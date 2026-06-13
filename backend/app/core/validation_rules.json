@@ -1,0 +1,148 @@
+[
+  {
+    "code": "PASSPORT_EXPIRY_MIN_6M",
+    "rule_type": "expiry",
+    "severity": "error",
+    "params": {"field": "expiry", "min_months_remaining": 6},
+    "enabled": true,
+    "message_key": "validation.passport.expiry_min_6m"
+  },
+  {
+    "code": "PASSPORT_EXPIRY_MIN_3M",
+    "rule_type": "expiry",
+    "severity": "warning",
+    "params": {"field": "expiry", "min_months_remaining": 3},
+    "enabled": true,
+    "message_key": "validation.passport.expiry_min_3m"
+  },
+  {
+    "code": "PASSPORT_NO_FORMAT",
+    "rule_type": "regex",
+    "severity": "error",
+    "params": {"field": "passport_no", "pattern": "^[A-Z][0-9]{8}$|^[0-9]{9}$"},
+    "enabled": true,
+    "message_key": "validation.passport.no_format"
+  },
+  {
+    "code": "PASSPORT_DOB_NOT_FUTURE",
+    "rule_type": "date",
+    "severity": "error",
+    "params": {"field": "dob", "must_be_past": true},
+    "enabled": true,
+    "message_key": "validation.passport.dob_past"
+  },
+  {
+    "code": "PASSPORT_DOB_AGE_MIN_16",
+    "rule_type": "age",
+    "severity": "error",
+    "params": {"field": "dob", "min_age": 16},
+    "enabled": true,
+    "message_key": "validation.passport.age_min_16"
+  },
+  {
+    "code": "IMAGE_BLUR_THRESHOLD",
+    "rule_type": "image_quality",
+    "severity": "error",
+    "params": {"laplacian_variance_min": 100},
+    "enabled": true,
+    "message_key": "validation.image.blur"
+  },
+  {
+    "code": "IMAGE_RESOLUTION_MIN",
+    "rule_type": "image_quality",
+    "severity": "error",
+    "params": {"min_width": 800, "min_height": 600},
+    "enabled": true,
+    "message_key": "validation.image.resolution"
+  },
+  {
+    "code": "IMAGE_FILE_SIZE_MAX",
+    "rule_type": "file",
+    "severity": "error",
+    "params": {"max_bytes": 10485760},
+    "enabled": true,
+    "message_key": "validation.image.size"
+  },
+  {
+    "code": "IMAGE_FORMAT_ALLOWED",
+    "rule_type": "file",
+    "severity": "error",
+    "params": {
+      "allowed_mime": ["image/jpeg", "image/png", "image/webp", "application/pdf"]
+    },
+    "enabled": true,
+    "message_key": "validation.image.format"
+  },
+  {
+    "code": "PASSPORT_NAME_MIN_LEN",
+    "rule_type": "length",
+    "severity": "error",
+    "params": {
+      "field": "surname|given_name",
+      "min_length": 1,
+      "max_length": 64
+    },
+    "enabled": true,
+    "message_key": "validation.passport.name_length"
+  },
+  {
+    "code": "TRAVEL_DATE_RANGE",
+    "rule_type": "date",
+    "severity": "warning",
+    "params": {
+      "field": "travel_date",
+      "must_be_future": true,
+      "max_days_future": 365
+    },
+    "enabled": true,
+    "message_key": "validation.travel.date_range"
+  },
+  {
+    "code": "STAY_DAYS_MAX",
+    "rule_type": "cross_field",
+    "severity": "warning",
+    "params": {"fields": ["arrival_date", "departure_date"], "max_days": 90},
+    "enabled": true,
+    "message_key": "validation.travel.stay_max"
+  },
+  {
+    "code": "ENROLLMENT_LETTER_DATE",
+    "rule_type": "date",
+    "severity": "warning",
+    "params": {"field": "enrollment_letter_date", "max_age_days": 90},
+    "enabled": true,
+    "message_key": "validation.student.enrollment_age"
+  },
+  {
+    "code": "PHOTO_FACE_DETECTED",
+    "rule_type": "image_quality",
+    "severity": "error",
+    "params": {"face_detect": true, "min_face_ratio": 0.2},
+    "enabled": false,
+    "message_key": "validation.photo.face"
+  },
+  {
+    "code": "PHOTO_BG_COLOR",
+    "rule_type": "image_quality",
+    "severity": "warning",
+    "params": {"expected_bg": "white"},
+    "enabled": false,
+    "message_key": "validation.photo.bg"
+  },
+  {
+    "code": "OCR_FIELD_CONFIDENCE",
+    "rule_type": "ocr_confidence",
+    "severity": "warning",
+    "params": {"min_confidence": 0.7},
+    "enabled": true,
+    "message_key": "validation.ocr.confidence"
+  },
+  {
+    "code": "PASSPORT_DOB_AGE_MAX_120",
+    "rule_type": "age",
+    "severity": "warning",
+    "params": {"field": "dob", "max_age": 120},
+    "enabled": false,
+    "message_key": "validation.passport.age_max_120"
+  }
+]
