@@ -1,0 +1,42 @@
+# macOS
+.DS_Store
+*.pem
+
+# Flutter / Dart
+frontend/ios/.dart_tool/package_config.json
+frontend/ios/.dart_tool/flutter_build/
+frontend/ios/build/
+frontend/ios/.packages
+frontend/ios/pubspec.lock
+
+# Web node_modules
+frontend/web/node_modules/
+
+# Miniprogram node_modules
+frontend/miniprogram/node_modules/
+frontend/miniprogram/package-lock.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Build outputs
+build/
+dist/
+
+# Env secrets
+.env
+.env.local
+.env.*.local
+
+# Misc
+*.log
+*.swp
+*.swo
