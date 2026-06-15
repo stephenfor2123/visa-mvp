@@ -179,15 +179,23 @@ function uploadChunkXhr(chunk, uploadId, materialType, orderNo, authToken) {
     xhr.send(chunk.blob)
   })
 }
-    xhr.setRequestHeader('X-Upload-ID', uploadId)
-    xhr.setRequestHeader('X-Chunk-Index', String(chunk.index))
-    xhr.setRequestHeader('X-Total-Chunks', String(chunk.total))
-    xhr.setRequestHeader('X-Filename', encodeURIComponent(''))
-    xhr.setRequestHeader('X-Material-Type', materialType)
-    if (orderNo) xhr.setRequestHeader('X-Order-No', orderNo)
-    xhr.setRequestHeader('X-File-Size', String(chunk.end - chunk.start))
 
-    xhr.upload.onprogress = (e) => {
+// W18-followup: 下面这段 (L182-214) 是孤儿代码，原本期望是另一个 uploadChunkXhr
+// 但缺少 function 包裹导致 Vite parse error。临时包成 named function 让 build 过。
+function uploadChunkXhr_v2_dup_unused(chunk, uploadId, materialType, orderNo) {
+  return new Promise((resolve, reject) => {
+    if (!chunk) return reject(new Error('chunk required'))
+    const _xhr = new XMLHttpRequest()
+    _xhr.open('POST', '/api/v2/materials/upload/chunk')
+    _xhr.setRequestHeader('X-Upload-ID', uploadId)
+    _xhr.setRequestHeader('X-Chunk-Index', String(chunk.index))
+    _xhr.setRequestHeader('X-Total-Chunks', String(chunk.total))
+    _xhr.setRequestHeader('X-Filename', encodeURIComponent(''))
+    _xhr.setRequestHeader('X-Material-Type', materialType)
+    if (orderNo) _xhr.setRequestHeader('X-Order-No', orderNo)
+    _xhr.setRequestHeader('X-File-Size', String(chunk.end - chunk.start))
+
+    _xhr.upload.onprogress = (e) => {
       if (e.lengthComputable) {
         // per-chunk fractional progress → add to overall base
         const fraction = e.loaded / e.total
@@ -197,19 +205,19 @@ function uploadChunkXhr(chunk, uploadId, materialType, orderNo, authToken) {
       }
     }
 
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
+    _xhr.onload = () => {
+      if (_xhr.status >= 200 && _xhr.status < 300) {
         try {
-          resolve(JSON.parse(xhr.responseText))
+          resolve(JSON.parse(_xhr.responseText))
         } catch {
-          resolve({ _raw: xhr.responseText })
+          resolve({ _raw: _xhr.responseText })
         }
       } else {
-        reject(new Error(`chunk ${chunk.index} failed: ${xhr.status} ${xhr.responseText}`))
+        reject(new Error(`chunk ${chunk.index} failed: ${_xhr.status} ${_xhr.responseText}`))
       }
     }
-    xhr.onerror = () => reject(new Error(`chunk ${chunk.index} network error`))
-    xhr.send(chunk.blob)
+    _xhr.onerror = () => reject(new Error(`chunk ${chunk.index} network error`))
+    _xhr.send(chunk.blob)
   })
 }
 
