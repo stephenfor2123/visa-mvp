@@ -140,7 +140,7 @@
         </form>
 
         <!-- SMS login -->
-        <form v-else class="auth-form" @submit.prevent="onSmsSubmit">
+        <form v-if="activeTab === 'sms'" class="auth-form" @submit.prevent="onSmsSubmit">
           <AppInput
             v-model="phone"
             :label="t('login.phone_label')"
@@ -182,22 +182,7 @@
                 data-testid="login-send-code"
               >
                 {{ smsCooldown > 0 ? `${smsCooldown}s` : (sending ? '...' : t('login.send_code')) }}
-              </AppButton>
-            </template>
-          </AppInput>
-
-          <p v-if="lastSentCode" class="mock-hint" role="status" aria-live="polite">
-            {{ t('login.mock_code_hint', { code: lastSentCode }) }}
-          </p>
-
-          <AppButton
-            native-type="submit"
-            variant="primary"
-            size="lg"
-            :loading="submitting"
-            style="width: 100%;"
-            data-testid="login-submit"
-          >{{ t('login.submit') }}</AppButton>
+            </AppButton>
         </form>
 
         <div class="auth-foot">
