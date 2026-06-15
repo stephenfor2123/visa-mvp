@@ -12,8 +12,6 @@ Why we don't reuse `app.schemas.payment.*`: insurance quotes are
 quote/bind/claim (3-stage), payment is create/notify/query/close (4-stage
 linear) — different verbs, different response shapes.
 """
-from __future__ import annotations
-
 import re
 from typing import Optional
 

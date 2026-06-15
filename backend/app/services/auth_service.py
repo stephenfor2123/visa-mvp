@@ -3,8 +3,6 @@
 Pure business logic. Knows nothing about FastAPI; the API layer
 translates exceptions to HTTP via the error-code registry.
 """
-from __future__ import annotations
-
 import hashlib
 from datetime import datetime, timezone
 from typing import Any, Mapping, Optional
@@ -175,7 +173,10 @@ class AuthService:
             action="user.register",
             info=info,
         )
-        _log.info("registered user id={} phone={}{}", user.id, phone_country, phone)
+        _log.info(
+            "user.register",
+            extra={"user_id": user.id, "event_type": "user.register", "status": "success"},
+        )
         return {**tokens, "user": self._to_user_dict(user)}
 
     # ------------------------------------------------------------------ #
@@ -215,7 +216,10 @@ class AuthService:
             action="user.login",
             info=info,
         )
-        _log.info("login user id={} phone={}{}", user.id, phone_country, phone)
+        _log.info(
+            "user.login",
+            extra={"user_id": user.id, "event_type": "user.login", "status": "success"},
+        )
         return {**tokens, "user": self._to_user_dict(user)}
 
     # ------------------------------------------------------------------ #
@@ -268,7 +272,10 @@ class AuthService:
             action="user.sms_login",
             info=info,
         )
-        _log.info("sms_login user id={} phone={}{}", user.id, phone_country, phone)
+        _log.info(
+            "user.sms_login",
+            extra={"user_id": user.id, "event_type": "user.sms_login", "status": "success"},
+        )
         return {**tokens, "user": self._to_user_dict(user)}
 
     # ------------------------------------------------------------------ #
@@ -322,5 +329,45 @@ class AuthService:
             info=info,
             extra={"rotated": True},
         )
-        _log.info("refresh user id={}", user.id)
+        _log.info(
+            "user.refresh",
+            extra={"user_id": user.id, "event_type": "user.refresh", "status": "success"},
+        )
         return {**tokens, "user": self._to_user_dict(user)}
+
+    # ------------------------------------------------------------------ #
+    # reset_password                                                      #
+    # ------------------------------------------------------------------ #
+    async def reset_password(
+        self,
+        *,
+        phone: str,
+        phone_country: str,
+        sms_code: str,
+        new_password: str,
+        info: ClientInfo,
+    ) -> dict[str, Any]:
+        """Verify SMS code (purpose=reset) then update password hash."""
+        validate_password_strength(new_password)
+
+        user = await self._get_user_by_phone(phone, phone_country)
+        if user is None:
+            raise BizException(ErrorCode.USER_NOT_FOUND, message="Phone not registered")
+
+        # Verify SMS code (mock mode: accept any 6-digit)
+        sms_service = SmsService(self.db)
+        await sms_service.verify_code(
+            phone=phone, phone_country=phone_country, code=sms_code, purpose="reset"
+        )
+
+        user.password_hash = hash_password(new_password, self.settings)
+        await self._commit_with_audit(
+            user=user,
+            action="user.reset_password",
+            info=info,
+        )
+        _log.info(
+            "user.reset_password",
+            extra={"user_id": user.id, "event_type": "user.reset_password", "status": "success"},
+        )
+        return {"message": "Password updated successfully"}

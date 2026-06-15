@@ -1,0 +1,83 @@
+<!--pages/profile/profile.wxml-->
+<view class="page-profile">
+  <block wx:if="{{user}}">
+    <view class="profile-header">
+      <view class="avatar">{{initial}}</view>
+      <view class="profile-info">
+        <view class="profile-name">{{user.nickname}}</view>
+        <view class="profile-phone">{{user.phoneCountry}} {{user.phone}}</view>
+      </view>
+    </view>
+
+    <app-card title="{{t('profile.page_title')}}">
+      <view class="info-list">
+        <view class="info-list__row">
+          <text class="info-list__label">{{t('profile.user_id')}}</text>
+          <text class="info-list__value">{{user.id}}</text>
+        </view>
+        <view class="info-list__row">
+          <text class="info-list__label">{{t('profile.language_pref')}}</text>
+          <text class="info-list__value">{{user.languagePref}}</text>
+        </view>
+        <view class="info-list__row">
+          <text class="info-list__label">{{t('profile.register_time')}}</text>
+          <text class="info-list__value">{{registerTime}}</text>
+        </view>
+        <view class="info-list__row">
+          <text class="info-list__label">{{t('profile.status')}}</text>
+          <text class="info-list__value">
+            <text class="badge badge--success">{{t('profile.status_active')}}</text>
+          </text>
+        </view>
+      </view>
+    </app-card>
+
+    <!-- W8-2 新增:快捷入口(订单/找回/协议) -->
+    <app-card>
+      <view class="quick-list">
+        <view class="quick-list__row" bindtap="onGoOrders">
+          <text class="quick-list__icon">📋</text>
+          <text class="quick-list__label">{{t['order.page_title']}}</text>
+          <text class="quick-list__arrow">›</text>
+        </view>
+        <view class="quick-list__row" bindtap="onGoForgot">
+          <text class="quick-list__icon">🔑</text>
+          <text class="quick-list__label">{{t['forgot.page_title']}}</text>
+          <text class="quick-list__arrow">›</text>
+        </view>
+        <view class="quick-list__row" bindtap="onGoAgreement">
+          <text class="quick-list__icon">📄</text>
+          <text class="quick-list__label">{{t['agreement.page_title']}}</text>
+          <text class="quick-list__arrow">›</text>
+        </view>
+      </view>
+    </app-card>
+
+    <view class="profile-actions">
+      <app-button
+        text="{{t('nav.logout')}}"
+        variant="outline"
+        size="md"
+        block="{{true}}"
+        bind:trigger="onLogout"
+      />
+    </view>
+
+    <view class="profile-tip">
+      {{t('profile.page_subtitle')}}
+    </view>
+  </block>
+
+  <block wx:else>
+    <view class="logged-out">
+      <view class="logged-out__icon">👋</view>
+      <view class="logged-out__text">{{t('profile.logged_out')}}</view>
+      <app-button
+        text="{{t('profile.go_login')}}"
+        variant="primary"
+        size="md"
+        bind:trigger="onGoLogin"
+      />
+    </view>
+  </block>
+</view>

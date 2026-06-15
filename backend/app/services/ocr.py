@@ -1,12 +1,15 @@
 """OCR Engine — PaddleOCR 2.7+ 主引擎, Tesseract 5 兜底 (V2 §5.1.2)."""
-from __future__ import annotations
-
 import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 import numpy as np
-from paddleocr import PaddleOCR
+try:
+    from paddleocr import PaddleOCR  # type: ignore
+    _PADDLE_AVAILABLE = True
+except ImportError:
+    PaddleOCR = None  # type: ignore
+    _PADDLE_AVAILABLE = False
 
 # Supported languages map (internal key → PaddleOCR lang arg)
 LANG_MAP: Dict[str, str] = {

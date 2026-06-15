@@ -1,6 +1,4 @@
 """Material endpoint DTOs (request/response) — V2 §4.3."""
-from __future__ import annotations
-
 import re
 from datetime import datetime
 from typing import Any, Optional

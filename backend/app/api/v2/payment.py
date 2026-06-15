@@ -21,19 +21,22 @@ DoD (V2 §4.5 + W6-2 spec):
 
 V2.1 TODO: drop in real channel adapters behind `Settings.payment_channel`.
 """
-from __future__ import annotations
-
+import json as _json
+import time
 from datetime import datetime, timezone
 from typing import Annotated, Optional
 
-from fastapi import APIRouter, Depends, Path
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, Path, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.db import get_db
+from app.core.db import AsyncSessionLocal, get_db
 from app.core.errors import BizException, ErrorCode
+from app.core.metrics import timed
+from app.core.logging import get_logger
 from app.core.security import get_current_user
 from app.models.order import Order
 from app.models.user import User
+from app.models.webhook_event import WebhookEvent
 from app.schemas.common import ApiResponse
 from app.schemas.payment import (
     ClosePaymentResponse,
@@ -52,6 +55,7 @@ from sqlalchemy import select
 
 
 router = APIRouter()
+_log = get_logger()
 
 
 # --------------------------------------------------------------------------- #
@@ -85,6 +89,151 @@ def _status_to_response(s: OrderPaymentStatus) -> QueryPaymentResponse:
 
 
 # --------------------------------------------------------------------------- #
+# Stripe webhook helpers (W16-3)                                            #
+# --------------------------------------------------------------------------- #
+def _verify_stripe_signature(
+    body: bytes,
+    sig_header: str,
+    webhook_secret: str,
+) -> dict:
+    """Verify and parse a Stripe webhook payload.
+
+    Args:
+        body: Raw request body bytes (must be the original, unparsed bytes).
+        sig_header: Value of the `Stripe-Signature` request header.
+        webhook_secret: The `whsec_xxx` signing secret for this endpoint.
+
+    Returns:
+        The verified Stripe event dict.
+
+    Raises:
+        BizException with PAYMENT_SIGNATURE_INVALID (4001-range) on failure.
+        The BizException is raised so FastAPI converts it to an HTTP 400,
+        which is what Stripe expects when rejecting a bad signature.
+    """
+    if not webhook_secret:
+        _log.warning(
+            "stripe webhook received but STRIPE_WEBHOOK_SECRET is empty; "
+            "rejecting (production must set the secret)"
+        )
+        raise BizException(
+            ErrorCode.PAYMENT_SIGNATURE_INVALID,
+            message="webhook secret not configured",
+        )
+
+    import stripe as _stripe
+
+    try:
+        event = _stripe.Webhook.construct_event(
+            body, sig_header, webhook_secret
+        )
+    except _stripe.error.SignatureVerificationError as exc:
+        _log.warning(
+            "stripe signature verification failed: {}", exc,
+        )
+        raise BizException(
+            ErrorCode.PAYMENT_SIGNATURE_INVALID,
+            message=f"invalid stripe signature: {exc}",
+        )
+
+    return event  # type: ignore[return-value]
+
+
+async def _process_stripe_webhook(event: dict) -> None:
+    """Background task: process one verified Stripe event.
+
+    This runs AFTER the endpoint has already returned 200 OK to Stripe,
+    so we don't block the response. The function:
+
+      1. Idempotency — check `webhook_events` table for the event id.
+         If already processed, log and exit (Stripe retry safety).
+      2. Resolve `order_no` from `event.data.object.metadata.order_no`.
+      3. Call `handle_notify` with the verified payload.
+      4. Record the event in `webhook_events` (on success).
+
+    Best-effort errors are swallowed — Stripe retries on 5xx, and we
+    already acked with 200 OK.  We log every exception so ops can
+    correlate failures in the audit trail.
+    """
+    from app.services.payment_provider import get_payment_provider
+
+    event_id = event.get("id") or ""
+    event_type = event.get("type") or ""
+    event_object = (event.get("data") or {}).get("object") or {}
+    metadata = event_object.get("metadata") or {}
+    order_no = metadata.get("order_no")
+
+    if not order_no:
+        _log.info(
+            "stripe webhook (bg): no order_no in metadata for "
+            "event_id={} type={}; skipping",
+            event_id, event_type,
+        )
+        return
+
+    _log.info(
+        "stripe webhook (bg): processing event_id={} type={} order_no={}",
+        event_id, event_type, order_no,
+    )
+
+    async with AsyncSessionLocal() as db:
+        try:
+            # ── Idempotency check ───────────────────────────────────────────
+            existing = await db.get(WebhookEvent, event_id)
+            if existing is not None:
+                _log.info(
+                    "stripe webhook (bg): event_id={} already processed "
+                    "(idempotent replay); skipping",
+                    event_id,
+                )
+                return
+
+            # ── Resolve provider + call handle_notify ───────────────────────
+            provider = get_payment_provider()
+            ok = await provider.handle_notify(
+                db,
+                order_no=order_no,
+                trade_no=event_object.get("id"),
+                payload=event,
+            )
+
+            if not ok:
+                _log.warning(
+                    "stripe webhook (bg): handle_notify returned False "
+                    "for order_no={}; will not record event",
+                    order_no,
+                )
+                return
+
+            # ── Record processed event (dedup log) ────────────────────────
+            db.add(
+                WebhookEvent(
+                    event_id=event_id,
+                    provider="stripe",
+                    event_type=event_type,
+                    order_no=order_no,
+                    processed_at=datetime.now(timezone.utc).replace(tzinfo=None),
+                    raw_payload=_json.dumps(event, ensure_ascii=False),
+                )
+            )
+            await db.commit()
+            _log.info(
+                "stripe webhook (bg): event_id={} processed + recorded "
+                "order_no={}",
+                event_id, order_no,
+            )
+
+        except Exception as exc:
+            _log.exception(
+                "stripe webhook (bg): failed event_id={} order_no={} err={}",
+                event_id, order_no, exc,
+            )
+            # Do NOT re-raise — we already returned 200 to Stripe.
+            # Stripe will retry, and on retry we'll hit the idempotency
+            # check above and return 200 immediately.
+
+
+# --------------------------------------------------------------------------- #
 # POST /payment/create                                                        #
 # --------------------------------------------------------------------------- #
 @router.post(
@@ -93,6 +242,7 @@ def _status_to_response(s: OrderPaymentStatus) -> QueryPaymentResponse:
     status_code=201,
     summary="Create a Mock payment order (returns trade_no + code_url)",
 )
+@timed
 async def create_payment(
     body: CreatePaymentRequest,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -110,6 +260,7 @@ async def create_payment(
     the order's payment status to `paid` 1s later — verifiable via a
     subsequent `GET /payment/{order_no}`.
     """
+    t0 = time.perf_counter()
     if body.amount_cents <= 0:
         # Belt-and-braces — the Pydantic `gt=0` validator should already
         # have caught this, but we double-check so the error code is
@@ -131,7 +282,15 @@ async def create_payment(
         desc=body.desc,
         currency=body.currency,
     )
-
+    _log.info(
+        "payment.create",
+        extra={
+            "user_id": current_user.id,
+            "event_type": "payment.create",
+            "duration_ms": round((time.perf_counter() - t0) * 1000, 1),
+            "status": "success",
+        },
+    )
     return ApiResponse[CreatePaymentResponse](
         code="1000",
         message="OK",
@@ -160,6 +319,7 @@ async def create_payment(
         "WxPay/Stripe webhook)."
     ),
 )
+@timed
 async def notify_payment(
     body: NotifyPaymentRequest,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -179,6 +339,7 @@ async def notify_payment(
     existing `paid_at` (replays are common in real channel flows).
     """
     provider: PaymentProvider = get_payment_provider()
+    t0 = time.perf_counter()
     try:
         ok = await provider.handle_notify(
             db,
@@ -214,6 +375,15 @@ async def notify_payment(
 
     # Re-query to get the canonical state for the response.
     status = await provider.query_order(db, order_no=body.order_no)
+    _log.info(
+        "payment.notify",
+        extra={
+            "user_id": None,
+            "event_type": "payment.notify",
+            "duration_ms": round((time.perf_counter() - t0) * 1000, 1),
+            "status": status.status,
+        },
+    )
     if status.trade_no is None or status.paid_at is None:
         # Should be unreachable (handle_notify just succeeded), but the
         # type system needs the None branch handled explicitly.
@@ -241,6 +411,7 @@ async def notify_payment(
     response_model=ApiResponse[QueryPaymentResponse],
     summary="Query the current payment status for an order (paid / pending / closed)",
 )
+@timed
 async def query_payment(
     order_no: str = Path(..., min_length=1, max_length=32),
     db: AsyncSession = Depends(get_db),
@@ -276,6 +447,7 @@ async def query_payment(
     response_model=ApiResponse[ClosePaymentResponse],
     summary="Close an unpaid order (pending → closed; cannot close paid orders)",
 )
+@timed
 async def close_payment(
     order_no: str = Path(..., min_length=1, max_length=32),
     db: AsyncSession = Depends(get_db),

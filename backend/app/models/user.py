@@ -4,8 +4,6 @@ Per V2 §4.1.5: phone + phone_country are the natural identifiers.
 We keep an autoincrement `id` as the stable primary key (FK target),
 and a public `uuid` for external APIs.
 """
-from __future__ import annotations
-
 import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
@@ -43,6 +41,13 @@ class User(Base):
 
     # Status — V2 lifecycle: active / pending_destroy / destroyed / disabled
     status: Mapped[str] = mapped_column(String(16), default="active", index=True)
+
+    # MFA — V2 §4.1 MFA
+    mfa_enabled: Mapped[bool] = mapped_column(default=False, index=True)
+    mfa_type: Mapped[Optional[str]] = mapped_column(String(16), nullable=True)  # "totp" | "sms"
+    mfa_secret: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)  # encrypted TOTP secret
+    mfa_phone: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)  # backup SMS phone
+    mfa_phone_country: Mapped[Optional[str]] = mapped_column(String(8), nullable=True)
 
     # Misc
     last_login_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)

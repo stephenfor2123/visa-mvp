@@ -5,8 +5,6 @@ Loaded from environment variables (and `.env` if present).
 Every config item has a sane default so the dev environment boots
 out of the box; production overrides via real env vars.
 """
-from __future__ import annotations
-
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal, Optional
@@ -95,6 +93,25 @@ class Settings(BaseSettings):
     # `SYSTEM_API_KEY`. Default below is a clearly-non-prod value so
     # the endpoint refuses to boot in `env=prod` without an override.
     system_api_key: str = "dev-system-key-change-me-in-prod-visa-mvp-2026"
+
+    # --- Admin panel (W14-3, W16-2) ---
+    # DEV: set ADMIN_PASSWORD_SECRET in .env (local only, not committed).
+    # PROD: inject via CI/CD secret / docker-compose secrets / vault.
+    # admin_password (legacy) is deprecated; remove after migration.
+    admin_password_secret: str = ""
+    admin_password: str = "CHANGE_ME_IN_PROD"
+
+    # --- CORS (V2 §9 security) ---
+    # Comma-separated list of allowed frontend origins.
+    # Dev default includes localhost variants; prod MUST override via env var.
+    # Example: https://visa.example.com,https://admin.example.com
+    cors_allowed_origins: str = Field(
+        default="http://localhost:5173,http://localhost:4173,http://localhost:3000",
+    )
+
+    # --- Security ---
+    # Max request body size in MB (must match material_max_file_size_mb).
+    max_request_size_mb: int = 10
 
     # --- Payment channel (V2 §4.5 — V2.1 stage — W10-4 wire-up) ---
     # All three fields are EMPTY BY DEFAULT in V2. V2 ships with the Mock

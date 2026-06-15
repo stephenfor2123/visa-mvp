@@ -1,0 +1,117 @@
+<!--pages/login/login.wxml-->
+<view class="page-login">
+  <!-- 顶部 header(品牌 + 语言切换) -->
+  <view class="auth-header">
+    <view class="brand">
+      <text class="brand-mark">V</text>
+      <text class="brand-name">{{t('common.app_name')}}</text>
+    </view>
+    <view class="lang-picker" bindtap="onSwitchLang">
+      <text>{{localeLabel}}</text>
+      <text class="caret">⌄</text>
+    </view>
+  </view>
+
+  <!-- 主卡片 -->
+  <view class="auth-card">
+    <view class="auth-title">{{t('login.title')}}</view>
+    <view class="auth-sub">{{t('login.subtitle')}}</view>
+
+    <!-- Tab 切换:密码 / 短信 -->
+    <view class="auth-tabs">
+      <view
+        class="auth-tab {{activeTab === 'pwd' ? 'on' : ''}}"
+        bindtap="onSwitchTab"
+        data-tab="pwd"
+      >{{t('login.tab_pwd')}}</view>
+      <view
+        class="auth-tab {{activeTab === 'sms' ? 'on' : ''}}"
+        bindtap="onSwitchTab"
+        data-tab="sms"
+      >{{t('login.tab_sms')}}</view>
+    </view>
+
+    <!-- 表单 -->
+    <view class="auth-form">
+      <view class="input-row">
+        <view class="input-label">{{t('login.phone_label')}}</view>
+        <view class="input-wrap {{errors.phone ? 'has-error' : ''}}">
+          <picker mode="selector" range="{{countries}}" range-key="label" value="{{countryIdx}}" bindchange="onCountryChange">
+            <view class="phone-country">
+              <text>{{countries[countryIdx].flag}} {{countries[countryIdx].code}}</text>
+            </view>
+          </picker>
+          <input
+            class="input-field"
+            type="number"
+            placeholder="{{t('login.phone_placeholder')}}"
+            value="{{phone}}"
+            maxlength="20"
+            bindinput="onPhoneInput"
+          />
+        </view>
+        <view wx:if="{{errors.phone}}" class="input-error">{{errors.phone}}</view>
+      </view>
+
+      <block wx:if="{{activeTab === 'pwd'}}">
+        <app-input
+          label="{{t('login.pwd_label')}}"
+          placeholder="{{t('login.pwd_placeholder')}}"
+          password="{{true}}"
+          value="{{password}}"
+          maxlength="64"
+          error="{{errors.password}}"
+          bind:input="onPwdInput"
+        />
+        <view class="auth-row">
+          <view class="remember" bindtap="onToggleRemember">
+            <view class="checkbox {{remember ? 'checked' : ''}}">{{remember ? '✓' : ''}}</view>
+            <text>{{t('login.remember')}}</text>
+          </view>
+          <text class="link" bindtap="onForgot">{{t('login.forgot')}}</text>
+        </view>
+      </block>
+
+      <block wx:else>
+        <app-input
+          label="{{t('login.sms_label')}}"
+          placeholder="{{t('login.sms_placeholder')}}"
+          input-type="number"
+          value="{{smsCode}}"
+          maxlength="6"
+          error="{{errors.smsCode}}"
+          bind:input="onSmsInput"
+        >
+          <view slot="suffix" class="suffix-slot">
+            <app-button
+              text="{{smsCooldown > 0 ? (smsCooldown + 's') : (sending ? '...' : t('login.send_code'))}}"
+              variant="outline"
+              size="sm"
+              disabled="{{smsCooldown > 0 || sending}}"
+              bind:trigger="onSendCode"
+            />
+          </view>
+        </app-input>
+        <view wx:if="{{lastSentCode}}" class="mock-hint">
+          Mock 验证码:<text class="mono">{{lastSentCode}}</text> · 测试期任何 6 位数字也通过
+        </view>
+      </block>
+
+      <app-button
+        text="{{t('login.submit')}}"
+        variant="primary"
+        size="lg"
+        loading="{{submitting}}"
+        block="{{true}}"
+        bind:trigger="onSubmit"
+      />
+    </view>
+
+    <view class="auth-foot">
+      <text>{{t('login.no_account')}}</text>
+      <text class="link" bindtap="goSignup">{{t('login.go_signup')}}</text>
+    </view>
+  </view>
+
+  <view class="auth-footer">© 2026 {{t('common.app_name')}} · V2 W6b demo · 仅供演示</view>
+</view>

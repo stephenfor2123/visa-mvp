@@ -1,0 +1,44 @@
+<!--pages/home/home.wxml-->
+<view class="page-home">
+  <!-- Hero 渐变 banner -->
+  <view class="hero">
+    <view class="hero__title">{{t('home.hero_title')}}</view>
+    <view class="hero__sub">{{t('home.hero_sub')}}</view>
+
+    <view class="hero__cta">
+      <app-button
+        text="{{t('home.hero_login')}}"
+        variant="primary"
+        size="md"
+        bind:trigger="onLogin"
+      />
+      <app-button
+        text="{{t('home.hero_explore')}}"
+        variant="outline"
+        size="md"
+        bind:trigger="onExplore"
+      />
+    </view>
+
+    <view class="hero__chips">
+      <view wx:for="{{heroCountries}}" wx:key="code" class="hero__chip">
+        <text class="flag">{{item.flag}}</text>
+        <text class="name">{{item.name}}</text>
+        <text class="meta">最快 3 天出签</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 4 大特性 -->
+  <view class="features">
+    <view class="section-title">{{t('home.section_features')}}</view>
+    <view class="section-sub">{{t('home.section_features_sub')}}</view>
+
+    <view class="features__grid">
+      <view wx:for="{{features}}" wx:key="title" class="feature">
+        <view class="feature__title">{{item.title}}</view>
+        <view class="feature__desc">{{item.desc}}</view>
+      </view>
+    </view>
+  </view>
+</view>

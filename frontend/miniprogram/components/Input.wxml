@@ -1,0 +1,23 @@
+<!--components/Input.wxml-->
+<view class="input-row">
+  <view wx:if="{{label}}" class="input-label">{{label}}</view>
+  <view class="input-wrap {{error ? 'has-error' : ''}}">
+    <slot name="prefix" />
+    <input
+      class="input-field"
+      type="{{inputType}}"
+      password="{{password}}"
+      value="{{value}}"
+      placeholder="{{placeholder}}"
+      placeholder-class="input-placeholder"
+      maxlength="{{maxlength}}"
+      disabled="{{disabled}}"
+      bindinput="onInput"
+      bindfocus="onFocus"
+      bindblur="onBlur"
+    />
+    <slot name="suffix" />
+  </view>
+  <view wx:if="{{error}}" class="input-error">{{error}}</view>
+  <view wx:elif="{{hint}}" class="input-hint">{{hint}}</view>
+</view>

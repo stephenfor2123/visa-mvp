@@ -16,8 +16,6 @@ is about to commit to the visa application:
 No new error codes are introduced here — we reuse 4xxx for ownership/status
 errors (see `app/core/errors.py`).
 """
-from __future__ import annotations
-
 from datetime import datetime
 from typing import Optional
 

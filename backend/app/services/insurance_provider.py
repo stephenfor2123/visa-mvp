@@ -34,15 +34,13 @@ Why we don't import `app.core.config` here: the mock is credential-free,
 so the module must remain importable from tests without a Settings object.
 The settings.insurance_channel swap is a V2.1 concern.
 """
-from __future__ import annotations
-
 import secrets
 import threading
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Optional, Union
 
 from loguru import logger
 
@@ -77,12 +75,13 @@ class _StoredPolicy:
     policy_id: str          # unique policy key (e.g. "INS-...")
     policy_no: str          # human-facing number (e.g. "MOCK-INS-...")
     order_id: str
+    user_id: str            # Owner user ID (for IDOR prevention)
     applicant_age: int
     destination_country: str
     premium_cents: int
     coverage_cents: int
     currency: str
-    status: str             # quoted | bound | claimed
+    status: str             #Union[quoted, bound, claimed]
     created_at: datetime
     bound_at: Optional[datetime] = None
     claim_id: Optional[str] = None
@@ -272,6 +271,7 @@ class MockInsuranceProvider(InsuranceProvider):
                 policy_id=policy_no,
                 policy_no=policy_no,
                 order_id=order_id,
+                user_id="",  # Set during bind() once user_id is known
                 applicant_age=applicant_age,
                 destination_country=destination_country,
                 premium_cents=premium,
@@ -301,6 +301,7 @@ class MockInsuranceProvider(InsuranceProvider):
         *,
         order_id: str,
         quote_id: str,
+        user_id: Optional[str] = None,
     ) -> dict:
         if not quote_id or not isinstance(quote_id, str):
             return {"ok": False, "error": "quote_id is required"}
@@ -339,9 +340,10 @@ class MockInsuranceProvider(InsuranceProvider):
                     "coverage_cents": policy.coverage_cents,
                     "currency": policy.currency,
                 }
-            # quoted → bound
+            # quoted → bound — record owner user_id for IDOR prevention
             policy.status = "bound"
             policy.bound_at = self._now_wall()
+            policy.user_id = user_id or ""
             snapshot = policy
 
         _log.info(
@@ -431,17 +433,29 @@ class MockInsuranceProvider(InsuranceProvider):
     # ------------------------------------------------------------------ #
     # Read helpers (used by GET /api/v2/insurance/{policy_id})            #
     # ------------------------------------------------------------------ #
-    def get_policy(self, policy_id: str) -> Optional[dict]:
+    def get_policy(
+        self, policy_id: str, owner_user_id: Optional[str] = None
+    ) -> Optional[dict]:
         """Return a flat dict snapshot of a policy, or None if not found.
 
-        Used by the API layer's GET /{policy_id} endpoint. The shape is
-        deliberately identical to the bind() return so the front-end can
-        render the same widget from both responses.
+        Parameters
+        ----------
+        policy_id : str
+            The policy ID to look up.
+        owner_user_id : Optional[str]
+            If provided, verifies the policy belongs to this user. Returns None
+            (not an error) if the policy exists but belongs to another user,
+            preventing IDOR. Prevents callers from probing arbitrary policy IDs.
         """
         with self._lock:
             p = self._policies.get(policy_id)
             if p is None:
                 return None
+
+            # IDOR check: if caller provides owner_user_id, verify ownership
+            if owner_user_id is not None and p.user_id and p.user_id != owner_user_id:
+                return None
+
             return {
                 "policy_id": p.policy_id,
                 "policy_no": p.policy_no,

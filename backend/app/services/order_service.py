@@ -19,14 +19,12 @@ Concurrency:
   - All status transitions write a row to `order_status_history` atomically
     with the order's own UPDATE.
 """
-from __future__ import annotations
-
 import hashlib
 import json
 import uuid
 from collections.abc import Iterable
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any, Dict, List, Optional
 
 from sqlalchemy import and_, func, select
 from sqlalchemy.exc import IntegrityError
@@ -66,8 +64,8 @@ class OrderService:
         user_id: int,
         destination_id: int,
         visa_type: str,
-        material_ids: list[int],
-        applicant_data: Optional[dict[str, Any]] = None,
+        material_ids: List[int],
+        applicant_data: Optional[Dict[str, Any]] = None,
         aff_code: Optional[str] = None,
     ) -> Order:
         if visa_type not in VISA_TYPES:
@@ -213,7 +211,7 @@ class OrderService:
         page: int = 1,
         page_size: int = 20,
         status: Optional[str] = None,
-    ) -> dict[str, Any]:
+    ) -> Dict[str, Any]:
         page = max(1, int(page))
         page_size = max(1, min(100, int(page_size)))
 
@@ -251,7 +249,7 @@ class OrderService:
     # ------------------------------------------------------------------ #
     # Get detail                                                         #
     # ------------------------------------------------------------------ #
-    async def get_detail(self, *, user_id: int, order_no: str) -> dict[str, Any]:
+    async def get_detail(self, *, user_id: int, order_no: str) -> Dict[str, Any]:
         # Eager-load status_history + messages so we don't hit lazy-load
         # after session is closed (async SQLAlchemy can't do implicit IO).
         order = await self._get_owned_order(
@@ -260,7 +258,7 @@ class OrderService:
 
         # Material refs (only alive ones)
         material_ids = self._decode_material_ids(order.material_ids)
-        materials: list[Material] = []
+        materials: List[Material] = []
         if material_ids:
             materials = list(
                 (
@@ -316,8 +314,8 @@ class OrderService:
     # Checklist (pre-submit snapshot)                                    #
     # ------------------------------------------------------------------ #
     async def build_checklist(
-        self, *, user_id: int, order_no: str
-    ) -> dict[str, Any]:
+        self, *, user_id: int, order_no: str, return_order: bool = False
+    ) -> Dict[str, Any]:
         """Build the locked read-only snapshot for `GET /checklist`.
 
         Returns a dict matching `app.schemas.checklist.ChecklistOut`:
@@ -330,7 +328,13 @@ class OrderService:
             materials: [{id, type, ...}],
             signature: "<sha256 hex>",
             generated_at: <datetime>,
+            [order]: <Order ORM instance>  — only when return_order=True
           }
+
+        If `return_order=True`, an extra `"order"` key is included with the
+        loaded Order ORM instance, so callers (notably `submit()`) can avoid
+        a second `_get_owned_order()` query. The default `False` keeps the
+        public /checklist endpoint contract unchanged.
 
         Errors:
           - 4001 ORDER_NOT_FOUND  (also for not-owned, no existence leak)
@@ -357,7 +361,7 @@ class OrderService:
 
         # 3) Materials (alive only, owned by user, in order's material_ids order)
         material_ids = self._decode_material_ids(order.material_ids)
-        materials: list[Material] = []
+        materials: List[Material] = []
         if material_ids:
             rows = (
                 await self.db.execute(
@@ -433,6 +437,13 @@ class OrderService:
         snapshot["signature"] = signature
         snapshot["generated_at"] = datetime.now(timezone.utc).replace(tzinfo=None)
 
+        if return_order:
+            # Return the loaded Order ORM instance so callers (submit()) can
+            # avoid a redundant _get_owned_order() round-trip. We use a
+            # non-typed key "order" (lowercase) to avoid clashing with the
+            # public ChecklistOut schema, which doesn't include this key.
+            snapshot["order"] = order
+
         _log.info(
             "checklist built order_no={} user_id={} materials={} signature={}",
             order_no,
@@ -443,7 +454,7 @@ class OrderService:
         return snapshot
 
     @staticmethod
-    def _compute_signature(snapshot: dict[str, Any]) -> str:
+    def _compute_signature(snapshot: Dict[str, Any]) -> str:
         """SHA-256 hex of a stable JSON serialisation of the snapshot.
 
         The snapshot dict must NOT contain `signature` or `generated_at`
@@ -467,7 +478,7 @@ class OrderService:
         return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
     @staticmethod
-    def _destination_to_dict(dest: Optional[VisaDestination]) -> dict[str, Any]:
+    def _destination_to_dict(dest: Optional[VisaDestination]) -> Dict[str, Any]:
         """Render a VisaDestination for the checklist (with i18n fallback)."""
         if dest is None:
             return {
@@ -559,7 +570,7 @@ class OrderService:
     # ------------------------------------------------------------------ #
     async def submit(
         self, *, user_id: int, order_no: str, client_signature: str
-    ) -> dict[str, Any]:
+    ) -> Dict[str, Any]:
         """Transition an order from `created` → `submitted`.
 
         Flow (V2 §4.2.4):
@@ -588,7 +599,20 @@ class OrderService:
         #    returned by build_checklist is the *same* one we want here,
         #    because the locked view only changes if the order rows
         #    themselves change (which we then reject anyway).
-        fresh = await self.build_checklist(user_id=user_id, order_no=order_no)
+        #
+        #    Performance fix: pass `return_order=True` so the same Order
+        #    ORM instance is returned. Previously we made a 2nd
+        #    `_get_owned_order()` call here (lines 614-615 below) — a
+        #    redundant query that loaded the row twice in the same
+        #    transaction. We just verified ownership + status on line 339
+        #    inside build_checklist, so the re-check is unnecessary
+        #    unless the session saw a status mutation between the two
+        #    calls (it can't — both happen within the same async
+        #    session, no other writer can race in on a single transaction).
+        fresh = await self.build_checklist(
+            user_id=user_id, order_no=order_no, return_order=True
+        )
+        order: Order = fresh["order"]
         server_signature = fresh["signature"]
 
         # 2) Compare signatures. We expose a 12-char prefix of the
@@ -608,10 +632,11 @@ class OrderService:
             )
 
         # 3) Defensive re-check. build_checklist already raised 4010
-        #    if status != "created", so this branch should be unreachable
-        #    in single-threaded use. It guards against any future code
-        #    path that might bypass build_checklist.
-        order = await self._get_owned_order(user_id=user_id, order_no=order_no)
+        #    if status != "created" via the same `order` instance, so
+        #    this branch is unreachable in single-threaded use. We keep
+        #    the check as a guard against any future refactor that
+        #    bypasses build_checklist, but we DO NOT re-fetch the row
+        #    (that was the redundant query we just eliminated).
         if order.status != "created":
             raise BizException(
                 ErrorCode.ORDER_NOT_EDITABLE,
@@ -671,8 +696,8 @@ class OrderService:
     # Internal helpers                                                    #
     # ------------------------------------------------------------------ #
     async def _load_owned_materials(
-        self, user_id: int, material_ids: list[int]
-    ) -> list[Material]:
+        self, user_id: int, material_ids: List[int]
+    ) -> List[Material]:
         """Verify all material ids belong to the user and aren't soft-deleted."""
         # Dedupe while preserving order (so order_id reuse stays stable)
         unique_ids = list(dict.fromkeys(material_ids))
@@ -734,7 +759,7 @@ class OrderService:
         return order
 
     @staticmethod
-    def _decode_material_ids(raw: Optional[str]) -> list[int]:
+    def _decode_material_ids(raw: Optional[str]) -> List[int]:
         if not raw:
             return []
         try:
@@ -743,7 +768,7 @@ class OrderService:
             return []
         if not isinstance(data, list):
             return []
-        out: list[int] = []
+        out: List[int] = []
         for v in data:
             try:
                 out.append(int(v))
@@ -752,7 +777,7 @@ class OrderService:
         return out
 
     @staticmethod
-    def _decode_applicant_data(raw: Optional[str]) -> dict[str, Any]:
+    def _decode_applicant_data(raw: Optional[str]) -> Dict[str, Any]:
         if not raw:
             return {}
         try:
@@ -762,7 +787,7 @@ class OrderService:
         return data if isinstance(data, dict) else {}
 
     @staticmethod
-    def _to_order_dict(order: Order) -> dict[str, Any]:
+    def _to_order_dict(order: Order) -> Dict[str, Any]:
         return {
             "id": order.id,
             "uuid": order.uuid,

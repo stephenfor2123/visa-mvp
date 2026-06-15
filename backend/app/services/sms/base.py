@@ -20,7 +20,7 @@ class SMSChannel(ABC):
             {
               "ok": bool,
               "channel_txn_id": str,   # unique id for this send (mock_xxx / tw_xxx)
-              "error": str | None,     # present only when ok is False
+              "error":Optional[str],     # present only when ok is False
             }
         """
         raise NotImplementedError

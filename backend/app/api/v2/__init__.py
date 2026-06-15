@@ -1,6 +1,7 @@
 """v2 API package — root router."""
 from fastapi import APIRouter
 
+from app.api.v2 import admin
 from app.api.v2 import affiliate
 from app.api.v2 import auth
 from app.api.v2 import destinations
@@ -10,9 +11,11 @@ from app.api.v2 import ocr
 from app.api.v2 import orders
 from app.api.v2 import payment
 from app.api.v2 import sms
+from app.api.v2 import voice
 
 
 api_v2_router = APIRouter()
+api_v2_router.include_router(admin.router, tags=["admin"])
 api_v2_router.include_router(affiliate.router, prefix="/affiliate", tags=["affiliate"])
 api_v2_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_v2_router.include_router(destinations.router, prefix="/destinations", tags=["destinations"])
@@ -24,3 +27,5 @@ api_v2_router.include_router(orders.router, prefix="/orders", tags=["orders"])
 api_v2_router.include_router(payment.router, prefix="/payment", tags=["payment"])
 # B-W6-1 — standalone SMS service (Mock-only in V2)
 api_v2_router.include_router(sms.router, prefix="/sms", tags=["sms"])
+# W14-5 — voice / speech-to-text endpoint
+api_v2_router.include_router(voice.router, prefix="/voice", tags=["voice"])

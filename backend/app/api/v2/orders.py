@@ -27,12 +27,11 @@ Submit (Story 1.2.2b):
   - On success: order.status "created" → "submitted", submitted_at
     stamped, rpa_task_id = uuid4, OrderStatusHistory row appended.
 """
-from __future__ import annotations
-
 import hashlib
 import json
+import time
 from datetime import datetime, timezone
-from typing import Annotated, Optional
+from typing import Annotated, Optional, Union
 
 from fastapi import APIRouter, Depends, Path, Query, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -106,6 +105,7 @@ async def create_order(
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> ApiResponse[CreateOrderResponse]:
+    t0 = time.perf_counter()
     service = OrderService(db)
     order = await service.create(
         user_id=current_user.id,
@@ -114,6 +114,15 @@ async def create_order(
         material_ids=body.material_ids,
         applicant_data=body.applicant_data,
         aff_code=body.aff_code,
+    )
+    _log.info(
+        "order.create",
+        extra={
+            "user_id": current_user.id,
+            "event_type": "order.create",
+            "duration_ms": round((time.perf_counter() - t0) * 1000, 1),
+            "status": "success",
+        },
     )
     return ApiResponse[CreateOrderResponse](
         code="1000",
@@ -198,7 +207,7 @@ async def get_order(
     order_no: str = Path(..., min_length=1, max_length=32),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
-) -> Response | ApiResponse[OrderDetailOut]:
+) -> Union[Response, ApiResponse[OrderDetailOut]]:
     """Order detail with ETag / 304 short-circuit (Story 1.2.2a).
 
     The ETag is computed over the canonical payload (status / history /
@@ -344,10 +353,20 @@ async def submit_order(
        mint a fresh correlation handle.
     """
     service = OrderService(db)
+    t0 = time.perf_counter()
     out = await service.submit(
         user_id=current_user.id,
         order_no=order_no,
         client_signature=body.signature,
+    )
+    _log.info(
+        "order.submit",
+        extra={
+            "user_id": current_user.id,
+            "event_type": "order.submit",
+            "duration_ms": round((time.perf_counter() - t0) * 1000, 1),
+            "status": out["status"],
+        },
     )
     return ApiResponse[SubmitOrderResponse](
         code="1000",

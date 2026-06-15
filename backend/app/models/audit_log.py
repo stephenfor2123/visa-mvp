@@ -1,6 +1,4 @@
 """AuditLog — append-only event log for sensitive actions (V2 §4.1.4)."""
-from __future__ import annotations
-
 import uuid
 from datetime import datetime
 from typing import Optional
@@ -41,6 +39,17 @@ class AuditLog(Base):
 
     __table_args__ = (
         Index("ix_audit_log_actor_action", "actor_type", "actor_id", "action"),
+        # W16 performance: the admin /logs endpoint ALWAYS sorts by
+        # created_at DESC and frequently filters by action / actor_type.
+        # A composite (created_at, action, actor_type) index lets the
+        # planner do an index range scan + use a sort-elimination in one
+        # pass, instead of a full scan + sort.
+        Index(
+            "ix_audit_log_created_action_actor",
+            "created_at",
+            "action",
+            "actor_type",
+        ),
     )
 
     def __repr__(self) -> str:  # pragma: no cover

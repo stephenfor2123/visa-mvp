@@ -28,8 +28,6 @@ Why a standalone set?
   - V2.1 swap (CJ / ShareASale / impact.com) is a one-line change in
     `services/affiliate_provider.py::get_affiliate_provider`.
 """
-from __future__ import annotations
-
 import secrets
 from typing import Annotated, Optional
 

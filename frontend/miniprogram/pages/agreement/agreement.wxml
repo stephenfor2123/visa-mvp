@@ -1,0 +1,66 @@
+<!-- pages/agreement/agreement.wxml -->
+<view class="page-agreement">
+  <view class="header">
+    <text class="title">{{t['agreement.page_title']}}</text>
+    <text class="subtitle">{{t['agreement.page_subtitle']}}</text>
+  </view>
+
+  <view class="tabs">
+    <view class="tab {{activeTab === 'terms' ? 'tab-active' : ''}}" data-tab="terms" bindtap="onSwitchTab">
+      <text>{{t['agreement.tab_terms']}}</text>
+    </view>
+    <view class="tab {{activeTab === 'privacy' ? 'tab-active' : ''}}" data-tab="privacy" bindtap="onSwitchTab">
+      <text>{{t['agreement.tab_privacy']}}</text>
+    </view>
+  </view>
+
+  <scroll-view class="content" scroll-y="true">
+    <!-- 用户协议 -->
+    <block wx:if="{{activeTab === 'terms'}}">
+      <view class="doc-head">
+        <text class="doc-title">{{t['agreement.terms_title']}}</text>
+        <text class="doc-meta">{{t['agreement.terms_effective']}}</text>
+      </view>
+      <view class="section">
+        <text class="section-title">{{t['agreement.terms_section_1_title']}}</text>
+        <text class="section-body">{{t['agreement.terms_section_1_body']}}</text>
+      </view>
+      <view class="section">
+        <text class="section-title">{{t['agreement.terms_section_2_title']}}</text>
+        <text class="section-body">{{t['agreement.terms_section_2_body']}}</text>
+      </view>
+      <view class="section">
+        <text class="section-title">{{t['agreement.terms_section_3_title']}}</text>
+        <text class="section-body">{{t['agreement.terms_section_3_body']}}</text>
+      </view>
+      <view class="section">
+        <text class="section-title">{{t['agreement.terms_section_4_title']}}</text>
+        <text class="section-body">{{t['agreement.terms_section_4_body']}}</text>
+      </view>
+    </block>
+
+    <!-- 隐私政策 -->
+    <block wx:else>
+      <view class="doc-head">
+        <text class="doc-title">{{t['agreement.privacy_title']}}</text>
+        <text class="doc-meta">{{t['agreement.privacy_effective']}}</text>
+      </view>
+      <view class="section">
+        <text class="section-title">{{t['agreement.privacy_section_1_title']}}</text>
+        <text class="section-body">{{t['agreement.privacy_section_1_body']}}</text>
+      </view>
+      <view class="section">
+        <text class="section-title">{{t['agreement.privacy_section_2_title']}}</text>
+        <text class="section-body">{{t['agreement.privacy_section_2_body']}}</text>
+      </view>
+      <view class="section">
+        <text class="section-title">{{t['agreement.privacy_section_3_title']}}</text>
+        <text class="section-body">{{t['agreement.privacy_section_3_body']}}</text>
+      </view>
+      <view class="section">
+        <text class="section-title">{{t['agreement.privacy_section_4_title']}}</text>
+        <text class="section-body">{{t['agreement.privacy_section_4_body']}}</text>
+      </view>
+    </block>
+  </scroll-view>
+</view>

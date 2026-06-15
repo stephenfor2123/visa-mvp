@@ -1,6 +1,4 @@
 """Audit-log helper — fire-and-forget but always returns the row id."""
-from __future__ import annotations
-
 import json
 from typing import Any, Optional
 

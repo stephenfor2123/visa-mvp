@@ -4,8 +4,6 @@ V2 §4.3. The same file (sha256) uploaded twice by the same user returns
 the existing row instead of creating a new one (the `deduplicated` flag
 on the response tells the client which case it is).
 """
-from __future__ import annotations
-
 import json
 import mimetypes
 import os

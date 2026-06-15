@@ -1,0 +1,41 @@
+<!--pages/destinations/destinations.wxml-->
+<view class="page-dest">
+  <view class="dest-header">
+    <view class="dest-title">{{t('dest.title')}}</view>
+    <view class="dest-sub">{{t('dest.subtitle')}}</view>
+  </view>
+
+  <view wx:if="{{loading}}" class="state-loading">⏳ {{t('common.loading')}}</view>
+  <view wx:elif="{{error}}" class="state-error">❌ {{error}}</view>
+
+  <view wx:else class="dest-grid">
+    <view
+      wx:for="{{destinations}}"
+      wx:key="id"
+      class="dest-card {{item.enabled ? '' : 'is-disabled'}}"
+      data-country="{{item.country_code}}"
+      data-enabled="{{item.enabled}}"
+      bindtap="onTapCard"
+    >
+      <view class="dest-card__flag">{{item.flag}}</view>
+      <view class="dest-card__name">{{item.country_name}}</view>
+      <view class="dest-card__types">
+        <block wx:for="{{item.visa_types}}" wx:for-item="vt" wx:key="*this">
+          <view class="tag {{vt === 'tourism' ? 'tag--tourism' : 'tag--student'}}">
+            {{vt === 'tourism' ? t('dest.tourism') : t('dest.student')}}
+          </view>
+        </block>
+      </view>
+      <view wx:if="{{!item.enabled}}" class="dest-card__lock">🔒 {{t('dest.coming_soon')}}</view>
+      <app-button
+        wx:if="{{item.enabled}}"
+        text="{{t('dest.apply_now')}}"
+        variant="primary"
+        size="sm"
+        block="{{true}}"
+        data-country="{{item.country_code}}"
+        bind:trigger="onApply"
+      />
+    </view>
+  </view>
+</view>

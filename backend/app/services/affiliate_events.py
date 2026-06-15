@@ -45,10 +45,8 @@ affiliate side hiccups. This matches the W8-4 contract (provider is
 mock + in-memory, can't realistically throw, but we still defend the
 boundary).
 """
-from __future__ import annotations
-
 from decimal import Decimal
-from typing import Optional
+from typing import Optional, Union
 
 from loguru import logger
 
@@ -71,7 +69,7 @@ def _provider():
     return get_affiliate_provider()
 
 
-def _decimal_to_cents(amount: Decimal | float | int | None) -> int:
+def _decimal_to_cents(amount:Union[Decimal, float, int, None]) -> int:
     """Convert the order's `total_amount` (Decimal dollars) to integer cents.
 
     V2 mock: orders are always priced in whole dollars in the test seed
@@ -107,10 +105,10 @@ async def on_order_created(
             {
               "ok": bool,
               "order_id": str,
-              "aff_code": str | None,
-              "click_id": str | None,
-              "partner_id": str | None,
-              "skipped_reason": str | None,
+              "aff_code": Optional[str],
+              "click_id": Optional[str],
+              "partner_id": Optional[str],
+              "skipped_reason": Optional[str],
             }
 
         The order row is NOT mutated here — `aff_code` was already
@@ -227,9 +225,9 @@ async def on_payment_completed(order: Order) -> dict:
         {
           "ok": bool,
           "order_id": str,
-          "commission_amount_cents": int | None,
-          "partner_id": str | None,
-          "skipped_reason": str | None,
+          "commission_amount_cents": Optional[int],
+          "partner_id": Optional[str],
+          "skipped_reason": Optional[str],
         }
     """
     provider = _provider()
@@ -311,7 +309,7 @@ async def on_order_rejected(order: Order) -> dict:
           "ok": True,
           "order_id": str,
           "action": "logged_only" | "reversed",
-          "skipped_reason": str | None,
+          "skipped_reason": Optional[str],
         }
     """
     _log.info(

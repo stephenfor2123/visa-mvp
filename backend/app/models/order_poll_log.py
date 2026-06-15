@@ -18,8 +18,6 @@ of "polled but no change" — useful for debugging "why didn't my RPA fire"
 support tickets. The caller can filter by `status_before != status_after`
 to see only true transitions.
 """
-from __future__ import annotations
-
 from datetime import datetime
 from typing import Optional
 

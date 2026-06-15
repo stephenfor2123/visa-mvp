@@ -1,0 +1,78 @@
+<!-- pages/order/order.wxml -->
+<view class="page-order">
+  <view class="header">
+    <text class="title">{{t['order.page_title']}}</text>
+    <text class="subtitle">{{t['order.page_subtitle']}}</text>
+  </view>
+
+  <!-- Tabs -->
+  <scroll-view class="tabs" scroll-x="true" enhanced="true" show-scrollbar="false">
+    <view
+      wx:for="{{tabs}}"
+      wx:key="key"
+      class="tab {{activeTab === item.key ? 'tab-active' : ''}}"
+      data-key="{{item.key}}"
+      bindtap="onSwitchTab"
+    >
+      <text>{{t[item.labelKey]}}</text>
+    </view>
+  </scroll-view>
+
+  <!-- 加载中 -->
+  <view class="loading" wx:if="{{loading}}">
+    <text>{{t['order.loading']}}</text>
+  </view>
+
+  <!-- 未登录 -->
+  <view class="empty" wx:elif="{{!isLoggedIn}}">
+    <text class="empty-icon">🔒</text>
+    <text class="empty-title">{{t['order.not_logged_in']}}</text>
+    <view class="btn-primary" bindtap="onGoLogin">
+      <text>{{t['order.go_login']}}</text>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty" wx:elif="{{empty}}">
+    <text class="empty-icon">📭</text>
+    <text class="empty-title">{{t['order.empty_title']}}</text>
+    <text class="empty-desc">{{t['order.empty_desc']}}</text>
+    <view class="btn-primary" bindtap="onGoDest">
+      <text>{{t['order.empty_action']}}</text>
+    </view>
+  </view>
+
+  <!-- 列表 -->
+  <view class="list" wx:else>
+    <view wx:for="{{list}}" wx:key="order_no" class="card">
+      <view class="card-head">
+        <text class="country">{{item.country_name}}</text>
+        <text class="status {{item.statusClass}}">{{item.statusLabel}}</text>
+      </view>
+      <view class="card-row">
+        <text class="row-label">{{t['order.item_amount']}}</text>
+        <text class="row-value strong">¥{{item.amountYuan}}</text>
+      </view>
+      <view class="card-row">
+        <text class="row-label">{{t['order.item_visa_type']}}</text>
+        <text class="row-value">{{item.visa_type === 'student' ? t['order.item_visa_student'] : t['order.item_visa_tourism']}}</text>
+      </view>
+      <view class="card-row">
+        <text class="row-label">{{t['order.item_created']}}</text>
+        <text class="row-value">{{item.created_at}}</text>
+      </view>
+      <view class="card-row" wx:if="{{item.reject_reason}}">
+        <text class="row-label">{{t['order.reject_reason_label']}}</text>
+        <text class="row-value warn">{{item.reject_reason}}</text>
+      </view>
+      <view class="card-actions">
+        <view wx:if="{{item.status === 'pending_payment'}}" class="btn-primary" data-no="{{item.order_no}}" bindtap="onPayNow">
+          <text>{{t['order.item_pay_now']}}</text>
+        </view>
+        <view class="btn-secondary" data-no="{{item.order_no}}" bindtap="onViewDetail">
+          <text>{{t['order.item_view_detail']}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

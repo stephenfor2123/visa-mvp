@@ -1,0 +1,11 @@
+{
+  "navigationBarTitleText": "签证助手",
+  "navigationBarBackgroundColor": "#3B6EF5",
+  "navigationBarTextStyle": "white",
+  "enablePullDownRefresh": true,
+  "backgroundTextStyle": "light",
+  "usingComponents": {
+    "app-button": "/components/Button",
+    "app-card": "/components/Card"
+  }
+}

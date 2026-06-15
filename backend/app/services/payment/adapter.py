@@ -4,6 +4,7 @@ The interface is async + JSON-friendly so the W2+ switch to a real
 channel is a configuration change, not a refactor.
 """
 from __future__ import annotations
+from typing import Optional
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -27,8 +28,8 @@ class PaymentResult:
     ok: bool
     channel_txn_id: str
     status: str          # pending / succeeded / failed
-    error: str | None = None
-    raw: dict | None = None
+    error:Optional[str]= None
+    rawOptional[dict] = None
 
 
 class PaymentAdapter(ABC):

@@ -6,12 +6,10 @@ Per V2 §4.1.4:
   - bcrypt cost 12, password 8-32 chars, must contain letters + digits
   - Access token TTL 2h, Refresh token 7d sliding
 """
-from __future__ import annotations
-
 import re
 import secrets
 from datetime import datetime, timedelta, timezone
-from typing import Any
+from typing import Any, Optional
 
 from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -29,7 +27,7 @@ from app.models.user import User
 # Password                                                            #
 # ------------------------------------------------------------------ #
 # passlib CryptContext; bcrypt cost from settings.
-_pwd_context: CryptContext | None = None
+_pwd_context: Optional[CryptContext] = None
 
 
 def _pwd_ctx(settings: Settings) -> CryptContext:
@@ -43,12 +41,12 @@ def _pwd_ctx(settings: Settings) -> CryptContext:
     return _pwd_context
 
 
-def hash_password(plain: str, settings: Settings | None = None) -> str:
+def hash_password(plain: str, settings: Optional[Settings] = None) -> str:
     settings = settings or get_settings()
     return _pwd_ctx(settings).hash(plain)
 
 
-def verify_password(plain: str, hashed: str, settings: Settings | None = None) -> bool:
+def verify_password(plain: str, hashed: str, settings: Optional[Settings] = None) -> bool:
     settings = settings or get_settings()
     try:
         return _pwd_ctx(settings).verify(plain, hashed)
@@ -61,7 +59,7 @@ _PASSWORD_STRONG_RE = re.compile(r"[A-Za-z]")  # any ASCII letter
 _PASSWORD_DIGIT_RE = re.compile(r"\d")
 
 
-def validate_password_strength(plain: str, settings: Settings | None = None) -> None:
+def validate_password_strength(plain: str, settings: Optional[Settings] = None) -> None:
     """Raise BizException(PASSWORD_TOO_WEAK) on weak password.
 
     Rule: length 8-32 AND contains at least one letter AND at least one digit.
@@ -97,8 +95,8 @@ def _now_utc() -> datetime:
 
 def create_access_token(
     user_id: int,
-    settings: Settings | None = None,
-    extra: dict[str, Any] | None = None,
+    settings: Optional[Settings] = None,
+    extra: Optional[dict[str, Any]] = None,
 ) -> tuple[str, datetime]:
     settings = settings or get_settings()
     now = _now_utc()
@@ -118,7 +116,7 @@ def create_access_token(
 
 def create_refresh_token(
     user_id: int,
-    settings: Settings | None = None,
+    settings: Optional[Settings] = None,
 ) -> tuple[str, datetime]:
     settings = settings or get_settings()
     now = _now_utc()
@@ -134,7 +132,7 @@ def create_refresh_token(
     return token, exp
 
 
-def decode_token(token: str, expected_type: str, settings: Settings | None = None) -> dict[str, Any]:
+def decode_token(token: str, expected_type: str, settings: Optional[Settings] = None) -> dict[str, Any]:
     settings = settings or get_settings()
     try:
         payload = jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
@@ -170,7 +168,7 @@ def decode_token(token: str, expected_type: str, settings: Settings | None = Non
 # Current user dependency                                            #
 # ------------------------------------------------------------------ #
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(_bearer_scheme),
     db: AsyncSession = Depends(get_db),
 ) -> User:
     """Resolve access token from Authorization: Bearer ... -> User row."""

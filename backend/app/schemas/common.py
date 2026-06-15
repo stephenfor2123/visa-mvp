@@ -1,6 +1,4 @@
 """Common envelope types — used for ALL responses per V2 §1.5.1."""
-from __future__ import annotations
-
 from typing import Any, Generic, Optional, TypeVar
 
 from pydantic import BaseModel, Field

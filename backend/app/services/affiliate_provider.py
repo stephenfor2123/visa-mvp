@@ -30,8 +30,6 @@ Payout rules:
     succeeds and stamps `status="paid"`.
   - payout_id is deterministically `mock_payout_<partner_id>_<period>_<ts>`.
 """
-from __future__ import annotations
-
 import secrets
 import threading
 import time

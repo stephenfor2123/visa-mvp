@@ -17,8 +17,6 @@ Coexistence with the W4 `SmsService` (DB-backed):
   - Both live behind their own ABC; the V2.1 swap is additive — drop in a
     `TencentSmsProvider` implementing the same ABC.
 """
-from __future__ import annotations
-
 import random
 import secrets
 import threading

@@ -8,8 +8,6 @@ Locked contract (see pm/wbs/B-W8-4.md):
   - All 5 are mock-only in V2 (no real affiliate network integration)
   - Commission rate is hard-coded to 5% in V2 (V2.1 will read from a rule row)
 """
-from __future__ import annotations
-
 import re
 from typing import List, Optional
 

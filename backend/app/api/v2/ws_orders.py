@@ -7,8 +7,6 @@ through ConnectionManager → all WS subscribers of that order_no.
 Cycle 3 close-out (W3-NO-DEFER): WSBroadcaster + ConnectionManager
 registry wired in. Frontend api/orders.js:402 env swap landed.
 """
-from __future__ import annotations
-
 import asyncio
 import time
 from typing import Any, Optional

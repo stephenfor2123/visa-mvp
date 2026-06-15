@@ -1,0 +1,74 @@
+<!-- pages/payment/payment.wxml -->
+<view class="page-payment">
+  <view class="header">
+    <text class="title">{{t['payment.page_title']}}</text>
+    <text class="subtitle">{{t['payment.page_subtitle']}}</text>
+  </view>
+
+  <!-- 加载中 -->
+  <view class="loading" wx:if="{{loading}}">
+    <text class="loading-icon">⏳</text>
+    <text class="loading-text">{{t['payment.qr_loading']}}</text>
+  </view>
+
+  <!-- 支付主体 -->
+  <view class="body" wx:else>
+    <!-- 订单信息卡 -->
+    <view class="info-card">
+      <view class="info-row">
+        <text class="info-label">{{t['payment.order_label']}}</text>
+        <text class="info-value">{{orderNo}}</text>
+      </view>
+      <view class="info-row">
+        <text class="info-label">{{t['payment.amount_label']}}</text>
+        <text class="info-value amount">¥{{amountYuan}} {{currency}}</text>
+      </view>
+      <view class="info-row">
+        <text class="info-label">{{t['payment.expire_label']}}</text>
+        <text class="info-value">{{countdown}} {{t['payment.expire_unit']}}</text>
+      </view>
+    </view>
+
+    <!-- QR 占位 (mobile preview 里用 emoji + 文本框代替,真实场景调 wx.scanCode 或展示 code_url) -->
+    <view class="qr-card">
+      <view class="qr-frame">
+        <text class="qr-emoji">📱</text>
+        <text class="qr-code-text">{{codeUrl || 'wxpay://bizpayurl?pr=mock'}}</text>
+      </view>
+      <text class="qr-hint">{{t['payment.qr_hint']}}</text>
+    </view>
+
+    <!-- 状态 -->
+    <view class="status-card status-{{status}}">
+      <view class="status-icon">
+        <text wx:if="{{status === 'pending'}}">⏱️</text>
+        <text wx:elif="{{status === 'paid'}}">✅</text>
+        <text wx:else>❌</text>
+      </view>
+      <text class="status-text">
+        {{status === 'pending' ? t['payment.status_pending'] : (status === 'paid' ? t['payment.status_paid'] : t['payment.status_failed'])}}
+      </text>
+    </view>
+
+    <!-- 轮询条 -->
+    <view class="poll-bar" wx:if="{{status === 'pending'}}">
+      <text class="poll-label">{{t['payment.polling_label']}} {{pollCountdown}} {{t['payment.polling_unit']}}</text>
+      <view class="btn-link" bindtap="onPollNow">
+        <text>{{t['payment.poll_now']}}</text>
+      </view>
+    </view>
+
+    <!-- 调试信息:D 验收用,展示 poll count + intentId 前 20 字符 -->
+    <view class="debug">
+      <text class="debug-line">intent: {{intentId}}</text>
+      <text class="debug-line">polls: {{pollCount}} × 1.5s</text>
+    </view>
+  </view>
+
+  <!-- 底部返回按钮 -->
+  <view class="footer" wx:if="{{!loading}}">
+    <view class="btn-secondary" bindtap="onBack">
+      <text>{{t['payment.back_btn']}}</text>
+    </view>
+  </view>
+</view>

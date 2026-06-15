@@ -1,6 +1,4 @@
 """/api/v2/destinations — 国家列表(V2 范围 = 美国 V2 启用)"""
-from __future__ import annotations
-
 import json
 from typing import Optional, List
 
@@ -67,4 +65,4 @@ async def list_destinations(
             enabled=r.enabled,
         ))
 
-    return ApiResponse(data=items)
+    return ApiResponse(code="1000", message="OK", data=items)

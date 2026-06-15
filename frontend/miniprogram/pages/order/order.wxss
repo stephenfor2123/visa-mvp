@@ -1,0 +1,35 @@
+/* pages/order/order.wxss */
+.page-order { min-height: 100vh; background: #FAFBFC; padding-bottom: 60rpx; }
+.header { padding: 32rpx 32rpx 16rpx; }
+.header .title { display: block; font-size: 44rpx; font-weight: 700; color: #111827; }
+.header .subtitle { display: block; font-size: 26rpx; color: #6B7280; margin-top: 8rpx; }
+.tabs { white-space: nowrap; padding: 16rpx 24rpx 24rpx; border-bottom: 1rpx solid #E5E7EB; }
+.tab { display: inline-block; padding: 12rpx 28rpx; margin-right: 16rpx; border-radius: 999rpx; background: #F3F4F6; color: #6B7280; font-size: 26rpx; }
+.tab-active { background: linear-gradient(135deg, #3B6EF5, #5B86F7); color: #FFFFFF; font-weight: 600; }
+.loading { padding: 80rpx 0; text-align: center; color: #6B7280; font-size: 28rpx; }
+.empty { padding: 120rpx 48rpx; text-align: center; display: flex; flex-direction: column; align-items: center; }
+.empty-icon { font-size: 96rpx; }
+.empty-title { display: block; font-size: 32rpx; font-weight: 600; color: #111827; margin-top: 24rpx; }
+.empty-desc { display: block; font-size: 26rpx; color: #6B7280; margin-top: 12rpx; margin-bottom: 32rpx; }
+.btn-primary { display: inline-block; padding: 20rpx 48rpx; background: linear-gradient(135deg, #3B6EF5, #5B86F7); color: #FFFFFF; border-radius: 16rpx; font-size: 28rpx; font-weight: 600; }
+.btn-secondary { display: inline-block; padding: 20rpx 48rpx; background: #FFFFFF; color: #3B6EF5; border: 2rpx solid #3B6EF5; border-radius: 16rpx; font-size: 28rpx; font-weight: 600; margin-left: 16rpx; }
+.list { padding: 24rpx 24rpx 0; }
+.card { background: #FFFFFF; border-radius: 24rpx; padding: 28rpx 28rpx 24rpx; margin-bottom: 20rpx; box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.04); }
+.card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20rpx; padding-bottom: 16rpx; border-bottom: 1rpx solid #F3F4F6; }
+.country { font-size: 34rpx; font-weight: 700; color: #111827; }
+.status { font-size: 24rpx; padding: 6rpx 16rpx; border-radius: 8rpx; }
+.status-pending { background: #FEF3C7; color: #92400E; }
+.status-paid { background: #DBEAFE; color: #1E40AF; }
+.status-reviewing { background: #FEF9C3; color: #854D0E; }
+.status-approved { background: #D1FAE5; color: #065F46; }
+.status-rejected { background: #FEE2E2; color: #991B1B; }
+.status-cancelled { background: #F3F4F6; color: #4B5563; }
+.status-default { background: #F3F4F6; color: #4B5563; }
+.card-row { display: flex; justify-content: space-between; align-items: center; padding: 8rpx 0; }
+.row-label { font-size: 26rpx; color: #6B7280; }
+.row-value { font-size: 28rpx; color: #111827; }
+.row-value.strong { font-weight: 700; }
+.row-value.warn { color: #B91C1C; font-size: 26rpx; }
+.card-actions { display: flex; justify-content: flex-end; margin-top: 20rpx; padding-top: 16rpx; border-top: 1rpx solid #F3F4F6; }
+.card-actions .btn-secondary { margin-left: 0; }
+.card-actions .btn-primary { margin-right: 16rpx; }

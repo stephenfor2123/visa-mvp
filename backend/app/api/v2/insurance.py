@@ -22,8 +22,6 @@ Why Mock-only in V2 (Mavis 13:13 拍板):
     "申请保险 → 拒签 → 一键理赔" can be exercised end-to-end with
     `pytest` alone.
 """
-from __future__ import annotations
-
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Path
@@ -117,7 +115,11 @@ async def post_bind(
     claiming someone else's quote).
     """
     provider = get_insurance_provider()
-    result = await provider.bind(order_id=body.order_id, quote_id=body.quote_id)
+    result = await provider.bind(
+        order_id=body.order_id,
+        quote_id=body.quote_id,
+        user_id=str(current_user.id),
+    )
     if not result.get("ok"):
         err = result.get("error") or "bind failed"
         # 1004 (NOT_FOUND) for "quote_id=... not found"; 1007 (CONFLICT) for
@@ -213,9 +215,12 @@ async def get_policy(
     Used by the front-end "我的保单" page, and by the test suite to
     verify the full quote → bind → claim lifecycle without having to
     re-mock the provider in-line.
+
+    IDOR prevention: returns 404 (not 403) if the policy belongs to another
+    user, preventing callers from probing arbitrary policy IDs.
     """
     provider = get_insurance_provider()
-    snap = provider.get_policy(policy_id)
+    snap = provider.get_policy(policy_id, owner_user_id=str(current_user.id))
     if snap is None:
         raise BizException(
             ErrorCode.NOT_FOUND, message=f"policy_id={policy_id} not found"

@@ -19,8 +19,6 @@ waiting for us to poll. Both flows share the same persistence rules,
 so we expose `record_change()` as the canonical "write one transition"
 primitive; the periodic `tick()` is just a fan-out of that primitive.
 """
-from __future__ import annotations
-
 import random
 from datetime import datetime, timezone
 from typing import Any, Optional

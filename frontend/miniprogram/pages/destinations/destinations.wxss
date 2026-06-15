@@ -1,0 +1,56 @@
+/* pages/destinations/destinations.wxss */
+.page-dest {
+  min-height: 100vh;
+  background: var(--bg, #FAFBFC);
+  padding: 24rpx;
+}
+.dest-header { padding: 16rpx 0 24rpx; }
+.dest-title { font-size: 40rpx; font-weight: 700; color: var(--ink-1, #1A1D29); margin-bottom: 8rpx; }
+.dest-sub { font-size: 26rpx; color: var(--ink-2, #5A5F6D); }
+
+.state-loading, .state-error {
+  padding: 80rpx 0; text-align: center;
+  color: var(--ink-3, #9CA3AF); font-size: 28rpx;
+}
+.state-error { color: var(--danger, #DC2626); }
+
+.dest-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+  margin-top: 16rpx;
+}
+.dest-card {
+  background: var(--surface, #fff);
+  border: 2rpx solid var(--line, #E5E7EB);
+  border-radius: 20rpx;
+  padding: 28rpx 20rpx;
+  text-align: center;
+  width: calc((100% - 20rpx) / 2);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+}
+.dest-card.is-disabled { opacity: 0.55; }
+.dest-card__flag { font-size: 64rpx; line-height: 1; }
+.dest-card__name {
+  font-size: 28rpx; font-weight: 600;
+  color: var(--ink-1, #1A1D29);
+}
+.dest-card__types {
+  display: flex; gap: 8rpx; justify-content: center; flex-wrap: wrap;
+}
+.tag {
+  padding: 4rpx 14rpx; border-radius: 999rpx;
+  font-size: 20rpx; font-weight: 500;
+}
+.tag--tourism { background: #EAF0FE; color: #2D5BFF; }
+.tag--student { background: #FEF3C7; color: #B45309; }
+.dest-card__lock { font-size: 22rpx; color: var(--ink-3, #9CA3AF); }
+
+/* 4 列(横屏或大屏)适配 */
+@media (min-width: 600px) {
+  .dest-card { width: calc((100% - 60rpx) / 4); }
+}

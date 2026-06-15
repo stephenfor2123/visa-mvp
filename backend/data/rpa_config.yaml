@@ -1,0 +1,47 @@
+rate_limits:
+  ip_per_day: 50
+  account_interval_minutes: 30
+  max_concurrent_tasks: 2
+timeouts:
+  http_timeout: 30
+  captcha_timeout: 20
+  submit_timeout: 60
+  page_load_timeout: 45
+retry:
+  captcha_max_retries: 3
+  page_max_retries: 2
+  backoff_multiplier: 2
+  initial_backoff: 1
+captcha:
+  engine: pytesseract
+  preprocess: true
+  min_confidence: 0.6
+  api_url: ''
+  api_key: ''
+session:
+  ttl_minutes: 120
+  user_agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML,
+    like Gecko) Chrome/120.0.0.0 Safari/537.36
+countries:
+  Indonesia:
+    base_url: https://visa-online.imigration.go.id
+    form_path: /apply
+    captcha_type: image
+    captcha_url_path: /captcha
+    submit_button_id: btn-submit
+    enabled: true
+  Vietnam:
+    base_url: https://visaonline.vn
+    form_path: /application
+    captcha_type: image
+    captcha_url_path: /captcha.jpg
+    submit_button_id: submit-btn
+    enabled: true
+  Philippines:
+    base_url: https://onlinetravel. Bureau of Immigration
+    form_path: /visa-application
+    captcha_type: image
+    captcha_url_path: /captcha
+    submit_button_id: btn-submit-visa
+    enabled: false
+mock_mode: false

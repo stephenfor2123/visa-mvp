@@ -14,8 +14,6 @@ Why a standalone set when /api/v2/auth/send-code already exists?
   `services/sms_provider.py` and these 4 endpoints are the public
   contract.
 """
-from __future__ import annotations
-
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Path

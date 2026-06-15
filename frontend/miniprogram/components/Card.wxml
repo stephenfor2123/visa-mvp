@@ -1,0 +1,13 @@
+<!--components/Card.wxml-->
+<view class="card-shell {{hoverable ? 'card-hoverable' : ''}}">
+  <view wx:if="{{title}}" class="card-header">
+    <text class="card-title">{{title}}</text>
+    <slot name="header" />
+  </view>
+  <view class="card-body">
+    <slot />
+  </view>
+  <view wx:if="{{hasFooter}}" class="card-footer">
+    <slot name="footer" />
+  </view>
+</view>

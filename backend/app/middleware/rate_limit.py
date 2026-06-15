@@ -61,7 +61,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self,
         app: ASGIApp,
         *,
-        limiter: InMemoryRateLimiter | None = None,
+        limiter:Optional[InMemoryRateLimiter]= None,
         global_per_min: int = 100,
         slow_per_min: int = 60,
     ) -> None:

@@ -21,7 +21,7 @@ from app.services.sms.base import SMSChannel
 class MockSMSChannel(SMSChannel):
     """In-process mock — no external dependencies, ideal for dev/test."""
 
-    def __init__(self, log_dir: str | None = None) -> None:
+    def __init__(self, log_dir:Optional[str]= None) -> None:
         self._log_dir = Path(log_dir) if log_dir else None
         if self._log_dir:
             self._log_dir.mkdir(parents=True, exist_ok=True)

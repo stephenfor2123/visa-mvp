@@ -1,0 +1,102 @@
+<!-- pages/forgot/forgot.wxml -->
+<view class="page-forgot">
+  <!-- 表单态 -->
+  <block wx:if="{{!success}}">
+    <view class="header">
+      <text class="title">{{t['forgot.page_title']}}</text>
+      <text class="subtitle">{{t['forgot.page_subtitle']}}</text>
+    </view>
+
+    <view class="form">
+      <!-- 手机号 + 区号 -->
+      <view class="form-row">
+        <text class="form-label">{{t['forgot.phone_label']}}</text>
+        <view class="form-input-row">
+          <picker mode="selector" range="{{countries}}" range-key="label" value="{{countryIdx}}" bindchange="onCountryChange">
+            <view class="country-picker">
+              <text>{{countries[countryIdx].label}}</text>
+              <text class="caret">▾</text>
+            </view>
+          </picker>
+          <input
+            class="form-input"
+            type="number"
+            maxlength="11"
+            placeholder="{{t['forgot.phone_placeholder']}}"
+            value="{{phone}}"
+            bindinput="onPhoneInput"
+          />
+        </view>
+        <text wx:if="{{errors.phone}}" class="form-err">{{errors.phone}}</text>
+      </view>
+
+      <!-- 短信验证码 -->
+      <view class="form-row">
+        <text class="form-label">{{t['forgot.sms_label']}}</text>
+        <view class="form-input-row">
+          <input
+            class="form-input"
+            type="number"
+            maxlength="6"
+            placeholder="{{t['forgot.sms_placeholder']}}"
+            value="{{smsCode}}"
+            bindinput="onSmsInput"
+          />
+          <view class="btn-sms {{smsCooldown > 0 ? 'btn-sms-disabled' : ''}}" bindtap="onSendCode">
+            <text wx:if="{{smsCooldown === 0}}">{{sending ? '...' : t['forgot.send_code']}}</text>
+            <text wx:elif="{{smsCooldown > 0}}">{{smsCooldown}}s</text>
+          </view>
+        </view>
+        <text wx:if="{{errors.smsCode}}" class="form-err">{{errors.smsCode}}</text>
+      </view>
+
+      <!-- 新密码 -->
+      <view class="form-row">
+        <text class="form-label">{{t['forgot.new_pwd_label']}}</text>
+        <input
+          class="form-input"
+          password="true"
+          maxlength="32"
+          placeholder="{{t['forgot.new_pwd_placeholder']}}"
+          value="{{newPwd}}"
+          bindinput="onNewPwdInput"
+        />
+        <text wx:if="{{errors.newPwd}}" class="form-err">{{errors.newPwd}}</text>
+      </view>
+
+      <!-- 确认新密码 -->
+      <view class="form-row">
+        <text class="form-label">{{t['forgot.confirm_pwd_label']}}</text>
+        <input
+          class="form-input"
+          password="true"
+          maxlength="32"
+          placeholder="{{t['forgot.confirm_pwd_placeholder']}}"
+          value="{{confirmPwd}}"
+          bindinput="onConfirmPwdInput"
+        />
+        <text wx:if="{{errors.confirmPwd}}" class="form-err">{{errors.confirmPwd}}</text>
+      </view>
+
+      <view class="btn-primary {{submitting ? 'btn-primary-loading' : ''}}" bindtap="onSubmit">
+        <text>{{submitting ? t['forgot.submitting'] : t['forgot.submit']}}</text>
+      </view>
+
+      <view class="link-back" bindtap="onBackLogin">
+        <text>{{t['forgot.back_login']}}</text>
+      </view>
+    </view>
+  </block>
+
+  <!-- 成功态 -->
+  <block wx:else>
+    <view class="success">
+      <text class="success-icon">✅</text>
+      <text class="success-title">{{t['forgot.success_title']}}</text>
+      <text class="success-desc">{{t['forgot.success_desc']}}</text>
+      <view class="btn-primary" bindtap="onGoLogin">
+        <text>{{t['forgot.go_login']}}</text>
+      </view>
+    </view>
+  </block>
+</view>

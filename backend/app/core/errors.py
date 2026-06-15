@@ -10,10 +10,8 @@ Usage:
     @app.exception_handler(BizException)
     async def handle_biz(request, exc): ...
 """
-from __future__ import annotations
-
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 
 from fastapi import HTTPException, status
 
@@ -45,6 +43,11 @@ class ErrorCode(str, Enum):
     SMS_CODE_EXPIRED = "2008"
     SMS_CODE_USED = "2009"
     SMS_RATE_LIMIT = "2010"
+    MFA_REQUIRED = "2011"
+    MFA_INVALID_CODE = "2012"
+    MFA_NOT_ENABLED = "2013"
+    MFA_TOKEN_INVALID = "2014"
+    MFA_TOKEN_EXPIRED = "2015"
 
     # 3xxx — User
     USER_NOT_FOUND = "3001"
@@ -60,11 +63,21 @@ class ErrorCode(str, Enum):
     ORDER_ALREADY_EXISTS = "4007"
     ORDER_INVALID_STATE = "4008"
     ORDER_CREATE_FAILED = "4009"
-    ORDER_NOT_EDITABLE = "4010"  # checklist/edit forbidden (status != created)
-    ORDER_SIGNATURE_MISMATCH = "4011"  # submit signature does not match server-side (4011 chosen: 4003 already taken by ORDER_INVALID_VISA_TYPE)
-    PAYMENT_NOT_FOUND = "4012"  # GET /api/v2/payment/{order_no} but order has no payment record yet (or order_no unknown)
-    PAYMENT_ALREADY_PAID = "4013"  # POST /api/v2/payment/{order_no}/close but order is already paid (refund needed)
-    PAYMENT_AMOUNT_INVALID = "4014"  # POST /api/v2/payment/create amount_cents <= 0
+    ORDER_NOT_EDITABLE = "4010"
+    ORDER_SIGNATURE_MISMATCH = "4011"
+    PAYMENT_NOT_FOUND = "4012"
+    PAYMENT_ALREADY_PAID = "4013"
+    PAYMENT_AMOUNT_INVALID = "4014"
+
+    # 5xxx — Materials
+    MATERIAL_NOT_FOUND = "5001"
+    MATERIAL_STORAGE_ERROR = "5002"
+    MATERIAL_SIGNED_URL_INVALID = "5003"
+
+    # 6xxx — Voice / ASR
+    VOICE_AUDIO_FORMAT = "6001"
+    VOICE_RECOGNIZE_FAILED = "6002"
+    VOICE_TIMEOUT = "6003"
 
     # 7xxx — 第三方
     SMS_GATEWAY_DOWN = "7001"
@@ -92,6 +105,11 @@ _ERROR_HTTP_STATUS: dict[ErrorCode, int] = {
     ErrorCode.SMS_CODE_EXPIRED: status.HTTP_422_UNPROCESSABLE_ENTITY,
     ErrorCode.SMS_CODE_USED: status.HTTP_422_UNPROCESSABLE_ENTITY,
     ErrorCode.SMS_RATE_LIMIT: status.HTTP_429_TOO_MANY_REQUESTS,
+    ErrorCode.MFA_REQUIRED: status.HTTP_403_FORBIDDEN,
+    ErrorCode.MFA_INVALID_CODE: status.HTTP_401_UNAUTHORIZED,
+    ErrorCode.MFA_NOT_ENABLED: status.HTTP_400_BAD_REQUEST,
+    ErrorCode.MFA_TOKEN_INVALID: status.HTTP_401_UNAUTHORIZED,
+    ErrorCode.MFA_TOKEN_EXPIRED: status.HTTP_401_UNAUTHORIZED,
     ErrorCode.USER_NOT_FOUND: status.HTTP_404_NOT_FOUND,
     ErrorCode.NICKNAME_TAKEN: status.HTTP_409_CONFLICT,
     # Order domain mappings
@@ -109,6 +127,14 @@ _ERROR_HTTP_STATUS: dict[ErrorCode, int] = {
     ErrorCode.PAYMENT_NOT_FOUND: status.HTTP_404_NOT_FOUND,
     ErrorCode.PAYMENT_ALREADY_PAID: status.HTTP_409_CONFLICT,
     ErrorCode.PAYMENT_AMOUNT_INVALID: status.HTTP_400_BAD_REQUEST,
+    # Materials domain
+    ErrorCode.MATERIAL_NOT_FOUND: status.HTTP_404_NOT_FOUND,
+    ErrorCode.MATERIAL_STORAGE_ERROR: status.HTTP_500_INTERNAL_SERVER_ERROR,
+    ErrorCode.MATERIAL_SIGNED_URL_INVALID: status.HTTP_403_FORBIDDEN,
+    # Voice / ASR domain
+    ErrorCode.VOICE_AUDIO_FORMAT: status.HTTP_400_BAD_REQUEST,
+    ErrorCode.VOICE_RECOGNIZE_FAILED: status.HTTP_422_UNPROCESSABLE_ENTITY,
+    ErrorCode.VOICE_TIMEOUT: status.HTTP_504_GATEWAY_TIMEOUT,
     ErrorCode.SMS_GATEWAY_DOWN: status.HTTP_502_BAD_GATEWAY,
 }
 
@@ -128,9 +154,9 @@ class BizException(HTTPException):
     def __init__(
         self,
         code: ErrorCode,
-        message: str | None = None,
-        status_code: int | None = None,
-        data: dict[str, Any] | None = None,
+        message: Optional[str] = None,
+        status_code: Optional[int] = None,
+        data: Optional[dict[str, Any]] = None,
     ) -> None:
         self.code = code
         self.message = message or code.name.replace("_", " ").title()
@@ -150,8 +176,8 @@ class BizException(HTTPException):
 
 def build_error_payload(
     code: ErrorCode,
-    message: str | None = None,
-    data: dict[str, Any] | None = None,
+    message: Optional[str] = None,
+    data: Optional[dict[str, Any]] = None,
 ) -> dict[str, Any]:
     """Construct the standard error payload (used by handlers & tests)."""
     return {

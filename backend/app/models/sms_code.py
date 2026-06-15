@@ -3,8 +3,6 @@
 We store `code_hash` (bcrypt) — never the raw code. Used by register,
 login, reset, destroy flows.
 """
-from __future__ import annotations
-
 from datetime import datetime
 from typing import Optional
 

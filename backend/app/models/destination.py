@@ -1,5 +1,4 @@
 """VisaDestination ORM model"""
-from __future__ import annotations
 from sqlalchemy import Column, Integer, String, Boolean, DateTime
 from sqlalchemy.sql import func
 from app.core.db import Base

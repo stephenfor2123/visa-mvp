@@ -2,8 +2,6 @@
 Async SQLAlchemy 2.0 engine, session factory, declarative base,
 and FastAPI dependency helpers.
 """
-from __future__ import annotations
-
 from collections.abc import AsyncGenerator
 from typing import Any
 

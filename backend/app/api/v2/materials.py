@@ -12,8 +12,6 @@ Endpoints:
 
 All endpoints except `/_local/...` require a valid bearer token.
 """
-from __future__ import annotations
-
 from typing import Annotated, Optional
 
 from fastapi import (
@@ -21,7 +19,6 @@ from fastapi import (
     Depends,
     File,
     Form,
-    HTTPException,
     Path,
     Query,
     Request,
@@ -217,13 +214,22 @@ async def fetch_local(
     key: str = Query(..., description="storage_key the token was signed for"),
 ):
     if not storage.verify_signed_token(token, key):
-        raise HTTPException(status_code=403, detail="invalid_or_expired_token")
+        raise BizException(
+            ErrorCode.MATERIAL_SIGNED_URL_INVALID,
+            message="invalid_or_expired_token",
+        )
     try:
         abs_path = storage.path_for(key)
     except FileNotFoundError:
-        raise HTTPException(status_code=404, detail="file_not_found")
+        raise BizException(
+            ErrorCode.MATERIAL_NOT_FOUND,
+            message="file_not_found",
+        )
     if not abs_path.exists():
-        raise HTTPException(status_code=404, detail="file_not_found")
+        raise BizException(
+            ErrorCode.MATERIAL_NOT_FOUND,
+            message="file_not_found",
+        )
     # Best-effort mime guess from filename
     import mimetypes
     media_type, _ = mimetypes.guess_type(abs_path.name)

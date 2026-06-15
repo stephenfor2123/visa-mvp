@@ -1,6 +1,4 @@
 """Order endpoint DTOs (request/response) — V2 §4.2."""
-from __future__ import annotations
-
 import re
 from datetime import datetime
 from decimal import Decimal

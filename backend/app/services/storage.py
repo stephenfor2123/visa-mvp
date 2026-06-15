@@ -10,8 +10,6 @@ The signed URL is just an internal `/api/v2/materials/_local/{token}`
 path where `token = sha256(storage_key + expires_at + secret)`. Tokens
 expire after `url_ttl_seconds` (default 300s = 5min per V2 §4.3.1).
 """
-from __future__ import annotations
-
 import hashlib
 import hmac
 import os

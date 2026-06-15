@@ -1,6 +1,4 @@
 """/api/v2/ocr — OCR recognition endpoint (V2 §5.1)."""
-from __future__ import annotations
-
 from io import BytesIO
 from typing import Annotated, List, Optional
 

@@ -2,8 +2,6 @@
 Loguru configuration. Single sink per process, used by middleware +
 service modules. Never `print()` — see CLAUDE.md / WORKLOG.
 """
-from __future__ import annotations
-
 import sys
 from pathlib import Path
 

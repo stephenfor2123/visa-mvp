@@ -34,8 +34,6 @@ to the order row. W6-2 spec calls out exactly those two
 responsibilities — so we layer them here instead of overloading the
 adapter.
 """
-from __future__ import annotations
-
 import asyncio
 import json
 import secrets

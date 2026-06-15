@@ -11,8 +11,6 @@ Endpoints this Story adds:
                                   reviewing) and advance them per the
                                   RPA stub rules.
 """
-from __future__ import annotations
-
 import secrets
 from typing import Annotated, Optional
 

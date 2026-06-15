@@ -11,8 +11,6 @@ We map the V2 Postgres schema to SQLite-friendly types:
   - NUMERIC(10,2)-> Numeric (DECIMAL)
   - TIMESTAMPTZ  -> DateTime
 """
-from __future__ import annotations
-
 import uuid
 from datetime import datetime
 from decimal import Decimal

@@ -6,8 +6,6 @@ MinIO in W2). Sha256 + user_id is uniquely indexed so the same file
 uploaded twice by the same user is de-duplicated (returns the existing
 row).
 """
-from __future__ import annotations
-
 import uuid
 from datetime import datetime
 from typing import Optional

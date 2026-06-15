@@ -27,8 +27,6 @@ bg) require OpenCV / face detection. We expose them as in-spec
 implementation that reads from a `file_meta` dict (so tests can drive
 them without real CV). The actual CV integration is W3+.
 """
-from __future__ import annotations
-
 import json
 import re
 from dataclasses import dataclass

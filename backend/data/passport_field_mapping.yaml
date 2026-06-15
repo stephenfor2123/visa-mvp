@@ -1,0 +1,304 @@
+# OCR Passport Field Mapping — 9 Countries
+# W14-1 — Visa MVP Project
+# Countries: Indonesia / Vietnam / Philippines / Thailand / Malaysia / Singapore / China / Japan / Korea
+#
+# Fields per country:
+#   country_code       : ISO 3166-1 alpha-2 code
+#   country_name_en    : English name
+#   country_name_zh    : Chinese name
+#   passport_number_re : full-match regex for passport number validation
+#   expiry_min_months  : minimum validity required (months from today)
+#   date_fmt           : strftime format for date parsing
+#   surname_pos        : key name for surname in OCR parsed dict
+#   given_name_pos     : key name for given name(s) in OCR parsed dict
+#   birth_date_field    : key name for date of birth
+#   expiry_date_field  : key name for expiry date
+#   gender_map         : map of OCR gender values → normalized values (M/F)
+#   field_order        : recommended parsing order
+
+# Indonesia (ID) — Machine Readable Zone: 9 chars, format LLLNNNNNNL
+id:
+  country_code: ID
+  country_name_en: Indonesia
+  country_name_zh: 印度尼西亚
+  passport_number_re: "^[A-Z][0-9]{8}$"
+  expiry_min_months: 6
+  date_fmt: "%d/%m/%Y"
+  surname_pos: "surname"
+  given_name_pos: "given_name"
+  birth_date_field: "date_of_birth"
+  expiry_date_field: "expiry_date"
+  gender_map:
+    L: "F"
+    P: "F"
+    M: "M"
+    male: "M"
+    female: "F"
+    Laki-laki: "M"
+    Perempuan: "F"
+  field_order:
+    - passport_no
+    - surname
+    - given_name
+    - sex
+    - nationality
+    - date_of_birth
+    - expiry_date
+  visa_types:
+    B211A:
+      surname: fullname
+      given_names: fullname
+      passport_number: passportno
+      nationality: nationality
+      birth_date: birthday
+      expiry_date: passport_expiry
+      gender: sex
+    Visa_on_Arrival:
+      surname: fullname
+      given_names: fullname
+      passport_number: passportno
+      nationality: nationality
+      birth_date: birthday
+      expiry_date: passport_expiry
+      gender: sex
+
+# Vietnam (VN) — 9 chars: 1 letter + 8 digits or 2 letters + 8 digits
+vn:
+  country_code: VN
+  country_name_en: Vietnam
+  country_name_zh: 越南
+  passport_number_re: "^[A-Z][0-9]{8}$"
+  expiry_min_months: 6
+  date_fmt: "%d/%m/%Y"
+  surname_pos: "surname"
+  given_name_pos: "given_name"
+  birth_date_field: "date_of_birth"
+  expiry_date_field: "expiry_date"
+  gender_map:
+    Nam: "M"
+    Nữ: "F"
+    M: "M"
+    F: "F"
+    male: "M"
+    female: "F"
+  field_order:
+    - passport_no
+    - surname
+    - given_name
+    - sex
+    - nationality
+    - date_of_birth
+    - expiry_date
+  visa_types:
+    e_visa:
+      surname: fullName
+      given_names: fullName
+      passport_number: passportNumber
+      nationality: nationality
+      birth_date: birthDate
+      expiry_date: expiryDate
+      gender: sex
+
+# Philippines (PH) — 9 chars: 1 letter + 7 digits + 1 letter
+ph:
+  country_code: PH
+  country_name_en: Philippines
+  country_name_zh: 菲律宾
+  passport_number_re: "^[A-Z][0-9]{7}[A-Z]$"
+  expiry_min_months: 6
+  date_fmt: "%m/%d/%Y"
+  surname_pos: "surname"
+  given_name_pos: "given_name"
+  birth_date_field: "date_of_birth"
+  expiry_date_field: "expiry_date"
+  gender_map:
+    M: "M"
+    F: "F"
+    male: "M"
+    female: "F"
+  field_order:
+    - passport_no
+    - surname
+    - given_name
+    - sex
+    - nationality
+    - date_of_birth
+    - expiry_date
+
+# Thailand (TH) — 9 chars: 1 letter + 8 digits
+th:
+  country_code: TH
+  country_name_en: Thailand
+  country_name_zh: 泰国
+  passport_number_re: "^[A-Z][0-9]{8}$"
+  expiry_min_months: 6
+  date_fmt: "%d/%m/%Y"
+  surname_pos: "surname"
+  given_name_pos: "given_name"
+  birth_date_field: "date_of_birth"
+  expiry_date_field: "expiry_date"
+  gender_map:
+    M: "M"
+    F: "F"
+    male: "M"
+    female: "F"
+    ชาย: "M"
+    หญิง: "F"
+  field_order:
+    - passport_no
+    - surname
+    - given_name
+    - sex
+    - nationality
+    - date_of_birth
+    - expiry_date
+
+# Malaysia (MY) — 9 chars: 2 letters + 7 digits
+my:
+  country_code: MY
+  country_name_en: Malaysia
+  country_name_zh: 马来西亚
+  passport_number_re: "^[A-Z]{2}[0-9]{7}$"
+  expiry_min_months: 6
+  date_fmt: "%d/%m/%Y"
+  surname_pos: "surname"
+  given_name_pos: "given_name"
+  birth_date_field: "date_of_birth"
+  expiry_date_field: "expiry_date"
+  gender_map:
+    M: "M"
+    F: "F"
+    male: "M"
+    female: "F"
+    Lelaki: "M"
+    Perempuan: "F"
+  field_order:
+    - passport_no
+    - surname
+    - given_name
+    - sex
+    - nationality
+    - date_of_birth
+    - expiry_date
+
+# Singapore (SG) — 9 chars: 1 letter + 7 digits + 1 letter (ICAO TD1)
+sg:
+  country_code: SG
+  country_name_en: Singapore
+  country_name_zh: 新加坡
+  passport_number_re: "^[A-Z][0-9]{7}[A-Z]$"
+  expiry_min_months: 6
+  date_fmt: "%d/%m/%Y"
+  surname_pos: "surname"
+  given_name_pos: "given_name"
+  birth_date_field: "date_of_birth"
+  expiry_date_field: "expiry_date"
+  gender_map:
+    M: "M"
+    F: "F"
+    male: "M"
+    female: "F"
+  field_order:
+    - passport_no
+    - surname
+    - given_name
+    - sex
+    - nationality
+    - date_of_birth
+    - expiry_date
+
+# China (CN) — 9 digits or 1 letter + 8 digits (G/E + 8 digits)
+cn:
+  country_code: CN
+  country_name_en: China
+  country_name_zh: 中国
+  passport_number_re: "^[A-Z][0-9]{8}$"
+  expiry_min_months: 6
+  date_fmt: "%Y/%m/%d"
+  surname_pos: "surname"
+  given_name_pos: "given_name"
+  birth_date_field: "date_of_birth"
+  expiry_date_field: "expiry_date"
+  gender_map:
+    男: "M"
+    女: "F"
+    M: "M"
+    F: "F"
+    male: "M"
+    female: "F"
+  field_order:
+    - passport_no
+    - surname
+    - given_name
+    - sex
+    - nationality
+    - date_of_birth
+    - expiry_date
+
+# Japan (JP) — 9 chars: 2 letters + 7 digits (ICAO TD2)
+jp:
+  country_code: JP
+  country_name_en: Japan
+  country_name_zh: 日本
+  passport_number_re: "^[A-Z]{2}[0-9]{7}$"
+  expiry_min_months: 6
+  date_fmt: "%Y/%m/%d"
+  surname_pos: "surname"
+  given_name_pos: "given_name"
+  birth_date_field: "date_of_birth"
+  expiry_date_field: "expiry_date"
+  gender_map:
+    男: "M"
+    女: "F"
+    M: "M"
+    F: "F"
+    male: "M"
+    female: "F"
+  field_order:
+    - passport_no
+    - surname
+    - given_name
+    - sex
+    - nationality
+    - date_of_birth
+    - expiry_date
+
+# Korea (KR) — 9 chars: 2 letters + 7 digits
+kr:
+  country_code: KR
+  country_name_en: South Korea
+  country_name_zh: 韩国
+  passport_number_re: "^[A-Z]{2}[0-9]{7}$"
+  expiry_min_months: 6
+  date_fmt: "%Y/%m/%d"
+  surname_pos: "surname"
+  given_name_pos: "given_name"
+  birth_date_field: "date_of_birth"
+  expiry_date_field: "expiry_date"
+  gender_map:
+    남: "M"
+    여: "F"
+    M: "M"
+    F: "F"
+    male: "M"
+    female: "F"
+  field_order:
+    - passport_no
+    - surname
+    - given_name
+    - sex
+    - nationality
+    - date_of_birth
+    - expiry_date
+
+# Nationality code → English name map (used by form_filler)
+nationality_map:
+  CN: Chinese
+  ID: Indonesian
+  VN: Vietnamese
+  PH: Filipino
+  TH: Thai
+  MY: Malaysian
+  SG: Singaporean
+  JP: Japanese
+  KR: Korean

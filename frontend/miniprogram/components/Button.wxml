@@ -1,0 +1,11 @@
+<!--components/Button/Button.wxml-->
+<button
+  class="btn-base {{variantClass}} {{sizeClass}} {{block ? 'btn-block' : ''}} {{loading ? 'is-loading' : ''}}"
+  disabled="{{disabled || loading}}"
+  bindtap="onTap"
+  hover-class="btn-hover"
+  hover-stay-time="80"
+>
+  <view wx:if="{{loading}}" class="btn-spinner" />
+  <text>{{loading ? loadingText : text}}</text>
+</button>

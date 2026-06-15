@@ -1,31 +1,34 @@
 """
-/api/v2/auth/* — register, login, sms-login, refresh, send-code.
+/api/v2/auth/* — register, login, sms-login, refresh, send-code, reset-password.
 
-5 endpoints (V2 §4.1):
+6 endpoints (V2 §4.1):
   - POST /api/v2/auth/register
   - POST /api/v2/auth/login
   - POST /api/v2/auth/sms-login
   - POST /api/v2/auth/refresh
   - POST /api/v2/auth/send-code
+  - POST /api/v2/auth/reset-password
 """
-from __future__ import annotations
-
+import time
 from typing import Annotated, Optional
 
-from fastapi import APIRouter, Depends, Header, Request
+from fastapi import APIRouter, Body, Depends, Header, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_db
+from app.core.errors import BizException
 from app.core.logging import get_logger
 from app.schemas.auth import (
     LoginRequest,
     RefreshRequest,
     RegisterRequest,
+    ResetPasswordRequest,
     SendCodeRequest,
     SmsLoginRequest,
     TokenPair,
 )
 from app.schemas.common import ApiResponse
+from app.core.metrics import timed
 from app.services.auth_service import AuthService
 from app.services.sms_service import SmsService
 
@@ -58,6 +61,7 @@ def _client_info(
     status_code=201,
     summary="Register a new user with phone + SMS code + password",
 )
+@timed
 async def register(
     body: RegisterRequest,
     request: Request,
@@ -65,6 +69,7 @@ async def register(
     user_agent: Annotated[Optional[str], Header(alias="User-Agent")] = None,
     x_device_fp: Annotated[Optional[str], Header(alias="X-Device-Fingerprint")] = None,
 ) -> ApiResponse[TokenPair]:
+    t0 = time.perf_counter()
     service = AuthService(db)
     info = _client_info(request, user_agent, x_device_fp)
     result = await service.register(
@@ -76,6 +81,15 @@ async def register(
         language_pref=body.language_pref,
         info=info,
     )
+    _log.info(
+        "user.register",
+        extra={
+            "user_id": result["user"]["id"],
+            "event_type": "user.register",
+            "duration_ms": round((time.perf_counter() - t0) * 1000, 1),
+            "status": "success",
+        },
+    )
     return ApiResponse[TokenPair](code="1000", message="OK", data=TokenPair(**result))
 
 
@@ -84,20 +98,45 @@ async def register(
     response_model=ApiResponse[TokenPair],
     summary="Phone + password login",
 )
+@timed
 async def login(
     body: LoginRequest,
-    request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
     user_agent: Annotated[Optional[str], Header(alias="User-Agent")] = None,
     x_device_fp: Annotated[Optional[str], Header(alias="X-Device-Fingerprint")] = None,
 ) -> ApiResponse[TokenPair]:
+    t0 = time.perf_counter()
     service = AuthService(db)
-    info = _client_info(request, user_agent, x_device_fp)
-    result = await service.login(
-        phone=body.phone,
-        phone_country=body.phone_country,
-        password=body.password,
-        info=info,
+    info = {
+        "user_agent": user_agent or "",
+        "device_fingerprint": x_device_fp or "",
+    }
+    try:
+        result = await service.login(
+            phone=body.phone,
+            phone_country=body.phone_country,
+            password=body.password,
+            info=info,
+        )
+    except BizException as exc:
+        _log.info(
+            "user.login",
+            extra={
+                "user_id": None,
+                "event_type": "user.login",
+                "duration_ms": round((time.perf_counter() - t0) * 1000, 1),
+                "status": "failed",
+            },
+        )
+        raise
+    _log.info(
+        "user.login",
+        extra={
+            "user_id": result["user"]["id"],
+            "event_type": "user.login",
+            "duration_ms": round((time.perf_counter() - t0) * 1000, 1),
+            "status": "success",
+        },
     )
     return ApiResponse[TokenPair](code="1000", message="OK", data=TokenPair(**result))
 
@@ -107,6 +146,7 @@ async def login(
     response_model=ApiResponse[TokenPair],
     summary="SMS-code login (auto-registers on first use in mock mode)",
 )
+@timed
 async def sms_login(
     body: SmsLoginRequest,
     request: Request,
@@ -114,6 +154,7 @@ async def sms_login(
     user_agent: Annotated[Optional[str], Header(alias="User-Agent")] = None,
     x_device_fp: Annotated[Optional[str], Header(alias="X-Device-Fingerprint")] = None,
 ) -> ApiResponse[TokenPair]:
+    t0 = time.perf_counter()
     service = AuthService(db)
     info = _client_info(request, user_agent, x_device_fp)
     result = await service.sms_login(
@@ -121,6 +162,15 @@ async def sms_login(
         phone_country=body.phone_country,
         sms_code_value=body.sms_code,
         info=info,
+    )
+    _log.info(
+        "user.sms_login",
+        extra={
+            "user_id": result["user"]["id"],
+            "event_type": "user.sms_login",
+            "duration_ms": round((time.perf_counter() - t0) * 1000, 1),
+            "status": "success",
+        },
     )
     return ApiResponse[TokenPair](code="1000", message="OK", data=TokenPair(**result))
 
@@ -130,6 +180,7 @@ async def sms_login(
     response_model=ApiResponse[TokenPair],
     summary="Rotate access + refresh tokens (V2 §4.1.4 sliding)",
 )
+@timed
 async def refresh(
     body: RefreshRequest,
     request: Request,
@@ -137,9 +188,19 @@ async def refresh(
     user_agent: Annotated[Optional[str], Header(alias="User-Agent")] = None,
     x_device_fp: Annotated[Optional[str], Header(alias="X-Device-Fingerprint")] = None,
 ) -> ApiResponse[TokenPair]:
+    t0 = time.perf_counter()
     service = AuthService(db)
     info = _client_info(request, user_agent, x_device_fp)
     result = await service.refresh(refresh_token=body.refresh_token, info=info)
+    _log.info(
+        "user.refresh",
+        extra={
+            "user_id": result["user"]["id"],
+            "event_type": "user.refresh",
+            "duration_ms": round((time.perf_counter() - t0) * 1000, 1),
+            "status": "success",
+        },
+    )
     return ApiResponse[TokenPair](code="1000", message="OK", data=TokenPair(**result))
 
 
@@ -148,6 +209,7 @@ async def refresh(
     response_model=ApiResponse[dict],
     summary="Send SMS code (mock mode: returns raw code in response)",
 )
+@timed
 async def send_code(
     body: SendCodeRequest,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -157,3 +219,28 @@ async def send_code(
         phone=body.phone, phone_country=body.phone_country, purpose=body.purpose
     )
     return ApiResponse[dict](code="1000", message="OK", data=payload)
+
+
+@router.post(
+    "/reset-password",
+    response_model=ApiResponse[dict],
+    summary="Reset password via SMS code (purpose=reset)",
+)
+@timed
+async def reset_password(
+    body: ResetPasswordRequest,
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user_agent: Annotated[Optional[str], Header(alias="User-Agent")] = None,
+    x_device_fp: Annotated[Optional[str], Header(alias="X-Device-Fingerprint")] = None,
+) -> ApiResponse[dict]:
+    service = AuthService(db)
+    info = _client_info(request, user_agent, x_device_fp)
+    await service.reset_password(
+        phone=body.phone,
+        phone_country=body.phone_country,
+        sms_code=body.sms_code,
+        new_password=body.new_password,
+        info=info,
+    )
+    return ApiResponse[dict](code="1000", message="OK", data={"message": "Password updated successfully"})

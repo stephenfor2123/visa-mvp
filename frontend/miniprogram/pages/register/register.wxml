@@ -1,0 +1,110 @@
+<!--pages/register/register.wxml-->
+<view class="page-register">
+  <view class="auth-header">
+    <view class="brand">
+      <text class="brand-mark">V</text>
+      <text class="brand-name">{{t('common.app_name')}}</text>
+    </view>
+    <view class="lang-picker" bindtap="onSwitchLang">
+      <text>{{localeLabel}}</text>
+      <text class="caret">⌄</text>
+    </view>
+  </view>
+
+  <view class="auth-card">
+    <view class="auth-title">{{t('register.title')}}</view>
+    <view class="auth-sub">{{t('register.subtitle')}}</view>
+
+    <view class="auth-form">
+      <view class="input-row">
+        <view class="input-label">{{t('register.phone_label')}}</view>
+        <view class="input-wrap {{errors.phone ? 'has-error' : ''}}">
+          <picker mode="selector" range="{{countries}}" range-key="label" value="{{countryIdx}}" bindchange="onCountryChange">
+            <view class="phone-country">
+              <text>{{countries[countryIdx].flag}} {{countries[countryIdx].code}}</text>
+            </view>
+          </picker>
+          <input
+            class="input-field"
+            type="number"
+            placeholder="{{t('register.phone_placeholder')}}"
+            value="{{phone}}"
+            maxlength="20"
+            bindinput="onPhoneInput"
+          />
+        </view>
+        <view wx:if="{{errors.phone}}" class="input-error">{{errors.phone}}</view>
+      </view>
+
+      <app-input
+        label="{{t('register.sms_label')}}"
+        placeholder="{{t('register.sms_placeholder')}}"
+        input-type="number"
+        value="{{smsCode}}"
+        maxlength="6"
+        error="{{errors.smsCode}}"
+        bind:input="onSmsInput"
+      >
+        <view slot="suffix" class="suffix-slot">
+          <app-button
+            text="{{smsCooldown > 0 ? (smsCooldown + 's') : (sending ? '...' : t('register.send_code'))}}"
+            variant="outline"
+            size="sm"
+            disabled="{{smsCooldown > 0 || sending}}"
+            bind:trigger="onSendCode"
+          />
+        </view>
+      </app-input>
+
+      <view wx:if="{{lastSentCode}}" class="mock-hint">
+        Mock 验证码:<text class="mono">{{lastSentCode}}</text> · 测试期任何 6 位数字也通过
+      </view>
+
+      <app-input
+        label="{{t('register.pwd_label')}}"
+        placeholder="{{t('register.pwd_placeholder')}}"
+        password="{{true}}"
+        value="{{password}}"
+        maxlength="32"
+        error="{{errors.password}}"
+        hint="{{pwdHint}}"
+        bind:input="onPwdInput"
+      />
+
+      <app-input
+        label="{{t('register.confirm_pwd_label')}}"
+        placeholder="{{t('register.confirm_pwd_placeholder')}}"
+        password="{{true}}"
+        value="{{confirmPassword}}"
+        maxlength="32"
+        error="{{errors.confirmPassword}}"
+        bind:input="onConfirmPwdInput"
+      />
+
+      <view class="agreement {{errors.agreement ? 'is-error' : ''}}" bindtap="onToggleAgree">
+        <view class="checkbox {{agreed ? 'checked' : ''}}">{{agreed ? '✓' : ''}}</view>
+        <view class="agreement__text">
+          <text>{{t('register.agreement_prefix')}}</text>
+          <text class="link">{{t('register.agreement_terms')}}</text>
+          <text>{{t('register.agreement_and')}}</text>
+          <text class="link">{{t('register.agreement_privacy')}}</text>
+        </view>
+      </view>
+      <view wx:if="{{errors.agreement}}" class="input-error">{{errors.agreement}}</view>
+
+      <app-button
+        text="{{submitting ? t('register.submitting') : t('register.submit')}}"
+        variant="primary"
+        size="lg"
+        loading="{{submitting}}"
+        block="{{true}}"
+        bind:trigger="onSubmit"
+      />
+    </view>
+
+    <view class="auth-foot">
+      <text>{{t('register.have_account')}}</text>
+      <text class="link" bindtap="goLogin">{{t('register.go_login')}}</text>
+    </view>
+  </view>
+</view>

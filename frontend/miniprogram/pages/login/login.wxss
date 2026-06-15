@@ -1,0 +1,217 @@
+/* pages/login/login.wxss */
+.page-login {
+  min-height: 100vh;
+  background: var(--bg-alt, #F1F4F8);
+  display: flex;
+  flex-direction: column;
+  padding: 24rpx;
+}
+.auth-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16rpx 0 32rpx;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+.brand-mark {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 14rpx;
+  background: var(--primary, #3B6EF5);
+  color: #fff;
+  font-weight: 700;
+  font-size: 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.brand-name {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: var(--ink-1, #1A1D29);
+}
+.lang-picker {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  padding: 8rpx 20rpx;
+  background: var(--surface, #fff);
+  border-radius: 999rpx;
+  font-size: 26rpx;
+  color: var(--ink-2, #5A5F6D);
+  border: 2rpx solid var(--border, #E5E7EB);
+}
+.caret { font-size: 24rpx; color: var(--ink-3, #9CA3AF); }
+
+.auth-card {
+  background: var(--surface, #fff);
+  border-radius: 24rpx;
+  padding: 40rpx 32rpx;
+  box-shadow: 0 2rpx 12rpx rgba(15, 23, 42, .06);
+}
+.auth-title {
+  font-size: 44rpx;
+  font-weight: 700;
+  color: var(--ink-1, #1A1D29);
+  margin-bottom: 8rpx;
+}
+.auth-sub {
+  font-size: 26rpx;
+  color: var(--ink-3, #9CA3AF);
+  margin-bottom: 32rpx;
+}
+
+.auth-tabs {
+  display: flex;
+  gap: 8rpx;
+  background: var(--bg-alt, #F1F4F8);
+  border-radius: 16rpx;
+  padding: 8rpx;
+  margin-bottom: 32rpx;
+}
+.auth-tab {
+  flex: 1;
+  text-align: center;
+  padding: 16rpx 0;
+  font-size: 28rpx;
+  color: var(--ink-3, #9CA3AF);
+  border-radius: 12rpx;
+  font-weight: 500;
+}
+.auth-tab.on {
+  background: #fff;
+  color: var(--primary, #3B6EF5);
+  font-weight: 600;
+  box-shadow: 0 1rpx 4rpx rgba(15, 23, 42, .08);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.input-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  margin-bottom: 24rpx;
+}
+.input-label {
+  font-size: 26rpx;
+  color: var(--ink-2, #5A5F6D);
+  font-weight: 500;
+}
+.input-wrap {
+  display: flex;
+  align-items: center;
+  background: var(--bg-alt, #F1F4F8);
+  border-radius: 12rpx;
+  padding: 0 24rpx;
+  border: 2rpx solid transparent;
+  min-height: 88rpx;
+}
+.input-wrap.has-error {
+  border-color: var(--danger, #DC2626);
+}
+.phone-country {
+  padding: 0 12rpx;
+  font-size: 28rpx;
+  color: var(--ink-1, #1A1D29);
+  border-right: 2rpx solid var(--border, #E5E7EB);
+  margin-right: 16rpx;
+  min-height: 88rpx;
+  display: flex;
+  align-items: center;
+}
+.input-field {
+  flex: 1;
+  background: transparent;
+  font-size: 28rpx;
+  color: var(--ink-1, #1A1D29);
+  padding: 20rpx 0;
+  min-height: 88rpx;
+}
+.input-error {
+  font-size: 24rpx;
+  color: var(--danger, #DC2626);
+  margin-top: 4rpx;
+}
+
+.suffix-slot {
+  display: flex;
+  align-items: center;
+}
+
+.auth-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 26rpx;
+  color: var(--ink-3, #9CA3AF);
+  margin-top: -8rpx;
+}
+.remember {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  color: var(--ink-2, #5A5F6D);
+}
+.checkbox {
+  width: 32rpx;
+  height: 32rpx;
+  border: 2rpx solid var(--border, #E5E7EB);
+  border-radius: 6rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22rpx;
+  color: var(--ink-3, #9CA3AF);
+  background: #fff;
+}
+.checkbox.checked {
+  background: var(--primary, #3B6EF5);
+  border-color: var(--primary, #3B6EF5);
+  color: #fff;
+}
+.link {
+  color: var(--primary, #3B6EF5);
+  font-weight: 500;
+}
+
+.mock-hint {
+  background: var(--warn-bg, #FFFBEB);
+  border: 2rpx solid var(--warn-border, #FCD34D);
+  border-radius: 12rpx;
+  padding: 16rpx 20rpx;
+  font-size: 24rpx;
+  color: var(--warn-text, #92400E);
+}
+.mock-hint .mono {
+  font-family: monospace;
+  font-weight: 700;
+  color: #78350F;
+  margin: 0 4rpx;
+}
+
+.auth-foot {
+  margin-top: 32rpx;
+  padding-top: 24rpx;
+  border-top: 1rpx solid var(--border, #E5E7EB);
+  text-align: center;
+  font-size: 26rpx;
+  color: var(--ink-3, #9CA3AF);
+}
+.auth-foot .link { margin-left: 8rpx; }
+
+.auth-footer {
+  margin-top: auto;
+  padding: 32rpx 0 16rpx;
+  text-align: center;
+  font-size: 22rpx;
+  color: var(--ink-3, #9CA3AF);
+}

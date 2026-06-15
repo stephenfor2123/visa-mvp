@@ -5,8 +5,6 @@ V2 §4.1.4 + §9.4 rules:
   - same phone: 1 send per 60s, 10 per day
   - codes stored as bcrypt hashes; raw code is never persisted
 """
-from __future__ import annotations
-
 import hashlib
 import secrets
 from datetime import datetime, timedelta, timezone

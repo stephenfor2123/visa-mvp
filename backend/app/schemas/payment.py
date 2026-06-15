@@ -8,8 +8,6 @@ Contract:
     JSON serialiser outputs `"2026-06-12T08:30:00"` (matches the rest
     of the V2 surface).
 """
-from __future__ import annotations
-
 from datetime import datetime
 from typing import Optional
 
@@ -63,6 +61,12 @@ class NotifyPaymentRequest(BaseModel):
     payload: Optional[dict] = Field(
         default=None,
         description="Optional raw gateway payload (forward-compat)",
+    )
+    event_id: Optional[str] = Field(
+        default=None,
+        description="Stripe event.id for deduplication — if set, webhook "
+                    "processor checks processed events before executing "
+                    "business logic (W16-3 idempotency).",
     )
 
 

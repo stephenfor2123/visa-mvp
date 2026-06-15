@@ -11,8 +11,6 @@ Locked contract (see pm/wbs/B-W6-1.md):
   - purpose ∈ {register, login, reset, destroy}
   - mock-only field `code` echoed in /send response (dev-mode)
 """
-from __future__ import annotations
-
 import re
 from typing import Optional
 

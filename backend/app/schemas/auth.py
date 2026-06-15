@@ -1,6 +1,4 @@
 """Auth endpoint DTOs (request/response) — V2 §4.1."""
-from __future__ import annotations
-
 import re
 from datetime import datetime
 from typing import Optional
@@ -130,6 +128,32 @@ class SendCodeRequest(BaseModel):
         allowed = {"register", "login", "reset", "destroy"}
         if v not in allowed:
             raise ValueError(f"purpose must be one of {sorted(allowed)}")
+        return v
+
+
+class ResetPasswordRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    phone: str
+    phone_country: str = "+86"
+    sms_code: str = Field(..., description="6-digit SMS code from /send-code with purpose=reset")
+    new_password: str = Field(..., min_length=8, max_length=32)
+
+    @field_validator("phone")
+    @classmethod
+    def _v_phone(cls, v: str) -> str:
+        return _validate_phone(v)
+
+    @field_validator("phone_country")
+    @classmethod
+    def _v_country(cls, v: str) -> str:
+        return _validate_phone_country(v)
+
+    @field_validator("sms_code")
+    @classmethod
+    def _v_sms_code(cls, v: str) -> str:
+        if not re.fullmatch(r"\d{6}", v):
+            raise ValueError("sms_code must be exactly 6 digits")
         return v
 
 
