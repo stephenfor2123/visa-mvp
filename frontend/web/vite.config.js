@@ -89,9 +89,11 @@ export default defineConfig({
             if (id.includes('element-plus')) {
               return 'vue-vendor'
             }
-            // i18n + locale files — loaded once, cached
+            // i18n — 合并到 vue-vendor (W18-2 修)
+            // 之前单独拆 i18n chunk 触发 Vue I18n 9 内部 compose 函数丢失，
+            // 浏览器报 "SyntaxError at i18n-*.js" + OrderNew 初始化失败
             if (id.includes('vue-i18n') || id.includes('@shared/i18n')) {
-              return 'i18n'
+              return 'vue-vendor'
             }
             // HTTP client
             if (id.includes('axios')) {
