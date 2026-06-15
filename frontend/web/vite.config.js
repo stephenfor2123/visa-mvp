@@ -83,9 +83,11 @@ export default defineConfig({
             if (id.includes('vue/') || id.includes('vue-router') || id.includes('pinia')) {
               return 'vue-vendor'
             }
-            // Element Plus — largest chunk, separate for long-term caching
+            // Element Plus — 合并到 vue-vendor 避免 TDZ 错误 (W18-1 修)
+            // 之前单独拆 chunk 会触发 unplugin-vue-components + Element PlusResolver
+            // 的 dynamic import 顺序问题，浏览器报 "Cannot access 'ye' before initialization"
             if (id.includes('element-plus')) {
-              return 'element-plus'
+              return 'vue-vendor'
             }
             // i18n + locale files — loaded once, cached
             if (id.includes('vue-i18n') || id.includes('@shared/i18n')) {
