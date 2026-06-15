@@ -459,6 +459,3 @@ export async function validateMaterials(materialIds) {
 export function clearMockDb() {
   MOCK_DB = []
 }
-
-// Named export — MaterialUploader uses this for real progress tracking
-export { uploadMaterialWithProgress }
