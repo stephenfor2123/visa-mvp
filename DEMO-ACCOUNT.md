@@ -12,12 +12,12 @@
 
 | 角色 | 用户名 / 手机号 | 密码 / 验证码 | 登录入口 | 用途 |
 | --- | --- | --- | --- | --- |
-| 普通用户 1(无订单) | `+86 13800138000` | 密码 `123456` | Web `/login`、iOS Login 页 | 演示"刚注册完成,选国家 → 上传材料"完整流程 |
-| 普通用户 2(已下单) | `+86 13800138001` | 密码 `123456` | Web `/login`、iOS Login 页 | 演示"已申请,未支付"订单状态、取消订单 |
-| 普通用户 3(已支付) | `+86 13800138002` | 密码 `123456` | Web `/login`、iOS Login 页 | 演示"已支付,等待 RPA 出签"状态流转、订单详情 |
+| 普通用户 1(无订单) | `+86 13800138000` | 密码 `demo1234` | Web `/login`、iOS Login 页 | 演示"刚注册完成,选国家 → 上传材料"完整流程 |
+| 普通用户 2(已下单) | `+86 13800138001` | 密码 `demo1234` | Web `/login`、iOS Login 页 | 演示"已申请,未支付"订单状态、取消订单 |
+| 普通用户 3(已支付) | `+86 13800138002` | 密码 `demo1234` | Web `/login`、iOS Login 页 | 演示"已支付,等待 RPA 出签"状态流转、订单详情 |
 | 管理员(admin) | 用户名 `admin` | 密码 `admin123` | Web `/admin/login`(`http://localhost:4173/admin/login`) | 用户管理 / 订单管理 / 国家配置 / 限流配置 / 审计日志 |
 
-> **密码策略**:`PASSWORD_MIN_LENGTH=8`(`backend/.env.example` 第 24 行)。演示密码 `123456` 故意违反该策略(通过直接写库绕过 `AuthService.register` 校验),**仅供本地开发与演示使用**;admin 密码 `admin123` 满足策略。生产部署必须改用强密码。
+> **密码策略**:`PASSWORD_MIN_LENGTH=8`(`backend/.env.example` 第 24 行)。演示密码 `demo1234` 故意违反该策略(通过直接写库绕过 `AuthService.register` 校验),**仅供本地开发与演示使用**;admin 密码 `admin123` 满足策略。生产部署必须改用强密码。
 
 ---
 
@@ -73,7 +73,7 @@
 | 入口 | URL | 说明 |
 | --- | --- | --- |
 | 普通用户登录 | `http://localhost:4173/login` | Vue Router 路由,密码登录 / 短信登录双 tab |
-| 普通用户登录(预填 demo) | `http://localhost:4173/login?demo=1` | URL 加 `?demo=1` 自动填 `13800138000 / 123456`(参考 `Login.vue:362-367`) |
+| 普通用户登录(预填 demo) | `http://localhost:4173/login?demo=1` | URL 加 `?demo=1` 自动填 `13800138000 / demo1234`(参考 `Login.vue:362-367`) |
 | 管理员登录 | `http://localhost:4173/admin/login` | 独立路由,独立 token(`admin.*.*` 前缀) |
 | 管理员登录(预填) | `http://localhost:4173/admin/login?demo=1` | 自动填 `admin / admin123`(`AdminLogin.vue:156`) |
 | Home | `http://localhost:4173/` | 公开页,无需登录 |
@@ -133,7 +133,7 @@ curl -s -X POST http://localhost:8000/api/v2/auth/send-code \
 # 2. 用验证码登录
 curl -s -X POST http://localhost:8000/api/v2/auth/sms-login \
   -H "Content-Type: application/json" \
-  -d '{"phone":"13800138000","phone_country":"+86","code":"123456"}'
+  -d '{"phone":"13800138000","phone_country":"+86","code":"demo1234"}'
 ```
 
 ---
@@ -157,9 +157,9 @@ python scripts/seed_demo_data.py --reset
 
 | 用户 | 手机号 | 密码 | 状态 |
 | --- | --- | --- | --- |
-| demo_user_1 | `+86 13800138000` | `123456` | active,0 订单 |
-| demo_user_2 | `+86 13800138001` | `123456` | active,1 订单 `pending_payment` |
-| demo_user_3 | `+86 13800138002` | `123456` | active,1 订单 `paid` |
+| demo_user_1 | `+86 13800138000` | `demo1234` | active,0 订单 |
+| demo_user_2 | `+86 13800138001` | `demo1234` | active,1 订单 `pending_payment` |
+| demo_user_3 | `+86 13800138002` | `demo1234` | active,1 订单 `paid` |
 | admin | `admin` | `admin123` | 来自 `ADMIN_PASSWORD_SECRET` |
 
 ### 4.2 手工重置(脚本未实现时的 fallback)
@@ -207,7 +207,7 @@ location.reload()
 
 - 前端 `VITE_MOCK !== 'false'`(默认即为 mock,见 `payment.js:17`)
 - 后端 `SMS_CHANNEL=mock`(默认,`backend/.env.example` 第 29 行)
-- 已用普通用户 1(`13800138000 / 123456`)登录
+- 已用普通用户 1(`13800138000 / demo1234`)登录
 
 ### 5.2 完整流程
 
@@ -337,7 +337,7 @@ location.reload()  // 触发重新拉取
 
 1. 启动后端:`cd backend && .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000`
 2. 启动 iOS 模拟器:`open -a Simulator && flutter run`
-3. 在 Login 页填入 demo 账号(如 `13800138000 / 123456`)
+3. 在 Login 页填入 demo 账号(如 `13800138000 / demo1234`)
 4. 跑完"选国家 → 拍照 → 创建订单 → 支付"完整流程
 5. 用 Web 端 admin 账号登录后台,可看到 iOS 提交的订单
 
@@ -425,7 +425,7 @@ location.reload()
 
 **A**:
 
-1. 用 demo_user_3(`13800138002 / 123456`)登录
+1. 用 demo_user_3(`13800138002 / demo1234`)登录
 2. iOS 端无 mock 支付,需后端直接改订单状态:
 
 ```sql
