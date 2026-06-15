@@ -182,7 +182,22 @@
                 data-testid="login-send-code"
               >
                 {{ smsCooldown > 0 ? `${smsCooldown}s` : (sending ? '...' : t('login.send_code')) }}
-            </AppButton>
+              </AppButton>
+            </template>
+          </AppInput>
+
+          <p v-if="lastSentCode" class="mock-hint" role="status" aria-live="polite">
+            {{ t('login.mock_code_hint', { code: lastSentCode }) }}
+          </p>
+
+          <AppButton
+            native-type="submit"
+            variant="primary"
+            size="lg"
+            :loading="submitting"
+            style="width: 100%;"
+            data-testid="login-submit"
+          >{{ t('login.submit') }}</AppButton>
         </form>
 
         <div class="auth-foot">
