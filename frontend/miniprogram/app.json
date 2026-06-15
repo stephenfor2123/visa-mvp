@@ -1,0 +1,50 @@
+{
+  "pages": [
+    "pages/home/home",
+    "pages/login/login",
+    "pages/register/register",
+    "pages/destinations/destinations",
+    "pages/profile/profile",
+    "pages/order/order",
+    "pages/payment/payment",
+    "pages/forgot/forgot",
+    "pages/agreement/agreement"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#3B6EF5",
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "签证助手",
+    "backgroundColor": "#FAFBFC",
+    "backgroundTextStyle": "dark",
+    "enablePullDownRefresh": false
+  },
+  "tabBar": {
+    "color": "#9CA3AF",
+    "selectedColor": "#3B6EF5",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/home/home",
+        "text": "首页",
+        "iconPath": "images/tab-home.png",
+        "selectedIconPath": "images/tab-home-active.png"
+      },
+      {
+        "pagePath": "pages/destinations/destinations",
+        "text": "选国家",
+        "iconPath": "images/tab-dest.png",
+        "selectedIconPath": "images/tab-dest-active.png"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "我的",
+        "iconPath": "images/tab-me.png",
+        "selectedIconPath": "images/tab-me-active.png"
+      }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

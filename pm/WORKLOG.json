@@ -1,0 +1,293 @@
+{
+  "agent": "D-pm-coordinator",
+  "started_at": "2026-06-11T14:28:00+08:00",
+  "last_update": "2026-06-13T01:46:00+08:00",
+  "current_w2_phase": "W10-收口完成",
+  "owner_can_resume_from": "W4 polish-1b (plan_6f0c842b) 已收口 → Mavis 拍板 polish-2 / 收官 / W5",
+  "rotation_note": "2026-06-12 09:52 V2 session (mvs_42b1197bab5a42c89e1473122bdfd010) ~19h 在线 / 100+ 消息 / token 临界, 准备 rotate。Handover 已写: /Users/stephen/.mavis/scratchpads/mvs_42b1197bab5a42c89e1473122bdfd010/handover-2026-06-12.md",
+  "completed": [
+    {
+      "task": "V2 需求文档 11 章 + 5 附录",
+      "files": [
+        "sources/V2_需求文档.md",
+        "sources/V2_需求文档.docx"
+      ],
+      "size_md_kb": 137,
+      "size_docx_mb": 1.75,
+      "verify": "11 章 + 16 H1 + 60 H2 + 93 H3 + 11 截图嵌入",
+      "done_at": "2026-06-11T16:42:00+08:00"
+    },
+    {
+      "task": "V2 HTML 原型 12 页 + 4 语种",
+      "files": [
+        "sources/V2_原型.html",
+        "sources/V2_原型_screenshots/"
+      ],
+      "verify": "12 页 + 12 张 PNG 截图 + 4 语种切换可用",
+      "done_at": "2026-06-11T16:30:00+08:00"
+    },
+    {
+      "task": "后端 5 auth 端点 + 测试",
+      "files": [
+        "backend/app/api/v2/auth.py",
+        "backend/tests/"
+      ],
+      "verify": "5 端点全跑通, 38/38 测试 PASS, 88% 覆盖",
+      "done_at": "2026-06-11T17:38:00+08:00"
+    },
+    {
+      "task": "项目管理 23 个文件 (WBS+风险+ngrok+standup+board)",
+      "files": [
+        "pm/"
+      ],
+      "verify": "23 个文件齐全, 含 Mermaid 甘特图 + 12 风险 + ngrok 启动脚本",
+      "done_at": "2026-06-11T17:31:00+08:00"
+    },
+    {
+      "task": "前端 Web 5 页面 + i18n + 组件",
+      "files": [
+        "frontend/web/src/",
+        "frontend/shared/i18n/"
+      ],
+      "verify": "Home/Login/Register/Profile/NotFound/Destinations 6 页面 + AppInput/AppButton/AppCard/LangSwitch + i18n 250 行",
+      "done_at": "2026-06-11T17:45:00+08:00"
+    },
+    {
+      "task": "S1 register 端到端 3/3 PASS",
+      "files": [
+        "frontend/web/tests/e2e/register.spec.js",
+        "frontend/web/screenshots/register.png"
+      ],
+      "verify": "happy path + 协议校验 + 密码校验 全过",
+      "done_at": "2026-06-11T18:00:00+08:00"
+    },
+    {
+      "task": "S2 login 端到端 3/3 PASS",
+      "files": [
+        "frontend/web/tests/e2e/login.spec.js"
+      ],
+      "verify": "happy path + 错误密码 + 表单校验 全过",
+      "done_at": "2026-06-11T18:01:00+08:00"
+    },
+    {
+      "task": "S3 后端 destinations 端点",
+      "files": [
+        "backend/app/api/v2/destinations.py",
+        "backend/alembic/versions/0002_destinations.py",
+        "backend/app/models/destination.py"
+      ],
+      "verify": "9 国种子, 美国 enabled=true, 其他 enabled=false, curl 200",
+      "done_at": "2026-06-11T18:06:00+08:00"
+    },
+    {
+      "task": "S3 前端 Destinations.vue + i18n",
+      "files": [
+        "frontend/web/src/views/Destinations.vue",
+        "frontend/web/src/api/destinations.js",
+        "frontend/web/src/router/index.js",
+        "frontend/shared/i18n/{zh-CN,en}.json"
+      ],
+      "verify": "9 国卡片网格, 美国可点, 其他灰显, i18n 4 语种 key 补齐",
+      "done_at": "2026-06-11T18:09:00+08:00"
+    },
+    {
+      "task": "W1-final-gate 收口 8/8 E2E",
+      "files": [
+        "pm/board/W1_gate_report.md"
+      ],
+      "verify": "8/8 E2E PASS, 5 端全跑通, 0 回归",
+      "done_at": "2026-06-11T20:40:00+08:00"
+    },
+    {
+      "task": "W2 Story 1.1.1a/1.1.1b/1.1.2a/1.1.2b 全收口",
+      "verify": "B-1.1.1a override_accept + A-1.1.1b override_accept + B-1.1.2a override_accept + A-1.1.2b manual_retry 修 vite build",
+      "done_at": "2026-06-11T21:00:00+08:00"
+    },
+    {
+      "task": "W2 Story 1.2.1a/1.2.1b 全收口",
+      "verify": "B 4 端点 + A OrderNew 843 行 + 6/6 E2E",
+      "done_at": "2026-06-11T21:20:00+08:00"
+    },
+    {
+      "task": "W2 Story 1.2.2a 全收口 (plan_3c096bbb)",
+      "verify": "B-1.2.2a 17/18 test_poll + scheduler 端点 + ETag 增强; A-1.2.2a OrderDetail 763 行 + helper 388 行 + 5 态 + i18n 63×2 + 10 截图",
+      "done_at": "2026-06-11T23:39:00+08:00"
+    },
+    {
+      "task": "W2-final-gate (B-1.2.2b 提交端点 + 视觉验证, plan_af12d77e)",
+      "verify": "B-1.2.2b POST /orders/{no}/submit + signature 二次校验 + 4010 状态门 — verifier PASS, auto-accept; C-A-1.2.2a-verify OrderDetail 5 态视觉验证 — verify skipped (verifier 自身产物)",
+      "done_at": "2026-06-11T23:38:00+08:00"
+    },
+    {
+      "task": "W2 AppButton 极小收口 (plan_5bdb16b4 override accept)",
+      "verify": "OrderNew.vue 4 处 native button 替换 + 3 截图重截 + E2E 4/6 PASS (case 4/5 副作用留 W3)。D override: cap kill + plan yaml max_cycles=1 配错 → 接受产物完整性, W3 治本一起修。",
+      "done_at": "2026-06-12T00:11:00+08:00"
+    },
+    {
+      "task": "W3 AppButton 治本重构 (AppButton.vue emit + setOnTrigger + CSS-only loading)",
+      "verify": "A-3.1.1a plan_0f63ceca AppButton.vue 125 行新架构入库; OrderNew.vue 4 处 native button 改 ref + setOnTrigger (cycle 2 retrofit, mavis/board W3 cycle 2 entry)",
+      "done_at": "2026-06-12T00:30:00+08:00"
+    },
+    {
+      "task": "W4 polish OrderDetail.vue + Materials.vue (plan_1e50de3b)",
+      "verify": "复用 W3 治本: OrderDetail.vue 8 个 AppButton 全 ref + setOnTrigger; Materials.vue 3 个 AppButton (含 v-if 条件挂载 + watch + nextTick 范式); npm run build PASS",
+      "done_at": "2026-06-12T08:42:00+08:00"
+    },
+    {
+      "task": "W4 polish-1b MaterialsValidate.vue (plan_6f0c842b)",
+      "verify": "cycle 1 (plan_4a89f946) verifier FAIL: v-else-if 条件挂载 ref 静默失效 1 真 bug; cycle 2 (plan_6f0c842b) PASS: 改 watch + nextTick 范式 + 5 AppButton 全部 ref + setOnTrigger 模式; verifier PASS ✅",
+      "done_at": "2026-06-12T09:18:00+08:00"
+    },
+    {
+      "task": "W4-final-gate 收口 3/3 plan",
+      "files": [
+        "pm/board/W4_gate_report.md"
+      ],
+      "verify": "plan_6f0c842b verifier PASS, plan_1e50de3b PASS, plan_6d75af51 cancelled→替代方案收口",
+      "done_at": "2026-06-12T09:18:00+08:00"
+    },
+    {
+      "task": "D-W4-001 决策: W4 已收口, 走收官流程 (D 协调者 10:14 关单)",
+      "verify": "3/3 plan 全 accept, AppButton 治本闭环, W4 summary 已写",
+      "done_at": "2026-06-12T10:14:00+08:00"
+    },
+    {
+      "task": "Mavis 10:57 四次拍板: SMS 也走 Mock, W6 完全零前置",
+      "files": [
+        ".mavis/plans/plan-w6-launchpad.yaml"
+      ],
+      "verify": "B-W6-1 重写: SmsProvider ABC (3 method: send_sms/verify_code/get_template) + MockSmsProvider 唯一实现 (内存存验证码, console.log 打印, return 200 + message_id); 4 端点 (send/verify/get/template); 3 pytest (factory + send_code_mock + verify_code 正确/错误/过期); 零凭据配置, 无 TENCENT_* 任何 key; C 测试 E2E 覆盖 (前端 send → console 拿 code → verify → JWT token); 1 天可跑通, 0 申请; 后期 V2.1 接腾讯云。W6 完全零前置版: B-W6-1 SMS Mock (1d) + B-W6-2 支付 Mock (1d) + A-W6-3 文档 (半天) + A-W6-4 iOS (2-3d) + A-W6-5 小程序 (2-3d) + C-W6-6 集成 (1d), 7-9 天全不阻塞任何前置。",
+      "done_at": "2026-06-12T10:57:00+08:00"
+    },
+    {
+      "task": "Mavis 10:52 修正: 支付改微信支付 V3 Native (扫码支付)",
+      "files": [
+        ".mavis/plans/plan-w6-launchpad.yaml"
+      ],
+      "verify": "用户口径 '先走通简单流程后期再拓展', 改微信支付 V3 Native (扫码)。前置: 营业执照 + 法人 + 对公账户, 商户号申请 1-3 工作日审核, 拿到 AppID/商户号/APIv3 密钥/证书序列号/证书密钥 5 项。SDK 选 wechatpay-v3 Python 库, POST /api/v2/payment/native 返回二维码 URL, 回调 /api/v2/payment/notify 验签更新订单状态。W6 估时从 1-2 天升到 3-5 天 (含申请 + 接入), M3 7/3 deadline 21 天 buffer 仍可接受但变窄。B-W6-2 跑通先走 mock provider, 用户给商户号 5 项后切真 SDK。Stripe 推迟到 V2.1 阶段。",
+      "done_at": "2026-06-12T10:52:00+08:00"
+    },
+    {
+      "task": "Mavis 10:54 三次修正: 支付走 Mock, 不接真 SDK (用户拍 C 方案)",
+      "files": [
+        ".mavis/plans/plan-w6-launchpad.yaml"
+      ],
+      "verify": "用户 10:54 拍板 C 方案: 支付走 Mock, 不接真 SDK。零申请, 1 天可跑通。B-W6-2 重写: PaymentProvider 抽象 + MockPaymentProvider (返回假 trade_no + 1s 后自动回调) + 端点 /api/v2/payment/create + /api/v2/payment/notify + pytest 3 case。Stripe / 微信支付 推迟 V2.1 阶段。W6 估时降回 1-2 天 (B-W6-2), M3 buffer 充足。",
+      "done_at": "2026-06-12T10:54:00+08:00"
+    },
+    {
+      "task": "Mavis 10:57 四次修正: SMS 也走 Mock, W6 完全零前置",
+      "files": [
+        ".mavis/plans/plan-w6-launchpad.yaml"
+      ],
+      "verify": "用户 10:57 拍板 SMS 也走 Mock, 后期换 key 切真 SDK。W6 完全零前置 (B-W6-1 SMS Mock + B-W6-2 支付 Mock), 不阻塞任何凭据申请。B-W6-1 重写: SmsProvider ABC + MockSmsProvider 唯一实现 + 端点 4 个 + pytest 3 case, 0 申请 1 天可跑通。腾讯云短信 SDK 推迟 V2.1 阶段。W6 估时稳定 7-9 天, M3 7/3 deadline 21 天 buffer 充足。",
+      "done_at": "2026-06-12T10:57:00+08:00"
+    },
+    {
+      "task": "W5 策略转向收口 + 启 W6 plan (新 D 接手)",
+      "files": [
+        "pm/board/W5_summary.md",
+        ".mavis/plans/plan-w6-launchpad.yaml",
+        ".mavis/plans/plan_9aa0a0ea/"
+      ],
+      "verify": "新 D (mvs_52b297580b0b44adba4555d9c648d3ab) 15:53 接手, Mavis 15:51 拍板 W5 收口 = 收 W4 治本级 + W5-1 拆 W6 装包 + 装后跑 pytest。D 反向验证: plan_dfeab5c8 paused cycle 2, B-W5-1 producer 0 字节 deliverable (workspace 空), B-W5-2 producer 撒谎'已存在'实际没写, 老 D 12:06 cancel 老 plan 后失联 4h。新 D 无 cancel 老 plan 权限, 留 paused 醒来自行 cancel。W5 实际收口: backend/app/services/ocr.py + ocr_field_mapping.yaml + ocr.py endpoint + materials.py + storage.py + test_ocr_field_mapping.py (1/1 PASS) + sms/{base,factory,mock,twilio}.py + payment/{adapter,factory,mock}.py 已入库。P0 拆 W6: B-W6-8 OCR 端到端 + 9 fixture + 9 国串测 + A-W6-9 前端 OCR E2E + A-W6-10 前端 Materials dedup E2E。W6 plan-w6-launchpad.yaml 修 2 bug: 加 tasks: 父键 + A-W6-10 depends_on [B-W6-8] 修 typo (从 B-W6-5)。plan_9aa0a0ea 16:01 启动, 10 task (B-1/2/7/8 + A-3/4/5/9/10 + C-6)。D tactical memory 沉淀 3 新 rule (D-CANCEL-OWNER-ONLY / D-RESUME-VS-CANCEL / D-PADDLEOCR-CAP-REALITY)。",
+      "done_at": "2026-06-12T16:01:00+08:00"
+    },
+    {
+      "task": "W5 OCR Launch (plan_dfeab5c8)",
+      "files": [
+        "backend/app/services/ocr.py (OCREngine, paddleocr 2.7.3)",
+        "backend/app/api/v2/ocr.py (POST /api/v2/ocr/recognize)",
+        "backend/app/services/ocr_field_mapping.yaml (9国护照字段)",
+        "backend/tests/integration/test_ocr_field_mapping.py",
+        "frontend/web/src/components/MaterialUploader.vue (231行)",
+        "frontend/web/src/api/materials.js",
+        "backend/app/api/v2/materials.py (POST /materials/upload + SHA256去重)"
+      ],
+      "verify": "5/5 task done: B-W5-1 override_accept (paddleocr 2.7.3+2.6.2, OCR功能完整) / B-W5-2 accept (9国字段) / B-W5-3 override_accept (辅助脚本defer W5.1) / A-W5-4 accept (build 7.91s, 231行, i18n OK) / B-W5-5 override_accept (20/20 pytest PASS)",
+      "done_at": "2026-06-12T16:23:00+08:00"
+    },
+    {
+      "task": "W10 backlog 收口 + V2.1 接真 (plan_4a8f622c)",
+      "verify": "5/5 task done: A-W10-1 A_WORKLOG修 / A-W10-2 i18n full-locale / B-W10-3 iOS文件copy / B-W10-4 支付V2.1真SDK / C-W10-5 集成测试",
+      "done_at": "2026-06-13T01:12:00+08:00"
+    },
+    {
+      "task": "B-W11c-2 Stripe V2 credential-free 配置",
+      "files": [
+        "backend/.env"
+      ],
+      "verify": "STRIPE_SECRET_KEY= (空值 → MockPaymentProvider 生效); STRIPE_WEBHOOK_SECRET= (空); STRIPE_PAYOUT_ACCOUNT_ID= (空, 注释说明 V2.1 affiliate 阶段填入); deliverable.md 已写",
+      "done_at": "2026-06-13T01:46:00+08:00"
+    }
+  ],
+  "in_progress": [],
+  "pending": [
+    {
+      "task": "OCR 准确率验收 (M3 milestone)",
+      "priority": "P0"
+    },
+    {
+      "task": "9 国护照字段适配",
+      "priority": "P1"
+    }
+  ],
+  "blocked": [],
+  "owner_decisions_needed": [],
+  "key_bugs_fixed": [
+    "register 字段 code → sms_code",
+    "AppButton 需 native-type='submit' 触发 form submit",
+    "后端 login 期望 phone_country snake, 前端要转",
+    "http.js unwrap 后, api/auth.js login/smsLogin 还要再 unwrap envelope",
+    "router destinations prefix 重复",
+    "get_logger(__name__) → get_logger()",
+    "alembic 0001 revision ID 是 0001_init, 0002 down_revision 需匹配",
+    "i18n 缺 nav.* / dest.* 字段",
+    "sendSmsCode 真实模式丢 purpose 字段",
+    "AppButton emit 链 Playwright actionability 拦截 → 方案 D native button (W2 1.2.1b-fix 临时)",
+    "AppButton 治本方案: emit + defineExpose trigger + CSS-only loading (W3 Story 3.1.1, AppButton.vue 125 行新架构入库)",
+    "E2E case 4 副作用: router guard / loadAll 清掉 route.query.material_ids → 1 行 history.replaceState (W2 1.2.1b-fix 收口)",
+    "AppButton v-else-if 条件挂载 ref 静默失效 → watch + nextTick 范式 (W4 polish-1b cycle 2 修)",
+    "D 协调者 plan_yaml max_cycles=1 配错 → manual_retry 撞上限 (plan_5bdb16b4, 后续 plan 改 max_cycles: 2)"
+  ],
+  "tactical_memory_writes": [
+    {
+      "ts": "2026-06-11T20:50:00+08:00",
+      "topic": "W2 收口 decision 提交与 retry hint 节奏",
+      "lessons": 4,
+      "key_lesson": "Producer session error ≠ 15min cap kill (6 秒内退出是 engine 唤起 worker 阶段 fail)"
+    },
+    {
+      "ts": "2026-06-11T23:55:00+08:00",
+      "topic": "D Coordinator 战略升级 4 原则",
+      "lessons": 6,
+      "key_rule": "15min cap 撞 2 次 → 拆 sub-task (例: plan_5c6123c4 撞 2 次 → cancel + 拆 1 ultra-narrow receipt)"
+    }
+  ],
+  "wip_status_2026-06-12_09-52": {
+    "active_plans": [],
+    "completed_plans_w2_w3_w4": [
+      "plan_3c096bbb (Story 1.2.2a) — completed 23:39",
+      "plan_65c8b2ff (Story 1.2.1b 视觉验证) — completed 21:14",
+      "plan_c69f22c6 (1.2.1a/1.2.1b) — completed 21:14",
+      "plan_b9b6446a (1.1.1a/1.1.2b) — completed 20:16",
+      "plan_af12d77e (B-1.2.2b + C-A-1.2.2a-verify) — completed 23:38",
+      "plan_5bdb16b4 (AppButton 极小收口 override) — completed 00:11",
+      "plan_0f63ceca (W3 A-3.1.1a AppButton 治本) — completed 00:30",
+      "plan_1e50de3b (W4 polish OrderDetail+Materials) — cancelled 00:49, cycle 2 retry 0f63ceca-style"
+    ],
+    "completed_plans_w4": [
+      "plan_6f0c842b (W4 polish-1b MaterialsValidate cycle 2) — completed 09:18, verifier PASS ✅"
+    ],
+    "cancelled_plans": [
+      "plan_5c6123c4 (AppButton fix 撞 cap 2 次, cancel 23:53) — W2",
+      "plan_4a89f946 (W4 polish-1b cycle 1 verifier FAIL) — W4",
+      "plan_6d75af51 (W4 polish 1 早 cancel) — W4",
+      "plan_1e50de3b (W4 polish OrderDetail+Materials cycle 2 retry 0) — W4"
+    ],
+    "wip_count": 0,
+    "wip_cap": 3,
+    "wip_slot_available": 3
+  },
+  "d_coordinator_status": "W5 策略转向收口 (新 D mvs_52b297580b0b44adba4555d9c648d3ab 接手老 D mvs_ff58bd51b4h 失联, 15:53 接收派活 16:01 收口)。W5 实际收口: ocr.py + ocr_field_mapping.yaml + materials.py + storage.py + sms/{base,factory,mock,twilio}.py + payment/{adapter,factory,mock}.py 已入库; test_ocr_field_mapping.py 1/1 PASS; test_ocr.py collection FAIL (cv2 + imgaug 冲突, 拆 W6 装包修)。W6 plan_9aa0a0ea 16:01 启动 10 task。D tactical memory 沉淀 3 新 rule (D-CANCEL-OWNER-ONLY / D-RESUME-VS-CANCEL / D-PADDLEOCR-CAP-REALITY) + 历史 17 次, 共 20 次 write。"
+}

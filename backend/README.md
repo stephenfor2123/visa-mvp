@@ -1,7 +1,11 @@
 # Visa MVP — Backend (W1)
 
+[![Security Policy](../../SECURITY.md)](../../SECURITY.md) [![Supported: v2.x](../../SECURITY.md#1-supported-versions)](../../SECURITY.md#1-supported-versions) [![Report Vulnerability](../../SECURITY.md#2-reporting-a-vulnerability)](../../SECURITY.md#2-reporting-a-vulnerability)
+
 FastAPI 0.115 + SQLAlchemy 2.0(async) + SQLite + Alembic + JWT.
 账号模块 5 端点 + 中间件 + 测试。
+
+> Found a security issue? See [`SECURITY.md`](../../SECURITY.md) — please **do not** open a public Issue.
 
 ---
 

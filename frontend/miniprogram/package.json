@@ -1,0 +1,13 @@
+{
+  "name": "visa-helper-mp",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Visa Helper 微信小程序 (V2 W6b + W8-2 扩展:订单/支付/找回/协议)",
+  "scripts": {
+    "build:weapp": "node ./build_weapp.cjs",
+    "build:weapp:verbose": "node ./build_weapp.cjs --verbose"
+  },
+  "dependencies": {
+    "miniprogram-ci": "^2.1.7"
+  }
+}

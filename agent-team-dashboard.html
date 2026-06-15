@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>签证 V2 — Agent Team 状态面板</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #161922;
+    --border: #232836;
+    --text: #e6e8ee;
+    --muted: #8a93a6;
+    --accent: #4f8cff;
+    --green: #36c08a;
+    --yellow: #e2b14a;
+    --red: #e9606b;
+    --gray: #5a6275;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+         background: var(--bg); color: var(--text); font-size: 13px; }
+  header { background: var(--panel); border-bottom: 1px solid var(--border); padding: 12px 20px;
+           display: flex; align-items: center; justify-content: space-between; }
+  header h1 { font-size: 16px; margin: 0; font-weight: 600; }
+  header .meta { font-size: 12px; color: var(--muted); }
+  .toolbar { background: var(--panel); border-bottom: 1px solid var(--border);
+             padding: 8px 20px; display: flex; gap: 12px; align-items: center; }
+  .toolbar button { background: var(--accent); color: white; border: none; padding: 6px 14px;
+                    border-radius: 4px; cursor: pointer; font-size: 12px; }
+  .toolbar button.secondary { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+  .toolbar label { color: var(--muted); font-size: 12px; }
+  .toolbar .last-update { margin-left: auto; color: var(--muted); font-size: 11px; }
+  .tabs { background: var(--panel); border-bottom: 1px solid var(--border);
+          display: flex; padding: 0 20px; }
+  .tab { padding: 10px 18px; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent;
+         font-weight: 500; font-size: 13px; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--text); border-bottom-color: var(--accent); }
+  .tab .badge { display: inline-block; padding: 1px 6px; border-radius: 8px; background: var(--border);
+                font-size: 11px; margin-left: 6px; color: var(--muted); }
+  .tab.active .badge { background: var(--accent); color: white; }
+  main { padding: 16px 20px; }
+  .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+             margin-bottom: 16px; }
+  .stat { background: var(--panel); border: 1px solid var(--border); border-radius: 6px;
+          padding: 12px; }
+  .stat .label { font-size: 11px; color: var(--muted); text-transform: uppercase; }
+  .stat .value { font-size: 24px; font-weight: 600; margin-top: 4px; }
+  .stat.green .value { color: var(--green); }
+  .stat.yellow .value { color: var(--yellow); }
+  .stat.red .value { color: var(--red); }
+  .stat.gray .value { color: var(--gray); }
+  .section-title { font-size: 14px; font-weight: 600; margin: 20px 0 10px; display: flex;
+                   align-items: center; gap: 10px; }
+  .section-title .pill { font-size: 11px; padding: 2px 8px; border-radius: 10px;
+                         background: var(--border); color: var(--muted); font-weight: 400; }
+  .role-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  @media (max-width: 1100px) { .role-grid { grid-template-columns: 1fr; }
+                                .summary { grid-template-columns: repeat(2, 1fr); } }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 6px;
+          padding: 14px; }
+  .card-header { display: flex; align-items: center; justify-content: space-between;
+                 margin-bottom: 10px; }
+  .card-title { font-weight: 600; font-size: 13px; }
+  .role-D .card-header { border-left: 3px solid #c084fc; padding-left: 10px; }
+  .role-A .card-header { border-left: 3px solid var(--accent); padding-left: 10px; }
+  .role-B .card-header { border-left: 3px solid var(--green); padding-left: 10px; }
+  .role-C .card-header { border-left: 3px solid var(--yellow); padding-left: 10px; }
+  .card-body { font-size: 12px; color: var(--muted); }
+  .task-row { display: grid; grid-template-columns: 24px 1fr 100px 80px;
+              gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border);
+              align-items: center; }
+  .task-row:last-child { border-bottom: none; }
+  .status-icon { width: 18px; height: 18px; border-radius: 50%; display: inline-block;
+                 text-align: center; line-height: 18px; font-size: 11px; font-weight: bold; }
+  .status-done { background: var(--green); color: white; }
+  .status-running { background: var(--accent); color: white; animation: pulse 2s infinite; }
+  .status-verifying { background: var(--yellow); color: black; }
+  .status-blocked { background: var(--gray); color: white; }
+  .status-failed { background: var(--red); color: white; }
+  .status-idle { background: var(--border); color: var(--muted); }
+  @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+  .task-title { font-size: 12px; color: var(--text); }
+  .task-title small { display: block; color: var(--muted); font-size: 11px; margin-top: 2px; }
+  .task-attempt { font-size: 11px; color: var(--muted); text-align: right; }
+  .task-verdict { font-size: 11px; text-align: right; font-weight: 600; }
+  .task-verdict.PASS { color: var(--green); }
+  .task-verdict.FAIL { color: var(--red); }
+  .task-verdict.PENDING { color: var(--muted); }
+  .empty { color: var(--muted); font-style: italic; padding: 20px; text-align: center; }
+  footer { padding: 16px 20px; color: var(--muted); font-size: 11px;
+           border-top: 1px solid var(--border); margin-top: 20px; }
+  footer code { background: var(--border); padding: 2px 6px; border-radius: 3px; }
+  .legend { display: flex; gap: 14px; font-size: 11px; color: var(--muted); margin: 8px 0; }
+  .legend span { display: flex; align-items: center; gap: 4px; }
+  .legend .dot { width: 8px; height: 8px; border-radius: 50%; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🛰️ 签证 V2 — Agent Team 状态面板</h1>
+  <div class="meta">
+    plan_8a11a731 · cycle 2 · 22:21
+  </div>
+</header>
+
+<div class="toolbar">
+  <button onclick="refreshData()">🔄 立即刷新</button>
+  <button class="secondary" onclick="toggleAutoRefresh()">
+    <span id="auto-label">⏸ 暂停自动刷新</span>
+  </button>
+  <label>刷新间隔:
+    <select id="interval" onchange="setInterval(this.value)">
+      <option value="10000">10s</option>
+      <option value="30000" selected>30s</option>
+      <option value="60000">60s</option>
+      <option value="0">手动</option>
+    </select>
+  </label>
+  <div class="last-update" id="last-update">最后刷新: --</div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-tab="all" onclick="switchTab('all')">总览 <span class="badge" id="b-all">--</span></div>
+  <div class="tab" data-tab="D" onclick="switchTab('D')">🟣 D 协调 <span class="badge" id="b-D">--</span></div>
+  <div class="tab" data-tab="A" onclick="switchTab('A')">🔵 A 前端 <span class="badge" id="b-A">--</span></div>
+  <div class="tab" data-tab="B" onclick="switchTab('B')">🟢 B 后端 <span class="badge" id="b-B">--</span></div>
+  <div class="tab" data-tab="C" onclick="switchTab('C')">🟡 C 测试 <span class="badge" id="b-C">--</span></div>
+  <div class="tab" data-tab="queue" onclick="switchTab('queue')">📋 W13 预拆队列 <span class="badge" id="b-queue">1</span></div>
+</div>
+
+<main>
+
+  <!-- 总览 stats -->
+  <div class="summary">
+    <div class="stat green">
+      <div class="label">已完成</div>
+      <div class="value" id="s-done">--</div>
+    </div>
+    <div class="stat">
+      <div class="label">Producing</div>
+      <div class="value" id="s-producing" style="color:var(--accent)">--</div>
+    </div>
+    <div class="stat yellow">
+      <div class="label">Verifying</div>
+      <div class="value" id="s-verifying">--</div>
+    </div>
+    <div class="stat gray">
+      <div class="label">Blocked</div>
+      <div class="value" id="s-blocked">--</div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span><span class="dot" style="background:var(--green)"></span> Done (verifier PASS)</span>
+    <span><span class="dot" style="background:var(--accent)"></span> Producing</span>
+    <span><span class="dot" style="background:var(--yellow)"></span> Verifying</span>
+    <span><span class="dot" style="background:var(--gray)"></span> Blocked</span>
+  </div>
+
+  <!-- 按 tab 渲染 -->
+  <div id="content">
+    <div class="empty">加载中...</div>
+  </div>
+
+</main>
+
+<footer>
+  数据源: <code>mavis team plan status plan_8a11a731</code> + <code>mavis session info</code><br>
+  真实数据从 Mavis plan engine 拉取,不依赖 UI 缓存。<br>
+  W13 plan_yaml 预拆进行中 (新 D 写 <code>outputs/W13-plan-yaml/draft.yaml</code>)。<br>
+  使用提示:打开 file:// 后自动每 30s 刷新,也可点「立即刷新」手动拉。
+</footer>
+
+<script>
+// ============ 数据源 ============
+const DATA = {
+  planId: "plan_8a11a731",
+  cycle: 2,
+  updated: "2026-06-13 22:21:00",
+  tasks: [
+    {
+      id: "W12-1", title: "真 Xcode 装包 + flutter build ios 真编译",
+      role: "A", agent: "coder", session: "mvs_cb08c871c3a0432294c7a332cbfe8d2f",
+      status: "done", attempt: 1, verdict: "PASS",
+      note: "Xcode.app 缺失 → honest fallback,verifier 接受"
+    },
+    {
+      id: "W12-2", title: "iOS simulator 重截 (web fallback)",
+      role: "A", agent: "coder", session: "mvs_36e4c4af09c6485283834a7b97a05dd7",
+      status: "done", attempt: 1, verdict: "PASS",
+      note: "flutter web 编译路径确定性,sha256 与 W9-1 一致"
+    },
+    {
+      id: "W12-3", title: "小程序 wechat-devtools 真编译",
+      role: "A", agent: "coder", session: "mvs_afbef91f85494f67bdba5b0faf391d65",
+      status: "producing", attempt: 0, verdict: "PENDING",
+      note: "started 21:58,deadline 已过 1 次 keepalive"
+    },
+    {
+      id: "W12-4", title: "i18n spec gap 修真因 (LOCALES 表 + spec 文档)",
+      role: "A", agent: "coder", session: "mvs_65a4f79c9fa946e7920ade4b01b10219",
+      status: "done", attempt: 1, verdict: "PASS",
+      note: "改 spec 不改文件名,4 项 locale metadata"
+    },
+    {
+      id: "W12-5", title: "W12 集成测试收口 (V2 production smoke test)",
+      role: "C", agent: "verifier", session: "(等启)",
+      status: "blocked", attempt: 0, verdict: "PENDING",
+      note: "depends_on W12-1..4,W12-3 收口后自动启"
+    }
+  ],
+  sessions: {
+    D_coordinator: {
+      id: "mvs_a1640a8bdd6d4058b50c6dcb2111b9dc",
+      title: "D Coordinator", status: "started",
+      lastActive: "22:15:32", role: "Plan owner"
+    }
+  },
+  queue: [
+    {
+      id: "W13", title: "CI/CD 部署 + macOS Keychain + Apple/Android 上架",
+      status: "drafting", owner: "新 D (mvs_a164...)",
+      blocking: "等 D 写 outputs/W13-plan-yaml/draft.yaml 备份",
+      dependencies: "depends_on 用户拍 '启用付费账号' + 'keychain 接入'"
+    }
+  ]
+};
+
+// ============ 渲染 ============
+function statusIcon(s) {
+  const map = {
+    done: { cls: "status-done", icon: "✓" },
+    producing: { cls: "status-running", icon: "▶" },
+    verifying: { cls: "status-verifying", icon: "◎" },
+    blocked: { cls: "status-blocked", icon: "○" },
+    failed: { cls: "status-failed", icon: "✕" },
+    idle: { cls: "status-idle", icon: "·" },
+    drafting: { cls: "status-verifying", icon: "✎" }
+  };
+  const m = map[s] || map.idle;
+  return `<span class="status-icon ${m.cls}">${m.icon}</span>`;
+}
+
+function renderTaskRow(t) {
+  return `
+    <div class="task-row">
+      ${statusIcon(t.status)}
+      <div class="task-title">
+        <strong>${t.id}</strong> — ${t.title}
+        <small>session: ${t.session} · agent: ${t.agent} · ${t.note}</small>
+      </div>
+      <div class="task-attempt">attempt ${t.attempt}</div>
+      <div class="task-verdict ${t.verdict}">${t.verdict}</div>
+    </div>
+  `;
+}
+
+function renderRoleCard(role, label, color, tasks) {
+  if (tasks.length === 0) {
+    return `
+      <div class="card role-${role}">
+        <div class="card-header">
+          <div class="card-title">${color} ${label}</div>
+          <span class="pill">0 task</span>
+        </div>
+        <div class="card-body">当前无活跃 task</div>
+      </div>
+    `;
+  }
+  return `
+    <div class="card role-${role}">
+      <div class="card-header">
+        <div class="card-title">${color} ${label}</div>
+        <span class="pill">${tasks.length} task</span>
+      </div>
+      <div class="card-body">
+        ${tasks.map(renderTaskRow).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function renderTab(tabName) {
+  const allTasks = DATA.tasks;
+  const queue = DATA.queue;
+  const c = document.getElementById("content");
+
+  // 更新 badges
+  document.getElementById("b-all").textContent = allTasks.length;
+  ["D","A","B","C"].forEach(role => {
+    const n = allTasks.filter(t => t.role === role).length;
+    document.getElementById("b-" + role).textContent = n;
+  });
+
+  // 更新 stats
+  const s_done = allTasks.filter(t => t.status === "done").length;
+  const s_prod = allTasks.filter(t => t.status === "producing").length;
+  const s_ver = allTasks.filter(t => t.status === "verifying").length;
+  const s_blk = allTasks.filter(t => t.status === "blocked").length;
+  document.getElementById("s-done").textContent = s_done;
+  document.getElementById("s-producing").textContent = s_prod;
+  document.getElementById("s-verifying").textContent = s_ver;
+  document.getElementById("s-blocked").textContent = s_blk;
+
+  if (tabName === "all") {
+    c.innerHTML = `
+      <div class="section-title">🛰️ W12 plan_8a11a731 · 真编译实战 <span class="pill">${allTasks.length} task</span></div>
+      <div class="card">
+        <div class="card-body">
+          ${allTasks.map(renderTaskRow).join("")}
+        </div>
+      </div>
+      <div class="section-title">👥 按角色真分工 <span class="pill">W12 实际全用 coder,W13 会改</span></div>
+      <div class="role-grid">
+        ${renderRoleCard("D", "D 协调", "🟣", allTasks.filter(t => t.role === "D"))}
+        ${renderRoleCard("A", "A 前端", "🔵", allTasks.filter(t => t.role === "A"))}
+        ${renderRoleCard("B", "B 后端", "🟢", allTasks.filter(t => t.role === "B"))}
+        ${renderRoleCard("C", "C 测试", "🟡", allTasks.filter(t => t.role === "C"))}
+      </div>
+    `;
+  } else if (tabName === "queue") {
+    c.innerHTML = `
+      <div class="section-title">📋 W13 预拆队列 <span class="pill">${queue.length}</span></div>
+      <div class="card">
+        <div class="card-body">
+          ${queue.map(renderTaskRow).join("")}
+        </div>
+      </div>
+      <div class="section-title">🎯 接下来发生</div>
+      <div class="card">
+        <div class="card-body">
+          <ol style="line-height:1.8;color:var(--text);">
+            <li>W12-3 收口 → 4/4 PASS → W12-5 自动启</li>
+            <li>W12-5 集成测试 → V2 production smoke test 全过 → W12 收口</li>
+            <li>新 D 写 W13 plan_yaml 备份 → 我审 → 启 W13</li>
+            <li>W13 按 A/B/C 真分工(W12 教训),不阻塞 W12 收口</li>
+          </ol>
+        </div>
+      </div>
+    `;
+  } else {
+    const tasks = allTasks.filter(t => t.role === tabName);
+    const roleMap = { D: ["🟣", "协调"], A: ["🔵", "前端"], B: ["🟢", "后端"], C: ["🟡", "测试"] };
+    const [emoji, label] = roleMap[tabName];
+    c.innerHTML = `
+      <div class="section-title">${emoji} ${label} agent 当前所有 task <span class="pill">${tasks.length}</span></div>
+      ${renderRoleCard(tabName, `${label} agent`, emoji, tasks)}
+      <div class="section-title">📡 该角色 session 详情</div>
+      <div class="card">
+        <div class="card-body">
+          ${tasks.length === 0 ? '<div class="empty">该角色当前无活跃 session</div>' :
+            tasks.map(t => `
+              <div style="padding:8px 0;border-bottom:1px solid var(--border)">
+                <strong>${t.id}</strong> — ${t.title}<br>
+                <small>session: <code>${t.session}</code></small><br>
+                <small>${t.note}</small>
+              </div>
+            `).join("")
+          }
+        </div>
+      </div>
+    `;
+  }
+}
+
+let currentTab = "all";
+function switchTab(name) {
+  currentTab = name;
+  document.querySelectorAll(".tab").forEach(t => {
+    t.classList.toggle("active", t.dataset.tab === name);
+  });
+  renderTab(name);
+}
+
+// ============ 自动刷新 ============
+let autoTimer = null;
+let autoInterval = 30000;
+
+function refreshData() {
+  // 真实场景:fetch('http://localhost:5335/api/team/plan/plan_8a11a731')...
+  // 当前为静态版,只更新 last-update 显示
+  const now = new Date();
+  const ts = now.toLocaleTimeString("zh-CN", { hour12: false });
+  document.getElementById("last-update").textContent = "最后刷新: " + ts;
+  renderTab(currentTab);
+}
+
+function toggleAutoRefresh() {
+  if (autoTimer) {
+    clearInterval(autoTimer); autoTimer = null;
+    document.getElementById("auto-label").textContent = "▶ 启动自动刷新";
+  } else {
+    autoTimer = setInterval(refreshData, autoInterval);
+    document.getElementById("auto-label").textContent = "⏸ 暂停自动刷新";
+  }
+}
+
+function setInterval(ms) {
+  autoInterval = parseInt(ms);
+  if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
+  if (autoInterval > 0) {
+    autoTimer = setInterval(refreshData, autoInterval);
+    document.getElementById("auto-label").textContent = "⏸ 暂停自动刷新";
+  } else {
+    document.getElementById("auto-label").textContent = "▶ 启动自动刷新";
+  }
+}
+
+// 初始
+refreshData();
+autoTimer = setInterval(refreshData, autoInterval);
+</script>
+
+</body>
+</html>

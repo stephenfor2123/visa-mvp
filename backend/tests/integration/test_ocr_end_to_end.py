@@ -20,15 +20,21 @@ import io
 import re
 from pathlib import Path
 
-import cv2
 import pytest
-import pytest_asyncio
-from httpx import AsyncClient
-from sqlalchemy import select
 
-from app.core.db import AsyncSessionLocal
-from app.models.destination import VisaDestination
-from app.services.ocr import OCREngine
+# cv2 (opencv-python) and paddleocr are heavy optional deps; skip the entire
+# module if they are not installed in the current venv.
+pytest.importorskip("cv2", reason="opencv-python not installed; skip OCR e2e")
+pytest.importorskip("paddleocr", reason="paddleocr not installed; skip OCR e2e")
+
+import cv2  # noqa: E402
+import pytest_asyncio  # noqa: E402
+from httpx import AsyncClient  # noqa: E402
+from sqlalchemy import select  # noqa: E402
+
+from app.core.db import AsyncSessionLocal  # noqa: E402
+from app.models.destination import VisaDestination  # noqa: E402
+from app.services.ocr import OCREngine  # noqa: E402
 
 FIXTURE_DIR = Path(__file__).parent.parent / "fixtures"
 

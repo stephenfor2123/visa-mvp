@@ -1,0 +1,316 @@
+{
+  "checks": [
+    {
+      "name": "shot[Home-zh-CN] status 200",
+      "pass": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "shot[Home-zh-CN] no raw key",
+      "pass": true,
+      "detail": "0 hits"
+    },
+    {
+      "name": "shot[Home-zh-CN] SPA render body>100",
+      "pass": true,
+      "detail": "body.length=337"
+    },
+    {
+      "name": "shot[Login-zh-CN] status 200",
+      "pass": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "shot[Login-zh-CN] no raw key",
+      "pass": true,
+      "detail": "0 hits"
+    },
+    {
+      "name": "shot[Login-zh-CN] SPA render body>100",
+      "pass": true,
+      "detail": "body.length=162"
+    },
+    {
+      "name": "shot[Register-zh-CN] status 200",
+      "pass": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "shot[Register-zh-CN] no raw key",
+      "pass": true,
+      "detail": "0 hits"
+    },
+    {
+      "name": "shot[Register-zh-CN] SPA render body>100",
+      "pass": true,
+      "detail": "body.length=180"
+    },
+    {
+      "name": "shot[Home-en] status 200",
+      "pass": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "shot[Home-en] no raw key",
+      "pass": true,
+      "detail": "0 hits"
+    },
+    {
+      "name": "shot[Home-en] SPA render body>100",
+      "pass": true,
+      "detail": "body.length=738"
+    },
+    {
+      "name": "shot[Login-en] status 200",
+      "pass": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "shot[Login-en] no raw key",
+      "pass": true,
+      "detail": "0 hits"
+    },
+    {
+      "name": "shot[Login-en] SPA render body>100",
+      "pass": true,
+      "detail": "body.length=304"
+    },
+    {
+      "name": "shot[Register-en] status 200",
+      "pass": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "shot[Register-en] no raw key",
+      "pass": true,
+      "detail": "0 hits"
+    },
+    {
+      "name": "shot[Register-en] SPA render body>100",
+      "pass": true,
+      "detail": "body.length=371"
+    },
+    {
+      "name": "shot[Home-id-ID] status 200",
+      "pass": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "shot[Home-id-ID] no raw key",
+      "pass": true,
+      "detail": "0 hits"
+    },
+    {
+      "name": "shot[Home-id-ID] SPA render body>100",
+      "pass": true,
+      "detail": "body.length=749"
+    },
+    {
+      "name": "shot[Login-id-ID] status 200",
+      "pass": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "shot[Login-id-ID] no raw key",
+      "pass": true,
+      "detail": "0 hits"
+    },
+    {
+      "name": "shot[Login-id-ID] SPA render body>100",
+      "pass": true,
+      "detail": "body.length=308"
+    },
+    {
+      "name": "shot[Register-id-ID] status 200",
+      "pass": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "shot[Register-id-ID] no raw key",
+      "pass": true,
+      "detail": "0 hits"
+    },
+    {
+      "name": "shot[Register-id-ID] SPA render body>100",
+      "pass": true,
+      "detail": "body.length=380"
+    },
+    {
+      "name": "shot[Home-vi-VN] status 200",
+      "pass": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "shot[Home-vi-VN] no raw key",
+      "pass": true,
+      "detail": "0 hits"
+    },
+    {
+      "name": "shot[Home-vi-VN] SPA render body>100",
+      "pass": true,
+      "detail": "body.length=766"
+    },
+    {
+      "name": "shot[Login-vi-VN] status 200",
+      "pass": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "shot[Login-vi-VN] no raw key",
+      "pass": true,
+      "detail": "0 hits"
+    },
+    {
+      "name": "shot[Login-vi-VN] SPA render body>100",
+      "pass": true,
+      "detail": "body.length=294"
+    },
+    {
+      "name": "shot[Login-vi-VN] NOT 404 page",
+      "pass": true,
+      "detail": "status=200 body>200=true"
+    },
+    {
+      "name": "shot[Register-vi-VN] status 200",
+      "pass": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "shot[Register-vi-VN] no raw key",
+      "pass": true,
+      "detail": "0 hits"
+    },
+    {
+      "name": "shot[Register-vi-VN] SPA render body>100",
+      "pass": true,
+      "detail": "body.length=361"
+    },
+    {
+      "name": "12 screenshots sha256 distinct",
+      "pass": true,
+      "detail": "12/12 unique"
+    }
+  ],
+  "results": [
+    {
+      "tag": "Home-zh-CN",
+      "url": "http://127.0.0.1:4173/home",
+      "status": 200,
+      "bodyLen": 337,
+      "fileSize": 233768,
+      "sha": "1ba63ec63b278fff98e80e128279a12c161847fdbaf4cfa2ed9bc8027efa1a7d",
+      "rawKeyHits": [],
+      "isSpaRender": true
+    },
+    {
+      "tag": "Login-zh-CN",
+      "url": "http://127.0.0.1:4173/login",
+      "status": 200,
+      "bodyLen": 162,
+      "fileSize": 43356,
+      "sha": "d290b6e5d7734092cb067ed7fc79cefecb7d40928af9a4d18655f0a7c804d16c",
+      "rawKeyHits": [],
+      "isSpaRender": true
+    },
+    {
+      "tag": "Register-zh-CN",
+      "url": "http://127.0.0.1:4173/register",
+      "status": 200,
+      "bodyLen": 180,
+      "fileSize": 53057,
+      "sha": "c9ab0ec4e048ce06a888ee9010a9b45485a93cec2a07da6117cdae614055050b",
+      "rawKeyHits": [],
+      "isSpaRender": true
+    },
+    {
+      "tag": "Home-en",
+      "url": "http://127.0.0.1:4173/home",
+      "status": 200,
+      "bodyLen": 738,
+      "fileSize": 228927,
+      "sha": "009405751628271ece5540c64f397b9e749a7210922f3af124e9e09dce60fe8b",
+      "rawKeyHits": [],
+      "isSpaRender": true
+    },
+    {
+      "tag": "Login-en",
+      "url": "http://127.0.0.1:4173/login",
+      "status": 200,
+      "bodyLen": 304,
+      "fileSize": 45599,
+      "sha": "eae5b0f10da0299964d6baa39e6ccd02d6dcf17a480bf1fa90b1a29f41700992",
+      "rawKeyHits": [],
+      "isSpaRender": true
+    },
+    {
+      "tag": "Register-en",
+      "url": "http://127.0.0.1:4173/register",
+      "status": 200,
+      "bodyLen": 371,
+      "fileSize": 57491,
+      "sha": "50aeed2a1b4fa6821d0985a1051ff2b0202dd942d038e8be03034e1b9c839d99",
+      "rawKeyHits": [],
+      "isSpaRender": true
+    },
+    {
+      "tag": "Home-id-ID",
+      "url": "http://127.0.0.1:4173/home",
+      "status": 200,
+      "bodyLen": 749,
+      "fileSize": 229271,
+      "sha": "91b37b51e17e1a1a6d3a57c3a882b9d75812dc3c57032b87daaeeb844a8fda41",
+      "rawKeyHits": [],
+      "isSpaRender": true
+    },
+    {
+      "tag": "Login-id-ID",
+      "url": "http://127.0.0.1:4173/login",
+      "status": 200,
+      "bodyLen": 308,
+      "fileSize": 45984,
+      "sha": "7cee633e551b973bc3a510aef7c477a8453a4ada83c91be4ea09540d88999b1d",
+      "rawKeyHits": [],
+      "isSpaRender": true
+    },
+    {
+      "tag": "Register-id-ID",
+      "url": "http://127.0.0.1:4173/register",
+      "status": 200,
+      "bodyLen": 380,
+      "fileSize": 56724,
+      "sha": "5318398a3248461e36c4be18e508964e5d8f2e79d10c11d6d0fd6acc7682c8b9",
+      "rawKeyHits": [],
+      "isSpaRender": true
+    },
+    {
+      "tag": "Home-vi-VN",
+      "url": "http://127.0.0.1:4173/home",
+      "status": 200,
+      "bodyLen": 766,
+      "fileSize": 232798,
+      "sha": "a3d746b749e4ac18950aef5ea2cef1bc09a6aba5aa29a9e976b66edcf4cb8b45",
+      "rawKeyHits": [],
+      "isSpaRender": true
+    },
+    {
+      "tag": "Login-vi-VN",
+      "url": "http://127.0.0.1:4173/login",
+      "status": 200,
+      "bodyLen": 294,
+      "fileSize": 47079,
+      "sha": "fb87635ef8f689adc63954196378b1445465151f80eaa0d7d65915eca5efc983",
+      "rawKeyHits": [],
+      "isSpaRender": true
+    },
+    {
+      "tag": "Register-vi-VN",
+      "url": "http://127.0.0.1:4173/register",
+      "status": 200,
+      "bodyLen": 361,
+      "fileSize": 57062,
+      "sha": "15efae302f5d3677812fefcbc77365a974093a41e3f878ada877adab84f56b5c",
+      "rawKeyHits": [],
+      "isSpaRender": true
+    }
+  ]
+}

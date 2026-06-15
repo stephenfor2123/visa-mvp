@@ -30,6 +30,7 @@ def _test_env() -> Generator[None, None, None]:
     os.environ["RATE_LIMIT_PER_IP_PER_MIN"] = "10000"  # disable IP rate limit
     os.environ["RATE_LIMIT_SLOW_API_PER_IP_PER_MIN"] = "10000"
     os.environ["JWT_SECRET"] = "test-secret-test-secret-test-secret-2026"
+    os.environ["ADMIN_PASSWORD_SECRET"] = "visa-admin-2024"
     os.environ["ENV"] = "test"
     os.environ["DB_ECHO"] = "0"
 

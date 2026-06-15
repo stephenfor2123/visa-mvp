@@ -414,7 +414,7 @@ async def get_dashboard_stats(
     """Aggregated counts for the admin dashboard — served from an in-process
     TTL cache (60 s) to avoid hammering the DB on every page refresh."""
     svc = AdminService(db)
-    out = svc.get_dashboard_stats()
+    out = await svc.get_dashboard_stats()
     return ApiResponse[DashboardStatsOut](
         code="1000", message="OK", data=DashboardStatsOut(**out)
     )

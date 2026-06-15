@@ -1,0 +1,71 @@
+# Backend service — Visa MVP (V2)
+#
+# - FastAPI on port 8000
+# - SQLite file persisted to a named volume (./.data on host)
+# - Redis on port 6379 (Celery broker; worker wires up in W2)
+# - Logs to ./logs
+# - Supports both single-arch (docker compose up --build) AND multi-arch build
+#   via docker buildx (see scripts/build-multiarch.sh for GHCR push).
+#
+# Usage (single-arch local dev):
+#   docker compose up --build
+#   docker compose exec backend alembic upgrade head
+#   curl http://localhost:8000/health
+#
+# Usage (multi-arch build + GHCR push, CI / release):
+#   ./scripts/build-multiarch.sh v0.2.0
+
+services:
+  backend:
+    # `build:` block is what `docker compose up --build` uses (single-arch, local).
+    # For multi-arch + push, use the standalone buildx script (above) — it ignores
+    # this block and uses --platform + --push instead.
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # Uncomment to force a specific platform locally (e.g. on Apple Silicon):
+      # platforms:
+      #   - linux/arm64
+    # Final image tag for `docker compose build` (local). For GHCR push, the
+    # script tags with ghcr.io/stephen/visa-api:latest separately.
+    image: visa-mvp-backend:dev
+    container_name: visa-mvp-backend
+    ports:
+      - "8000:8000"
+    environment:
+      ENV: dev
+      DATABASE_URL: sqlite+aiosqlite:////app/data/visa_mvp.db
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me-in-prod-visa-mvp-2026}
+      SMS_CHANNEL: mock
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      LOG_DIR: /app/logs
+      SMS_LOG_DIR: /app/logs
+      MOCK_SMS_WEBHOOK_URL: ${MOCK_SMS_WEBHOOK_URL:-}
+    volumes:
+      - ./.data:/app/data
+      - ./.logs:/app/logs
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+  redis:
+    image: redis:7-alpine
+    container_name: visa-mvp-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./.redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5

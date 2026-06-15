@@ -257,6 +257,10 @@ class AdminService:
             },
         )
         await self.db.commit()
+        # Reload attributes that may have been expired by the commit (SQLAlchemy
+        # async session needs refresh, otherwise accessing updated_at raises
+        # MissingGreenlet on lazy-load)
+        await self.db.refresh(order)
         return {
             "id": order.id,
             "order_no": order.order_no,
@@ -609,7 +613,7 @@ class AdminService:
     _dashboard_cache:Optional[dict[str, Any]]= None
     _dashboard_cache_ttl: float = 60.0  # seconds
 
-    def get_dashboard_stats(self) -> dict[str, Any]:
+    async def get_dashboard_stats(self) -> dict[str, Any]:
         """Return aggregated dashboard metrics, served from a 60-second TTL cache.
 
         Metrics:
@@ -640,14 +644,9 @@ class AdminService:
         today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
         week_start = today_start - timedelta(days=today_start.weekday())
 
-        import asyncio
-
-        # Run sync SQLAlchemy count queries via asyncio
-        loop = asyncio.new_event_loop()
-        try:
-            stats = loop.run_until_complete(self._fetch_dashboard_stats(today_start, week_start))
-        finally:
-            loop.close()
+        # Direct await (was: asyncio.new_event_loop + run_until_complete which raises
+        # RuntimeError when called inside a running event loop)
+        stats = await self._fetch_dashboard_stats(today_start, week_start)
 
         stats["generated_at"] = now
         stats["cached"] = False

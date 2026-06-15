@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>home preview</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "PingFang SC", sans-serif; }
+  .frame { width: 375px; height: 812px; background: #FAFBFC; display: flex; flex-direction: column; padding: 12px; position: relative; }
+  .hero {
+    background: linear-gradient(135deg, #3B6EF5 0%, #6E59F0 100%);
+    color: #fff; border-radius: 12px; padding: 24px 16px;
+    box-shadow: 0 4px 12px rgba(59, 110, 245, .25);
+    margin-bottom: 20px;
+  }
+  .hero__title { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+  .hero__sub { font-size: 13px; opacity: .9; margin-bottom: 16px; line-height: 1.5; }
+  .hero__cta { display: flex; gap: 8px; margin-bottom: 16px; }
+  .cta-primary { background: #fff; color: #3B6EF5; border: none; padding: 9px 16px; border-radius: 6px; font-size: 14px; font-weight: 600; }
+  .cta-outline { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.6); padding: 9px 16px; border-radius: 6px; font-size: 14px; }
+  .hero__chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .hero__chip { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.2); border-radius: 8px; padding: 8px 10px; min-width: 90px; }
+  .hero__chip .flag { font-size: 16px; }
+  .hero__chip .name { font-weight: 600; font-size: 13px; display: block; }
+  .hero__chip .meta { opacity: .8; font-size: 10px; }
+  .section-title { font-size: 18px; font-weight: 700; color: #1A1D29; margin-bottom: 4px; padding: 0 4px; }
+  .section-sub { font-size: 13px; color: #5A5F6D; margin-bottom: 12px; padding: 0 4px; }
+  .features { display: flex; flex-direction: column; gap: 10px; padding: 0 4px; }
+  .feature { background: #fff; border: 1px solid #E5E7EB; border-radius: 10px; padding: 14px 12px; }
+  .feature__title { font-size: 15px; font-weight: 600; color: #1A1D29; margin-bottom: 4px; }
+  .feature__desc { font-size: 13px; color: #5A5F6D; line-height: 1.6; }
+  .tabbar { position: absolute; bottom: 0; left: 0; right: 0; height: 56px; background: #fff; border-top: 1px solid #E5E7EB; display: flex; align-items: center; justify-content: space-around; font-size: 11px; }
+  .tab { display: flex; flex-direction: column; align-items: center; gap: 2px; color: #9CA3AF; }
+  .tab.active { color: #3B6EF5; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="hero">
+    <div class="hero__title">让签证更简单</div>
+    <div class="hero__sub">覆盖东南亚多国签证 · 材料清单智能生成 · 拒签险 · 一键加急</div>
+    <div class="hero__cta">
+      <button class="cta-primary">立即登录</button>
+      <button class="cta-outline">查看支持国家</button>
+    </div>
+    <div class="hero__chips">
+      <div class="hero__chip"><div class="flag">🇹🇭</div><div class="name">Thailand</div><div class="meta">最快 3 天出签</div></div>
+      <div class="hero__chip"><div class="flag">🇻🇳</div><div class="name">Vietnam</div><div class="meta">最快 3 天出签</div></div>
+      <div class="hero__chip"><div class="flag">🇮🇩</div><div class="name">Indonesia</div><div class="meta">最快 3 天出签</div></div>
+      <div class="hero__chip"><div class="flag">🇵🇭</div><div class="name">Philippines</div><div class="meta">最快 3 天出签</div></div>
+      <div class="hero__chip"><div class="flag">🇲🇾</div><div class="name">Malaysia</div><div class="meta">最快 3 天出签</div></div>
+      <div class="hero__chip"><div class="flag">🇸🇬</div><div class="name">Singapore</div><div class="meta">最快 3 天出签</div></div>
+    </div>
+  </div>
+
+  <div class="section-title">为什么选我们</div>
+  <div class="section-sub">把繁琐的签证流程,变成 4 步搞定</div>
+
+  <div class="features">
+    <div class="feature">
+      <div class="feature__title">材料清单自动生成</div>
+      <div class="feature__desc">根据目的地自动列出所需材料,避免漏交错交。</div>
+    </div>
+    <div class="feature">
+      <div class="feature__title">拒签险保障</div>
+      <div class="feature__desc">若不幸被拒签,平台赔付 100% 服务费。</div>
+    </div>
+    <div class="feature">
+      <div class="feature__title">模板库</div>
+      <div class="feature__desc">在职证明、银行流水、邀请函等,模板一键套用。</div>
+    </div>
+    <div class="feature">
+      <div class="feature__title">Affiliate 计划</div>
+      <div class="feature__desc">推荐好友办签,双方各得 ¥50 优惠券。</div>
+    </div>
+  </div>
+
+  <div class="tabbar">
+    <div class="tab active">🏠<span>首页</span></div>
+    <div class="tab">🌐<span>选国家</span></div>
+    <div class="tab">👤<span>我的</span></div>
+  </div>
+</div>
+</body>
+</html>

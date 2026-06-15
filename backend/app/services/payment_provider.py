@@ -330,6 +330,16 @@ class PaymentProvider:
         extra["payment"] = blob
         order.extra = json.dumps(extra, ensure_ascii=False)
 
+        # V2 §4.2.4: payment completion flips order.status 'created' →
+        # 'submitted' (payment serves as the user's confirmation to push the
+        # order into the processing queue). Earlier this was intentionally
+        # left to manual admin approval only (verifier #1 W17 audit caught
+        # the gap).
+        if order.status in ("created", "pending"):
+            old_status = order.status
+            order.status = "submitted"
+            order.submitted_at = paid_at
+
         self.db_add_status_history(
             db,
             order_id=order.id,

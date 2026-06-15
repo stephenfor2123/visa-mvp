@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>payment preview</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; background: #1F2937; }
+  .frame { width: 375px; height: 812px; background: #FAFBFC; margin: 0 auto; display: flex; flex-direction: column; overflow: hidden; }
+  .nav-bar { background: linear-gradient(135deg, #3B6EF5, #5B86F7); color: #fff; padding: 14px 16px; font-size: 17px; font-weight: 600; text-align: center; }
+  .header { padding: 20px 16px 12px; text-align: center; }
+  .title { display: block; font-size: 20px; font-weight: 700; color: #111827; }
+  .subtitle { display: block; font-size: 12px; color: #6B7280; margin-top: 4px; }
+  .body { flex: 1; padding: 0 12px; }
+  .info { background: #fff; border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+  .info-row { display: flex; justify-content: space-between; padding: 5px 0; }
+  .info-label { font-size: 12px; color: #6B7280; }
+  .info-value { font-size: 14px; color: #111827; font-weight: 600; }
+  .info-value.amount { color: #3B6EF5; font-size: 18px; font-weight: 700; }
+  .qr { background: #fff; border-radius: 12px; padding: 24px 16px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); text-align: center; }
+  .qr-frame { width: 180px; height: 180px; margin: 0 auto; background: #F9FAFB; border: 2px dashed #3B6EF5; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px; }
+  .qr-emoji { font-size: 50px; }
+  .qr-code-text { font-size: 10px; color: #6B7280; margin-top: 8px; word-break: break-all; }
+  .qr-hint { display: block; font-size: 14px; color: #111827; font-weight: 600; margin-top: 16px; }
+  .status { display: flex; align-items: center; padding: 12px 16px; border-radius: 8px; margin-bottom: 8px; background: #FEF3C7; color: #92400E; }
+  .status-icon { font-size: 20px; margin-right: 8px; }
+  .status-text { font-size: 14px; font-weight: 600; }
+  .poll { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; font-size: 12px; color: #6B7280; }
+  .poll-link { color: #3B6EF5; font-weight: 600; }
+  .debug { margin-top: 8px; padding: 8px 10px; background: #F3F4F6; border-radius: 4px; }
+  .debug-line { display: block; font-size: 10px; color: #6B7280; font-family: monospace; }
+  .footer { padding: 12px 12px 20px; }
+  .btn-s { width: 100%; text-align: center; padding: 12px 0; background: #fff; color: #3B6EF5; border: 1px solid #3B6EF5; border-radius: 8px; font-size: 14px; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="nav-bar" id="navBar">Order Payment</div>
+  <div class="header">
+    <span class="title" id="pageTitle">Order Payment</span>
+    <span class="subtitle" id="pageSubtitle">Scan the QR code with WeChat to complete payment</span>
+  </div>
+  <div class="body">
+    <div class="info">
+      <div class="info-row"><span class="info-label" id="lblOrder">Order No.</span><span class="info-value">O-2026-0001</span></div>
+      <div class="info-row"><span class="info-label" id="lblAmount">Amount</span><span class="info-value amount">¥599.00 CNY</span></div>
+      <div class="info-row"><span class="info-label" id="lblExpire">Link expires in</span><span class="info-value" id="expireVal">15 min</span></div>
+    </div>
+    <div class="qr">
+      <div class="qr-frame">
+        <span class="qr-emoji">📱</span>
+        <span class="qr-code-text">weixin://wxpay/bizpayurl?pr=mock_O-2026-0001_a3f9c2</span>
+      </div>
+      <span class="qr-hint" id="qrHint">Open WeChat and scan</span>
+    </div>
+    <div class="status">
+      <span class="status-icon">⏱️</span>
+      <span class="status-text" id="statusText">Pending Payment</span>
+    </div>
+    <div class="poll">
+      <span id="pollText">Next auto-check in 1s</span>
+      <span class="poll-link" id="pollNow">Check Now</span>
+    </div>
+    <div class="debug">
+      <span class="debug-line">intent: pi_mock_1718...</span>
+      <span class="debug-line">polls: 4 × 1.5s</span>
+    </div>
+  </div>
+  <div class="footer">
+    <div class="btn-s" id="backBtn">Back to Orders</div>
+  </div>
+</div>
+
+<script>
+const I18N = {
+  'zh-CN': { nav: '订单支付', t: '订单支付', s: '请使用微信扫描下方二维码完成支付', lO: '订单号', lA: '应付金额', lE: '支付链接', expU: '分钟后过期', hint: '打开微信扫一扫', st: '等待支付', pTxt: '下次自动查询 1 秒', pNow: '立即查询', back: '返回订单' },
+  'en':     { nav: 'Order Payment', t: 'Order Payment', s: 'Scan the QR code with WeChat to complete payment', lO: 'Order No.', lA: 'Amount', lE: 'Link expires in', expU: 'min', hint: 'Open WeChat and scan', st: 'Pending Payment', pTxt: 'Next auto-check in 1s', pNow: 'Check Now', back: 'Back to Orders' },
+  'id':     { nav: 'Pembayaran', t: 'Pembayaran Pesanan', s: 'Pindai kode QR dengan WeChat untuk menyelesaikan pembayaran', lO: 'No. Pesanan', lA: 'Jumlah', lE: 'Tautan kedaluwarsa dalam', expU: 'mnt', hint: 'Buka WeChat dan pindai', st: 'Menunggu Pembayaran', pTxt: 'Pemeriksaan berikutnya dalam 1d', pNow: 'Periksa Sekarang', back: 'Kembali ke Pesanan' },
+  'vi':     { nav: 'Thanh toán', t: 'Thanh toán đơn hàng', s: 'Quét mã QR bằng WeChat để hoàn tất thanh toán', lO: 'Mã đơn', lA: 'Số tiền', lE: 'Liên kết hết hạn sau', expU: 'phút', hint: 'Mở WeChat và quét', st: 'Chờ thanh toán', pTxt: 'Kiểm tra tiếp theo sau 1giây', pNow: 'Kiểm tra ngay', back: 'Quay lại đơn hàng' }
+}
+const lang = new URLSearchParams(location.search).get('lang') || 'en'
+const t = I18N[lang] || I18N['en']
+document.getElementById('navBar').textContent = t.nav
+document.getElementById('pageTitle').textContent = t.t
+document.getElementById('pageSubtitle').textContent = t.s
+document.getElementById('lblOrder').textContent = t.lO
+document.getElementById('lblAmount').textContent = t.lA
+document.getElementById('lblExpire').textContent = t.lE
+document.getElementById('expireVal').textContent = '15 ' + t.expU
+document.getElementById('qrHint').textContent = t.hint
+document.getElementById('statusText').textContent = t.st
+document.getElementById('pollText').textContent = t.pTxt
+document.getElementById('pollNow').textContent = t.pNow
+document.getElementById('backBtn').textContent = t.back
+</script>
+</body>
+</html>

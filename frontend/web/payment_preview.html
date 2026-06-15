@@ -1,0 +1,320 @@
+<!--
+  Standalone PaymentResult preview — for W14-10 screenshots only.
+  Bypasses vite build (macOS M-series hang).
+  Uses Vue 3 via CDN (no compile needed: template strings only).
+  Inline-compiles the PaymentResult.vue template as a render fn.
+  Mock data seeded in localStorage; queryPaymentStatus returned inline.
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Payment Result — Preview</title>
+<style>
+  :root {
+    --bg-alt: #F8FAFC;
+    --border: #E2E8F0;
+    --ink-1: #0F172A;
+    --ink-2: #334155;
+    --ink-3: #64748B;
+    --primary: #3B6EF5;
+    --primary-hover: #2C5DE0;
+    --primary-bg: #EAF0FE;
+    --el-color-primary: #3B6EF5;
+    --el-color-danger: #DC2626;
+    --muted: #94A3B8;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg-alt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif; color: var(--ink-1); }
+  a { color: inherit; }
+
+  .app-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 24px; background: #fff; border-bottom: 1px solid var(--border);
+  }
+  .app-header__brand { display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--ink-1); font-weight: 600; font-size: 15px; }
+  .app-header__brand-mark { width: 28px; height: 28px; border-radius: 8px; background: var(--primary); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; }
+  .app-header__right { display: flex; align-items: center; gap: 12px; }
+
+  .app-container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+  .paymentresult-shell { max-width: 720px; padding: 28px 20px 60px; }
+
+  .status-card {
+    background: #fff; border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 36px 28px;
+    margin-bottom: 22px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(15,23,42,.04);
+  }
+  .status-card--success   { border-top: 4px solid #16A34A; background: linear-gradient(180deg, #F0FDF4 0%, #fff 60%); }
+  .status-card--failed    { border-top: 4px solid #DC2626; background: linear-gradient(180deg, #FEF2F2 0%, #fff 60%); }
+  .status-card--pending   { border-top: 4px solid #D97706; background: linear-gradient(180deg, #FFFBEB 0%, #fff 60%); }
+  .status-card--cancelled { border-top: 4px solid #64748B; background: linear-gradient(180deg, #F8FAFC 0%, #fff 60%); }
+
+  .status-icon { display: inline-flex; align-items: center; justify-content: center; width: 72px; height: 72px; border-radius: 50%; margin-bottom: 14px; }
+  .status-icon__emoji { font-size: 40px; font-weight: 700; line-height: 1; }
+  .status-icon--success   { background: #DCFCE7; color: #166534; }
+  .status-icon--failed    { background: #FEE2E2; color: #991B1B; }
+  .status-icon--pending   { background: #FEF3C7; color: #92400E; animation: pulse-scale 1.6s ease-in-out infinite; }
+  .status-icon--cancelled { background: #E2E8F0; color: #475569; }
+
+  .status-title { margin: 4px 0 10px; font-size: 24px; font-weight: 700; color: var(--ink-1); }
+  .status-message { margin: 0 0 10px; font-size: 14px; color: var(--ink-2); line-height: 1.6; }
+  .status-hint { margin: 0 0 18px; font-size: 12px; color: var(--ink-3); }
+  .status-reason {
+    margin: 4px auto 18px; max-width: 480px;
+    padding: 10px 14px;
+    background: #FEF2F2; color: #7F1D1D;
+    border: 1px solid #FCA5A5; border-radius: 8px;
+    font-size: 13px; line-height: 1.5;
+  }
+  .status-eta {
+    display: inline-block;
+    margin: 8px 0 18px;
+    padding: 6px 14px;
+    background: #DCFCE7; color: #166534;
+    border: 1px solid #86EFAC; border-radius: 999px;
+    font-size: 12px; font-weight: 500;
+  }
+
+  .polling-bar { display: inline-flex; align-items: center; gap: 6px; margin: 6px 0 10px; }
+  .polling-dot {
+    display: inline-block; width: 10px; height: 10px;
+    border-radius: 50%; background: #D97706;
+    animation: polling-bounce 1.4s ease-in-out infinite;
+  }
+  .polling-dot:nth-child(2) { animation-delay: .2s; }
+  .polling-dot:nth-child(3) { animation-delay: .4s; }
+  @keyframes polling-bounce {
+    0%, 80%, 100% { transform: scale(0.5); opacity: 0.5; }
+    40% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes pulse-scale {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.4); }
+    50% { transform: scale(1.05); box-shadow: 0 0 0 12px rgba(217, 119, 6, 0); }
+  }
+  .polling-label { margin: 0 0 18px; font-size: 12px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+
+  .action-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 4px; }
+  .app-btn {
+    position: relative; display: inline-flex; align-items: center; justify-content: center;
+    gap: 6px; font-weight: 500; border-radius: 8px; border: 1px solid transparent;
+    cursor: pointer; transition: all .15s ease; white-space: nowrap; user-select: none; line-height: 1;
+    min-width: 64px;
+    font-family: inherit;
+  }
+  .app-btn:disabled { cursor: not-allowed; opacity: .6; }
+  .app-btn--sm { padding: 6px 12px; font-size: 13px; }
+  .app-btn--md { padding: 9px 16px; font-size: 14px; }
+  .app-btn--primary { background: var(--primary); color: #fff; }
+  .app-btn--outline { background: #fff; color: var(--primary); border-color: var(--primary); }
+  .app-btn--ghost { background: transparent; color: var(--ink-2); }
+
+  .summary-card {
+    background: #fff; border: 1px solid var(--border);
+    border-radius: 14px; padding: 22px 26px;
+    box-shadow: 0 1px 3px rgba(15,23,42,.04);
+  }
+  .summary-card__title { margin: 0 0 4px; font-size: 11px; font-weight: 600; color: var(--ink-3); letter-spacing: 0.06em; text-transform: uppercase; }
+  .summary-card__order-id { margin: 0 0 16px; font-size: 18px; font-weight: 700; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--ink-1); }
+
+  .info-list { margin: 0; padding: 0; }
+  .info-list__row { display: grid; grid-template-columns: 110px 1fr; gap: 12px; padding: 9px 0; border-bottom: 1px dashed var(--border); font-size: 14px; }
+  .info-list__row:last-child { border-bottom: none; }
+  .info-list__row dt { color: var(--ink-3); margin: 0; }
+  .info-list__row dd { color: var(--ink-1); margin: 0; font-weight: 500; }
+  .info-list__mono { font-family: ui-monospace, monospace; }
+
+  .state-block { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 40px; text-align: center; color: var(--ink-3); font-size: 14px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .state-block__title { margin: 4px 0 4px; font-size: 18px; font-weight: 700; color: var(--ink-1); }
+  .state-block__body { margin: 0 0 12px; font-size: 13px; color: var(--ink-3); }
+  .spinner { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--primary); border-top-color: transparent; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .lang-switch { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background: #F1F5F9; border-radius: 999px; font-size: 12px; color: var(--ink-2); }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="/node_modules/vue/dist/vue.global.prod.js"></script>
+<script>
+// =========================================================================
+// I18N (inline copy of shared/i18n/zh-CN.json payment.* section)
+// =========================================================================
+const I18N = {
+  'zh-CN': {
+    app_name: '签证助手',
+    orderdetail_logout_btn: '退出登录',
+    payment_page_subtitle: 'Stripe 安全支付 · 由 VisaOps 提供保障',
+    payment_order_id: '订单号',
+    payment_amount: '金额',
+    payment_method: '支付方式',
+    payment_transaction_id: '交易号',
+    payment_estimated_processing: '预计处理时间:{hours} 小时',
+    payment_success_title: '支付成功',
+    payment_success_message: '您的订单已成功支付,我们将立即为您提交签证申请。',
+    payment_success_next: '前往订单详情跟踪进度',
+    payment_failed_title: '支付失败',
+    payment_failed_reason_card_declined: '您的银行卡被拒绝,请尝试其他卡或联系发卡行。',
+    payment_failed_reason_insufficient_funds: '账户余额不足,请充值或更换支付方式。',
+    payment_failed_reason_network_error: '网络异常,请稍后重试。',
+    payment_failed_reason_expired_session: '支付会话已过期,请重新发起支付。',
+    payment_failed_reason_unknown: '支付失败,请重试或联系客服。',
+    payment_retry_button: '重新支付',
+    payment_back_to_orders: '返回订单列表',
+    payment_pending_title: '支付处理中',
+    payment_pending_message: '我们正在等待支付通道的最终确认,请稍候…',
+    payment_pending_polling_label: '下次轮询 {sec} 秒',
+    payment_pending_refresh_now: '立即刷新',
+    payment_pending_wait_hint: '通常 30 秒内出结果',
+    payment_cancelled_title: '支付已取消',
+    payment_cancelled_message: '您已主动取消本次支付。如需重新支付,请点击下方按钮。',
+    payment_cancelled_continue_button: '重新发起支付',
+    payment_loading_state: '正在加载支付状态…',
+    payment_load_failed: '支付状态加载失败',
+    payment_retry_load: '重新加载',
+    payment_method_stripe: 'Stripe 信用卡',
+    payment_icon_success: '✓',
+    payment_icon_failed: '✗',
+    payment_icon_pending: '⏳',
+    payment_icon_cancelled: '—',
+    common_cancel: '取消'
+  }
+};
+
+function t(key, params) {
+  const dict = I18N['zh-CN'];
+  let val = dict[key];
+  if (val == null) val = key;
+  if (params && typeof params === 'object') {
+    Object.keys(params).forEach(k => { val = val.replace('{' + k + '}', params[k]); });
+  }
+  return val;
+}
+
+// =========================================================================
+// Mock payment (seeded per status query param)
+// =========================================================================
+function makeMock(status) {
+  const now = new Date().toISOString();
+  const reason = status === 'failed' ? 'card_declined' : null;
+  return {
+    order_id: 'V2-20260614-009900',
+    status,
+    amount_cents: 9900,
+    currency: 'USD',
+    method: 'stripe',
+    reason,
+    reason_message: reason,
+    transaction_id: status === 'success' ? 'txn_demo_001' : null,
+    estimated_processing_hours: status === 'success' ? 24 : null,
+    created_at: now,
+    updated_at: now,
+    paid_at: status === 'success' ? now : null,
+    cancelled_at: status === 'cancelled' ? now : null
+  };
+}
+
+const { createApp, ref, computed, onMounted, onBeforeUnmount, nextTick, watch, h } = Vue;
+
+// PaymentResult.vue (render fn form, inline copy — no compile needed)
+const App = {
+  setup() {
+    const orderId = ref(new URLSearchParams(location.search).get('orderId') || 'V2-20260614-009900');
+    const status = ref(new URLSearchParams(location.search).get('status') || 'success');
+    const payment = ref(makeMock(status.value));
+    const countdownSec = ref(30);
+
+    const statusClass = computed(() => 'status-card--' + status.value);
+    const iconClass = computed(() => 'status-icon--' + status.value);
+    const icon = computed(() => t('payment_icon_' + status.value));
+    const title = computed(() => {
+      if (status.value === 'success') return t('payment_success_title');
+      if (status.value === 'failed') return t('payment_failed_title');
+      if (status.value === 'pending') return t('payment_pending_title');
+      return t('payment_cancelled_title');
+    });
+    const message = computed(() => {
+      if (status.value === 'success') return t('payment_success_message');
+      if (status.value === 'pending') return t('payment_pending_message');
+      if (status.value === 'cancelled') return t('payment_cancelled_message');
+      return '';
+    });
+    const reasonText = computed(() => {
+      if (status.value !== 'failed') return '';
+      const r = payment.value?.reason || 'unknown';
+      const key = 'payment_failed_reason_' + r;
+      return t(key);
+    });
+
+    // Status card section
+    const StatusCard = () => h('section', { 'data-testid': 'paymentresult-status-' + status.value, class: ['status-card', statusClass.value] }, [
+      h('div', { class: ['status-icon', iconClass.value] }, [
+        h('span', { class: 'status-icon__emoji' }, icon.value)
+      ]),
+      h('h1', { class: 'status-title' }, title.value),
+      status.value !== 'failed' ? h('p', { class: 'status-message' }, message.value) : null,
+      status.value === 'failed' ? h('p', { 'data-testid': 'paymentresult-reason', class: 'status-reason' }, reasonText.value) : null,
+      status.value === 'success' && payment.value?.estimated_processing_hours
+        ? h('p', { 'data-testid': 'paymentresult-eta', class: 'status-eta' }, t('payment_estimated_processing', { hours: payment.value.estimated_processing_hours }))
+        : null,
+      status.value === 'pending' ? h('div', null, [
+        h('p', { class: 'status-hint' }, t('payment_pending_wait_hint')),
+        h('div', { class: 'polling-bar' }, [
+          h('span', { class: 'polling-dot' }),
+          h('span', { class: 'polling-dot' }),
+          h('span', { class: 'polling-dot' })
+        ]),
+        h('p', { 'data-testid': 'paymentresult-polling-label', class: 'polling-label' }, t('payment_pending_polling_label', { sec: countdownSec.value }))
+      ]) : null,
+      h('div', { class: 'action-row' }, [
+        status.value === 'success' ? h('button', { 'data-testid': 'paymentresult-view-order', class: ['app-btn', 'app-btn--md', 'app-btn--primary'] }, [t('payment_success_next'), ' →']) : null,
+        status.value === 'failed' ? h('button', { 'data-testid': 'paymentresult-retry-pay', class: ['app-btn', 'app-btn--md', 'app-btn--primary'] }, t('payment_retry_button')) : null,
+        status.value === 'failed' ? h('button', { 'data-testid': 'paymentresult-failed-back', class: ['app-btn', 'app-btn--md', 'app-btn--ghost'] }, t('payment_back_to_orders')) : null,
+        status.value === 'pending' ? h('button', { 'data-testid': 'paymentresult-refresh', class: ['app-btn', 'app-btn--md', 'app-btn--outline'] }, t('payment_pending_refresh_now')) : null,
+        status.value === 'pending' ? h('button', { 'data-testid': 'paymentresult-cancel', class: ['app-btn', 'app-btn--md', 'app-btn--ghost'] }, t('common_cancel')) : null,
+        status.value === 'cancelled' ? h('button', { 'data-testid': 'paymentresult-recontinue', class: ['app-btn', 'app-btn--md', 'app-btn--primary'] }, t('payment_cancelled_continue_button')) : null
+      ])
+    ]);
+
+    const SummaryCard = () => h('section', { 'data-testid': 'paymentresult-summary', class: 'summary-card' }, [
+      h('h2', { class: 'summary-card__title' }, t('payment_order_id')),
+      h('p', { 'data-testid': 'paymentresult-order-id', class: 'summary-card__order-id' }, payment.value.order_id),
+      h('dl', { class: 'info-list' }, [
+        h('div', { class: 'info-list__row' }, [h('dt', null, t('payment_amount')), h('dd', null, formatAmount(payment.value.amount_cents, payment.value.currency))]),
+        h('div', { class: 'info-list__row' }, [h('dt', null, t('payment_method')), h('dd', null, t('payment_method_stripe'))]),
+        payment.value.transaction_id ? h('div', { class: 'info-list__row' }, [h('dt', null, t('payment_transaction_id')), h('dd', { class: 'info-list__mono' }, payment.value.transaction_id)]) : null
+      ])
+    ]);
+
+    return () => h('div', { class: 'paymentresult-page' }, [
+      h('header', { class: 'app-header app-container' }, [
+        h('a', { href: '#', class: 'app-header__brand' }, [
+          h('span', { class: 'app-header__brand-mark' }, 'V'),
+          h('span', null, t('app_name'))
+        ]),
+        h('div', { class: 'app-header__right' }, [
+          h('span', { class: 'lang-switch' }, '🇨🇳 简体中文'),
+          h('button', { 'data-testid': 'paymentresult-logout', class: ['app-btn', 'app-btn--sm', 'app-btn--outline'] }, t('orderdetail_logout_btn'))
+        ])
+      ]),
+      h('main', { class: 'app-container app-page paymentresult-shell' }, [
+        StatusCard(),
+        SummaryCard()
+      ])
+    ]);
+  }
+};
+
+function formatAmount(cents, currency) {
+  if (cents == null) return '—';
+  const cur = currency || 'USD';
+  const val = (Number(cents) / 100).toFixed(2);
+  return cur + ' ' + val;
+}
+
+createApp(App).mount('#app');
+</script>
+</body>
+</html>

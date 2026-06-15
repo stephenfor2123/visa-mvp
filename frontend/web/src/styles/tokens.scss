@@ -1,0 +1,99 @@
+// 引入 design tokens → CSS 变量
+@use 'sass:color';
+
+$primary: #3B6EF5;
+$primary-hover: #2C5DE0;
+$primary-active: #1F4DC2;
+$primary-bg: #EAF0FE;
+$success: #16A34A;
+$warning: #F59E0B;
+$danger: #DC2626;
+$danger-bg: #FEE2E2;
+$info: #0EA5E9;
+
+$ink-1: #0F172A;
+$ink-2: #334155;
+$ink-3: #64748B;
+$muted: #94A3B8;
+$border: #E2E8F0;
+$bg: #FFFFFF;
+$bg-alt: #F8FAFC;
+$bg-card: #FFFFFF;
+$bg-disabled: #F1F5F9;
+
+:root {
+  --el-color-primary: #{$primary};
+  --el-color-success: #{$success};
+  --el-color-warning: #{$warning};
+  --el-color-danger: #{$danger};
+  --el-color-info: #{$info};
+
+  --primary-hover: #{$primary-hover};
+  --primary-active: #{$primary-active};
+  --primary-bg: #{$primary-bg};
+  --success: #{$success};
+  --warning: #{$warning};
+  --danger: #{$danger};
+  --danger-bg: #{$danger-bg};
+  --info: #{$info};
+
+  --ink-1: #{$ink-1};
+  --ink-2: #{$ink-2};
+  --ink-3: #{$ink-3};
+  --muted: #{$muted};
+  --border: #{$border};
+  --bg: #{$bg};
+  --bg-alt: #{$bg-alt};
+  --bg-card: #{$bg-card};
+  --bg-disabled: #{$bg-disabled};
+
+  --font-family-base: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', 'Segoe UI', Roboto, sans-serif;
+}
+
+// ─── Dark mode tokens ──────────────────────────────────────────────────────────
+[data-theme="dark"] {
+  $ink-1-dark: #E2E8F0;
+  $ink-2-dark: #CBD5E1;
+  $ink-3-dark: #94A3B8;
+  $muted-dark: #64748B;
+  $border-dark: #1E293B;
+  $bg-dark: #0B1120;
+  $bg-alt-dark: #0F172A;
+  $bg-card-dark: #1E293B;
+  $bg-disabled-dark: #1E293B;
+  $primary-bg-dark: #1E2A4A;
+
+  --ink-1: #{$ink-1-dark};
+  --ink-2: #{$ink-2-dark};
+  --ink-3: #{$ink-3-dark};
+  --muted: #{$muted-dark};
+  --border: #{$border-dark};
+  --bg: #{$bg-dark};
+  --bg-alt: #{$bg-alt-dark};
+  --bg-card: #{$bg-card-dark};
+  --bg-disabled: #{$bg-disabled-dark};
+  --primary-bg: #{$primary-bg-dark};
+  --el-color-primary: #{$primary};
+  --el-color-success: #{$success};
+  --el-color-warning: #{$warning};
+  --el-color-danger: #{$danger};
+  --el-color-info: #{$info};
+
+  .app-header { background: var(--bg-card); }
+  .lang-switch { background: var(--bg-alt); border-color: var(--border); }
+  .el-input__wrapper { background-color: var(--bg-alt); }
+  .el-input__inner { color: var(--ink-1); }
+}
+
+// 覆盖 Element Plus 部分默认
+.el-button--primary {
+  background: $primary;
+  border-color: $primary;
+  &:hover { background: $primary-hover; border-color: $primary-hover; }
+  &:active { background: $primary-active; border-color: $primary-active; }
+}
+
+.el-input__wrapper.is-focus {
+  box-shadow: 0 0 0 3px rgba(59,110,245,.18) !important;
+}

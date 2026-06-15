@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>W14 RPA 页面视觉稿</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f7f5f0; --panel: #ffffff; --line: #e9e3d6; --line-soft: #f0ebdf;
+    --text: #1f2533; --text-2: #3a4256; --muted: #7c7a72; --ink: #14171e;
+    --primary: #2D5BFF; --primary-light: #EAF0FE;
+    --success: #22C55E; --success-light: #DCFCE7;
+    --warn: #F59E0B; --warn-light: #FEF3C7;
+    --danger: #EF4444; --danger-light: #FEE2E2;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 15px; }
+  body {
+    font-family: 'Outfit', -apple-system, 'PingFang SC', sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(at 0% 0%, rgba(45,91,255,.05) 0%, transparent 45%),
+      radial-gradient(at 100% 0%, rgba(99,95,240,.05) 0%, transparent 45%);
+    background-attachment: fixed;
+  }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 48px 32px 96px; }
+  .hero {
+    text-align: center; padding: 44px 32px; border-radius: 22px;
+    background: linear-gradient(135deg, #f9f6ee, #efece6);
+    border: 1px solid var(--line); margin-bottom: 48px;
+    box-shadow: 0 1px 0 rgba(255,255,255,.6) inset, 0 6px 24px -16px rgba(20,23,30,.12);
+  }
+  .hero h1 {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 36px; font-weight: 400; color: var(--ink);
+    margin-bottom: 10px;
+  }
+  .hero p { color: var(--text-2); font-size: 15px; max-width: 600px; margin: 0 auto; }
+  .tag { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .tag-blue { background: var(--primary-light); color: var(--primary); }
+  .tag-green { background: var(--success-light); color: #166534; }
+  .tag-red { background: var(--danger-light); color: #B91C1C; }
+
+  /* Three columns */
+  .screenshots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 40px; }
+  .screenshot-card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px -8px rgba(20,23,30,.1); }
+  .screenshot-header { padding: 14px 18px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; }
+  .screenshot-label { font-size: 13px; font-weight: 600; color: var(--ink); }
+  .screenshot-label span { font-weight: 400; color: var(--muted); margin-left: 4px; }
+  .screenshot-url { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); margin-left: auto; }
+
+  /* Mock browser chrome */
+  .browser-mock { background: #F8F9FA; border-bottom: 1px solid #E2E8F0; padding: 8px 12px; display: flex; align-items: center; gap: 6px; }
+  .browser-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .browser-dot-red { background: #FF5F57; }
+  .browser-dot-yellow { background: #FFBD2E; }
+  .browser-dot-green { background: #28C840; }
+  .browser-url { flex: 1; background: #fff; border: 1px solid #E2E8F0; border-radius: 6px; padding: 4px 10px; font-size: 11px; color: #666; font-family: 'JetBrains Mono', monospace; }
+
+  /* App header */
+  .app-header { background: #fff; border-bottom: 1px solid #E2E8F0; padding: 0 20px; height: 52px; display: flex; align-items: center; justify-content: space-between; }
+  .brand { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; color: var(--ink); text-decoration: none; }
+  .brand-mark { width: 26px; height: 26px; background: var(--primary); color: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; }
+
+  /* Page content */
+  .page-content { padding: 28px 20px; background: #FAFBFC; min-height: 340px; display: flex; flex-direction: column; align-items: center; }
+
+  /* RpaSubmit card */
+  .rpa-card { background: #fff; border: 1px solid #E2E8F0; border-radius: 14px; padding: 28px 24px; width: 100%; text-align: center; }
+  .rpa-icon { font-size: 40px; margin-bottom: 12px; display: block; }
+  .rpa-icon.anim { animation: float 2s ease-in-out infinite; }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+  .rpa-title { font-size: 18px; font-weight: 700; color: var(--ink); margin: 0 0 6px; }
+  .rpa-sub { font-size: 12px; color: var(--muted); margin: 0 0 16px; line-height: 1.5; }
+  .task-id { display: inline-flex; align-items: center; gap: 6px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 4px 10px; margin-bottom: 14px; }
+  .task-id-label { font-size: 11px; color: var(--muted); }
+  .task-id-val { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--ink); }
+
+  /* Progress */
+  .progress-wrap { margin-bottom: 18px; }
+  .progress-bar { height: 6px; background: #E2E8F0; border-radius: 999px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 999px; transition: width .5s ease; background: linear-gradient(90deg, #3B6EF5, #6E59F0); }
+  .progress-fill.done { background: linear-gradient(90deg, #22C55E, #16A34A); }
+  .progress-fill.error { background: linear-gradient(90deg, #EF4444, #DC2626); }
+  .progress-meta { display: flex; justify-content: space-between; margin-top: 5px; font-size: 11px; }
+  .progress-pct { font-weight: 600; color: var(--ink); }
+  .progress-step { color: var(--muted); }
+
+  /* Steps */
+  .steps { display: flex; justify-content: center; gap: 0; margin-bottom: 18px; }
+  .step { display: flex; flex-direction: column; align-items: center; gap: 5px; position: relative; flex: 1; max-width: 120px; }
+  .step + .step::before { content: ''; position: absolute; top: 12px; left: -50%; width: 100%; height: 2px; background: #E2E8F0; z-index: 0; }
+  .step.done + .step::before, .step.done::before { background: #22C55E; }
+  .step-dot { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #E2E8F0; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: var(--muted); z-index: 1; }
+  .step.done .step-dot { border-color: #22C55E; background: #22C55E; color: #fff; }
+  .step.active .step-dot { border-color: var(--primary); background: var(--primary); color: #fff; animation: pulse-dot 1.5s ease-in-out infinite; }
+  @keyframes pulse-dot { 0%,100%{box-shadow:0 0 0 0 rgba(59,110,245,.4)} 50%{box-shadow:0 0 0 6px rgba(59,110,245,0)} }
+  .step-label { font-size: 10px; color: var(--muted); }
+  .step.done .step-label { color: #22C55E; font-weight: 500; }
+  .step.active .step-label { color: var(--primary); font-weight: 600; }
+
+  /* Buttons */
+  .btn-row { display: flex; gap: 8px; justify-content: center; margin-top: 8px; }
+  .btn { padding: 8px 18px; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; font-family: inherit; }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:hover { background: #2C5DE0; }
+  .btn-outline { background: #fff; color: var(--primary); border: 1px solid var(--primary); }
+  .btn-ghost { background: transparent; color: var(--text-2); }
+  .btn-ghost:hover { background: rgba(15,23,42,.05); }
+
+  /* Error state */
+  .error-box { background: var(--danger-light); border: 1px solid #FECACA; border-radius: 8px; padding: 10px 12px; margin-bottom: 14px; font-size: 12px; color: #7F1D1D; text-align: left; }
+  .error-title { font-weight: 600; margin-bottom: 4px; }
+
+  /* RpaStatus card */
+  .query-card { background: #fff; border: 1px solid #E2E8F0; border-radius: 14px; padding: 18px; margin-bottom: 14px; }
+  .query-row { display: flex; gap: 8px; align-items: center; }
+  .query-input { flex: 1; padding: 7px 10px; border: 1px solid #E2E8F0; border-radius: 7px; font-size: 13px; font-family: inherit; outline: none; }
+  .query-hint { font-size: 11px; color: var(--muted); margin-top: 6px; }
+  .result-card { background: #fff; border: 1px solid #E2E8F0; border-radius: 14px; padding: 18px; }
+  .result-header { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .result-order { font-size: 12px; color: var(--muted); margin-left: auto; }
+  .result-row { display: flex; align-items: center; padding: 7px 0; border-bottom: 1px solid #F1F5F9; }
+  .result-row:last-of-type { border-bottom: none; }
+  .result-label { font-size: 12px; color: var(--muted); min-width: 90px; }
+  .result-val { font-size: 13px; color: var(--ink); }
+  .result-val.hi { font-weight: 600; color: var(--primary); }
+  .result-progress { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+  .result-progress-bar { flex: 1; height: 6px; background: #E2E8F0; border-radius: 999px; overflow: hidden; }
+  .result-progress-fill { height: 100%; background: linear-gradient(90deg, #22C55E, #16A34A); border-radius: 999px; }
+  .result-actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; align-items: center; }
+  .polling-hint { font-size: 11px; color: var(--muted); flex: 1; }
+
+  /* Footer */
+  .page-footer { font-size: 11px; color: var(--muted); text-align: center; max-width: 500px; margin: 0 auto; line-height: 1.6; }
+
+  /* Section info */
+  .info-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 40px; }
+  .info-card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
+  .info-card h3 { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 8px; }
+  .info-card p { font-size: 12px; color: var(--text-2); line-height: 1.5; }
+  .info-card code { font-family: 'JetBrains Mono', monospace; font-size: 11px; background: #F1F5F9; padding: 1px 5px; border-radius: 3px; color: var(--primary); }
+
+  .tech-row { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px 24px; margin-bottom: 40px; }
+  .tech-row h3 { font-size: 15px; font-weight: 600; color: var(--ink); margin-bottom: 14px; }
+  .tech-items { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tech-tag { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 500; background: var(--primary-light); color: var(--primary); }
+
+  @media (max-width: 900px) { .screenshots { grid-template-columns: 1fr; } .info-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 600px) { .info-grid { grid-template-columns: 1fr; } .wrap { padding: 24px 16px 64px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Hero -->
+  <header class="hero">
+    <span class="tag tag-blue">W14 前端 RPA 交互</span>
+    <h1>RPA 提交页面 &amp; 状态查询</h1>
+    <p>材料校验通过后自动触发 RPA 提交，实时进度展示，3 步状态指示器，支持 4 语种国际化</p>
+  </header>
+
+  <!-- Tech tags -->
+  <div class="tech-row">
+    <h3>技术栈</h3>
+    <div class="tech-items">
+      <span class="tech-tag">Vue 3 Composition API</span>
+      <span class="tech-tag">vue-i18n t()</span>
+      <span class="tech-tag">CSS 进度条动画</span>
+      <span class="tech-tag">3s Polling</span>
+      <span class="tech-tag">30s Auto-refresh</span>
+      <span class="tech-tag">48 rpa.* i18n keys</span>
+      <span class="tech-tag">zh-CN / en / id / vi</span>
+      <span class="tech-tag">Mock API</span>
+    </div>
+  </div>
+
+  <!-- Screenshots -->
+  <div class="screenshots">
+
+    <!-- SCREENSHOT 1: RpaSubmit submitting -->
+    <div class="screenshot-card">
+      <div class="screenshot-header">
+        <span class="tag tag-blue">1</span>
+        <span class="screenshot-label">RpaSubmit.vue<span> — 提交中状态</span></span>
+        <span class="screenshot-url">/rpa/submit</span>
+      </div>
+      <div class="browser-mock">
+        <div class="browser-dot browser-dot-red"></div>
+        <div class="browser-dot browser-dot-yellow"></div>
+        <div class="browser-dot browser-dot-green"></div>
+        <div class="browser-url">http://localhost:5173/rpa/submit?orderNo=ORD_DEMO_001</div>
+      </div>
+      <div class="page-content">
+        <div class="rpa-card">
+          <span class="rpa-icon anim">🤖</span>
+          <h2 class="rpa-title">材料校验通过，正在提交</h2>
+          <p class="rpa-sub">RPA 机器人正在访问签证官网，填写表单并提交申请</p>
+          <div class="task-id">
+            <span class="task-id-label">任务 ID</span>
+            <code class="task-id-val">rpa_8f3k2m9x</code>
+          </div>
+          <div class="progress-wrap">
+            <div class="progress-bar"><div class="progress-fill" style="width:40%"></div></div>
+            <div class="progress-meta">
+              <span class="progress-pct">40%</span>
+              <span class="progress-step">填写申请表单</span>
+            </div>
+          </div>
+          <div class="steps">
+            <div class="step done">
+              <div class="step-dot">✓</div>
+              <span class="step-label">访问签证官网</span>
+            </div>
+            <div class="step active">
+              <div class="step-dot">2</div>
+              <span class="step-label">填写申请表单</span>
+            </div>
+            <div class="step">
+              <div class="step-dot">3</div>
+              <span class="step-label">提交申请</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCREENSHOT 2: RpaSubmit done -->
+    <div class="screenshot-card">
+      <div class="screenshot-header">
+        <span class="tag tag-green">2</span>
+        <span class="screenshot-label">RpaSubmit.vue<span> — 完成状态</span></span>
+        <span class="screenshot-url">/rpa/submit</span>
+      </div>
+      <div class="browser-mock">
+        <div class="browser-dot browser-dot-red"></div>
+        <div class="browser-dot browser-dot-yellow"></div>
+        <div class="browser-dot browser-dot-green"></div>
+        <div class="browser-url">http://localhost:5173/rpa/submit?orderNo=ORD_DEMO_001</div>
+      </div>
+      <div class="page-content">
+        <div class="rpa-card">
+          <span class="rpa-icon">✅</span>
+          <h2 class="rpa-title">提交成功！</h2>
+          <p class="rpa-sub">您的签证申请已成功提交至官方系统，等待审核</p>
+          <div class="task-id">
+            <span class="task-id-label">任务 ID</span>
+            <code class="task-id-val">rpa_8f3k2m9x</code>
+          </div>
+          <div class="progress-wrap">
+            <div class="progress-bar"><div class="progress-fill done" style="width:100%"></div></div>
+            <div class="progress-meta">
+              <span class="progress-pct">100%</span>
+              <span class="progress-step">提交完成</span>
+            </div>
+          </div>
+          <div class="steps">
+            <div class="step done"><div class="step-dot">✓</div><span class="step-label">访问签证官网</span></div>
+            <div class="step done"><div class="step-dot">✓</div><span class="step-label">填写申请表单</span></div>
+            <div class="step done"><div class="step-dot">✓</div><span class="step-label">提交申请</span></div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary">查看订单详情</button>
+            <button class="btn btn-ghost">返回首页</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCREENSHOT 3: RpaStatus query result -->
+    <div class="screenshot-card">
+      <div class="screenshot-header">
+        <span class="tag tag-blue">3</span>
+        <span class="screenshot-label">RpaStatus.vue<span> — 状态查询结果</span></span>
+        <span class="screenshot-url">/rpa/status</span>
+      </div>
+      <div class="browser-mock">
+        <div class="browser-dot browser-dot-red"></div>
+        <div class="browser-dot browser-dot-yellow"></div>
+        <div class="browser-dot browser-dot-green"></div>
+        <div class="browser-url">http://localhost:5173/rpa/status</div>
+      </div>
+      <div class="page-content">
+        <!-- Query form -->
+        <div class="query-card" style="width:100%">
+          <h2 style="font-size:22px;font-weight:700;color:#0F172A;margin:0 0 14px;">RPA 状态查询</h2>
+          <p style="font-size:13px;color:#64748B;margin:0 0 14px;">输入订单号或任务 ID，实时查询 RPA 提交状态</p>
+          <div class="query-row">
+            <input class="query-input" value="rpa_8f3k2m9x" style="background:#F8FAFC">
+            <button class="btn btn-primary">查询</button>
+          </div>
+          <p class="query-hint">支持输入订单号 (ORD_xxx) 或任务 ID (rpa_xxx)</p>
+        </div>
+        <!-- Result -->
+        <div class="result-card" style="width:100%">
+          <div class="result-header">
+            <span class="tag tag-green">已完成</span>
+            <span class="result-order">订单号: ORD_DEMO_001</span>
+          </div>
+          <div class="result-row"><span class="result-label">任务 ID</span><code class="result-val">rpa_8f3k2m9x</code></div>
+          <div class="result-row"><span class="result-label">当前步骤</span><span class="result-val hi">提交完成</span></div>
+          <div class="result-row"><span class="result-label">提交时间</span><span class="result-val">2026-06-14 10:00:00</span></div>
+          <div class="result-row"><span class="result-label">完成时间</span><span class="result-val">2026-06-14 10:02:15</span></div>
+          <div class="result-progress">
+            <div class="result-progress-bar"><div class="result-progress-fill" style="width:100%"></div></div>
+            <span class="result-val" style="min-width:36px;font-weight:600">100%</span>
+          </div>
+          <div class="result-actions">
+            <button class="btn btn-outline" style="font-size:12px;padding:6px 12px">🔄 刷新状态</button>
+            <span class="polling-hint">自动刷新倒计时: 30 秒</span>
+            <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px">开启自动刷新</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Error state screenshot -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:40px">
+    <div class="screenshot-card">
+      <div class="screenshot-header">
+        <span class="tag tag-red">4</span>
+        <span class="screenshot-label">RpaSubmit.vue<span> — 异常状态</span></span>
+        <span class="screenshot-url">/rpa/submit</span>
+      </div>
+      <div class="page-content">
+        <div class="rpa-card">
+          <span class="rpa-icon">❌</span>
+          <h2 class="rpa-title">提交遇到问题</h2>
+          <p class="rpa-sub">提交过程中遇到问题，请查看原因后重试</p>
+          <div class="task-id">
+            <span class="task-id-label">任务 ID</span>
+            <code class="task-id-val">rpa_8f3k2m9x</code>
+          </div>
+          <div class="progress-wrap">
+            <div class="progress-bar"><div class="progress-fill error" style="width:25%"></div></div>
+            <div class="progress-meta">
+              <span class="progress-pct">25%</span>
+              <span class="progress-step">访问签证官网</span>
+            </div>
+          </div>
+          <div class="steps">
+            <div class="step active"><div class="step-dot">1</div><span class="step-label">访问签证官网</span></div>
+            <div class="step"><div class="step-dot">2</div><span class="step-label">填写申请表单</span></div>
+            <div class="step"><div class="step-dot">3</div><span class="step-label">提交申请</span></div>
+          </div>
+          <div class="error-box">
+            <div class="error-title">⚠️ 提交异常</div>
+            网络异常，请检查网络后重试。如问题持续，请联系客服。
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary">重新提交</button>
+            <button class="btn btn-ghost">返回首页</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screenshot-card">
+      <div class="screenshot-header">
+        <span class="tag tag-blue">5</span>
+        <span class="screenshot-label">RpaStatus.vue<span> — 空状态</span></span>
+        <span class="screenshot-url">/rpa/status</span>
+      </div>
+      <div class="page-content">
+        <div class="query-card" style="width:100%">
+          <h2 style="font-size:22px;font-weight:700;color:#0F172A;margin:0 0 14px;">RPA 状态查询</h2>
+          <p style="font-size:13px;color:#64748B;margin:0 0 14px;">输入订单号或任务 ID，实时查询 RPA 提交状态</p>
+          <div class="query-row">
+            <input class="query-input" placeholder="请输入订单号或任务 ID">
+            <button class="btn btn-primary">查询</button>
+          </div>
+          <p class="query-hint">支持输入订单号 (ORD_xxx) 或任务 ID (rpa_xxx)</p>
+        </div>
+        <div style="text-align:center;padding:32px 20px;color:#64748B;background:#fff;border:1px solid #E2E8F0;border-radius:14px;width:100%">
+          <div style="font-size:40px;margin-bottom:10px">🔍</div>
+          <p style="font-size:14px;margin:0">未找到相关任务，请确认订单号或任务 ID</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- File info -->
+  <div class="info-grid">
+    <div class="info-card">
+      <h3>RpaSubmit.vue</h3>
+      <p>提交中 / 完成 / 异常 三状态视图，3s polling，任务 ID 显示，步骤指示器，进度条动画</p>
+      <code style="display:block;margin-top:8px;font-size:11px">src/views/RpaSubmit.vue</code>
+    </div>
+    <div class="info-card">
+      <h3>RpaStatus.vue</h3>
+      <p>查询表单 + 结果展示，30s 自动刷新，轮询倒计时，状态 badge，支持 orderNo/taskId 两种查询方式</p>
+      <code style="display:block;margin-top:8px;font-size:11px">src/views/RpaStatus.vue</code>
+    </div>
+    <div class="info-card">
+      <h3>api/rpa.js</h3>
+      <p>postRpaSubmit / getRpaStatus / getRpaConfig / updateRpaConfig，Mock 模式自动推进状态</p>
+      <code style="display:block;margin-top:8px;font-size:11px">src/api/rpa.js</code>
+    </div>
+    <div class="info-card">
+      <h3>i18n 4 语种</h3>
+      <p>48 个 rpa.* key，zh-CN / en / id / vi 全覆盖，所有文案通过 t() 函数国际化</p>
+      <code style="display:block;margin-top:8px;font-size:11px">shared/i18n/{zh-CN,en,id,vi}.json</code>
+    </div>
+  </div>
+
+  <p class="page-footer">
+    W14-4 前端 RPA 交互 · 视觉稿 · 2026-06-14<br>
+    代码实现见: src/views/RpaSubmit.vue · src/views/RpaStatus.vue · src/api/rpa.js
+  </p>
+</div>
+</body>
+</html>

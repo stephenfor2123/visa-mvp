@@ -1,0 +1,64 @@
+%% pm/wbs/wbs.gantt.mmd
+%% 签证 V2 MVP 8 周甘特图 - 可在 GitHub/GitLab/VSCode Mermaid 预览中渲染
+%% 修订请同步 pm/wbs/wbs.md 的任务表
+
+gantt
+    title 签证 V2 MVP · 8 周排期(W1 = 2026-06-15 启动)
+    dateFormat  YYYY-MM-DD
+    axisFormat  %m-%d
+    excludes    weekends
+
+    section 基础设施
+    服务器采购+OS初始化(DevOps)        :infra1, 2026-06-15, 3d
+    Docker+Compose 部署(DevOps)        :infra2, after infra1, 2d
+    DB+MinIO+Redis 初始化(DevOps)      :infra3, after infra1, 3d
+    监控+告警+备份(DevOps)             :infra4, after infra2, 7d
+
+    section 后端
+    服务脚手架+CI/CD(后端)             :be1, 2026-06-15, 5d
+    Auth+Users+Materials(后端)         :be2, after be1, 8d
+    Orders+RPA调度(后端)               :be3, after be2, 6d
+    Admin+Config+Audit(后端)           :be4, after be3, 5d
+    推送+限流v2(后端)                  :be5, after be3, 5d
+
+    section 前端
+    设计系统+组件库(前端)              :fe1, 2026-06-15, 5d
+    账号+首页+选国(前端)               :fe2, after fe1, 6d
+    采集+OCR+校验(前端)                :fe3, after fe2, 6d
+    订单+RPA+状态(前端)                :fe4, after fe3, 5d
+    后台管理(前端)                     :fe5, after fe2, 8d
+    iOS打包+TF提交(前端)               :fe6, after fe4, 3d
+
+    section AI&RPA
+    PaddleOCR+FunASR 部署(AI)          :ai1, 2026-06-17, 4d
+    校验规则引擎(AI)                   :ai2, after ai1, 6d
+    Playwright RPA 框架(AI)            :ai3, after ai1, 5d
+    验证码识别+风控(AI)                :ai4, after ai3, 5d
+    联调+优化(AI)                      :ai5, after ai4, 4d
+    准确率收口 95/90(AI)               :ai6, after ai5, 4d
+
+    section 产品
+    需求评审+登录页标注(产品)          :p1, 2026-06-15, 2d
+    9国流程梳理(产品)                  :p2, 2026-06-22, 3d
+    OCR准确率验收(产品)                :p3, after p2, 2d
+    校验规则i18n(产品)                 :p4, 2026-07-06, 3d
+    中期demo评审(产品)                 :p5, 2026-07-10, 1d
+    UAT+上线验收(产品)                 :p6, 2026-07-27, 8d
+
+    section 测试+DevOps
+    pytest+conftest(QA)                :qa1, 2026-06-15, 3d
+    e2e框架(QA)                        :qa2, 2026-06-22, 3d
+    集成测试(QA)                       :qa3, 2026-06-29, 5d
+    性能压测(QA)                       :qa4, 2026-07-20, 3d
+    UAT+渗透(QA)                       :qa5, 2026-07-27, 5d
+    上线Gate(QA)                       :qa6, 2026-08-03, 5d
+
+    section 里程碑
+    W1 脚手架 DONE                     :milestone, m1, 2026-06-19, 0d
+    W2 契约+DEMO                       :milestone, m2, 2026-06-26, 0d
+    W3 OCR 跑通                        :milestone, m3, 2026-07-03, 0d
+    W4 中期 demo                       :milestone, m4, 2026-07-10, 0d
+    W5 RPA 跑通                        :milestone, m5, 2026-07-17, 0d
+    W6 性能+TF                         :milestone, m6, 2026-07-24, 0d
+    W7 UAT                             :milestone, m7, 2026-07-31, 0d
+    W8 上线                            :milestone, m8, 2026-08-07, 0d

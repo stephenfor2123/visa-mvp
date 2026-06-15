@@ -1,0 +1,56 @@
+{
+  "agent": "coder",
+  "started_at": "2026-06-11T17:31:00+08:00",
+  "last_update": "2026-06-11T20:25:00+08:00",
+  "current_task": "W2 Story 1.1.2b: AI 校验结果页 N2 (绿/黄/红 + 整改指引)",
+  "stories": [
+    {
+      "id": "S1",
+      "title": "Web 注册端到端 (frontend /register + Playwright E2E)",
+      "status": "done",
+      "delivered_at": "2026-06-11T17:53:00+08:00"
+    },
+    {
+      "id": "1.1.2b",
+      "title": "AI 校验结果页 N2 — 绿/黄/红三档 + 整改指引 + 4 语种",
+      "status": "done",
+      "delivered_at": "2026-06-11T20:25:00+08:00",
+      "sub_tasks": [
+        "补 validation.* i18n (43 keys / 语种, 含 V2 §5.2 全 16 条规则 message_key)",
+        "写 api/materials.js wrapper,含 validateMaterials() 解 ApiResponse envelope",
+        "写 MaterialsValidate.vue: 4 统计卡 + 3 分组(error/warning/pass) + 整改指引 + 重新拍摄按钮 + 继续按钮(灰显 + W2-D3 角标)",
+        "router 加 /materials/validate + /materials/scan 占位",
+        "修复 api/destinations.js 顶部 Python 风格 docstring 的 1 行潜在 bug(挡住 vite build)",
+        "npm run build 通过 (16.55s), 产物含 MaterialsValidate-{js,css}",
+        "WORKLOG.md + WORKLOG.json 追加 Sub-task"
+      ]
+    }
+  ],
+  "completed": [
+    "W1: 探查项目结构,确认 S0 已建 web/ 骨架",
+    "W1: 确认 backend 8000 端口运行,/health 200",
+    "W1: curl POST /api/v2/auth/send-code 通过 (mock 返回验证码)",
+    "W1: curl POST /api/v2/auth/register 通过 (返回 JWT + user 对象)",
+    "W1: curl 二次注册同号 → 2003 Phone already registered (幂等保护验证)",
+    "W1: 本地 npm 安装 @playwright/test 1.55.0",
+    "W1: 修复 api/auth.js sendSmsCode 不转发 purpose 字段 bug",
+    "W1: 写完 /register 页 (Register.vue) — 复用 Login 卡片骨架 + AppInput/AppButton + LangSwitch,新增协议勾选",
+    "W1: Playwright config + global-setup (起 vite) + global-teardown (关 vite)",
+    "W1: register.spec.js 3 个用例:happy path / 协议校验 / 密码不一致",
+    "W1: 3/3 E2E 通过 (8.3s)",
+    "W1: 截图 register.png 1440x900 拿到 (59KB)",
+    "W1: 更新 README (E2E 跑法 + S1 注册页说明 + 截图)",
+    "W1: 更新 WORKLOG.md + WORKLOG.json",
+    "W1: 写 deliverable.md + 更新 board.md",
+    "W2 1.1.2b: 补 validation.* i18n (43 keys / 语种, zh-CN + en) — 16 条规则 + 27 条 UI",
+    "W2 1.1.2b: 写 api/materials.js wrapper,validateMaterials() 解 ApiResponse envelope,带 mock 兜底",
+    "W2 1.1.2b: 写 MaterialsValidate.vue (4 统计卡 + 3 分组 + 整改指引 + 重新拍摄按钮 + 灰显继续按钮)",
+    "W2 1.1.2b: router 加 /materials/validate + /materials/scan 占位",
+    "W2 1.1.2b: 修复 api/destinations.js 顶部 Python 风格 docstring 潜在 bug (挡住 vite build)",
+    "W2 1.1.2b: npm run build 通过 (16.55s), 产物含 MaterialsValidate-{js,css}",
+    "W2 1.1.2b: WORKLOG.md + WORKLOG.json 追加 Sub-task"
+  ],
+  "in_progress": [],
+  "blocked": [],
+  "next_steps": []
+}

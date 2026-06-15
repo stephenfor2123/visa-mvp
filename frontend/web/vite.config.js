@@ -1,0 +1,103 @@
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import AutoImport from 'unplugin-auto-import/vite'
+import Components from 'unplugin-vue-components/vite'
+import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
+import { VitePWA } from 'vite-plugin-pwa'
+import path from 'node:path'
+
+export default defineConfig({
+  plugins: [
+    vue(),
+    AutoImport({ resolvers: [ElementPlusResolver()] }),
+    Components({ resolvers: [ElementPlusResolver()] }),
+    VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['favicon.svg', 'icons/*.png'],
+      manifest: false, // 使用 public/manifest.json
+      devOptions: {
+        enabled: false
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'google-fonts-cache',
+              expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 }
+            }
+          },
+          {
+            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'gstatic-fonts-cache',
+              expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 }
+            }
+          },
+          {
+            urlPattern: /\/api\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-cache',
+              networkTimeoutSeconds: 5,
+              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 }
+            }
+          }
+        ]
+      }
+    })
+  ],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, 'src'),
+      '@shared': path.resolve(__dirname, '../shared')
+    }
+  },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        api: 'modern',
+        silenceDeprecations: ['legacy-js-api', 'import', 'global-builtin'],
+      }
+    }
+  },
+  server: {
+    host: '0.0.0.0',
+    port: 5173,
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true
+      }
+    }
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            // Vue core ecosystem — stable, cacheable independently
+            if (id.includes('vue/') || id.includes('vue-router') || id.includes('pinia')) {
+              return 'vue-vendor'
+            }
+            // Element Plus — largest chunk, separate for long-term caching
+            if (id.includes('element-plus')) {
+              return 'element-plus'
+            }
+            // i18n + locale files — loaded once, cached
+            if (id.includes('vue-i18n') || id.includes('@shared/i18n')) {
+              return 'i18n'
+            }
+            // HTTP client
+            if (id.includes('axios')) {
+              return 'axios-vendor'
+            }
+          }
+        }
+      }
+    }
+  }
+})

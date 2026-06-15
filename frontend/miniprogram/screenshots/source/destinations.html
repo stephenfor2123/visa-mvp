@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>destinations preview</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "PingFang SC", sans-serif; }
+  .frame { width: 375px; height: 812px; background: #FAFBFC; display: flex; flex-direction: column; padding: 12px; }
+  .dest-header { padding: 8px 0 12px; }
+  .dest-title { font-size: 20px; font-weight: 700; color: #1A1D29; margin-bottom: 4px; }
+  .dest-sub { font-size: 13px; color: #5A5F6D; }
+  .dest-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+  .dest-card {
+    background: #fff; border: 1px solid #E5E7EB;
+    border-radius: 10px; padding: 14px 10px; text-align: center;
+    width: calc((100% - 10px) / 2);
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+  }
+  .dest-card.is-disabled { opacity: 0.55; }
+  .dest-card__flag { font-size: 32px; line-height: 1; }
+  .dest-card__name { font-size: 14px; font-weight: 600; color: #1A1D29; }
+  .dest-card__types { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; }
+  .tag { padding: 2px 7px; border-radius: 999px; font-size: 10px; font-weight: 500; }
+  .tag--tourism { background: #EAF0FE; color: #2D5BFF; }
+  .tag--student { background: #FEF3C7; color: #B45309; }
+  .dest-card__lock { font-size: 11px; color: #9CA3AF; }
+  .apply-btn { width: 100%; padding: 6px 0; background: #3B6EF5; color: #fff; border: none; border-radius: 4px; font-size: 12px; cursor: pointer; }
+  .tabbar { position: absolute; bottom: 0; left: 0; right: 0; height: 56px; background: #fff; border-top: 1px solid #E5E7EB; display: flex; align-items: center; justify-content: space-around; font-size: 11px; }
+  .tab { display: flex; flex-direction: column; align-items: center; gap: 2px; color: #9CA3AF; }
+  .tab.active { color: #3B6EF5; font-weight: 600; }
+  .frame { position: relative; }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="dest-header">
+    <div class="dest-title">选择目的地</div>
+    <div class="dest-sub">V2 首批支持美国(US),其他 8 国 V3+ 开放</div>
+  </div>
+
+  <div class="dest-grid">
+    <div class="dest-card">
+      <div class="dest-card__flag">🇺🇸</div>
+      <div class="dest-card__name">美国</div>
+      <div class="dest-card__types">
+        <span class="tag tag--tourism">旅游签</span>
+        <span class="tag tag--student">学生签</span>
+      </div>
+      <button class="apply-btn">立即申请</button>
+    </div>
+    <div class="dest-card is-disabled">
+      <div class="dest-card__flag">🇯🇵</div>
+      <div class="dest-card__name">日本</div>
+      <div class="dest-card__types">
+        <span class="tag tag--tourism">旅游签</span>
+        <span class="tag tag--student">学生签</span>
+      </div>
+      <div class="dest-card__lock">🔒 V3+ 即将开放</div>
+    </div>
+    <div class="dest-card is-disabled">
+      <div class="dest-card__flag">🇬🇧</div>
+      <div class="dest-card__name">英国</div>
+      <div class="dest-card__types">
+        <span class="tag tag--tourism">旅游签</span>
+        <span class="tag tag--student">学生签</span>
+      </div>
+      <div class="dest-card__lock">🔒 V3+ 即将开放</div>
+    </div>
+    <div class="dest-card is-disabled">
+      <div class="dest-card__flag">🇦🇺</div>
+      <div class="dest-card__name">澳大利亚</div>
+      <div class="dest-card__types">
+        <span class="tag tag--tourism">旅游签</span>
+        <span class="tag tag--student">学生签</span>
+      </div>
+      <div class="dest-card__lock">🔒 V3+ 即将开放</div>
+    </div>
+    <div class="dest-card is-disabled">
+      <div class="dest-card__flag">🇨🇦</div>
+      <div class="dest-card__name">加拿大</div>
+      <div class="dest-card__types">
+        <span class="tag tag--tourism">旅游签</span>
+        <span class="tag tag--student">学生签</span>
+      </div>
+      <div class="dest-card__lock">🔒 V3+ 即将开放</div>
+    </div>
+    <div class="dest-card is-disabled">
+      <div class="dest-card__flag">🇩🇪</div>
+      <div class="dest-card__name">德国(申根)</div>
+      <div class="dest-card__types">
+        <span class="tag tag--tourism">旅游签</span>
+        <span class="tag tag--student">学生签</span>
+      </div>
+      <div class="dest-card__lock">🔒 V3+ 即将开放</div>
+    </div>
+  </div>
+
+  <div class="tabbar">
+    <div class="tab">🏠<span>首页</span></div>
+    <div class="tab active">🌐<span>选国家</span></div>
+    <div class="tab">👤<span>我的</span></div>
+  </div>
+</div>
+</body>
+</html>

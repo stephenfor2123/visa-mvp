@@ -1,0 +1,1686 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>签证智能工具 V2 ·纯工具+本地部署版 · 高保真原型 v2.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+ --bg:#FAFBFC; --surface:#FFFFFF; --line:#E5E7EB; --line-soft:#F3F4F6;
+ --ink:#1A1D29; --ink-2:#5A5F6D; --muted:#9CA3AF;
+ --primary:#2D5BFF; --primary-hover:#1E47E0;
+ --accent:#FF6B6B; --success:#10B981; --warning:#F59E0B; --error:#EF4444;
+ --r-sm:6px; --r-md:8px; --r-lg:12px; --r-xl:16px;
+ --sh-sm:01px2px rgba(20,23,30,.05);
+ --sh-md:04px12px rgba(20,23,30,.08);
+ --sh-lg:08px24px rgba(20,23,30,.12);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;font-family:'Outfit',-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.55}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font-family:inherit;font-size:14px;color:var(--ink)}
+.serif{font-family:'DM Serif Display',serif;font-weight:400;letter-spacing:-0.005em}
+.mono{font-family:'JetBrains Mono',monospace}
+a{color:var(--primary);text-decoration:none}
+.app{display:grid;grid-template-rows:56px1fr;height:100vh;min-width:1280px}
+.topbar{display:grid;grid-template-columns:1fr auto1fr;align-items:center;padding:020px;background:var(--surface);border-bottom:1px solid var(--line);box-shadow:var(--sh-sm);gap:16px}
+.topbar .brand{font-family:'DM Serif Display',serif;font-size:20px;color:var(--primary);display:flex;align-items:center;gap:8px}
+.topbar .brand .dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.topbar .pill{padding:5px10px;background:var(--line-soft);border-radius:8px;font-size:12px;color:var(--muted)}
+.topbar .pill b{color:var(--ink);font-weight:600}
+.topbar .view{display:flex;gap:8px;justify-content:flex-end;align-items:center}
+.lang-switch{position:relative}
+.lang-switch .btn{display:flex;align-items:center;gap:6px;padding:6px12px;background:var(--line-soft);border-radius:8px;font-size:13px;color:var(--ink-2);font-weight:500}
+.lang-switch .btn .flag{font-size:14px}
+.lang-switch .btn .arrow{font-size:10px;color:var(--muted)}
+.lang-switch .menu{position:absolute;right:0;top:calc(100% +6px);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);box-shadow:var(--sh-lg);min-width:200px;display:none;z-index:1000;overflow:hidden}
+.lang-switch.open .menu{display:block}
+.lang-switch .menu a{display:flex;align-items:center;gap:8px;padding:10px14px;font-size:13px;color:var(--ink-2);cursor:pointer;transition:background .12s}
+.lang-switch .menu a:hover{background:var(--line-soft);color:var(--ink)}
+.lang-switch .menu a.on{background:rgba(45,91,255,.08);color:var(--primary);font-weight:500}
+.main{display:grid;grid-template-columns:220px1fr;overflow:hidden}
+.sidebar{background:var(--surface);border-right:1px solid var(--line);padding:16px12px;overflow-y:auto}
+.sidebar .grp{font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);font-weight:600;padding:14px10px6px;margin-top:4px}
+.sidebar .grp:first-child{padding-top:4px;margin-top:0}
+.sidebar .nav{display:flex;flex-direction:column;gap:2px}
+.sidebar .nav a{display:flex;align-items:center;gap:8px;padding:8px10px;border-radius:var(--r-md);font-size:13px;color:var(--ink-2);text-decoration:none;transition:all .12s;cursor:pointer}
+.sidebar .nav a:hover{background:var(--line-soft)}
+.sidebar .nav a.on{background:var(--primary);color:white;font-weight:500}
+.sidebar .nav a .num{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;background:var(--line-soft);padding:1px5px;border-radius:4px;margin-left:auto}
+.sidebar .nav a.on .num{color:var(--primary);background:rgba(255,255,255,.85)}
+.canvas{overflow-y:auto;background:var(--bg);padding:24px32px}
+.canvas-inner{max-width:1280px;margin:0 auto}
+.flow-strip{margin-bottom:20px;padding:14px18px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-xl);display:flex;align-items:center;gap:8px;flex-wrap:wrap;box-shadow:var(--sh-sm)}
+.flow-strip .label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-right:4px}
+.flow-strip .step{display:flex;align-items:center;gap:6px;padding:4px10px;border-radius:var(--r-md);background:var(--line-soft);font-size:12px;color:var(--ink-2)}
+.flow-strip .step.now{background:var(--primary);color:white;font-weight:500}
+.flow-strip .step .n{width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600}
+.flow-strip .step:not(.now) .n{background:rgba(0,0,0,.06);color:var(--muted)}
+.flow-strip .arrow{color:var(--muted);font-size:14px}
+.flow-strip .actions{margin-left:auto;display:flex;gap:8px}
+.flow-strip .actions button{padding:6px14px;border-radius:var(--r-md);font-size:13px;font-weight:500}
+.flow-strip .actions .prev{background:var(--line-soft);color:var(--ink-2)}
+.flow-strip .actions .next{background:var(--primary);color:white}
+.page{display:none;animation:fadeIn .25s ease}
+.page.on{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-xl);padding:20px;box-shadow:var(--sh-sm)}
+.card h3{margin:0012px;font-size:14px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:8px}
+.grid2{display:grid;grid-template-columns:1fr1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.row{display:flex;gap:12px;align-items:center}
+.spread{display:flex;justify-content:space-between;align-items:center}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:2px8px;background:var(--line-soft);border-radius:var(--r-sm);font-size:11px;color:var(--ink-2);font-weight:500}
+.tag.ok{background:#d1fae5;color:#065f46}
+.tag.warn{background:#fef3c7;color:#92400e}
+.tag.bad{background:#fee2e2;color:#991b1b}
+.tag.primary{background:#dbeafe;color:#1e40af}
+.tag.dark{background:#1f2937;color:#fff}
+h1.page-title{font-family:'DM Serif Display',serif;font-size:30px;margin:004px;color:var(--ink);font-weight:400}
+.page-sub{color:var(--muted);margin:0024px;font-size:14px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px14px;border-radius:var(--r-md);font-size:13px;font-weight:500;transition:all .15s;cursor:pointer;border:1px solid transparent}
+.btn.primary{background:var(--primary);color:white}
+.btn.primary:hover{background:var(--primary-hover)}
+.btn.ghost{background:var(--line-soft);color:var(--ink-2)}
+.btn.ghost:hover{background:var(--line)}
+.btn.outline{background:transparent;border:1px solid var(--line);color:var(--ink-2)}
+.btn.outline:hover{border-color:var(--ink-2)}
+.btn.danger{background:#fee2e2;color:#991b1b}
+.btn.lg{padding:12px22px;font-size:14px}
+.btn:disabled{opacity:0.5;cursor:not-allowed}
+.input{width:100%;padding:10px12px;border:1px solid var(--line);border-radius:var(--r-md);background:white;outline:none;transition:border .15s}
+.input:focus{border-color:var(--primary);box-shadow:0003px rgba(45,91,255,.08)}
+.input.invalid{border-color:var(--error);background:#fef2f2}
+.input.valid{border-color:var(--success);background:#f0fdf4}
+.label{font-size:12px;color:var(--ink-2);font-weight:500;margin-bottom:4px;display:block}
+.help{font-size:11px;color:var(--muted);margin-top:4px}
+.required::after{content:" *";color:var(--error)}
+.divider{height:1px;background:var(--line);margin:16px0}
+.hero-img{position:relative;border-radius:var(--r-xl);overflow:hidden;margin-bottom:20px;color:white;min-height:380px;display:flex;flex-direction:column;justify-content:flex-end;padding:40px44px}
+.hero-img::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.1)0%,rgba(0,0,0,.3)50%,rgba(0,0,0,.75)100%);z-index:1}
+.hero-img .bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+.hero-img>*{position:relative;z-index:2}
+.hero-img h1{font-family:'DM Serif Display',serif;font-size:42px;margin:0010px;font-weight:400;line-height:1.15;max-width:720px;text-shadow:02px16px rgba(0,0,0,.4)}
+.hero-img p{margin:0022px;opacity:0.95;max-width:640px;font-size:15px;text-shadow:01px8px rgba(0,0,0,.4);line-height:1.7}
+.hero-img .stats{display:flex;gap:36px;margin-top:24px;padding-top:22px;border-top:1px solid rgba(255,255,255,.2)}
+.hero-img .stats .item .v{font-size:26px;font-weight:600;font-family:'JetBrains Mono',monospace}
+.hero-img .stats .item .l{font-size:12px;opacity:0.85;margin-top:2px}
+.trust-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.trust-strip .card{padding:18px;text-align:center}
+.trust-strip .icon{font-size:28px;margin-bottom:8px}
+.trust-strip h4{font-size:14px;margin:004px;font-weight:600}
+.trust-strip p{font-size:12px;color:var(--ink-2);margin:0;line-height:1.5}
+.dest-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-xl);overflow:hidden;cursor:pointer;transition:all .2s;position:relative}
+.dest-card:hover{transform:translateY(-2px);box-shadow:var(--sh-md);border-color:var(--primary)}
+.dest-card .img{height:160px;position:relative;overflow:hidden}
+.dest-card .img img{width:100%;height:100%;object-fit:cover;transition:transform .3s}
+.dest-card:hover .img img{transform:scale(1.05)}
+.dest-card .img::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent50%,rgba(0,0,0,.5)100%)}
+.dest-card .flag-label{position:absolute;top:12px;left:12px;background:rgba(255,255,255,.95);color:var(--ink);padding:4px10px;border-radius:var(--r-sm);font-size:11px;font-weight:600;z-index:1}
+.dest-card .price-pill{position:absolute;bottom:10px;right:12px;background:white;color:var(--primary);padding:4px10px;border-radius:var(--r-md);font-size:12px;font-weight:700;z-index:1;box-shadow:02px8px rgba(0,0,0,.2)}
+.dest-card .body{padding:14px}
+.dest-card .body .name{font-weight:600;font-size:18px;margin-bottom:4px;font-family:'DM Serif Display',serif;letter-spacing:-0.01em}
+.dest-card .body .meta{font-size:12px;color:var(--muted);display:flex;justify-content:space-between;margin-bottom:8px}
+.dest-card .body .tags{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px}
+.dest-card .body .foot{font-size:12px;color:var(--ink-2);display:flex;justify-content:space-between;padding-top:10px;border-top:1px solid var(--line-soft);align-items:center}
+.auth-shell{max-width:480px;margin:24px auto}
+.auth-shell .card{padding:36px40px}
+.auth-shell h1{font-family:'DM Serif Display',serif;font-size:28px;margin:006px;color:var(--ink)}
+.auth-shell .sub{font-size:14px;color:var(--muted);margin:0024px}
+.auth-shell .field{margin-bottom:16px}
+.phone-row{display:grid;grid-template-columns:120px1fr110px;gap:8px}
+.profile-head{display:flex;gap:20px;align-items:center;padding:24px;background:linear-gradient(135deg,#2D5BFF,#5A7DFF);border-radius:var(--r-xl);color:white;margin-bottom:20px}
+.profile-head .avatar{width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:600;backdrop-filter:blur(10px);border:2px solid rgba(255,255,255,.4)}
+.profile-head .info h2{font-family:'DM Serif Display',serif;font-size:24px;margin:004px;font-weight:400}
+.profile-head .info p{margin:0;opacity:0.85;font-size:13px}
+.menu-list .menu-item{display:flex;align-items:center;gap:14px;padding:16px;border:1px solid var(--line);border-radius:var(--r-md);margin-bottom:8px;background:var(--surface);cursor:pointer;transition:all .12s}
+.menu-list .menu-item:hover{border-color:var(--primary);background:rgba(45,91,255,.02)}
+.menu-list .menu-item .icon{width:36px;height:36px;border-radius:var(--r-md);background:var(--line-soft);display:flex;align-items:center;justify-content:center;font-size:18px}
+.menu-list .menu-item .label{flex:1;font-size:14px;font-weight:500}
+.menu-list .menu-item .arrow{color:var(--muted);font-size:14px}
+.scan-stage{aspect-ratio:1.4;max-width:560px;margin:0 auto20px;background:#0f172a;border-radius:var(--r-xl);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;color:white}
+.scan-stage .corner{position:absolute;width:36px;height:36px;border:3px solid var(--accent);border-radius:4px}
+.scan-stage .corner.tl{top:40px;left:40px;border-right:none;border-bottom:none}
+.scan-stage .corner.tr{top:40px;right:40px;border-left:none;border-bottom:none}
+.scan-stage .corner.bl{bottom:40px;left:40px;border-right:none;border-top:none}
+.scan-stage .corner.br{bottom:40px;right:40px;border-left:none;border-top:none}
+.scan-stage .scan-line{position:absolute;left:40px;right:40px;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);box-shadow:0012px var(--accent);animation:scan2.4s ease-in-out infinite}
+@keyframes scan{0%,100%{top:40px}50%{top:calc(100% -42px)}}
+.scan-stage .passport{width:78%;height:62%;background:linear-gradient(135deg,#1e40af,#1e3a8a);border-radius:8px;position:relative;box-shadow:010px40px rgba(0,0,0,.5)}
+.scan-stage .passport::before{content:"PASSPORT";position:absolute;top:14px;left:14px;font-family:'DM Serif Display',serif;font-size:14px;letter-spacing:0.1em;color:#fbbf24}
+.scan-stage .passport .photo{position:absolute;top:42px;left:14px;width:60px;height:74px;background:#1e293b;border-radius:3px;display:flex;align-items:center;justify-content:center;color:#64748b;font-size:10px}
+.scan-stage .passport .text{position:absolute;top:42px;left:84px;right:14px;color:white;font-family:'JetBrains Mono',monospace}
+.scan-stage .passport .text .name{font-size:12px;margin-bottom:6px;color:#fbbf24}
+.scan-stage .passport .text .row{font-size:10px;line-height:1.7;display:flex;justify-content:space-between;margin-bottom:2px}
+.scan-stage .passport .mrz{position:absolute;bottom:14px;left:14px;right:14px;height:20px;background:repeating-linear-gradient(90deg,white04px,transparent4px6px);border-radius:2px}
+.scan-tip{position:absolute;top:24px;left:0;right:0;text-align:center;font-size:13px;background:rgba(0,0,0,.5);padding:8px16px;margin:020px;border-radius:8px}
+.scan-controls{position:absolute;bottom:30px;left:0;right:0;display:flex;justify-content:center;gap:20px;align-items:center}
+.scan-controls .flash{width:44px;height:44px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.3)}
+.scan-controls .capture{width:64px;height:64px;background:white;border-radius:50%;border:4px solid rgba(255,255,255,.5);box-shadow:04px16px rgba(0,0,0,.3)}
+.scan-controls .switch{width:44px;height:44px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.3)}
+.countdown{display:inline-block;background:rgba(0,0,0,.6);padding:4px10px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--warning)}
+.mat-tabs{display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap}
+.mat-tabs .tab{padding:8px14px;border-radius:var(--r-md);font-size:12px;background:var(--line-soft);color:var(--ink-2);cursor:pointer;border:1px solid transparent}
+.mat-tabs .tab.on{background:var(--primary);color:white;font-weight:500}
+.mat-tabs .tab:hover:not(.on){background:#e9eef9}
+.entry-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+.entry-card{background:var(--surface);border:2px solid var(--line);border-radius:var(--r-xl);padding:20px;text-align:center;cursor:pointer;transition:all .15s}
+.entry-card:hover{border-color:var(--primary);background:rgba(45,91,255,.02)}
+.entry-card .ic{font-size:32px;margin-bottom:8px}
+.entry-card h4{font-size:14px;margin:004px;font-weight:600}
+.entry-card p{font-size:12px;color:var(--muted);margin:0}
+.mat-list{display:flex;flex-direction:column;gap:8px}
+.mat-item{display:grid;grid-template-columns:48px1fr auto auto auto;gap:14px;align-items:center;padding:14px16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md)}
+.mat-item .thumb{width:48px;height:48px;border-radius:var(--r-md);background:linear-gradient(135deg,#5A7DFF,#2D5BFF);display:flex;align-items:center;justify-content:center;color:white;font-size:20px;font-weight:600}
+.mat-item .meta .name{font-size:14px;font-weight:500}
+.mat-item .meta .file{font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:2px}
+.val-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.val-summary .stat{padding:18px;border-radius:var(--r-md);background:var(--surface);border:1px solid var(--line);text-align:center}
+.val-summary .stat .v{font-size:28px;font-weight:600;font-family:'JetBrains Mono',monospace}
+.val-summary .stat.ok .v{color:var(--success)}
+.val-summary .stat.bad .v{color:var(--error)}
+.val-summary .stat.warn .v{color:var(--warning)}
+.val-summary .stat.total .v{color:var(--ink)}
+.val-summary .stat .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-top:4px}
+.val-list .val-item{display:grid;grid-template-columns:40px1fr140px100px;gap:14px;align-items:center;padding:14px16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);margin-bottom:8px;cursor:pointer;transition:all .12s}
+.val-list .val-item:hover{border-color:var(--ink-2)}
+.val-list .val-item .dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:14px;font-weight:600}
+.val-list .val-item.ok .dot{background:var(--success)}
+.val-list .val-item.warn .dot{background:var(--warning)}
+.val-list .val-item.bad .dot{background:var(--error)}
+.val-list .val-item .info .key{font-size:14px;font-weight:500;color:var(--ink)}
+.val-list .val-item .info .rule{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:2px}
+.form-grid{display:grid;grid-template-columns:1fr1fr;gap:14px}
+.form-row{grid-column:span2}
+.auto-badge{display:inline-block;background:rgba(16,185,129,.1);color:var(--success);padding:2px6px;border-radius:4px;font-size:10px;font-weight:600;margin-left:6px}
+.rpa-stepper{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding:24px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-xl)}
+.rpa-stepper .step{flex:1;text-align:center;position:relative}
+.rpa-stepper .step .icon{width:48px;height:48px;border-radius:50%;background:var(--line-soft);display:flex;align-items:center;justify-content:center;margin:0 auto8px;font-size:18px;color:var(--muted);position:relative;z-index:1}
+.rpa-stepper .step.done .icon{background:var(--success);color:white}
+.rpa-stepper .step.now .icon{background:var(--primary);color:white;box-shadow:0006px rgba(45,91,255,.15);animation:pulse1.6s ease-in-out infinite}
+.rpa-stepper .step.fail .icon{background:var(--error);color:white}
+.rpa-stepper .step .label{font-size:12px;font-weight:500;color:var(--ink)}
+.rpa-stepper .step.now .label{color:var(--primary)}
+.rpa-stepper .step.done .label{color:var(--success)}
+.rpa-stepper .step.fail .label{color:var(--error)}
+.rpa-stepper .step .time{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:2px}
+.rpa-stepper .step:not(:last-child)::after{content:"";position:absolute;left:calc(50% +30px);right:calc(-50% +30px);top:24px;height:2px;background:var(--line);z-index:0}
+.rpa-stepper .step.done:not(:last-child)::after{background:var(--success)}
+@keyframes pulse{0%,100%{box-shadow:0006px rgba(45,91,255,.15)}50%{box-shadow:00012px rgba(45,91,255,.05)}}
+.rpa-grid{display:grid;grid-template-columns:1fr320px;gap:16px}
+.log-window{background:#0f172a;border-radius:var(--r-md);padding:14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#94a3b8;height:280px;overflow:hidden;position:relative}
+.log-window .line{margin-bottom:3px;line-height:1.6;white-space:nowrap}
+.log-window .line .ts{color:#64748b;margin-right:8px}
+.log-window .line.info{color:#94a3b8}
+.log-window .line.ok{color:#10B981}
+.log-window .line.warn{color:#F59E0B}
+.log-window .line.fail{color:#EF4444}
+.log-window .scroll-mask{position:absolute;left:0;right:0;bottom:0;height:60px;background:linear-gradient(180deg,transparent,#0f172a);pointer-events:none}
+.rpa-side{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-xl);padding:20px}
+.rpa-side h4{margin:0012px;font-size:14px;font-weight:600}
+.rpa-side .metric{display:flex;justify-content:space-between;padding:8px0;font-size:13px;border-bottom:1px solid var(--line-soft)}
+.rpa-side .metric:last-child{border-bottom:none}
+.rpa-side .metric .v{font-family:'JetBrains Mono',monospace;font-weight:600}
+.toast-demo{position:fixed;top:80px;right:32px;background:var(--error);color:white;padding:14px18px;border-radius:var(--r-md);box-shadow:var(--sh-lg);max-width:340px;display:none;z-index:9999}
+.toast-demo.on{display:block;animation:slideIn .4s ease}
+@keyframes slideIn{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}
+.toast-demo h5{margin:004px;font-size:14px}
+.toast-demo p{margin:0;font-size:12px;opacity:0.9;line-height:1.5}
+.timeline{display:flex;justify-content:space-between;margin-bottom:30px;padding:24px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-xl);position:relative}
+.timeline .step{flex:1;text-align:center;position:relative}
+.timeline .step .dot{width:40px;height:40px;border-radius:50%;background:var(--line);display:flex;align-items:center;justify-content:center;margin:0 auto8px;font-size:14px;color:var(--muted);position:relative;z-index:1}
+.timeline .step.done .dot{background:var(--success);color:white}
+.timeline .step.now .dot{background:var(--warning);color:white;box-shadow:0005px rgba(245,158,11,.15);animation:pulse1.6s ease-in-out infinite}
+.timeline .step .label{font-size:12px;font-weight:500;color:var(--ink-2)}
+.timeline .step.done .label,.timeline .step.now .label{color:var(--ink)}
+.timeline .step .time{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:2px}
+.timeline .step:not(:last-child)::after{content:"";position:absolute;left:calc(50% +24px);right:calc(-50% +24px);top:20px;height:2px;background:var(--line);z-index:0}
+.timeline .step.done:not(:last-child)::after{background:var(--success)}
+.msg-list .msg{display:flex;gap:12px;padding:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);margin-bottom:8px}
+.msg-list .msg .dot{width:8px;height:8px;border-radius:50%;background:var(--primary);margin-top:6px;flex-shrink:0}
+.msg-list .msg .body .title{font-size:14px;font-weight:500;color:var(--ink)}
+.msg-list .msg .body .text{font-size:13px;color:var(--ink-2);margin-top:2px;line-height:1.5}
+.msg-list .msg .body .time{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:4px}
+.settings-grid{display:grid;grid-template-columns:1fr1fr;gap:16px}
+.settings-card .row2{display:flex;justify-content:space-between;align-items:center;padding:14px0;border-bottom:1px solid var(--line-soft)}
+.settings-card .row2:last-child{border-bottom:none}
+.settings-card .row2 .label{font-size:14px;font-weight:500;color:var(--ink)}
+.settings-card .row2 .desc{font-size:12px;color:var(--muted);margin-top:2px}
+.switch{position:relative;width:40px;height:22px;background:var(--line);border-radius:11px;cursor:pointer;transition:background .2s}
+.switch::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;background:white;border-radius:50%;transition:all .2s;box-shadow:var(--sh-sm)}
+.switch.on{background:var(--primary)}
+.switch.on::after{left:20px}
+.danger-row{border:1px solid #fecaca;background:#fef2f2;border-radius:var(--r-md);padding:14px18px;display:flex;justify-content:space-between;align-items:center}
+.section-title{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin:20px010px}
+</style>
+</head>
+<body>
+<div class="app">
+ <div class="topbar">
+ <div class="brand"><span class="dot"></span><span data-i18n="brand">签证智能助手 · V2</span></div>
+ <div class="pill"><span data-i18n="env">纯工具版</span> · <b>8W MVP</b></div>
+ <div class="view">
+ <div class="lang-switch" id="langSwitch">
+ <button class="btn" onclick="document.getElementById('langSwitch').classList.toggle('open')">
+ <span class="flag" id="langFlag">🇨🇳</span>
+ <span id="langLabel">简体中文</span>
+ <span class="arrow">▾</span>
+ </button>
+ <div class="menu">
+ <a data-lang="zh-CN" onclick="setLang('zh-CN')"><span>🇨🇳</span>简体中文</a>
+ <a data-lang="en" onclick="setLang('en')"><span>🇬🇧</span> English</a>
+ <a data-lang="id" onclick="setLang('id')"><span>🇮🇩</span> Bahasa Indonesia</a>
+ <a data-lang="vi" onclick="setLang('vi')"><span>🇻🇳</span> Tiếng Việt</a>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <div class="main">
+ <div class="sidebar">
+ <div class="grp" data-i18n="grp_guest">游客 (Guest)</div>
+ <div class="nav">
+ <a data-p="P1" class="on" onclick="showPage('P1')"><span>🏠</span> <span data-i18n="nav_home">首页 /落地页</span> <span class="num">01</span></a>
+ <a data-p="P2" onclick="showPage('P2')"><span>📝</span> <span data-i18n="nav_signup">注册</span> <span class="num">02</span></a>
+ <a data-p="P3" onclick="showPage('P3')"><span>🔑</span> <span data-i18n="nav_login">登录</span> <span class="num">03</span></a>
+ </div>
+ <div class="grp" data-i18n="grp_user">已登录 (User)</div>
+ <div class="nav">
+ <a data-p="P4" onclick="showPage('P4')"><span>👤</span> <span data-i18n="nav_profile">个人中心</span> <span class="num">04</span></a>
+ <a data-p="P5" onclick="showPage('P5')"><span>🌏</span> <span data-i18n="nav_dests">选择目的地</span> <span class="num">05</span></a>
+ <a data-p="P6" onclick="showPage('P6')"><span>📷</span> <span data-i18n="nav_scan">扫描护照 (N1)</span> <span class="num">06</span></a>
+ <a data-p="P7" onclick="showPage('P7')"><span>📄</span> <span data-i18n="nav_mats">材料采集</span> <span class="num">07</span></a>
+ <a data-p="P8" onclick="showPage('P8')"><span>✅</span> <span data-i18n="nav_val">AI校验结果 (N2)</span> <span class="num">08</span></a>
+ <a data-p="P9" onclick="showPage('P9')"><span>📋</span> <span data-i18n="nav_form">表单填写</span> <span class="num">09</span></a>
+ <a data-p="P10" onclick="showPage('P10')"><span>⚙️</span> <span data-i18n="nav_rpa">RPA进度 (N3)</span> <span class="num">10</span></a>
+ <a data-p="P11" onclick="showPage('P11')"><span>📑</span> <span data-i18n="nav_order">订单详情 (N4)</span> <span class="num">11</span></a>
+ <a data-p="P12" onclick="showPage('P12')"><span>⚙️</span> <span data-i18n="nav_set">设置</span> <span class="num">12</span></a>
+ </div>
+ </div>
+
+ <div class="canvas">
+ <div class="canvas-inner">
+
+<div class="page on" data-id="P1">
+ <div class="flow-strip">
+ <span class="label" data-i18n="flow_label">签证 V2 全流程</span>
+ <span class="step now"><span class="n">1</span> <span data-i18n="step1">首页</span></span><span class="arrow">→</span>
+ <span class="step"><span class="n">2</span> <span data-i18n="step2">选国家</span></span><span class="arrow">→</span>
+ <span class="step"><span class="n">3</span> <span data-i18n="step3">扫描</span></span><span class="arrow">→</span>
+ <span class="step"><span class="n">4</span> <span data-i18n="step4">材料</span></span><span class="arrow">→</span>
+ <span class="step"><span class="n">5</span> <span data-i18n="step5">校验</span></span><span class="arrow">→</span>
+ <span class="step"><span class="n">6</span> <span data-i18n="step6">表单</span></span><span class="arrow">→</span>
+ <span class="step"><span class="n">7</span> <span data-i18n="step7">RPA提交</span></span><span class="arrow">→</span>
+ <span class="step"><span class="n">8</span> <span data-i18n="step8">订单状态</span></span><span class="arrow">→</span>
+ <span class="step"><span class="n">9</span> <span data-i18n="step9">出签</span></span>
+ <div class="actions">
+ <button class="next" onclick="showPage('P5')"><span data-i18n="cta_next">下一步:选国家</span> →</button>
+ </div>
+ </div>
+ <div class="hero-img">
+ <img class="bg" src="V1_原型_images/usa.jpg" alt="USA"/>
+ <h1 data-i18n="hero_title">几分钟搞定签证申请</h1>
+ <p data-i18n="hero_sub">护照 OCR + AI智能校验 + RPA 自动提交。本地部署 · 数据安全 ·4语种界面 ·9 国目的地。<br/><span data-i18n="hero_note">仅作为线上辅助工具,签证结果由各国官方机构独立审核。</span></p>
+ <div style="display:flex;gap:10px">
+ <button class="btn primary lg" onclick="showPage('P2')" data-i18n="cta_signup">免费注册</button>
+ <button class="btn lg" style="background:rgba(255,255,255,.15);color:white;backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.3)" onclick="showPage('P5')" data-i18n="cta_explore">浏览9 国目的地</button>
+ </div>
+ <div class="stats">
+ <div class="item"><div class="v">9</div><div class="l" data-i18n="stat_dests">目的地</div></div>
+ <div class="item"><div class="v">4</div><div class="l" data-i18n="stat_langs">语种</div></div>
+ <div class="item"><div class="v">≥95%</div><div class="l" data-i18n="stat_ocr">OCR准确率</div></div>
+ <div class="item"><div class="v">≥95%</div><div class="l" data-i18n="stat_rpa">RPA提交成功率</div></div>
+ <div class="item"><div class="v">100%</div><div class="l" data-i18n="stat_local">本地部署</div></div>
+ </div>
+ </div>
+ <div class="trust-strip">
+ <div class="card"><div class="icon">🚫</div><h4 data-i18n="trust1_t">无活体检测</h4><p data-i18n="trust1_d">无需人脸识别、指纹采集。仅扫描证件 +填写信息。</p></div>
+ <div class="card"><div class="icon">🏠</div><h4 data-i18n="trust2_t">100% 本地部署</h4><p data-i18n="trust2_d">所有数据存储在本地服务器,无任何公有云依赖。</p></div>
+ <div class="card"><div class="icon">🤖</div><h4 data-i18n="trust3_t">AI智能校验</h4><p data-i18n="trust3_d">15+校验规则:格式 /有效期 /清晰度 / 一致性。</p></div>
+ <div class="card"><div class="icon">⚡</div><h4 data-i18n="trust4_t">RPA 自动提交</h4><p data-i18n="trust4_d">Playwright + Camoufox模拟人工操作,平均10-15 分钟。</p></div>
+ </div>
+ <div class="section-title" data-i18n="dests_title">9 国主推目的地</div>
+ <div class="grid3" id="destGrid"></div>
+</div>
+
+<div class="page" data-id="P2">
+ <div class="auth-shell">
+ <div class="card">
+ <h1 data-i18n="signup_t">创建账号</h1>
+ <p class="sub" data-i18n="signup_s">4语种界面 · 仅用于签证申请辅助</p>
+ <div class="field">
+ <label class="label required" data-i18n="phone_l">手机号</label>
+ <div class="phone-row">
+ <select class="input"><option>🇨🇳 +86</option><option selected>🇮🇩 +62</option><option>🇻🇳 +84</option><option>🇵🇭 +63</option></select>
+ <input class="input" placeholder="81234567890" data-i18n-placeholder="phone_ph"/>
+ <button class="btn outline" data-i18n="send_code">发送验证码</button>
+ </div>
+ <div class="help" data-i18n="phone_help">我们将向该手机号发送6 位验证码</div>
+ </div>
+ <div class="field">
+ <label class="label required" data-i18n="code_l">验证码</label>
+ <input class="input" placeholder="6 位数字" data-i18n-placeholder="code_ph"/>
+ </div>
+ <div class="field">
+ <label class="label required" data-i18n="pwd_l">密码</label>
+ <input class="input" type="password" placeholder="8-32 位字母和数字" data-i18n-placeholder="pwd_ph"/>
+ <div class="help" data-i18n="pwd_help">强度: ●○○ 中等</div>
+ </div>
+ <div class="field" style="display:flex;align-items:flex-start;gap:8px;margin-top:24px">
+ <input type="checkbox" id="agree" checked style="margin-top:3px"/>
+ <label for="agree" style="font-size:13px;line-height:1.6;color:var(--ink-2)">
+ <span data-i18n="agree_p">我已阅读并同意</span> <a href="#" onclick="showPage('P1');return false"><span data-i18n="agree_tos">《用户服务协议》</span></a> <span data-i18n="agree_and">和</span> <a href="#" onclick="showPage('P1');return false"><span data-i18n="agree_priv">《隐私政策》</span></a>
+ </label>
+ </div>
+ <button class="btn primary lg" style="width:100%;margin-top:16px" onclick="showPage('P4')" data-i18n="signup_btn">注册</button>
+ <div class="divider"></div>
+ <div style="text-align:center;font-size:13px;color:var(--muted)">
+ <span data-i18n="have_acc">已有账号?</span> <a href="#" onclick="showPage('P3');return false" data-i18n="go_login">立即登录</a>
+ </div>
+ </div>
+ </div>
+</div>
+
+<div class="page" data-id="P3">
+ <div class="auth-shell">
+ <div class="card">
+ <h1 data-i18n="login_t">欢迎回来</h1>
+ <p class="sub" data-i18n="login_s">使用手机号 +密码 /短信码登录</p>
+ <div class="mat-tabs" style="margin-bottom:20px">
+ <span class="tab on" data-i18n="login_pwd">密码登录</span>
+ <span class="tab" data-i18n="login_sms">短信快捷登录</span>
+ </div>
+ <div class="field">
+ <label class="label required" data-i18n="phone_l">手机号</label>
+ <div class="phone-row">
+ <select class="input"><option>🇨🇳 +86</option><option selected>🇮🇩 +62</option><option>🇻🇳 +84</option><option>🇵🇭 +63</option></select>
+ <input class="input" placeholder="81234567890" data-i18n-placeholder="phone_ph"/>
+ <button class="btn outline" data-i18n="send_code">发送验证码</button>
+ </div>
+ </div>
+ <div class="field">
+ <label class="label required" data-i18n="pwd_l">密码</label>
+ <input class="input valid" type="password" value="••••••••"/>
+ <div class="help" style="color:var(--success)" data-i18n="pwd_ok">已记住密码</div>
+ </div>
+ <div class="row" style="justify-content:space-between;margin:14px020px">
+ <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-2);cursor:pointer">
+ <input type="checkbox" checked/> <span data-i18n="remember">7 天内自动登录</span>
+ </label>
+ <a href="#" style="font-size:13px" data-i18n="forgot">忘记密码?</a>
+ </div>
+ <button class="btn primary lg" style="width:100%" onclick="showPage('P4')" data-i18n="login_btn">登录</button>
+ <div class="divider"></div>
+ <div style="text-align:center;font-size:13px;color:var(--muted)">
+ <span data-i18n="no_acc">还没有账号?</span> <a href="#" onclick="showPage('P2');return false" data-i18n="go_signup">立即注册</a>
+ </div>
+ </div>
+ </div>
+</div>
+
+<div class="page" data-id="P4">
+ <h1 class="page-title" data-i18n="profile_t">个人中心</h1>
+ <p class="page-sub" data-i18n="profile_s">账号信息 · 历史材料 ·语种偏好</p>
+ <div class="profile-head">
+ <div class="avatar">B</div>
+ <div class="info">
+ <h2>Budi Santoso</h2>
+ <p>+62812-****-7890 · <span data-i18n="joined">注册于</span>2026-05-12</p>
+ <div style="margin-top:8px;display:flex;gap:8px">
+ <span class="tag" style="background:rgba(255,255,255,.2);color:white">🇮🇩 Bahasa Indonesia</span>
+ <span class="tag ok" style="background:rgba(16,185,129,.2);color:#d1fae5"><span data-i18n="verified">已实名</span></span>
+ </div>
+ </div>
+ <div style="margin-left:auto;text-align:right">
+ <div style="font-size:12px;opacity:0.8" data-i18n="orders_count">累计订单</div>
+ <div style="font-family:'JetBrains Mono',monospace;font-size:36px;font-weight:600">3</div>
+ </div>
+ </div>
+ <div class="grid2">
+ <div>
+ <div class="section-title" data-i18n="quick_actions">快捷入口</div>
+ <div class="menu-list">
+ <div class="menu-item" onclick="showPage('P11')">
+ <div class="icon">📑</div>
+ <div class="label">
+ <div data-i18n="m_orders">我的订单</div>
+ <div style="font-size:12px;color:var(--muted);font-weight:400;margin-top:2px"><span data-i18n="m_orders_d">3笔进行中 ·2笔已完成</span></div>
+ </div>
+ <span class="arrow">›</span>
+ </div>
+ <div class="menu-item">
+ <div class="icon">📁</div>
+ <div class="label">
+ <div data-i18n="m_mats">材料仓库 (N5)</div>
+ <div style="font-size:12px;color:var(--muted);font-weight:400;margin-top:2px"><span data-i18n="m_mats_d">护照 +身份证,可复用</span></div>
+ </div>
+ <span class="arrow">›</span>
+ </div>
+ <div class="menu-item" onclick="showPage('P12')">
+ <div class="icon">⚙️</div>
+ <div class="label">
+ <div data-i18n="m_set">设置</div>
+ <div style="font-size:12px;color:var(--muted);font-weight:400;margin-top:2px"><span data-i18n="m_set_d">通知 ·隐私 ·协议</span></div>
+ </div>
+ <span class="arrow">›</span>
+ </div>
+ <div class="menu-item danger-row" style="border:none;background:#fef2f2;border:1px solid #fecaca">
+ <div class="icon" style="background:#fee2e2;color:#991b1b">🗑️</div>
+ <div class="label">
+ <div style="color:#991b1b" data-i18n="m_del">注销账号 (N7)</div>
+ <div style="font-size:12px;color:var(--muted);font-weight:400;margin-top:2px"><span data-i18n="m_del_d">72h 后数据彻底销毁</span></div>
+ </div>
+ <span class="arrow" style="color:#991b1b">›</span>
+ </div>
+ </div>
+ </div>
+ <div>
+ <div class="section-title" data-i18n="recent_orders">最近订单</div>
+ <div class="card">
+ <div class="row spread" style="margin-bottom:12px">
+ <div>
+ <div style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ink-2)">V2-20260611-000123</div>
+ <div style="font-size:14px;font-weight:500;margin-top:2px">🇯🇵 <span data-i18n="jp_name">日本旅游签</span></div>
+ </div>
+ <span class="tag warn"><span data-i18n="state_reviewing">审核中</span></span>
+ </div>
+ <div class="row spread" style="font-size:12px;color:var(--muted)">
+ <span>2026-06-1114:23</span>
+ <a href="#" onclick="showPage('P11');return false" data-i18n="view_detail">查看详情 →</a>
+ </div>
+ </div>
+ <div class="card" style="margin-top:10px">
+ <div class="row spread" style="margin-bottom:12px">
+ <div>
+ <div style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ink-2)">V2-20260528-000087</div>
+ <div style="font-size:14px;font-weight:500;margin-top:2px">🇰🇷 <span data-i18n="kr_name">韩国旅游签</span></div>
+ </div>
+ <span class="tag ok"><span data-i18n="state_approved">出签</span></span>
+ </div>
+ <div class="row spread" style="font-size:12px;color:var(--muted)">
+ <span>2026-05-2809:45</span>
+ <a href="#" data-i18n="dl_pdf">下载签证 PDF ↓</a>
+ </div>
+ </div>
+ <div class="card" style="margin-top:10px">
+ <div class="row spread" style="margin-bottom:12px">
+ <div>
+ <div style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ink-2)">V2-20260520-000042</div>
+ <div style="font-size:14px;font-weight:500;margin-top:2px">🇸🇬 <span data-i18n="sg_name">新加坡学生签</span></div>
+ </div>
+ <span class="tag bad"><span data-i18n="state_rejected">拒签</span></span>
+ </div>
+ <div class="row spread" style="font-size:12px;color:var(--muted)">
+ <span>2026-05-2017:12</span>
+ <a href="#" data-i18n="view_reason">查看原因 →</a>
+ </div>
+ </div>
+ </div>
+ </div>
+</div>
+
+<div class="page" data-id="P5">
+ <h1 class="page-title" data-i18n="dests_t">选择目的地</h1>
+ <p class="page-sub" data-i18n="dests_s">9 国主推 · 仅旅游签/学生签 · 数据已为 Tier1 国家(印尼/越南/菲律宾)完整配置</p>
+ <div class="row" style="margin-bottom:20px">
+ <div class="mat-tabs">
+ <span class="tab on" data-i18n="vt_all">全部</span>
+ <span class="tab" data-i18n="vt_t">旅游签</span>
+ <span class="tab" data-i18n="vt_s">学生签</span>
+ </div>
+ <div style="margin-left:auto;font-size:13px;color:var(--muted)" data-i18n="applied_mark">已申请过 ↗ 显示绿色角标</div>
+ </div>
+ <div class="grid3" id="destGrid2"></div>
+ <div class="card" style="margin-top:24px;background:rgba(45,91,255,.04);border-color:rgba(45,91,255,.2)">
+ <div class="row spread">
+ <div>
+ <h3 style="margin:0;font-size:14px;font-weight:600;color:var(--primary)" data-i18n="tier1_h">Tier1 国家已完整配置</h3>
+ <p style="margin:6px00;font-size:13px;color:var(--ink-2);line-height:1.6" data-i18n="tier1_d">印尼 /越南 /菲律宾 已完整配置 OCR模板、AI校验规则、RPA自动化流程,可用率达99%。其余6 国(美/日/英/澳/加/欧盟)配置就绪,文档已覆盖。</p>
+ </div>
+ <button class="btn outline" data-i18n="view_cfg">查看配置说明</button>
+ </div>
+ </div>
+</div>
+
+<div class="page" data-id="P6">
+ <div class="flow-strip">
+ <span class="label" data-i18n="flow_label">签证 V2 全流程</span>
+ <span class="step"><span class="n">1</span> <span data-i18n="step1">首页</span></span><span class="arrow">→</span>
+ <span class="step"><span class="n">2</span> <span data-i18n="step2">选国家</span></span><span class="arrow">→</span>
+ <span class="step now"><span class="n">3</span> <span data-i18n="step3">扫描</span></span><span class="arrow">→</span>
+ <span class="step"><span class="n">4</span> <span data-i18n="step4">材料</span></span><span class="arrow">→</span>
+ <span class="step"><span class="n">5</span> <span data-i18n="step5">校验</span></span><span class="arrow">→</span>
+ <span class="step"><span class="n">6</span> <span data-i18n="step6">表单</span></span><span class="arrow">→</span>
+ <span class="step"><span class="n">7</span> <span data-i18n="step7">RPA提交</span></span><span class="arrow">→</span>
+ <span class="step"><span class="n">8</span> <span data-i18n="step8">订单状态</span></span><span class="arrow">→</span>
+ <span class="step"><span class="n">9</span> <span data-i18n="step9">出签</span></span>
+ <div class="actions">
+ <button class="prev" onclick="showPage('P5')"><span data-i18n="prev">← 上一步</span></button>
+ <button class="next" onclick="showPage('P8')"><span data-i18n="next">下一步:校验 →</span></button>
+ </div>
+ </div>
+ <h1 class="page-title" data-i18n="scan_t">扫描护照资料页</h1>
+ <p class="page-sub" data-i18n="scan_s">将 <strong data-i18n="scan_bio">有照片那页</strong> 对准取景框 · 自动检测对齐 · 平均2.5 秒识别完成</p>
+ <div class="scan-stage">
+ <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+ <div class="scan-line"></div>
+ <div class="passport">
+ <div class="photo">PHOTO</div>
+ <div class="text">
+ <div class="name">SANTOSO, BUDI</div>
+ <div class="row"><span>Passport No</span><span>A12345678</span></div>
+ <div class="row"><span>Nationality</span><span>INDONESIA</span></div>
+ <div class="row"><span>Sex</span><span>M</span></div>
+ <div class="row"><span>DOB</span><span>1990-05-12</span></div>
+ <div class="row"><span>Expiry</span><span>2030-08-22</span></div>
+ </div>
+ <div class="mrz"></div>
+ </div>
+ <div class="scan-tip">📐 <span data-i18n="scan_tip">将护照资料页对准框内,确保四角完整可见</span></div>
+ <div class="scan-controls">
+ <div class="flash">⚡</div>
+ <div class="capture"></div>
+ <div class="switch">🔄</div>
+ </div>
+ </div>
+ <div class="row spread" style="max-width:560px;margin:0 auto">
+ <div>
+ <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em" data-i18n="auto_cap">自动拍摄倒计时</div>
+ <div class="countdown" style="margin-top:4px">3.0 s</div>
+ </div>
+ <div>
+ <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em" data-i18n="conf">对齐置信度</div>
+ <div style="margin-top:6px"><div style="background:var(--line);height:6px;border-radius:3px;width:180px"><div style="background:var(--success);height:6px;border-radius:3px;width:82%"></div></div></div>
+ </div>
+ <button class="btn outline" onclick="showPage('P8')"><span data-i18n="manual">手动拍摄</span></button>
+ </div>
+ <div class="card" style="max-width:560px;margin:24px auto0">
+ <div class="row" style="gap:14px">
+ <div style="font-size:24px">💡</div>
+ <div>
+ <h4 style="margin:004px;font-size:14px" data-i18n="tip_h">拍摄小贴士</h4>
+ <p style="margin:0;font-size:12px;color:var(--ink-2);line-height:1.6" data-i18n="tip_d">在光线充足的环境下拍摄 ·避免反光和阴影 ·保持护照平整 · OCR引擎 PaddleOCR2.7+离线运行,字段准确率 ≥95%。</p>
+ </div>
+ </div>
+ </div>
+</div>
+
+<div class="page" data-id="P7">
+ <div class="flow-strip">
+ <span class="label" data-i18n="flow_label">签证 V2 全流程</span>
+ <span class="step"><span class="n">1</span> <span data-i18n="step1">首页</span></span><span class="arrow">→</span>
+ <span class="step"><span class="n">2</span> <span data-i18n="step2">选国家</span></span><span class="arrow">→</span>
+ <span class="step"><span class="n">3</span> <span data-i18n="step3">扫描</span></span><span class="arrow">→</span>
+ <span class="step now"><span class="n">4</span> <span data-i18n="step4">材料</span></span><span class="arrow">→</span>
+ <span class="step"><span class="n">5</span> <span data-i18n="step5">校验</span></span><span class="arrow">→</span>
+ <span class="step"><span class="n">6</span> <span data-i18n="step6">表单</span></span><span class="arrow">→</span>
+ <span class="step"><span class="n">7</span> <span data-i18n="step7">RPA提交</span></span><span class="arrow">→</span>
+ <span class="step"><span class="n">8</span> <span data-i18n="step8">订单状态</span></span><span class="arrow">→</span>
+ <span class="step"><span class="n">9</span> <span data-i18n="step9">出签</span></span>
+ <div class="actions">
+ <button class="prev" onclick="showPage('P6')"><span data-i18n="prev">← 上一步</span></button>
+ <button class="next" onclick="showPage('P8')"><span data-i18n="next">下一步:校验 →</span></button>
+ </div>
+ </div>
+ <h1 class="page-title" data-i18n="mats_t">材料采集</h1>
+ <p class="page-sub" data-i18n="mats_s">3 种采集方式可选 · 支持同一材料多张 · 单文件 ≤10MB · JPG / PNG / PDF / WebP</p>
+ <div class="mat-tabs">
+ <span class="tab on" data-i18n="m_all">全部材料</span>
+ <span class="tab" data-i18n="m_pass">护照</span>
+ <span class="tab" data-i18n="m_id">身份证</span>
+ <span class="tab" data-i18n="m_house">户口本</span>
+ <span class="tab" data-i18n="m_emp">在职证明</span>
+ <span class="tab" data-i18n="m_bank">银行流水</span>
+ <span class="tab" data-i18n="m_flight">机票预订单</span>
+ <span class="tab" data-i18n="m_hotel">酒店预订单</span>
+ </div>
+ <div class="entry-grid">
+ <div class="entry-card" onclick="showPage('P6')">
+ <div class="ic">📷</div>
+ <h4 data-i18n="ent1_t">拍照识别 (OCR)</h4>
+ <p data-i18n="ent1_d">PaddleOCR2.7+ ·实时识别 ·2.5s 平均</p>
+ </div>
+ <div class="entry-card">
+ <div class="ic">📤</div>
+ <h4 data-i18n="ent2_t">上传文件</h4>
+ <p data-i18n="ent2_d">JPG / PNG / PDF / WebP · ≤10MB</p>
+ </div>
+ <div class="entry-card">
+ <div class="ic">🎤</div>
+ <h4 data-i18n="ent3_t">语音录入</h4>
+ <p data-i18n="ent3_d">FunASR paraformer-zh ·印尼/越南/英/中</p>
+ </div>
+ </div>
+ <div class="section-title" data-i18n="collected_t">已采集材料 ·3 项</div>
+ <div class="mat-list">
+ <div class="mat-item">
+ <div class="thumb">P</div>
+ <div class="meta">
+ <div class="name">护照资料页 <span class="auto-badge">OCR</span></div>
+ <div class="file">passport_id_001.jpg ·2.3MB</div>
+ </div>
+ <span class="tag ok"><span data-i18n="mat_pass">已通过</span></span>
+ <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)">0.96</span>
+ <button class="btn ghost" data-i18n="retake">重新采集</button>
+ </div>
+ <div class="mat-item">
+ <div class="thumb" style="background:linear-gradient(135deg,#10B981,#059669)">B</div>
+ <div class="meta">
+ <div class="name">银行流水 (近6 个月) <span class="auto-badge">PDF</span></div>
+ <div class="file">bank_statement_202605.pdf ·1.8MB</div>
+ </div>
+ <span class="tag ok"><span data-i18n="mat_pass">已通过</span></span>
+ <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)">0.91</span>
+ <button class="btn ghost" data-i18n="retake">重新采集</button>
+ </div>
+ <div class="mat-item">
+ <div class="thumb" style="background:linear-gradient(135deg,#F59E0B,#D97706)">F</div>
+ <div class="meta">
+ <div class="name">机票预订单 <span class="auto-badge" style="background:rgba(245,158,11,.1);color:var(--warning)">待校验</span></div>
+ <div class="file">flight_booking.pdf ·0.4MB</div>
+ </div>
+ <span class="tag warn"><span data-i18n="mat_pend">待校验</span></span>
+ <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)">—</span>
+ <button class="btn ghost" data-i18n="retake">重新采集</button>
+ </div>
+ </div>
+ <div class="row" style="margin-top:20px;justify-content:flex-end;gap:10px">
+ <button class="btn ghost" data-i18n="save_draft">保存草稿</button>
+ <button class="btn primary lg" onclick="showPage('P8')" data-i18n="submit_val">提交校验 →</button>
+ </div>
+</div>
+
+<div class="page" data-id="P8">
+ <div class="flow-strip">
+ <span class="label" data-i18n="flow_label">签证 V2 全流程</span>
+ <span class="step"><span class="n">1</span> <span data-i18n="step1">首页</span></span><span class="arrow">→</span>
+ <span class="step"><span class="n">2</span> <span data-i18n="step2">选国家</span></span><span class="arrow">→</span>
+ <span class="step"><span class="n">3</span> <span data-i18n="step3">扫描</span></span><span class="arrow">→</span>
+ <span class="step"><span class="n">4</span> <span data-i18n="step4">材料</span></span><span class="arrow">→</span>
+ <span class="step now"><span class="n">5</span> <span data-i18n="step5">校验</span></span><span class="arrow">→</span>
+ <span class="step"><span class="n">6</span> <span data-i18n="step6">表单</span></span><span class="arrow">→</span>
+ <span class="step"><span class="n">7</span> <span data-i18n="step7">RPA提交</span></span><span class="arrow">→</span>
+ <span class="step"><span class="n">8</span> <span data-i18n="step8">订单状态</span></span><span class="arrow">→</span>
+ <span class="step"><span class="n">9</span> <span data-i18n="step9">出签</span></span>
+ <div class="actions">
+ <button class="prev" onclick="showPage('P7')"><span data-i18n="prev">← 上一步</span></button>
+ <button class="next" onclick="showPage('P9')"><span data-i18n="next">下一步:表单 →</span></button>
+ </div>
+ </div>
+ <h1 class="page-title" data-i18n="val_t">AI校验结果</h1>
+ <p class="page-sub"><span data-i18n="val_s1">共8 项检查</span> · <strong style="color:var(--error)"><span data-i18n="val_s2">1 项需修正</span></strong> · <strong style="color:var(--warning)"><span data-i18n="val_s3">2 项警告</span></strong> · <strong style="color:var(--success)">5 <span data-i18n="val_s4">项通过</span></strong></p>
+ <div class="val-summary">
+ <div class="stat total"><div class="v">8</div><div class="l" data-i18n="val_total">总项</div></div>
+ <div class="stat ok"><div class="v">5</div><div class="l" data-i18n="val_pass">通过</div></div>
+ <div class="stat warn"><div class="v">2</div><div class="l" data-i18n="val_warn">警告</div></div>
+ <div class="stat bad"><div class="v">1</div><div class="l" data-i18n="val_fail">错误</div></div>
+ </div>
+ <div class="val-list">
+ <div class="val-item bad">
+ <div class="dot">✕</div>
+ <div class="info"><div class="key" data-i18n="v1_k">护照号格式</div><div class="rule">PASSPORT_NO_FORMAT ·错误</div></div>
+ <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--error)">A1234567890</div>
+ <button class="btn danger" data-i18n="v_fix">修正</button>
+ </div>
+ <div class="val-item warn">
+ <div class="dot">!</div>
+ <div class="info"><div class="key" data-i18n="v2_k">护照有效期</div><div class="rule">PASSPORT_EXPIRY_MIN_3M ·警告</div></div>
+ <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--warning)">~4.5 月</div>
+ <button class="btn ghost" data-i18n="v_view">查看</button>
+ </div>
+ <div class="val-item warn">
+ <div class="dot">!</div>
+ <div class="info"><div class="key" data-i18n="v3_k">机票出行日期</div><div class="rule">TRAVEL_DATE_RANGE ·警告</div></div>
+ <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--warning)">2026-12-20</div>
+ <button class="btn ghost" data-i18n="v_view">查看</button>
+ </div>
+ <div class="val-item ok">
+ <div class="dot">✓</div>
+ <div class="info"><div class="key" data-i18n="v4_k">出生日期</div><div class="rule">PASSPORT_DOB_NOT_FUTURE · 通过</div></div>
+ <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--success)">1990-05-12</div>
+ <span class="tag ok" data-i18n="v_pass">通过</span>
+ </div>
+ <div class="val-item ok">
+ <div class="dot">✓</div>
+ <div class="info"><div class="key" data-i18n="v5_k">姓名长度</div><div class="rule">PASSPORT_NAME_MIN_LEN · 通过</div></div>
+ <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--success)">SANTOSO, BUDI</div>
+ <span class="tag ok" data-i18n="v_pass">通过</span>
+ </div>
+ <div class="val-item ok">
+ <div class="dot">✓</div>
+ <div class="info"><div class="key" data-i18n="v6_k">图片清晰度</div><div class="rule">IMAGE_BLUR_THRESHOLD · 通过</div></div>
+ <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--success)">Laplacian312</div>
+ <span class="tag ok" data-i18n="v_pass">通过</span>
+ </div>
+ <div class="val-item ok">
+ <div class="dot">✓</div>
+ <div class="info"><div class="key" data-i18n="v7_k">图片分辨率</div><div class="rule">IMAGE_RESOLUTION_MIN · 通过</div></div>
+ <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--success)">1920×1080</div>
+ <span class="tag ok" data-i18n="v_pass">通过</span>
+ </div>
+ <div class="val-item ok">
+ <div class="dot">✓</div>
+ <div class="info"><div class="key" data-i18n="v8_k">OCR字段置信度</div><div class="rule">OCR_FIELD_CONFIDENCE · 通过</div></div>
+ <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--success)">≥0.7</div>
+ <span class="tag ok" data-i18n="v_pass">通过</span>
+ </div>
+ </div>
+ <div class="card" style="margin-top:20px;background:rgba(239,68,68,.04);border-color:rgba(239,68,68,.3)">
+ <div class="row" style="gap:14px">
+ <div style="font-size:24px">⚠️</div>
+ <div style="flex:1">
+ <h4 style="margin:006px;font-size:14px;color:var(--error)" data-i18n="fix_h">需要修正 (1 项)</h4>
+ <p style="margin:0;font-size:13px;color:var(--ink-2);line-height:1.6" data-i18n="fix_d">护照号应为9 位字母+数字格式 (ICAO9303),当前识别为10 位。请重新拍摄资料页或手动修改。</p>
+ </div>
+ <button class="btn primary" onclick="showPage('P6')"><span data-i18n="retake">重新拍摄</span></button>
+ </div>
+ </div>
+ <div class="row" style="margin-top:20px;justify-content:flex-end;gap:10px">
+ <button class="btn ghost" data-i18n="save_draft">保存草稿</button>
+ <button class="btn primary lg" onclick="showPage('P9')"><span data-i18n="continue_warn">忽略警告继续 →</span></button>
+ </div>
+</div>
+
+<div class="page" data-id="P9">
+ <div class="flow-strip">
+ <span class="label" data-i18n="flow_label">签证 V2 全流程</span>
+ <span class="step"><span class="n">1</span> <span data-i18n="step1">首页</span></span><span class="arrow">→</span>
+ <span class="step"><span class="n">2</span> <span data-i18n="step2">选国家</span></span><span class="arrow">→</span>
+ <span class="step"><span class="n">3</span> <span data-i18n="step3">扫描</span></span><span class="arrow">→</span>
+ <span class="step"><span class="n">4</span> <span data-i18n="step4">材料</span></span><span class="arrow">→</span>
+ <span class="step"><span class="n">5</span> <span data-i18n="step5">校验</span></span><span class="arrow">→</span>
+ <span class="step now"><span class="n">6</span> <span data-i18n="step6">表单</span></span><span class="arrow">→</span>
+ <span class="step"><span class="n">7</span> <span data-i18n="step7">RPA提交</span></span><span class="arrow">→</span>
+ <span class="step"><span class="n">8</span> <span data-i18n="step8">订单状态</span></span><span class="arrow">→</span>
+ <span class="step"><span class="n">9</span> <span data-i18n="step9">出签</span></span>
+ <div class="actions">
+ <button class="prev" onclick="showPage('P8')"><span data-i18n="prev">← 上一步</span></button>
+ <button class="next" onclick="showPage('P10')"><span data-i18n="next">下一步:RPA提交 →</span></button>
+ </div>
+ </div>
+ <h1 class="page-title" data-i18n="form_t">日本旅游签申请表</h1>
+ <p class="page-sub"><span data-i18n="form_s1">已根据 OCR预填</span> <strong style="color:var(--success)">82%</strong> · <span data-i18n="form_s2">请补全剩余字段</span></p>
+ <div class="step-tabs" style="display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap">
+ <span class="tab done" style="padding:6px12px;border-radius:8px;font-size:12px;background:#d1fae5;color:#065f46">✓ <span data-i18n="ft1">基本信息</span></span>
+ <span class="tab done" style="padding:6px12px;border-radius:8px;font-size:12px;background:#d1fae5;color:#065f46">✓ <span data-i18n="ft2">旅行信息</span></span>
+ <span class="tab now" style="padding:6px12px;border-radius:8px;font-size:12px;background:var(--primary);color:white;font-weight:500"><span data-i18n="ft3">工作信息</span></span>
+ <span class="tab" style="padding:6px12px;border-radius:8px;font-size:12px;background:var(--line-soft);color:var(--ink-2)"><span data-i18n="ft4">家庭信息</span></span>
+ <span class="tab" style="padding:6px12px;border-radius:8px;font-size:12px;background:var(--line-soft);color:var(--ink-2)"><span data-i18n="ft5">紧急联系人</span></span>
+ </div>
+ <div class="card">
+ <div class="form-grid">
+ <div class="field"><label class="label required" data-i18n="fn_l">姓 (英文)</label><input class="input" value="SANTOSO"/><span class="auto-badge">AUTO · OCR</span></div>
+ <div class="field"><label class="label required" data-i18n="gn_l">名 (英文)</label><input class="input" value="BUDI"/><span class="auto-badge">AUTO · OCR</span></div>
+ <div class="field"><label class="label required" data-i18n="pn_l">护照号</label><input class="input invalid" value="A1234567890"/><div class="help" style="color:var(--error)" data-i18n="pn_err">格式不符 ICAO9303 标准</div></div>
+ <div class="field"><label class="label required" data-i18n="dob_l">出生日期</label><input class="input" value="1990-05-12"/><span class="auto-badge">AUTO · OCR</span></div>
+ <div class="field"><label class="label required" data-i18n="nat_l">国籍</label><select class="input"><option>🇮🇩印度尼西亚 (IDN)</option><option>🇻🇳越南 (VNM)</option><option>🇵🇭菲律宾 (PHL)</option></select></div>
+ <div class="field"><label class="label required" data-i18n="dst_l">目的地国家</label><select class="input"><option selected>🇯🇵 日本 (JPN) · 旅游签</option><option>🇰🇷韩国 (KOR)</option></select></div>
+ <div class="field"><label class="label required" data-i18n="arr_l">入境日期</label><input class="input" type="date" value="2026-12-20"/></div>
+ <div class="field"><label class="label required" data-i18n="dep_l">离境日期</label><input class="input" type="date" value="2027-01-05"/></div>
+ <div class="field form-row"><label class="label required" data-i18n="stay_l">停留天数</label><input class="input" value="16 天"/><div class="help" data-i18n="stay_h">自动计算 ·入境日期 +离境日期</div></div>
+ <div class="field"><label class="label required" data-i18n="occ_l">职业</label><input class="input" value="Software Engineer"/></div>
+ <div class="field"><label class="label required" data-i18n="emp_l">雇主</label><input class="input" value="PT. Tech Indonesia"/></div>
+ <div class="field form-row"><label class="label required" data-i18n="em_l">紧急联系人</label><div style="display:grid;grid-template-columns:1fr1fr1fr;gap:8px"><input class="input" value="Sari Santoso" placeholder="姓名"/><input class="input" value="母亲 / Mother" placeholder="关系"/><input class="input" value="+62813-****-1234" placeholder="电话"/></div></div>
+ </div>
+ </div>
+ <div class="row" style="margin-top:20px;justify-content:flex-end;gap:10px">
+ <button class="btn ghost" data-i18n="save_draft">保存草稿</button>
+ <button class="btn primary lg" onclick="showPage('P10')" data-i18n="submit_app">提交申请 →</button>
+ </div>
+</div>
+
+<div class="page" data-id="P10">
+ <h1 class="page-title" data-i18n="rpa_t">RPA 自动提交中</h1>
+ <p class="page-sub"><span data-i18n="rpa_s">正在访问签证官网 · 自动填表 ·验证码解算 ·提交申请</span> · <span data-i18n="eta">预计剩余</span> <strong style="font-family:'JetBrains Mono',monospace;color:var(--primary)">2 min14 s</strong></p>
+ <div class="rpa-stepper">
+ <div class="step done"><div class="icon">🌐</div><div class="label" data-i18n="r1">打开官网页面</div><div class="time">2.1 s</div></div>
+ <div class="step done"><div class="icon">🔍</div><div class="label" data-i18n="r2">解析表单结构</div><div class="time">1.4 s</div></div>
+ <div class="step now"><div class="icon">🔐</div><div class="label" data-i18n="r3">解验证码</div><div class="time">—</div></div>
+ <div class="step"><div class="icon">📝</div><div class="label" data-i18n="r4">自动填表</div><div class="time">—</div></div>
+ <div class="step"><div class="icon">📤</div><div class="label" data-i18n="r5">上传材料</div><div class="time">—</div></div>
+ <div class="step"><div class="icon">✅</div><div class="label" data-i18n="r6">提交</div><div class="time">—</div></div>
+ </div>
+ <div class="rpa-grid">
+ <div class="card">
+ <div class="row spread" style="margin-bottom:12px">
+ <h3 style="margin:0" data-i18n="log_h">实时日志</h3>
+ <span class="tag ok">● <span data-i18n="running">运行中</span></span>
+ </div>
+ <div class="log-window">
+ <div class="line info"><span class="ts">14:23:01</span> <span data-i18n="log1">[INFO] 启动 Playwright + Camoufox浏览器实例</span></div>
+ <div class="line info"><span class="ts">14:23:01</span> <span data-i18n="log2">[INFO] 加载 User-Agent池 →选中 Chrome/119.0 Win11</span></div>
+ <div class="line info"><span class="ts">14:23:02</span> <span data-i18n="log3">[INFO] 访问 https://www.vfsglobal.com/japan/ (200 OK)</span></div>
+ <div class="line ok"><span class="ts">14:23:03</span> <span data-i18n="log4">[OK] Step1 完成 ·2.1 s</span></div>
+ <div class="line info"><span class="ts">14:23:04</span> <span data-i18n="log5">[INFO] 解析页面表单 →18字段已识别</span></div>
+ <div class="line ok"><span class="ts">14:23:05</span> <span data-i18n="log6">[OK] Step2 完成 ·1.4 s</span></div>
+ <div class="line info"><span class="ts">14:23:06</span> <span data-i18n="log7">[INFO] 定位验证码元素 #captcha-image</span></div>
+ <div class="line info"><span class="ts">14:23:06</span> <span data-i18n="log8">[INFO] 调用 ddddocr推理 → CPU142 ms</span></div>
+ <div class="line warn"><span class="ts">14:23:07</span> <span data-i18n="log9">[WARN] 首次识别置信度0.74 →触发重试</span></div>
+ <div class="line info"><span class="ts">14:23:08</span> <span data-i18n="log10">[INFO] 重试识别 →置信度0.91 ·尝试1/3</span></div>
+ <div class="line ok"><span class="ts">14:23:08</span> <span data-i18n="log11">[OK] 验证码已填入 ·等待提交</span></div>
+ <div class="scroll-mask"></div>
+ </div>
+ </div>
+ <div class="rpa-side">
+ <h4 data-i18n="stats_h">运行指标</h4>
+ <div class="metric"><span data-i18n="m1">已用时</span><span class="v">0:08</span></div>
+ <div class="metric"><span data-i18n="m2">剩余</span><span class="v" style="color:var(--primary)">~2:14</span></div>
+ <div class="metric"><span data-i18n="m3">验证码尝试</span><span class="v">1 /3</span></div>
+ <div class="metric"><span data-i18n="m4">已填字段</span><span class="v">18 /18</span></div>
+ <div class="metric"><span data-i18n="m5">日访问</span><span class="v">12 /50</span></div>
+ <div class="metric"><span data-i18n="m6">IP切换</span><span class="v">—</span></div>
+ <div class="divider"></div>
+ <h4 data-i18n="pol_h">风控策略</h4>
+ <div style="font-size:12px;color:var(--ink-2);line-height:1.7" data-i18n="pol_d">单 IP ≤50 次/日 · 单账号间隔 ≥60s ·错峰 UTC00:00-06:00 ·验证码连续失败3 次自动终止。</div>
+ </div>
+ </div>
+ <div class="toast-demo" id="rpaToast">
+ <h5>⚠ <span data-i18n="toast_h">验证码识别异常</span></h5>
+ <p data-i18n="toast_d">官网改版,选择器 #captcha-image失效。已自动告警 +暂停该国任务,等待人工介入。</p>
+ </div>
+</div>
+
+<div class="page" data-id="P11">
+ <div class="row spread" style="margin-bottom:16px">
+ <div>
+ <div style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ink-2)">V2-20260611-000123</div>
+ <h1 style="margin:4px00;font-family:'DM Serif Display',serif;font-size:26px" data-i18n="od_t">日本旅游签 ·订单详情</h1>
+ </div>
+ <div style="text-align:right">
+ <span class="tag warn" style="font-size:13px;padding:6px14px">● <span data-i18n="state_reviewing">审核中</span></span>
+ <div style="font-size:12px;color:var(--muted);margin-top:6px"><span data-i18n="upd">最后更新</span>2026-06-1115:18</div>
+ </div>
+ </div>
+ <div class="timeline">
+ <div class="step done"><div class="dot">✓</div><div class="label" data-i18n="state_created">待提交</div><div class="time">06-1114:01</div></div>
+ <div class="step done"><div class="dot">✓</div><div class="label" data-i18n="state_submitted">已提交</div><div class="time">06-1114:24</div></div>
+ <div class="step now"><div class="dot">⏳</div><div class="label" data-i18n="state_reviewing">审核中</div><div class="time">06-1114:30</div></div>
+ <div class="step"><div class="dot"></div><div class="label" data-i18n="state_approved">出签</div><div class="time">—</div></div>
+ <div class="step"><div class="dot"></div><div class="label" data-i18n="state_rejected">拒签</div><div class="time">—</div></div>
+ </div>
+ <div class="grid2">
+ <div class="card">
+ <h3 data-i18n="info_h">订单信息</h3>
+ <div style="display:grid;grid-template-columns:1fr1fr;gap:8px16px;font-size:13px">
+ <div><div style="color:var(--muted);font-size:11px" data-i18n="f1">目的地</div><div style="font-weight:500;margin-top:2px">🇯🇵 日本 · <span data-i18n="vt_t2">旅游签</span></div></div>
+ <div><div style="color:var(--muted);font-size:11px" data-i18n="f2">申请人</div><div style="font-weight:500;margin-top:2px">SANTOSO, BUDI</div></div>
+ <div><div style="color:var(--muted);font-size:11px" data-i18n="f3">入境日期</div><div style="font-weight:500;margin-top:2px;font-family:'JetBrains Mono',monospace">2026-12-20</div></div>
+ <div><div style="color:var(--muted);font-size:11px" data-i18n="f4">停留天数</div><div style="font-weight:500;margin-top:2px;font-family:'JetBrains Mono',monospace">16 天</div></div>
+ <div><div style="color:var(--muted);font-size:11px" data-i18n="f5">官网申请号</div><div style="font-weight:500;margin-top:2px;font-family:'JetBrains Mono',monospace">JP-VFS-20260611-5821</div></div>
+ <div><div style="color:var(--muted);font-size:11px" data-i18n="f6">费用</div><div style="font-weight:500;margin-top:2px;font-family:'JetBrains Mono',monospace">$0.00 <span style="font-size:11px;color:var(--muted)" data-i18n="f6_d">(内部记账 · V3+ 接通支付)</span></div></div>
+ </div>
+ </div>
+ <div class="card">
+ <h3 data-i18n="msgs_h">状态变更消息</h3>
+ <div class="msg-list">
+ <div class="msg"><div class="dot" style="background:var(--warning)"></div><div class="body"><div class="title"><span data-i18n="msg1_t">已进入审核阶段</span></div><div class="text" data-i18n="msg1_d">官网已受理您的申请,日本驻印尼使馆正在审核。平均5-7 工作日。</div><div class="time">2026-06-1114:30 · inapp</div></div></div>
+ <div class="msg"><div class="dot" style="background:var(--primary)"></div><div class="body"><div class="title"><span data-i18n="msg2_t">提交成功</span></div><div class="text" data-i18n="msg2_d">RPA 已将您的申请提交到签证官网。申请号 JP-VFS-20260611-5821。</div><div class="time">2026-06-1114:24 · email</div></div></div>
+ <div class="msg"><div class="dot" style="background:var(--success)"></div><div class="body"><div class="title"><span data-i18n="msg3_t">订单创建成功</span></div><div class="text" data-i18n="msg3_d">订单 V2-20260611-000123 已创建,材料已上传并通过 AI校验。</div><div class="time">2026-06-1114:01 · inapp</div></div></div>
+ </div>
+ </div>
+ </div>
+ <div class="card" style="margin-top:16px">
+ <h3 data-i18n="rpa_ss_h">RPA提交截图回放</h3>
+ <div class="grid4">
+ <div style="aspect-ratio:16/10;background:#0f172a;border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px;font-family:'JetBrains Mono',monospace;text-align:center;padding:8px">rpa-01-visit<br/>签证官网</div>
+ <div style="aspect-ratio:16:10;background:#0f172a;border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px;font-family:'JetBrains Mono',monospace;text-align:center;padding:8px">rpa-02-form<br/>表单解析</div>
+ <div style="aspect-ratio:16:10;background:#0f172a;border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px;font-family:'JetBrains Mono',monospace;text-align:center;padding:8px">rpa-03-captcha<br/>验证码</div>
+ <div style="aspect-ratio:16:10;background:#0f172a;border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px;font-family:'JetBrains Mono',monospace;text-align:center;padding:8px">rpa-04-submit<br/>提交成功</div>
+ </div>
+ <div style="font-size:12px;color:var(--muted);margin-top:8px" data-i18n="rpa_ss_d">截图存储7 年 · 仅开发者配置后台可访问 ·加密 AES-256-GCM</div>
+ </div>
+ <div class="row" style="margin-top:20px;justify-content:flex-end;gap:10px">
+ <button class="btn ghost" data-i18n="reapply">重新申请</button>
+ <button class="btn outline" data-i18n="dl_receipt">下载受理单</button>
+ </div>
+</div>
+
+<div class="page" data-id="P12">
+ <h1 class="page-title" data-i18n="set_t">设置</h1>
+ <p class="page-sub" data-i18n="set_s">账号安全 ·通知 ·隐私 ·协议</p>
+ <div class="settings-grid">
+ <div>
+ <div class="card settings-card">
+ <h3 data-i18n="notif_h">通知设置</h3>
+ <div class="row2"><div><div class="label" data-i18n="n1">推送通知</div><div class="desc" data-i18n="n1_d">订单状态变更、审核进度等</div></div><div class="switch on" onclick="this.classList.toggle('on')"></div></div>
+ <div class="row2"><div><div class="label" data-i18n="n2">邮件通知</div><div class="desc" data-i18n="n2_d">出签 /拒签时发送邮件</div></div><div class="switch on" onclick="this.classList.toggle('on')"></div></div>
+ <div class="row2"><div><div class="label" data-i18n="n3">营销内容</div><div class="desc" data-i18n="n3_d">优惠活动、新国家上线</div></div><div class="switch" onclick="this.classList.toggle('on')"></div></div>
+ <div class="row2"><div><div class="label" data-i18n="n4">短信通知</div><div class="desc" data-i18n="n4_d">仅用于登录验证码、注销确认</div></div><div class="switch on" onclick="this.classList.toggle('on')"></div></div>
+ </div>
+ <div class="card settings-card" style="margin-top:14px">
+ <h3 data-i18n="lang_h">界面语言</h3>
+ <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px">
+ <div class="entry-card" style="padding:14px;border-color:var(--primary);background:rgba(45,91,255,.04)"><div class="ic" style="font-size:24px;margin-bottom:4px">🇨🇳</div><h4 style="margin:0;font-size:13px">简体中文</h4><p style="margin:2px00;font-size:11px">zh-CN</p></div>
+ <div class="entry-card" style="padding:14px"><div class="ic" style="font-size:24px;margin-bottom:4px">🇬🇧</div><h4 style="margin:0;font-size:13px">English</h4><p style="margin:2px00;font-size:11px">en</p></div>
+ <div class="entry-card" style="padding:14px"><div class="ic" style="font-size:24px;margin-bottom:4px">🇮🇩</div><h4 style="margin:0;font-size:13px">Bahasa Indonesia</h4><p style="margin:2px00;font-size:11px">id</p></div>
+ <div class="entry-card" style="padding:14px"><div class="ic" style="font-size:24px;margin-bottom:4px">🇻🇳</div><h4 style="margin:0;font-size:13px">Tiếng Việt</h4><p style="margin:2px00;font-size:11px">vi</p></div>
+ </div>
+ </div>
+ </div>
+ <div>
+ <div class="card settings-card">
+ <h3 data-i18n="sec_h">账号安全</h3>
+ <div class="row2"><div><div class="label" data-i18n="s1">修改密码</div><div class="desc" data-i18n="s1_d">最近修改:2026-05-12</div></div><button class="btn outline" data-i18n="s1_b">修改</button></div>
+ <div class="row2"><div><div class="label" data-i18n="s2">修改手机号</div><div class="desc" data-i18n="s2_d">当前: +62812-****-7890</div></div><button class="btn outline" data-i18n="s1_b">修改</button></div>
+ <div class="row2"><div><div class="label" data-i18n="s3">登录设备</div><div class="desc" data-i18n="s3_d">2 台活跃设备</div></div><button class="btn outline" data-i18n="s3_b">管理</button></div>
+ </div>
+ <div class="card settings-card" style="margin-top:14px">
+ <h3 data-i18n="agree2_h">协议与条款</h3>
+ <div class="row2"><div class="label" data-i18n="a1">用户服务协议</div><a href="#" data-i18n="view">查看 →</a></div>
+ <div class="row2"><div class="label" data-i18n="a2">隐私政策</div><a href="#" data-i18n="view">查看 →</a></div>
+ <div class="row2"><div class="label" data-i18n="a3">数据导出 (GDPR)</div><button class="btn outline" data-i18n="export">导出我的数据</button></div>
+ </div>
+ <div class="danger-row" style="margin-top:14px">
+ <div>
+ <div style="font-weight:600;color:#991b1b" data-i18n="del_h">注销账号</div>
+ <div style="font-size:12px;color:#991b1b;opacity:0.8;margin-top:2px" data-i18n="del_d">72小时内永久删除您的所有数据 ·不可恢复</div>
+ </div>
+ <button class="btn danger" data-i18n="del_b">注销 (N7)</button>
+ </div>
+ </div>
+ </div>
+</div>
+
+ </div>
+ </div>
+ </div>
+</div>
+<script>
+/* ============================================================
+ * V2 i18n dictionary (4 languages, ~160 keys per language)
+ * ============================================================ */
+const I18N = {
+'zh-CN': {
+brand:'签证智能助手 · V2', env:'纯工具版',
+grp_guest:'游客 (Guest)', grp_user:'已登录 (User)',
+nav_home:'首页 /落地页', nav_signup:'注册', nav_login:'登录',
+nav_profile:'个人中心', nav_dests:'选择目的地',
+nav_scan:'扫描护照 (N1)', nav_mats:'材料采集', nav_val:'AI校验结果 (N2)',
+nav_form:'表单填写', nav_rpa:'RPA进度 (N3)', nav_order:'订单详情 (N4)', nav_set:'设置',
+flow_label:'签证 V2 全流程',
+step1:'首页', step2:'选国家', step3:'扫描', step4:'材料', step5:'校验',
+step6:'表单', step7:'RPA提交', step8:'订单状态', step9:'出签',
+prev:'← 上一步', next:'下一步 →', cta_next:'下一步:选国家',
+hero_title:'几分钟搞定签证申请',
+hero_sub:'护照 OCR + AI智能校验 + RPA 自动提交。本地部署 · 数据安全 ·4语种界面 ·9 国目的地。<br/>仅作为线上辅助工具,签证结果由各国官方机构独立审核。',
+hero_note:'仅作为线上辅助工具,签证结果由各国官方机构独立审核。',
+cta_signup:'免费注册', cta_explore:'浏览9 国目的地',
+stat_dests:'目的地', stat_langs:'语种', stat_ocr:'OCR准确率',
+stat_rpa:'RPA提交成功率', stat_local:'本地部署',
+trust1_t:'无活体检测', trust1_d:'无需人脸识别、指纹采集。仅扫描证件 +填写信息。',
+trust2_t:'100% 本地部署', trust2_d:'所有数据存储在本地服务器,无任何公有云依赖。',
+trust3_t:'AI智能校验', trust3_d:'15+校验规则:格式 /有效期 /清晰度 / 一致性。',
+trust4_t:'RPA 自动提交', trust4_d:'Playwright + Camoufox模拟人工操作,平均10-15 分钟。',
+dests_title:'9 国主推目的地',
+signup_t:'创建账号', signup_s:'4语种界面 · 仅用于签证申请辅助',
+phone_l:'手机号', phone_ph:'81234567890', send_code:'发送验证码',
+phone_help:'我们将向该手机号发送6 位验证码',
+code_l:'验证码', code_ph:'6 位数字',
+pwd_l:'密码', pwd_ph:'8-32 位字母和数字', pwd_help:'强度: ●○○ 中等',
+pwd_ok:'已记住密码',
+agree_p:'我已阅读并同意', agree_tos:'《用户服务协议》', agree_and:'和', agree_priv:'《隐私政策》',
+signup_btn:'注册', have_acc:'已有账号?', go_login:'立即登录',
+login_t:'欢迎回来', login_s:'使用手机号 +密码 /短信码登录',
+login_pwd:'密码登录', login_sms:'短信快捷登录',
+remember:'7 天内自动登录', forgot:'忘记密码?',
+login_btn:'登录', no_acc:'还没有账号?', go_signup:'立即注册',
+profile_t:'个人中心', profile_s:'账号信息 · 历史材料 ·语种偏好',
+joined:'注册于', verified:'已实名', orders_count:'累计订单',
+quick_actions:'快捷入口',
+m_orders:'我的订单', m_orders_d:'3笔进行中 ·2笔已完成',
+m_mats:'材料仓库 (N5)', m_mats_d:'护照 +身份证,可复用',
+m_set:'设置', m_set_d:'通知 ·隐私 ·协议',
+m_del:'注销账号 (N7)', m_del_d:'72h 后数据彻底销毁',
+recent_orders:'最近订单',
+jp_name:'日本旅游签', kr_name:'韩国旅游签', sg_name:'新加坡学生签',
+view_detail:'查看详情 →', dl_pdf:'下载签证 PDF ↓', view_reason:'查看原因 →',
+state_created:'待提交', state_submitted:'已提交', state_reviewing:'审核中',
+state_approved:'出签', state_rejected:'拒签',
+dests_t:'选择目的地',
+dests_s:'9 国主推 · 仅旅游签/学生签 · 数据已为 Tier1 国家(印尼/越南/菲律宾)完整配置',
+vt_all:'全部', vt_t:'旅游签', vt_s:'学生签',
+applied_mark:'已申请过 ↗ 显示绿色角标',
+tier1_h:'Tier1 国家已完整配置',
+tier1_d:'印尼 /越南 /菲律宾 已完整配置 OCR模板、AI校验规则、RPA自动化流程,可用率达99%。其余6 国(美/日/英/澳/加/欧盟)配置就绪,文档已覆盖。',
+view_cfg:'查看配置说明',
+scan_t:'扫描护照资料页',
+scan_s:'将 <strong>有照片那页</strong> 对准取景框 · 自动检测对齐 · 平均2.5 秒识别完成',
+scan_bio:'有照片那页',
+scan_tip:'将护照资料页对准框内,确保四角完整可见',
+auto_cap:'自动拍摄倒计时', conf:'对齐置信度', manual:'手动拍摄',
+tip_h:'拍摄小贴士',
+tip_d:'在光线充足的环境下拍摄 ·避免反光和阴影 ·保持护照平整 · OCR引擎 PaddleOCR2.7+离线运行,字段准确率 ≥95%。',
+mats_t:'材料采集',
+mats_s:'3 种采集方式可选 · 支持同一材料多张 · 单文件 ≤10MB · JPG / PNG / PDF / WebP',
+m_all:'全部材料', m_pass:'护照', m_id:'身份证', m_house:'户口本',
+m_emp:'在职证明', m_bank:'银行流水', m_flight:'机票预订单', m_hotel:'酒店预订单',
+ent1_t:'拍照识别 (OCR)', ent1_d:'PaddleOCR2.7+ ·实时识别 ·2.5s 平均',
+ent2_t:'上传文件', ent2_d:'JPG / PNG / PDF / WebP · ≤10MB',
+ent3_t:'语音录入', ent3_d:'FunASR paraformer-zh ·印尼/越南/英/中',
+collected_t:'已采集材料 ·3 项',
+mat_pass:'已通过', mat_pend:'待校验', retake:'重新采集',
+save_draft:'保存草稿', submit_val:'提交校验 →',
+val_t:'AI校验结果',
+val_s1:'共8 项检查', val_s2:'1 项需修正', val_s3:'2 项警告', val_s4:'项通过',
+val_total:'总项', val_pass:'通过', val_warn:'警告', val_fail:'错误',
+v1_k:'护照号格式', v_fix:'修正',
+v2_k:'护照有效期', v3_k:'机票出行日期', v_view:'查看',
+v4_k:'出生日期', v5_k:'姓名长度', v6_k:'图片清晰度',
+v7_k:'图片分辨率', v8_k:'OCR字段置信度', v_pass:'通过',
+fix_h:'需要修正 (1 项)',
+fix_d:'护照号应为9 位字母+数字格式 (ICAO9303),当前识别为10 位。请重新拍摄资料页或手动修改。',
+continue_warn:'忽略警告继续 →',
+form_t:'日本旅游签申请表',
+form_s1:'已根据 OCR预填', form_s2:'请补全剩余字段',
+ft1:'基本信息', ft2:'旅行信息', ft3:'工作信息', ft4:'家庭信息', ft5:'紧急联系人',
+fn_l:'姓 (英文)', gn_l:'名 (英文)', pn_l:'护照号',
+pn_err:'格式不符 ICAO9303 标准',
+dob_l:'出生日期', nat_l:'国籍', dst_l:'目的地国家',
+arr_l:'入境日期', dep_l:'离境日期', stay_l:'停留天数',
+stay_h:'自动计算 ·入境日期 +离境日期',
+occ_l:'职业', emp_l:'雇主', em_l:'紧急联系人',
+submit_app:'提交申请 →',
+rpa_t:'RPA 自动提交中',
+rpa_s:'正在访问签证官网 · 自动填表 ·验证码解算 ·提交申请',
+eta:'预计剩余',
+r1:'打开官网页面', r2:'解析表单结构', r3:'解验证码',
+r4:'自动填表', r5:'上传材料', r6:'提交',
+log_h:'实时日志', running:'运行中',
+log1:'[INFO] 启动 Playwright + Camoufox浏览器实例',
+log2:'[INFO] 加载 User-Agent池 →选中 Chrome/119.0 Win11',
+log3:'[INFO] 访问 https://www.vfsglobal.com/japan/ (200 OK)',
+log4:'[OK] Step1 完成 ·2.1 s',
+log5:'[INFO] 解析页面表单 →18字段已识别',
+log6:'[OK] Step2 完成 ·1.4 s',
+log7:'[INFO] 定位验证码元素 #captcha-image',
+log8:'[INFO] 调用 ddddocr推理 → CPU142 ms',
+log9:'[WARN] 首次识别置信度0.74 →触发重试',
+log10:'[INFO] 重试识别 →置信度0.91 ·尝试1/3',
+log11:'[OK] 验证码已填入 ·等待提交',
+stats_h:'运行指标',
+m1:'已用时', m2:'剩余', m3:'验证码尝试', m4:'已填字段', m5:'日访问', m6:'IP切换',
+pol_h:'风控策略',
+pol_d:'单 IP ≤50 次/日 · 单账号间隔 ≥60s ·错峰 UTC00:00-06:00 ·验证码连续失败3 次自动终止。',
+toast_h:'验证码识别异常',
+toast_d:'官网改版,选择器 #captcha-image失效。已自动告警 +暂停该国任务,等待人工介入。',
+od_t:'日本旅游签 ·订单详情', upd:'最后更新',
+info_h:'订单信息',
+f1:'目的地', f2:'申请人', f3:'入境日期', f4:'停留天数',
+f5:'官网申请号', f6:'费用',
+f6_d:'(内部记账 · V3+ 接通支付)', vt_t2:'旅游签',
+msgs_h:'状态变更消息',
+msg1_t:'已进入审核阶段',
+msg1_d:'官网已受理您的申请,日本驻印尼使馆正在审核。平均5-7 工作日。',
+msg2_t:'提交成功',
+msg2_d:'RPA 已将您的申请提交到签证官网。申请号 JP-VFS-20260611-5821。',
+msg3_t:'订单创建成功',
+msg3_d:'订单 V2-20260611-000123 已创建,材料已上传并通过 AI校验。',
+rpa_ss_h:'RPA提交截图回放',
+rpa_ss_d:'截图存储7 年 · 仅开发者配置后台可访问 ·加密 AES-256-GCM',
+reapply:'重新申请', dl_receipt:'下载受理单',
+set_t:'设置', set_s:'账号安全 ·通知 ·隐私 ·协议',
+notif_h:'通知设置',
+n1:'推送通知', n1_d:'订单状态变更、审核进度等',
+n2:'邮件通知', n2_d:'出签 /拒签时发送邮件',
+n3:'营销内容', n3_d:'优惠活动、新国家上线',
+n4:'短信通知', n4_d:'仅用于登录验证码、注销确认',
+lang_h:'界面语言',
+sec_h:'账号安全',
+s1:'修改密码', s1_d:'最近修改:2026-05-12', s1_b:'修改',
+s2:'修改手机号', s2_d:'当前: +62812-****-7890',
+s3:'登录设备', s3_d:'2 台活跃设备', s3_b:'管理',
+agree2_h:'协议与条款',
+a1:'用户服务协议', a2:'隐私政策', a3:'数据导出 (GDPR)',
+view:'查看 →', export:'导出我的数据',
+del_h:'注销账号', del_d:'72小时内永久删除您的所有数据 ·不可恢复', del_b:'注销 (N7)',
+},
+'en': {
+brand:'Visa Smart Assistant · V2', env:'Pure Tool Edition',
+grp_guest:'Guest', grp_user:'Logged-in (User)',
+nav_home:'Home / Landing', nav_signup:'Sign Up', nav_login:'Log In',
+nav_profile:'Profile', nav_dests:'Choose Destination',
+nav_scan:'Scan Passport (N1)', nav_mats:'Materials', nav_val:'AI Validation (N2)',
+nav_form:'Application Form', nav_rpa:'RPA Progress (N3)', nav_order:'Order Detail (N4)', nav_set:'Settings',
+flow_label:'Visa V2 End-to-End',
+step1:'Home', step2:'Country', step3:'Scan', step4:'Materials', step5:'Validate',
+step6:'Form', step7:'RPA Submit', step8:'Order Status', step9:'Issued',
+prev:'← Back', next:'Next →', cta_next:'Next: Pick Country',
+hero_title:'Apply for a visa in minutes',
+hero_sub:'Passport OCR + AI validation + automated RPA submission. On-premise · Secure ·4 languages ·9 destinations.<br/>A self-service online tool only — final visa decisions are made independently by official authorities.',
+hero_note:'A self-service online tool only — final visa decisions are made independently by official authorities.',
+cta_signup:'Sign Up Free', cta_explore:'Browse9 Destinations',
+stat_dests:'Destinations', stat_langs:'Languages', stat_ocr:'OCR Accuracy',
+stat_rpa:'RPA Success Rate', stat_local:'On-Premise',
+trust1_t:'No Biometrics', trust1_d:'No face recognition or fingerprints. Just scan and fill.',
+trust2_t:'100% On-Premise', trust2_d:'All data stays on local servers — zero public cloud dependency.',
+trust3_t:'AI Validation', trust3_d:'15+ rules: format / expiry / sharpness / consistency.',
+trust4_t:'RPA Auto-Submit', trust4_d:'Playwright + Camoufox mimic human action —10-15 min on average.',
+dests_title:'9 Featured Destinations',
+signup_t:'Create Account', signup_s:'4 languages · visa application helper only',
+phone_l:'Phone Number', phone_ph:'81234567890', send_code:'Send Code',
+phone_help:'We will send a6-digit code to your phone',
+code_l:'Verification Code', code_ph:'6 digits',
+pwd_l:'Password', pwd_ph:'8-32 chars, letters and digits', pwd_help:'Strength: ●○○ Medium',
+pwd_ok:'Password remembered',
+agree_p:'I have read and agree to', agree_tos:'Terms of Service', agree_and:'and', agree_priv:'Privacy Policy',
+signup_btn:'Sign Up', have_acc:'Have an account?', go_login:'Log In',
+login_t:'Welcome Back', login_s:'Use phone + password or SMS code',
+login_pwd:'Password', login_sms:'SMS Code',
+remember:'Remember me for7 days', forgot:'Forgot Password?',
+login_btn:'Log In', no_acc:"Don't have an account?", go_signup:'Sign Up',
+profile_t:'Profile', profile_s:'Account · Materials · Language preferences',
+joined:'Joined', verified:'Verified', orders_count:'Total Orders',
+quick_actions:'Quick Actions',
+m_orders:'My Orders', m_orders_d:'3 in progress ·2 completed',
+m_mats:'Material Vault (N5)', m_mats_d:'Passport + ID card, reusable',
+m_set:'Settings', m_set_d:'Notifications · Privacy · Agreements',
+m_del:'Delete Account (N7)', m_del_d:'Data destroyed in72h',
+recent_orders:'Recent Orders',
+jp_name:'Japan Tourist Visa', kr_name:'Korea Tourist Visa', sg_name:'Singapore Student Visa',
+view_detail:'View Detail →', dl_pdf:'Download Visa PDF ↓', view_reason:'View Reason →',
+state_created:'Pending', state_submitted:'Submitted', state_reviewing:'Reviewing',
+state_approved:'Approved', state_rejected:'Rejected',
+dests_t:'Choose Destination',
+dests_s:'9 featured · Tourist/Student visas only · Tier1 (ID/VN/PH) fully configured',
+vt_all:'All', vt_t:'Tourist', vt_s:'Student',
+applied_mark:'Already applied ↗ green corner badge',
+tier1_h:'Tier1 countries fully configured',
+tier1_d:'Indonesia / Vietnam / Philippines have full OCR templates, AI rules and RPA flows —99% availability. Other6 (US/JP/UK/AU/CA/EU) are configured and documented.',
+view_cfg:'View Configuration',
+scan_t:'Scan Passport Bio Page',
+scan_s:'Align the <strong>photo page</strong> within the frame · auto alignment detection · ~2.5s recognition',
+scan_bio:'photo page',
+scan_tip:'Align the passport bio page so all4 corners are visible',
+auto_cap:'Auto Capture Countdown', conf:'Alignment Confidence', manual:'Manual Capture',
+tip_h:'Capture Tips',
+tip_d:'Shoot in good light · avoid reflections and shadows · keep passport flat · PaddleOCR2.7+ runs offline with ≥95% field accuracy.',
+mats_t:'Materials Collection',
+mats_s:'3 input modes · multi-file per material · ≤10MB · JPG / PNG / PDF / WebP',
+m_all:'All Materials', m_pass:'Passport', m_id:'ID Card', m_house:'Household',
+m_emp:'Employment', m_bank:'Bank Statement', m_flight:'Flight', m_hotel:'Hotel',
+ent1_t:'Capture (OCR)', ent1_d:'PaddleOCR2.7+ · realtime ·2.5s avg',
+ent2_t:'Upload File', ent2_d:'JPG / PNG / PDF / WebP · ≤10MB',
+ent3_t:'Voice Input', ent3_d:'FunASR paraformer-zh · ID/VN/EN/ZH',
+collected_t:'Collected ·3 items',
+mat_pass:'Passed', mat_pend:'Pending', retake:'Re-capture',
+save_draft:'Save Draft', submit_val:'Submit Validation →',
+val_t:'AI Validation Result',
+val_s1:'8 items checked', val_s2:'1 must fix', val_s3:'2 warnings', val_s4:'passed',
+val_total:'Total', val_pass:'Pass', val_warn:'Warn', val_fail:'Fail',
+v1_k:'Passport No. Format', v_fix:'Fix',
+v2_k:'Passport Expiry', v3_k:'Flight Date', v_view:'View',
+v4_k:'Date of Birth', v5_k:'Name Length', v6_k:'Image Sharpness',
+v7_k:'Image Resolution', v8_k:'OCR Confidence', v_pass:'Pass',
+fix_h:'Must Fix (1 item)',
+fix_d:'Passport number must be9 chars (ICAO9303); we detected10. Please re-capture or edit manually.',
+continue_warn:'Continue ignoring warnings →',
+form_t:'Japan Tourist Visa Application',
+form_s1:'OCR pre-filled', form_s2:'complete the rest',
+ft1:'Basic', ft2:'Travel', ft3:'Employment', ft4:'Family', ft5:'Emergency Contact',
+fn_l:'Surname (EN)', gn_l:'Given Name (EN)', pn_l:'Passport No.',
+pn_err:'Format does not match ICAO9303',
+dob_l:'Date of Birth', nat_l:'Nationality', dst_l:'Destination',
+arr_l:'Arrival Date', dep_l:'Departure Date', stay_l:'Stay Duration',
+stay_h:'Auto-calculated · Arrival + Departure',
+occ_l:'Occupation', emp_l:'Employer', em_l:'Emergency Contact',
+submit_app:'Submit Application →',
+rpa_t:'RPA Auto-Submitting',
+rpa_s:'Visiting official site · filling form · solving captcha · submitting',
+eta:'Estimated remaining',
+r1:'Visit Site', r2:'Parse Form', r3:'Solve Captcha',
+r4:'Fill Form', r5:'Upload Files', r6:'Submit',
+log_h:'Live Log', running:'Running',
+log1:'[INFO] Launch Playwright + Camoufox browser',
+log2:'[INFO] Load UA pool → select Chrome/119.0 Win11',
+log3:'[INFO] GET https://www.vfsglobal.com/japan/ (200 OK)',
+log4:'[OK] Step1 done ·2.1 s',
+log5:'[INFO] Parse form schema →18 fields identified',
+log6:'[OK] Step2 done ·1.4 s',
+log7:'[INFO] Locate captcha #captcha-image',
+log8:'[INFO] Run ddddocr inference → CPU142 ms',
+log9:'[WARN] First-pass confidence0.74 → retrying',
+log10:'[INFO] Retry → confidence0.91 · attempt1/3',
+log11:'[OK] Captcha filled · awaiting submit',
+stats_h:'Run Metrics',
+m1:'Elapsed', m2:'Remaining', m3:'Captcha Try', m4:'Fields Filled', m5:'Daily Visits', m6:'IP Switch',
+pol_h:'Throttling Policy',
+pol_d:'≤50 visits/IP/day · ≥60s between submissions · off-peak UTC00:00-06:00 ·3 captcha fails → auto-abort.',
+toast_h:'Captcha Recognition Anomaly',
+toast_d:'Site redesign: #captcha-image selector broken. Auto alert sent + country task paused, awaiting manual intervention.',
+od_t:'Japan Tourist Visa · Order Detail', upd:'Last updated',
+info_h:'Order Information',
+f1:'Destination', f2:'Applicant', f3:'Arrival Date', f4:'Stay',
+f5:'Official Ref No.', f6:'Fee',
+f6_d:'(Internal ledger · V3+ payments)', vt_t2:'Tourist',
+msgs_h:'Status Messages',
+msg1_t:'Entered Review Stage',
+msg1_d:'Your application was received and is being reviewed by the Embassy of Japan in Indonesia. Typical5-7 business days.',
+msg2_t:'Submitted Successfully',
+msg2_d:'RPA has submitted your application. Reference: JP-VFS-20260611-5821.',
+msg3_t:'Order Created',
+msg3_d:'Order V2-20260611-000123 created. Materials uploaded and AI validation passed.',
+rpa_ss_h:'RPA Screenshot Playback',
+rpa_ss_d:'Screenshots stored7 years · developer admin only · AES-256-GCM encrypted',
+reapply:'Re-apply', dl_receipt:'Download Receipt',
+set_t:'Settings', set_s:'Security · Notifications · Privacy · Agreements',
+notif_h:'Notifications',
+n1:'Push Notifications', n1_d:'Order status, review progress',
+n2:'Email Notifications', n2_d:'Send on approval / rejection',
+n3:'Marketing', n3_d:'Promotions, new destinations',
+n4:'SMS Notifications', n4_d:'Login codes and account deletion only',
+lang_h:'Display Language',
+sec_h:'Account Security',
+s1:'Change Password', s1_d:'Last changed:2026-05-12', s1_b:'Change',
+s2:'Change Phone', s2_d:'Current: +62812-****-7890',
+s3:'Active Devices', s3_d:'2 active', s3_b:'Manage',
+agree2_h:'Agreements & Policies',
+a1:'Terms of Service', a2:'Privacy Policy', a3:'Data Export (GDPR)',
+view:'View →', export:'Export My Data',
+del_h:'Delete Account', del_d:'Permanently delete all your data within72 hours. Cannot be undone.', del_b:'Delete (N7)',
+},
+'id': {
+brand:'Asisten Visa Cerdas · V2', env:'Edisi Alat Murni',
+grp_guest:'Tamu', grp_user:'Masuk (Pengguna)',
+nav_home:'Beranda', nav_signup:'Daftar', nav_login:'Masuk',
+nav_profile:'Profil', nav_dests:'Pilih Destinasi',
+nav_scan:'Pindai Paspor (N1)', nav_mats:'Material', nav_val:'Validasi AI (N2)',
+nav_form:'Formulir', nav_rpa:'Progres RPA (N3)', nav_order:'Detail Pesanan (N4)', nav_set:'Pengaturan',
+flow_label:'Visa V2 End-to-End',
+step1:'Beranda', step2:'Negara', step3:'Pindai', step4:'Material', step5:'Validasi',
+step6:'Formulir', step7:'Kirim RPA', step8:'Status', step9:'Disetujui',
+prev:'← Sebelumnya', next:'Selanjutnya →', cta_next:'Selanjutnya: Pilih Negara',
+hero_title:'Ajukan visa dalam hitungan menit',
+hero_sub:'OCR Paspor + validasi AI + pengiriman otomatis RPA. On-premise · Aman ·4 bahasa ·9 destinasi.<br/>Alat bantu online saja — keputusan visa akhir dibuat independen oleh pihak berwenang resmi.',
+hero_note:'Alat bantu online saja — keputusan visa akhir dibuat independen oleh pihak berwenang resmi.',
+cta_signup:'Daftar Gratis', cta_explore:'Lihat9 Destinasi',
+stat_dests:'Destinasi', stat_langs:'Bahasa', stat_ocr:'Akurasi OCR',
+stat_rpa:'Tingkat Sukses RPA', stat_local:'On-Premise',
+trust1_t:'Tanpa Biometrik', trust1_d:'Tanpa pengenalan wajah atau sidik jari. Cukup pindai dan isi.',
+trust2_t:'100% On-Premise', trust2_d:'Semua data tetap di server lokal — tanpa ketergantungan cloud publik.',
+trust3_t:'Validasi AI', trust3_d:'15+ aturan: format / kedaluwarsa / ketajaman / konsistensi.',
+trust4_t:'Kirim Otomatis RPA', trust4_d:'Playwright + Camoufox meniru aksi manusia — rata-rata10-15 menit.',
+dests_title:'9 Destinasi Unggulan',
+signup_t:'Buat Akun', signup_s:'4 bahasa · alat pembantu aplikasi visa saja',
+phone_l:'Nomor Telepon', phone_ph:'81234567890', send_code:'Kirim Kode',
+phone_help:'Kami akan mengirim kode6 digit ke ponsel Anda',
+code_l:'Kode Verifikasi', code_ph:'6 digit',
+pwd_l:'Kata Sandi', pwd_ph:'8-32 karakter, huruf dan angka', pwd_help:'Kekuatan: ●○○ Sedang',
+pwd_ok:'Kata sandi diingat',
+agree_p:'Saya telah membaca dan menyetujui', agree_tos:'Ketentuan Layanan', agree_and:'dan', agree_priv:'Kebijakan Privasi',
+signup_btn:'Daftar', have_acc:'Sudah punya akun?', go_login:'Masuk',
+login_t:'Selamat Datang Kembali', login_s:'Gunakan telepon + kata sandi atau kode SMS',
+login_pwd:'Kata Sandi', login_sms:'Kode SMS',
+remember:'Ingat saya selama7 hari', forgot:'Lupa Kata Sandi?',
+login_btn:'Masuk', no_acc:'Belum punya akun?', go_signup:'Daftar',
+profile_t:'Profil', profile_s:'Akun · Material · Preferensi bahasa',
+joined:'Bergabung', verified:'Terverifikasi', orders_count:'Total Pesanan',
+quick_actions:'Aksi Cepat',
+m_orders:'Pesanan Saya', m_orders_d:'3 berlangsung ·2 selesai',
+m_mats:'Brankas Material (N5)', m_mats_d:'Paspor + KTP, dapat digunakan ulang',
+m_set:'Pengaturan', m_set_d:'Notifikasi · Privasi · Perjanjian',
+m_del:'Hapus Akun (N7)', m_del_d:'Data dihancurkan dalam72 jam',
+recent_orders:'Pesanan Terbaru',
+jp_name:'Visa Turis Jepang', kr_name:'Visa Turis Korea', sg_name:'Visa Pelajar Singapura',
+view_detail:'Lihat Detail →', dl_pdf:'Unduh PDF Visa ↓', view_reason:'Lihat Alasan →',
+state_created:'Tertunda', state_submitted:'Terkirim', state_reviewing:'Ditinjau',
+state_approved:'Disetujui', state_rejected:'Ditolak',
+dests_t:'Pilih Destinasi',
+dests_s:'9 unggulan · Hanya visa Turis/Pelajar · Tier1 (ID/VN/PH) terkonfigurasi penuh',
+vt_all:'Semua', vt_t:'Turis', vt_s:'Pelajar',
+applied_mark:'Sudah pernah申请 ↗ tanda sudut hijau',
+tier1_h:'Negara Tier1 terkonfigurasi penuh',
+tier1_d:'Indonesia / Vietnam / Filipina memiliki template OCR, aturan AI, dan alur RPA lengkap — ketersediaan99%.6 negara lainnya (AS/JP/UK/AU/CA/EU) terkonfigurasi dan terdokumentasi.',
+view_cfg:'Lihat Konfigurasi',
+scan_t:'Pindai Halaman Bio Paspor',
+scan_s:'Sejajarkan <strong>halaman foto</strong> dalam bingkai · deteksi penyelarasan otomatis · ~2.5 detik pengenalan',
+scan_bio:'halaman foto',
+scan_tip:'Sejajarkan halaman bio paspor agar semua4 sudut terlihat',
+auto_cap:'Hitung Mundur Otomatis', conf:'Kepercayaan Penyelarasan', manual:'Pengambilan Manual',
+tip_h:'Tips Pengambilan',
+tip_d:'Ambil di cahaya bagus · hindari pantulan dan bayangan · jaga paspor tetap rata · PaddleOCR2.7+ berjalan offline dengan akurasi bidang ≥95%.',
+mats_t:'Pengumpulan Material',
+mats_s:'3 mode input · multi-file per material · ≤10MB · JPG / PNG / PDF / WebP',
+m_all:'Semua Material', m_pass:'Paspor', m_id:'KTP', m_house:'Kartu Keluarga',
+m_emp:'Pekerjaan', m_bank:'Rekening Bank', m_flight:'Tiket', m_hotel:'Hotel',
+ent1_t:'Ambil (OCR)', ent1_d:'PaddleOCR2.7+ · realtime · rata-rata2.5 dtk',
+ent2_t:'Unggah File', ent2_d:'JPG / PNG / PDF / WebP · ≤10MB',
+ent3_t:'Input Suara', ent3_d:'FunASR paraformer-zh · ID/VN/EN/ZH',
+collected_t:'Terkumpul ·3 item',
+mat_pass:'Lulus', mat_pend:'Tertunda', retake:'Ambil Ulang',
+save_draft:'Simpan Draft', submit_val:'Kirim Validasi →',
+val_t:'Hasil Validasi AI',
+val_s1:'8 item diperiksa', val_s2:'1 harus diperbaiki', val_s3:'2 peringatan', val_s4:'lulus',
+val_total:'Total', val_pass:'Lulus', val_warn:'Peringatan', val_fail:'Gagal',
+v1_k:'Format No. Paspor', v_fix:'Perbaiki',
+v2_k:'Kedaluwarsa Paspor', v3_k:'Tanggal Penerbangan', v_view:'Lihat',
+v4_k:'Tanggal Lahir', v5_k:'Panjang Nama', v6_k:'Ketajaman Gambar',
+v7_k:'Resolusi Gambar', v8_k:'Kepercayaan OCR', v_pass:'Lulus',
+fix_h:'Harus Diperbaiki (1 item)',
+fix_d:'Nomor paspor harus9 karakter (ICAO9303); terdeteksi10. Silakan ambil ulang atau edit manual.',
+continue_warn:'Lanjutkan abaikan peringatan →',
+form_t:'Aplikasi Visa Turis Jepang',
+form_s1:'OCR terisi awal', form_s2:'lengkapi sisanya',
+ft1:'Dasar', ft2:'Perjalanan', ft3:'Pekerjaan', ft4:'Keluarga', ft5:'Kontak Darurat',
+fn_l:'Nama Belakang (EN)', gn_l:'Nama Depan (EN)', pn_l:'No. Paspor',
+pn_err:'Format tidak cocok dengan ICAO9303',
+dob_l:'Tanggal Lahir', nat_l:'Kewarganegaraan', dst_l:'Destinasi',
+arr_l:'Tanggal Tiba', dep_l:'Tanggal Berangkat', stay_l:'Durasi Tinggal',
+stay_h:'Dihitung otomatis · Tiba + Berangkat',
+occ_l:'Pekerjaan', emp_l:'Majikan', em_l:'Kontak Darurat',
+submit_app:'Kirim Aplikasi →',
+rpa_t:'RPA Mengirim Otomatis',
+rpa_s:'Mengunjungi situs resmi · mengisi formulir · memecahkan captcha · mengirim',
+eta:'Estimasi tersisa',
+r1:'Kunjungi Situs', r2:'Parse Formulir', r3:'Selesaikan Captcha',
+r4:'Isi Formulir', r5:'Unggah File', r6:'Kirim',
+log_h:'Log Langsung', running:'Berjalan',
+log1:'[INFO] Luncurkan browser Playwright + Camoufox',
+log2:'[INFO] Muat pool UA → pilih Chrome/119.0 Win11',
+log3:'[INFO] GET https://www.vfsglobal.com/japan/ (200 OK)',
+log4:'[OK] Step1 selesai ·2.1 dtk',
+log5:'[INFO] Parse skema formulir →18 bidang teridentifikasi',
+log6:'[OK] Step2 selesai ·1.4 dtk',
+log7:'[INFO] Cari captcha #captcha-image',
+log8:'[INFO] Jalankan inferensi ddddocr → CPU142 md',
+log9:'[WARN] Keyakinan lintasan pertama0.74 → coba lagi',
+log10:'[INFO] Coba lagi → keyakinan0.91 · percobaan1/3',
+log11:'[OK] Captcha terisi · menunggu kirim',
+stats_h:'Metrik Berjalan',
+m1:'Berlalu', m2:'Tersisa', m3:'Coba Captcha', m4:'Bidang Terisi', m5:'Kunjungan Harian', m6:'Saklar IP',
+pol_h:'Kebijakan Throttling',
+pol_d:'≤50 kunjungan/IP/hari · ≥60d antara pengiriman · off-peak UTC00:00-06:00 ·3 gagal captcha → batal otomatis.',
+toast_h:'Anomali Pengenalan Captcha',
+toast_d:'Redesain situs: pemilih #captcha-image rusak. Peringatan otomatis terkirim + tugas negara dijeda, menunggu intervensi manual.',
+od_t:'Visa Turis Jepang · Detail Pesanan', upd:'Terakhir diperbarui',
+info_h:'Informasi Pesanan',
+f1:'Destinasi', f2:'Pemohon', f3:'Tanggal Tiba', f4:'Tinggal',
+f5:'No. Ref Resmi', f6:'Biaya',
+f6_d:'(Buku besar internal · pembayaran V3+)', vt_t2:'Turis',
+msgs_h:'Pesan Status',
+msg1_t:'Memasuki Tahap Tinjauan',
+msg1_d:'Aplikasi Anda diterima dan sedang ditinjau oleh Kedutaan Jepang di Indonesia. Tipikal5-7 hari kerja.',
+msg2_t:'Berhasil Dikirim',
+msg2_d:'RPA telah mengirim aplikasi Anda. Referensi: JP-VFS-20260611-5821.',
+msg3_t:'Pesanan Dibuat',
+msg3_d:'Pesanan V2-20260611-000123 dibuat. Material diunggah dan validasi AI lulus.',
+rpa_ss_h:'Pemutaran Ulang Tangkapan RPA',
+rpa_ss_d:'Tangkapan disimpan7 tahun · hanya admin developer · terenkripsi AES-256-GCM',
+reapply:'Ajukan Ulang', dl_receipt:'Unduh Tanda Terima',
+set_t:'Pengaturan', set_s:'Keamanan · Notifikasi · Privasi · Perjanjian',
+notif_h:'Notifikasi',
+n1:'Notifikasi Push', n1_d:'Status pesanan, progres tinjauan',
+n2:'Notifikasi Email', n2_d:'Kirim saat persetujuan / penolakan',
+n3:'Pemasaran', n3_d:'Promosi, destinasi baru',
+n4:'Notifikasi SMS', n4_d:'Hanya kode masuk dan penghapusan akun',
+lang_h:'Bahasa Tampilan',
+sec_h:'Keamanan Akun',
+s1:'Ubah Kata Sandi', s1_d:'Terakhir diubah:2026-05-12', s1_b:'Ubah',
+s2:'Ubah Telepon', s2_d:'Saat ini: +62812-****-7890',
+s3:'Perangkat Aktif', s3_d:'2 aktif', s3_b:'Kelola',
+agree2_h:'Perjanjian & Kebijakan',
+a1:'Ketentuan Layanan', a2:'Kebijakan Privasi', a3:'Ekspor Data (GDPR)',
+view:'Lihat →', export:'Ekspor Data Saya',
+del_h:'Hapus Akun', del_d:'Hapus permanen semua data Anda dalam72 jam. Tidak dapat dibatalkan.', del_b:'Hapus (N7)',
+},
+'vi': {
+brand:'Trợ lý Visa Thông minh · V2', env:'Phiên bản Công cụ Thuần',
+grp_guest:'Khách', grp_user:'Đã đăng nhập',
+nav_home:'Trang chủ', nav_signup:'Đăng ký', nav_login:'Đăng nhập',
+nav_profile:'Hồ sơ', nav_dests:'Chọn Điểm đến',
+nav_scan:'Quét Hộ chiếu (N1)', nav_mats:'Tài liệu', nav_val:'Kiểm tra AI (N2)',
+nav_form:'Đơn', nav_rpa:'Tiến độ RPA (N3)', nav_order:'Chi tiết Đơn hàng (N4)', nav_set:'Cài đặt',
+flow_label:'Visa V2 Toàn bộ quy trình',
+step1:'Trang chủ', step2:'Quốc gia', step3:'Quét', step4:'Tài liệu', step5:'Kiểm tra',
+step6:'Đơn', step7:'Gửi RPA', step8:'Trạng thái', step9:'Đã duyệt',
+prev:'← Quay lại', next:'Tiếp theo →', cta_next:'Tiếp: Chọn quốc gia',
+hero_title:'Xin visa trong vài phút',
+hero_sub:'OCR hộ chiếu + kiểm tra AI + gửi tự động RPA. On-premise · An toàn ·4 ngôn ngữ ·9 điểm đến.<br/>Chỉ là công cụ trực tuyến tự phục vụ — quyết định visa cuối cùng do cơ quan chính thức độc lập đưa ra.',
+hero_note:'Chỉ là công cụ trực tuyến tự phục vụ — quyết định visa cuối cùng do cơ quan chính thức độc lập đưa ra.',
+cta_signup:'Đăng ký miễn phí', cta_explore:'Xem9 điểm đến',
+stat_dests:'Điểm đến', stat_langs:'Ngôn ngữ', stat_ocr:'Độ chính xác OCR',
+stat_rpa:'Tỷ lệ thành công RPA', stat_local:'On-Premise',
+trust1_t:'Không sinh trắc học', trust1_d:'Không nhận diện khuôn mặt hay vân tay. Chỉ quét và điền.',
+trust2_t:'100% On-Premise', trust2_d:'Mọi dữ liệuở máy chủ cục bộ — không phụ thuộc cloud công cộng.',
+trust3_t:'Kiểm tra AI', trust3_d:'15+ quy tắc: định dạng / hết hạn / độ sắc nét / nhất quán.',
+trust4_t:'Gửi tự động RPA', trust4_d:'Playwright + Camoufox mô phỏng thao tác người — trung bình10-15 phút.',
+dests_title:'9 điểm đến nổi bật',
+signup_t:'Tạo tài khoản', signup_s:'4 ngôn ngữ · chỉ là công cụ hỗ trợ xin visa',
+phone_l:'Số điện thoại', phone_ph:'81234567890', send_code:'Gửi mã',
+phone_help:'Chúng tôi sẽ gửi mã6 chữ số đến điện thoại của bạn',
+code_l:'Mã xác minh', code_ph:'6 chữ số',
+pwd_l:'Mật khẩu', pwd_ph:'8-32 ký tự, chữ và số', pwd_help:'Độ mạnh: ●○○ Trung bình',
+pwd_ok:'Đã nhớ mật khẩu',
+agree_p:'Tôi đã đọc và đồng ý', agree_tos:'Điều khoản Dịch vụ', agree_and:'và', agree_priv:'Chính sách Bảo mật',
+signup_btn:'Đăng ký', have_acc:'Đã có tài khoản?', go_login:'Đăng nhập',
+login_t:'Chào mừng trở lại', login_s:'Dùng SĐT + mật khẩu hoặc mã SMS',
+login_pwd:'Mật khẩu', login_sms:'Mã SMS',
+remember:'Ghi nhớ tôi trong7 ngày', forgot:'Quên mật khẩu?',
+login_btn:'Đăng nhập', no_acc:'Chưa có tài khoản?', go_signup:'Đăng ký',
+profile_t:'Hồ sơ', profile_s:'Tài khoản · Tài liệu · Tùy chọn ngôn ngữ',
+joined:'Tham gia', verified:'Đã xác minh', orders_count:'Tổng đơn hàng',
+quick_actions:'Truy cập nhanh',
+m_orders:'Đơn hàng của tôi', m_orders_d:'3 đang xử lý ·2 hoàn thành',
+m_mats:'Kho tài liệu (N5)', m_mats_d:'Hộ chiếu + CCCD, có thể tái sử dụng',
+m_set:'Cài đặt', m_set_d:'Thông báo · Bảo mật · Thỏa thuận',
+m_del:'Xóa tài khoản (N7)', m_del_d:'Dữ liệu bị hủy trong72 giờ',
+recent_orders:'Đơn hàng gần đây',
+jp_name:'Visa Du lịch Nhật Bản', kr_name:'Visa Du lịch Hàn Quốc', sg_name:'Visa Sinh viên Singapore',
+view_detail:'Xem chi tiết →', dl_pdf:'Tải PDF visa ↓', view_reason:'Xem lý do →',
+state_created:'Đang chờ', state_submitted:'Đã gửi', state_reviewing:'Đang xét duyệt',
+state_approved:'Đã duyệt', state_rejected:'Bị từ chối',
+dests_t:'Chọn điểm đến',
+dests_s:'9 nổi bật · Chỉ visa Du lịch/Sinh viên · Tier1 (ID/VN/PH) đã cấu hình đầy đủ',
+vt_all:'Tất cả', vt_t:'Du lịch', vt_s:'Sinh viên',
+applied_mark:'Đã từng nộp ↗ góc xanh',
+tier1_h:'Quốc gia Tier1 đã cấu hình đầy đủ',
+tier1_d:'Indonesia / Việt Nam / Philippines có mẫu OCR, quy tắc AI và luồng RPA đầy đủ — khả dụng99%.6 quốc gia khác (Mỹ/JP/UK/AU/CA/EU) đã cấu hình và có tài liệu.',
+view_cfg:'Xem cấu hình',
+scan_t:'Quét trang sinh trắc hộ chiếu',
+scan_s:'Căn chỉnh <strong>trangảnh</strong> trong khung · phát hiện căn chỉnh tự động · nhận dạng ~2.5 giây',
+scan_bio:'trangảnh',
+scan_tip:'Căn chỉnh trang sinh trắc hộ chiếu sao cho cả4 góc đều hiển thị',
+auto_cap:'Đếm ngược tự động', conf:'Độ tin cậy căn chỉnh', manual:'Chụp thủ công',
+tip_h:'Mẹo chụp',
+tip_d:'Chụp trong ánh sáng tốt · tránh phản chiếu và bóng · giữ hộ chiếu phẳng · PaddleOCR2.7+ chạy offline với độ chính xác trường ≥95%.',
+mats_t:'Thu thập tài liệu',
+mats_s:'3 chế độ nhập · nhiều file mỗi tài liệu · ≤10MB · JPG / PNG / PDF / WebP',
+m_all:'Tất cả tài liệu', m_pass:'Hộ chiếu', m_id:'CCCD', m_house:'Sổ hộ khẩu',
+m_emp:'Việc làm', m_bank:'Sao kê', m_flight:'Vé máy bay', m_hotel:'Khách sạn',
+ent1_t:'Chụp (OCR)', ent1_d:'PaddleOCR2.7+ · realtime · trung bình2.5 giây',
+ent2_t:'Tải file', ent2_d:'JPG / PNG / PDF / WebP · ≤10MB',
+ent3_t:'Nhập giọng nói', ent3_d:'FunASR paraformer-zh · ID/VN/EN/ZH',
+collected_t:'Đã thu thập ·3 mục',
+mat_pass:'Đạt', mat_pend:'Đang chờ', retake:'Chụp lại',
+save_draft:'Lưu nháp', submit_val:'Gửi kiểm tra →',
+val_t:'Kết quả kiểm tra AI',
+val_s1:'8 mục đã kiểm', val_s2:'1 cần sửa', val_s3:'2 cảnh báo', val_s4:'đạt',
+val_total:'Tổng', val_pass:'Đạt', val_warn:'Cảnh báo', val_fail:'Lỗi',
+v1_k:'Định dạng Số HC', v_fix:'Sửa',
+v2_k:'Hạn HC', v3_k:'Ngày bay', v_view:'Xem',
+v4_k:'Ngày sinh', v5_k:'Độ dài tên', v6_k:'Độ sắc nét',
+v7_k:'Độ phân giải', v8_k:'Độ tin cậy OCR', v_pass:'Đạt',
+fix_h:'Cần sửa (1 mục)',
+fix_d:'Số hộ chiếu phải9 ký tự (ICAO9303); phát hiện10. Vui lòng chụp lại hoặc sửa thủ công.',
+continue_warn:'Tiếp tục bỏ qua cảnh báo →',
+form_t:'Đơn xin visa Du lịch Nhật Bản',
+form_s1:'OCR đã điền sẵn', form_s2:'hoàn thành phần còn lại',
+ft1:'Cơ bản', ft2:'Du lịch', ft3:'Việc làm', ft4:'Gia đình', ft5:'Liên hệ khẩn',
+fn_l:'Họ (EN)', gn_l:'Tên (EN)', pn_l:'Số HC',
+pn_err:'Định dạng không khớp ICAO9303',
+dob_l:'Ngày sinh', nat_l:'Quốc tịch', dst_l:'Điểm đến',
+arr_l:'Ngày đến', dep_l:'Ngày đi', stay_l:'Thời gian lưu trú',
+stay_h:'Tự tính · Đến + Đi',
+occ_l:'Nghề nghiệp', emp_l:'Chủ lao động', em_l:'Liên hệ khẩn',
+submit_app:'Gửi đơn →',
+rpa_t:'RPA đang gửi tự động',
+rpa_s:'Đang truy cập trang chính thức · điền form · giải captcha · gửi',
+eta:'Còn lạiước tính',
+r1:'Truy cập trang', r2:'Phân tích form', r3:'Giải captcha',
+r4:'Điền form', r5:'Tải file', r6:'Gửi',
+log_h:'Log trực tiếp', running:'Đang chạy',
+log1:'[INFO] Khởi động trình duyệt Playwright + Camoufox',
+log2:'[INFO] Tải pool UA → chọn Chrome/119.0 Win11',
+log3:'[INFO] GET https://www.vfsglobal.com/japan/ (200 OK)',
+log4:'[OK] Step1 xong ·2.1 giây',
+log5:'[INFO] Phân tích schema form →18 trường nhận diện',
+log6:'[OK] Step2 xong ·1.4 giây',
+log7:'[INFO] Định vị captcha #captcha-image',
+log8:'[INFO] Chạy suy luận ddddocr → CPU142 ms',
+log9:'[WARN] Độ tin cậy lần đầu0.74 → thử lại',
+log10:'[INFO] Thử lại → độ tin cậy0.91 · lần thử1/3',
+log11:'[OK] Captcha đã điền · chờ gửi',
+stats_h:'Số liệu chạy',
+m1:'Đã dùng', m2:'Còn lại', m3:'Lần captcha', m4:'Trường đã điền', m5:'Lượt/ngày', m6:'Đổi IP',
+pol_h:'Chính sách giới hạn',
+pol_d:'≤50 lượt/IP/ngày · ≥60s giữa các lần gửi · ngoài giờ UTC00:00-06:00 ·3 lần captcha thất bại → tự hủy.',
+toast_h:'Bất thường nhận diện captcha',
+toast_d:'Thiết kế lại trang: bộ chọn #captcha-image hỏng. Cảnh báo tự động đã gửi + tạm dừng tác vụ quốc gia, chờ can thiệp thủ công.',
+od_t:'Visa Du lịch Nhật Bản · Chi tiết đơn hàng', upd:'Cập nhật lần cuối',
+info_h:'Thông tin đơn hàng',
+f1:'Điểm đến', f2:'Người nộp', f3:'Ngày đến', f4:'Lưu trú',
+f5:'Mã tham chiếu', f6:'Phí',
+f6_d:'(Sổ cái nội bộ · thanh toán V3+)', vt_t2:'Du lịch',
+msgs_h:'Tin nhắn trạng thái',
+msg1_t:'Đã vào giai đoạn xét duyệt',
+msg1_d:'Đơn của bạn đã được tiếp nhận và đang được Đại sứ quán Nhật Bản tại Indonesia xét duyệt. Thường5-7 ngày làm việc.',
+msg2_t:'Gửi thành công',
+msg2_d:'RPA đã gửi đơn của bạn. Tham chiếu: JP-VFS-20260611-5821.',
+msg3_t:'Đơn hàng đã tạo',
+msg3_d:'Đơn V2-20260611-000123 đã tạo. Tài liệu đã tải lên và kiểm tra AI đạt.',
+rpa_ss_h:'Phát lạiảnh chụp RPA',
+rpa_ss_d:'Ảnh lưu7 năm · chỉ admin nhà phát triển · mã hóa AES-256-GCM',
+reapply:'Nộp lại', dl_receipt:'Tải biên nhận',
+set_t:'Cài đặt', set_s:'Bảo mật · Thông báo · Riêng tư · Thỏa thuận',
+notif_h:'Thông báo',
+n1:'Thông báo đẩy', n1_d:'Trạng thái đơn hàng, tiến độ xét duyệt',
+n2:'Thông báo email', n2_d:'Gửi khi duyệt / từ chối',
+n3:'Tiếp thị', n3_d:'Khuyến mãi, điểm đến mới',
+n4:'Thông báo SMS', n4_d:'Chỉ mã đăng nhập và xóa tài khoản',
+lang_h:'Ngôn ngữ hiển thị',
+sec_h:'Bảo mật tài khoản',
+s1:'Đổi mật khẩu', s1_d:'Đổi lần cuối:2026-05-12', s1_b:'Đổi',
+s2:'Đổi SĐT', s2_d:'Hiện tại: +62812-****-7890',
+s3:'Thiết bị hoạt động', s3_d:'2 hoạt động', s3_b:'Quản lý',
+agree2_h:'Thỏa thuận & Chính sách',
+a1:'Điều khoản Dịch vụ', a2:'Chính sách Bảo mật', a3:'Xuất dữ liệu (GDPR)',
+view:'Xem →', export:'Xuất dữ liệu của tôi',
+del_h:'Xóa tài khoản', del_d:'Xóa vĩnh viễn mọi dữ liệu trong72 giờ. Không thể hoàn tác.', del_b:'Xóa (N7)',
+}
+};
+
+/* ============================================================
+ * Country data (9 destinations)
+ * ============================================================ */
+const COUNTRIES = [
+{ code:'US', img:'usa.jpg', name_zh:'美国', name_en:'United States', name_id:'Amerika Serikat', name_vi:'Hoa Kỳ', meta:'5-10 工作日', type:'B1/B2 + F1', tier:'Tier2', flag:'🇺🇸', applied:false, base:'$185' },
+{ code:'JP', img:'japan.jpg', name_zh:'日本', name_en:'Japan', name_id:'Jepang', name_vi:'Nhật Bản', meta:'5-7 工作日', type:'旅游 +留学', tier:'Tier2', flag:'🇯🇵', applied:true, base:'¥4,000' },
+{ code:'UK', img:'uk.jpg', name_zh:'英国', name_en:'United Kingdom', name_id:'Inggris', name_vi:'Vương quốc Anh', meta:'3 周', type:'Visitor + Student', tier:'Tier2', flag:'🇬🇧', applied:false, base:'£127' },
+{ code:'AU', img:'australia.jpg', name_zh:'澳大利亚', name_en:'Australia', name_id:'Australia', name_vi:'Úc', meta:'15-30 天', type:'Visitor + Student', tier:'Tier2', flag:'🇦🇺', applied:false, base:'AUD190' },
+{ code:'CA', img:'canada.jpg', name_zh:'加拿大', name_en:'Canada', name_id:'Kanada', name_vi:'Canada', meta:'10-15 工作日', type:'Visitor + Study', tier:'Tier2', flag:'🇨🇦', applied:false, base:'CAD185' },
+{ code:'EU', img:'eu.jpg', name_zh:'申根 (法/德/意)', name_en:'Schengen (FR/DE/IT)', name_id:'Schengen (FR/DE/IT)', name_vi:'Schengen (FR/DE/IT)', meta:'15 工作日', type:'Tourist + Student', tier:'Tier2', flag:'🇪🇺', applied:false, base:'€90' },
+{ code:'SG', img:'korea.jpg', name_zh:'新加坡', name_en:'Singapore', name_id:'Singapura', name_vi:'Singapore', meta:'3-5 工作日', type:'STP + STP-Student', tier:'Tier1', flag:'🇸🇬', applied:false, base:'SGD30' },
+{ code:'KR', img:'korea.jpg', name_zh:'韩国', name_en:'Korea', name_id:'Korea', name_vi:'Hàn Quốc', meta:'5 工作日', type:'C-3 + D-2', tier:'Tier1', flag:'🇰🇷', applied:false, base:'₩60,000' },
+{ code:'NZ', img:'newzealand.jpg',name_zh:'新西兰', name_en:'New Zealand', name_id:'Selandia Baru', name_vi:'New Zealand', meta:'20 工作日', type:'Visitor + Student', tier:'Tier2', flag:'🇳🇿', applied:false, base:'NZD211' }
+];
+
+/* ============================================================
+ * Render functions
+ * ============================================================ */
+function showPage(id){
+ document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+ const el=document.querySelector(`.page[data-id="${id}"]`);
+ if(el)el.classList.add('on');
+ document.querySelectorAll('.sidebar .nav a').forEach(a=>{
+ a.classList.toggle('on', a.dataset.p===id);
+ });
+ // Scroll to top of canvas
+ document.querySelector('.canvas').scrollTop=0;
+ // Trigger toast demo on RPA page
+ if(id==='P10'){setTimeout(()=>{const t=document.getElementById('rpaToast');if(t)t.classList.add('on');},600);}
+ else{const t=document.getElementById('rpaToast');if(t)t.classList.remove('on');}
+}
+
+function setLang(lang){
+ const dict=I18N[lang]||I18N['zh-CN'];
+ document.querySelectorAll('[data-i18n]').forEach(el=>{
+ const k=el.getAttribute('data-i18n');
+ if(dict[k])el.innerHTML=dict[k];
+ });
+ document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{
+ const k=el.getAttribute('data-i18n-placeholder');
+ if(dict[k])el.setAttribute('placeholder',dict[k]);
+ });
+ // Update lang label + flag
+ const langFlag=document.getElementById('langFlag');
+ const langLabel=document.getElementById('langLabel');
+ if(langFlag&&langLabel){
+ const meta={'zh-CN':['🇨🇳','简体中文'],'en':['🇬🇧','English'],'id':['🇮🇩','Bahasa Indonesia'],'vi':['🇻🇳','Tiếng Việt']};
+ langFlag.textContent=meta[lang][0];
+ langLabel.textContent=meta[lang][1];
+ }
+ // Update dest cards country names
+ renderDestCards(lang);
+ // Close lang menu
+ document.getElementById('langSwitch').classList.remove('open');
+}
+
+function renderDestCards(lang){
+ const nameKey='name_'+lang.split('-')[0];
+ ['destGrid','destGrid2'].forEach(gridId=>{
+ const grid=document.getElementById(gridId);
+ if(!grid)return;
+ grid.innerHTML=COUNTRIES.map(c=>{
+ const tierLabel=c.tier==='Tier1'?'<span class="tag" style="background:rgba(16,185,129,.1);color:var(--success)">Tier1 · '+((lang==='en')?'Ready':(lang==='id')?'Siap':(lang==='vi')?'Sẵn':'已就绪')+'</span>':'<span class="tag">Tier2</span>';
+ const appliedCorner=c.applied?'<div style="position:absolute;top:0;left:0;right:0;background:var(--success);color:white;padding:4px12px;font-size:11px;font-weight:600;text-align:center;border-radius:var(--r-xl) var(--r-xl)00">'+((lang==='en')?'✓ Already applied':(lang==='id')?'✓ Sudah申请':(lang==='vi')?'✓ Đã nộp':'✓ 已申请')+'</div>':'';
+ return `
+<div class="dest-card" onclick="showPage('P6')">
+ <div class="img">
+ <img src="V1_原型_images/${c.img}" alt="${c.name_en}"/>
+ <span class="flag-label">${c.flag} ${c.code}</span>
+ <span class="price-pill">${c.base}</span>
+ </div>
+ <div class="body">
+ <div class="name">${c[nameKey]||c.name_en}</div>
+ <div class="meta"><span>${c.type}</span><span>${c.meta}</span></div>
+ <div class="tags">${tierLabel}<span class="tag primary">Pure Tool</span></div>
+ <div class="foot"><span>${(lang==='en')?'Auto OCR + RPA':(lang==='id')?'Otomatis OCR + RPA':(lang==='vi')?'OCR + RPA tự động':'OCR + RPA 自动'}</span><span style="color:var(--primary);font-weight:600">→</span></div>
+ </div>
+ ${appliedCorner}
+</div>`;
+ }).join('');
+ });
+}
+
+/* ============================================================
+ * Initialization
+ * ============================================================ */
+document.addEventListener('DOMContentLoaded',()=>{
+ // Click outside to close lang menu
+ document.addEventListener('click',(e)=>{
+ if(!e.target.closest('.lang-switch')){
+ document.getElementById('langSwitch').classList.remove('open');
+ }
+ });
+ // Default language from localStorage or browser
+ let lang='zh-CN';
+ try{
+ const saved=localStorage.getItem('visa_v2_lang');
+ if(saved&&I18N[saved])lang=saved;
+ else if(navigator.language){
+ const n=navigator.language.toLowerCase();
+ if(n.startsWith('id'))lang='id';
+ else if(n.startsWith('vi'))lang='vi';
+ else if(n.startsWith('en'))lang='en';
+ else if(n.startsWith('zh'))lang='zh-CN';
+ }
+ }catch(e){}
+ setLang(lang);
+});
+
+</script>
+</body>
+</html>

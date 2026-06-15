@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>管理员登录 · Admin Sign-in</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root {
+    --el-color-primary: #3B6EF5;
+    --ink-1: #0F172A;
+    --ink-2: #334155;
+    --ink-3: #64748B;
+    --border: #E2E8F0;
+    --bg-alt: #F1F5F9;
+    --muted: #94A3B8;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; color: var(--ink-1); }
+  .admin-login-page {
+    min-height: 100vh;
+    background: linear-gradient(180deg, #0F172A 0%, #1E293B 100%);
+    display: flex; flex-direction: column;
+  }
+  .admin-login-topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 28px; color: #E2E8F0;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+  }
+  .admin-login-brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; font-size: 16px; letter-spacing: .5px; }
+  .admin-login-mark {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; background: #3B6EF5; color: #fff;
+    border-radius: 6px; font-weight: 700; font-size: 14px;
+  }
+  .admin-login-brand-text { color: #F8FAFC; }
+  .lang-switch { font-size: 12px; color: #CBD5E1; border: 1px solid rgba(255,255,255,.15); padding: 4px 10px; border-radius: 6px; }
+  .admin-login-shell {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 48px 20px;
+  }
+  .admin-login-card {
+    width: 100%; max-width: 420px;
+    background: #fff; border: 1px solid var(--border);
+    border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,.25);
+    overflow: hidden;
+  }
+  .admin-login-header { padding: 24px 24px 8px; text-align: center; border-bottom: 1px solid var(--border); }
+  .admin-login-title { margin: 0 0 4px; font-size: 22px; font-weight: 700; color: var(--ink-1); }
+  .admin-login-sub { margin: 0; font-size: 13px; color: var(--ink-3); }
+  .admin-login-form { padding: 20px 24px 24px; display: flex; flex-direction: column; gap: 14px; }
+  .app-input { display: block; }
+  .app-input__label { display: block; font-size: 13px; font-weight: 500; color: var(--ink-2); margin-bottom: 6px; }
+  .app-input__wrap {
+    display: flex; align-items: center; gap: 8px; background: #fff;
+    border: 1px solid var(--border); border-radius: 8px; padding: 0 12px;
+  }
+  .app-input__wrap:focus-within { border-color: #3B6EF5; box-shadow: 0 0 0 3px rgba(59,110,245,.15); }
+  .app-input__el {
+    flex: 1; height: 40px; border: none; outline: none; background: transparent;
+    font-size: 14px; color: var(--ink-1); width: 100%; min-width: 0;
+  }
+  .app-input__el::placeholder { color: var(--muted); }
+  .app-input__error { margin-top: 4px; font-size: 12px; color: #DC2626; }
+  .admin-login-server-error {
+    padding: 10px 12px; background: #FEF2F2; border: 1px solid #FCA5A5;
+    border-radius: 8px; font-size: 13px; color: #B91C1C;
+  }
+  .app-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    font-weight: 500; border-radius: 8px; border: 1px solid transparent;
+    cursor: pointer; transition: all .15s; white-space: nowrap;
+    user-select: none; line-height: 1; min-width: 64px;
+  }
+  .app-btn--lg { padding: 12px 22px; font-size: 16px; }
+  .app-btn--primary { background: #3B6EF5; color: #fff; }
+  .admin-login-row { display: flex; justify-content: flex-end; font-size: 13px; margin-top: -4px; }
+  .admin-login-row a { color: #3B6EF5; cursor: pointer; text-decoration: none; }
+  .admin-login-mock-hint {
+    margin: 4px 0 0; padding: 8px 12px; background: #F1F5F9; border-radius: 6px;
+    font-size: 12px; color: #475569; text-align: center; font-family: monospace;
+  }
+  .admin-login-footer {
+    margin-top: 32px; font-size: 12px; color: rgba(226,232,240,.65);
+    text-align: center; max-width: 420px; line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+<div class="admin-login-page">
+  <header class="admin-login-topbar">
+    <div class="admin-login-brand">
+      <span class="admin-login-mark">A</span>
+      <span class="admin-login-brand-text">运营后台</span>
+    </div>
+    <div class="lang-switch">🌐 中文 ▾</div>
+  </header>
+
+  <main class="admin-login-shell">
+    <div class="admin-login-card" data-testid="admin-login-card">
+      <div class="admin-login-header">
+        <h1 class="admin-login-title">管理员登录</h1>
+        <p class="admin-login-sub">仅限后台运营人员访问</p>
+      </div>
+
+      <form class="admin-login-form" data-testid="admin-login-form" onsubmit="event.preventDefault(); return false;">
+        <label class="app-input">
+          <span class="app-input__label">账号<span style="color:#DC2626;margin-left:2px">*</span></span>
+          <span class="app-input__wrap">
+            <input class="app-input__el" type="text" value="admin" placeholder="请输入管理员账号" autocomplete="username" data-testid="admin-login-username" />
+          </span>
+        </label>
+
+        <label class="app-input">
+          <span class="app-input__label">密码<span style="color:#DC2626;margin-left:2px">*</span></span>
+          <span class="app-input__wrap">
+            <input class="app-input__el" type="password" value="admin123" placeholder="请输入密码" autocomplete="current-password" data-testid="admin-login-password" />
+          </span>
+        </label>
+
+        <div class="admin-login-row">
+          <a href="#" onclick="return false;">忘记密码?</a>
+        </div>
+
+        <button type="submit" class="app-btn app-btn--lg app-btn--primary" style="width:100%;" data-testid="admin-login-submit">登录</button>
+
+        <p class="admin-login-mock-hint" data-testid="admin-login-mock-hint">测试账号:admin / admin123</p>
+      </form>
+    </div>
+
+    <footer class="admin-login-footer">登录即表示您同意后台操作审计与日志记录</footer>
+  </main>
+</div>
+</body>
+</html>

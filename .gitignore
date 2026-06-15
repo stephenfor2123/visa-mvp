@@ -20,6 +20,7 @@ frontend/miniprogram/package-lock.json
 __pycache__/
 *.py[cod]
 .venv/
+.venv-test/
 venv/
 
 # IDE
@@ -40,3 +41,27 @@ dist/
 *.log
 *.swp
 *.swo
+.venv/
+frontend/ios/.dart_tool/
+frontend/ios/build/
+frontend/web/node_modules/
+frontend/miniprogram/node_modules/
+backend/.coverage*
+.pytest_cache/
+
+# Backup files (W14-7 cleanup .md.bak + similar)
+*.bak
+*.md.bak
+*.md~
+
+# Local-only working dirs (not for public repo)
+.mavis/
+.opencode/
+.cu-screenshots/
+outputs/
+docs/screenshots/
+
+# Workflow artifacts
+frontend/web/dist/
+frontend/ios/build/
+backend/.coverage*

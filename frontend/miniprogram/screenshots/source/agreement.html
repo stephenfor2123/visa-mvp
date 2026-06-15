@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<title>agreement preview</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; background: #1F2937; }
+  .frame { width: 375px; height: 812px; background: #FAFBFC; margin: 0 auto; display: flex; flex-direction: column; overflow: hidden; }
+  .nav-bar { background: linear-gradient(135deg, #3B6EF5, #5B86F7); color: #fff; padding: 14px 16px; font-size: 17px; font-weight: 600; text-align: center; }
+  .header { padding: 20px 16px 8px; }
+  .title { display: block; font-size: 20px; font-weight: 700; color: #111827; }
+  .subtitle { display: block; font-size: 12px; color: #6B7280; margin-top: 4px; }
+  .tabs { display: flex; padding: 0 12px; border-bottom: 1px solid #E5E7EB; }
+  .tab { flex: 1; padding: 12px 0; text-align: center; font-size: 14px; color: #6B7280; font-weight: 600; position: relative; }
+  .tab.active { color: #3B6EF5; }
+  .tab.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; transform: translateX(-50%); width: 30px; height: 3px; background: linear-gradient(135deg, #3B6EF5, #5B86F7); border-radius: 2px; }
+  .content { flex: 1; padding: 12px 16px 20px; overflow-y: auto; }
+  .doc-head { padding: 12px 0; border-bottom: 1px solid #E5E7EB; margin-bottom: 12px; }
+  .doc-title { display: block; font-size: 18px; font-weight: 700; color: #111827; }
+  .doc-meta { display: block; font-size: 12px; color: #6B7280; margin-top: 4px; }
+  .section { margin-bottom: 16px; }
+  .section-title { display: block; font-size: 15px; font-weight: 700; color: #111827; margin-bottom: 6px; }
+  .section-body { display: block; font-size: 14px; line-height: 1.6; color: #374151; }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="nav-bar" id="navBar">Thỏa thuận dịch vụ</div>
+  <div class="header">
+    <span class="title" id="pageTitle">Thỏa thuận dịch vụ</span>
+    <span class="subtitle" id="pageSubtitle">Vui lòng đọc kỹ các điều khoản sau</span>
+  </div>
+  <div class="tabs">
+    <div class="tab" id="tabTerms">Điều khoản</div>
+    <div class="tab active" id="tabPrivacy">Bảo mật</div>
+  </div>
+  <div class="content" id="content">
+    <div class="doc-head">
+      <span class="doc-title" id="docTitle">Trợ lý Visa — Chính sách bảo mật</span>
+      <span class="doc-meta" id="docMeta">Có hiệu lực: 2026-06-01</span>
+    </div>
+    <div class="section">
+      <span class="section-title" id="s1t">1. Thông tin thu thập</span>
+      <span class="section-body" id="s1b">Để cung cấp dịch vụ visa, Nền tảng thu thập số điện thoại, giấy tờ tùy thân, hộ chiếu, thông tin du lịch và thanh toán khi cần.</span>
+    </div>
+    <div class="section">
+      <span class="section-title" id="s2t">2. Sử dụng thông tin</span>
+      <span class="section-body" id="s2b">Thông tin của bạn chỉ được dùng cho hồ sơ visa, hỗ trợ, kiểm soát rủi ro và tuân thủ pháp luật — không dùng cho mục đích thương mại khác.</span>
+    </div>
+    <div class="section">
+      <span class="section-title" id="s3t">3. Lưu trữ và truyền tải</span>
+      <span class="section-body" id="s3b">Dữ liệu được mã hóa và lưu trữ trên máy chủ tại Trung Quốc đại lục, truyền qua HTTPS / TLS 1.3. Truy cập của bên thứ ba cần sự đồng ý rõ ràng của bạn.</span>
+    </div>
+    <div class="section">
+      <span class="section-title" id="s4t">4. Quyền của bạn</span>
+      <span class="section-body" id="s4b">Bạn có thể xem, sửa hoặc xóa thông tin cá nhân bất kỳ lúc nào. Liên hệ hỗ trợ để xóa tài khoản.</span>
+    </div>
+  </div>
+</div>
+
+<script>
+const I18N = {
+  'zh-CN': {
+    nav: '服务协议', t: '服务协议', s: '请仔细阅读以下条款',
+    tTab: '用户协议', pTab: '隐私政策',
+    showTab: 'privacy',
+    tDoc: '签证助手 隐私政策', tMeta: '生效日期:2026-06-01',
+    s1t: '1. 信息收集', s1b: '为提供签证申请服务,本平台会收集您的手机号、身份信息、护照信息、旅行信息、支付信息等必要数据。',
+    s2t: '2. 信息使用', s2b: '您的信息仅用于签证申请、客服沟通、风险控制及法律法规要求的场景,不会用于其他商业用途。',
+    s3t: '3. 信息存储与传输', s3b: '您的信息加密存储于中国境内的服务器,使用 HTTPS / TLS 1.3 传输,任何第三方访问均需经过您的明示授权。',
+    s4t: '4. 您的权利', s4b: '您可随时查看、更正、删除您的个人信息。如需注销账号,请联系客服。'
+  },
+  'en': {
+    nav: 'Service Agreement', t: 'Service Agreement', s: 'Please read the following terms carefully',
+    tTab: 'Terms', pTab: 'Privacy',
+    showTab: 'privacy',
+    tDoc: 'Visa Helper — Privacy Policy', tMeta: 'Effective: 2026-06-01',
+    s1t: '1. Information Collected', s1b: 'To provide visa services, the Platform collects phone number, identity, passport, travel, and payment information as necessary.',
+    s2t: '2. Use of Information', s2b: 'Your information is used only for visa applications, customer support, risk control, and legal compliance — never for other commercial purposes.',
+    s3t: '3. Storage and Transmission', s3b: 'Your data is encrypted and stored on servers in mainland China, transmitted over HTTPS / TLS 1.3. Any third-party access requires your explicit consent.',
+    s4t: '4. Your Rights', s4b: 'You may view, correct, or delete your personal information at any time. Contact support to delete your account.'
+  },
+  'id': {
+    nav: 'Perjanjian Layanan', t: 'Perjanjian Layanan', s: 'Harap baca ketentuan berikut dengan cermat',
+    tTab: 'Ketentuan', pTab: 'Privasi',
+    showTab: 'privacy',
+    tDoc: 'Pembantu Visa — Kebijakan Privasi', tMeta: 'Berlaku: 2026-06-01',
+    s1t: '1. Informasi yang Dikumpulkan', s1b: 'Untuk layanan visa, Platform mengumpulkan nomor HP, identitas, paspor, perjalanan, dan pembayaran seperlunya.',
+    s2t: '2. Penggunaan Informasi', s2b: 'Informasi Anda hanya digunakan untuk permohonan visa, dukungan, kontrol risiko, dan kepatuhan hukum — bukan untuk tujuan komersial lainnya.',
+    s3t: '3. Penyimpanan dan Transmisi', s3b: 'Data Anda dienkripsi dan disimpan di server di Tiongkok daratan, ditransmisikan melalui HTTPS / TLS 1.3. Akses pihak ketiga memerlukan persetujuan Anda.',
+    s4t: '4. Hak Anda', s4b: 'Anda dapat melihat, memperbaiki, atau menghapus informasi pribadi kapan saja. Hubungi dukungan untuk menghapus akun.'
+  },
+  'vi': {
+    nav: 'Thỏa thuận dịch vụ', t: 'Thỏa thuận dịch vụ', s: 'Vui lòng đọc kỹ các điều khoản sau',
+    tTab: 'Điều khoản', pTab: 'Bảo mật',
+    showTab: 'privacy',
+    tDoc: 'Trợ lý Visa — Chính sách bảo mật', tMeta: 'Có hiệu lực: 2026-06-01',
+    s1t: '1. Thông tin thu thập', s1b: 'Để cung cấp dịch vụ visa, Nền tảng thu thập số điện thoại, giấy tờ tùy thân, hộ chiếu, thông tin du lịch và thanh toán khi cần.',
+    s2t: '2. Sử dụng thông tin', s2b: 'Thông tin của bạn chỉ được dùng cho hồ sơ visa, hỗ trợ, kiểm soát rủi ro và tuân thủ pháp luật — không dùng cho mục đích thương mại khác.',
+    s3t: '3. Lưu trữ và truyền tải', s3b: 'Dữ liệu được mã hóa và lưu trữ trên máy chủ tại Trung Quốc đại lục, truyền qua HTTPS / TLS 1.3. Truy cập của bên thứ ba cần sự đồng ý rõ ràng của bạn.',
+    s4t: '4. Quyền của bạn', s4b: 'Bạn có thể xem, sửa hoặc xóa thông tin cá nhân bất kỳ lúc nào. Liên hệ hỗ trợ để xóa tài khoản.'
+  }
+}
+const lang = new URLSearchParams(location.search).get('lang') || 'vi'
+const t = I18N[lang] || I18N['vi']
+document.getElementById('navBar').textContent = t.nav
+document.getElementById('pageTitle').textContent = t.t
+document.getElementById('pageSubtitle').textContent = t.s
+document.getElementById('tabTerms').textContent = t.tTab
+document.getElementById('tabPrivacy').textContent = t.pTab
+document.getElementById('docTitle').textContent = t.tDoc
+document.getElementById('docMeta').textContent = t.tMeta
+document.getElementById('s1t').textContent = t.s1t
+document.getElementById('s1b').textContent = t.s1b
+document.getElementById('s2t').textContent = t.s2t
+document.getElementById('s2b').textContent = t.s2b
+document.getElementById('s3t').textContent = t.s3t
+document.getElementById('s3b').textContent = t.s3b
+document.getElementById('s4t').textContent = t.s4t
+document.getElementById('s4b').textContent = t.s4b
+</script>
+</body>
+</html>

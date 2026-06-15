@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>profile preview</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "PingFang SC", sans-serif; }
+  .frame { width: 375px; height: 812px; background: #FAFBFC; display: flex; flex-direction: column; padding: 12px; position: relative; }
+  .profile-header {
+    display: flex; align-items: center; gap: 12px;
+    background: linear-gradient(135deg, #3B6EF5 0%, #6E59F0 100%);
+    color: #fff; border-radius: 12px; padding: 16px;
+    margin-bottom: 12px; box-shadow: 0 2px 8px rgba(59, 110, 245, .2);
+  }
+  .avatar { width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,.25); display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; border: 2px solid rgba(255,255,255,.4); }
+  .profile-info { flex: 1; }
+  .profile-name { font-size: 18px; font-weight: 700; margin-bottom: 2px; }
+  .profile-phone { font-size: 13px; opacity: .9; }
+  .info-card { background: #fff; border-radius: 10px; padding: 16px; box-shadow: 0 1px 4px rgba(15,23,42,.04); }
+  .info-card-title { font-size: 16px; font-weight: 600; color: #1A1D29; padding-bottom: 8px; border-bottom: 1px solid #E5E7EB; margin-bottom: 8px; }
+  .info-list { display: flex; flex-direction: column; }
+  .info-list__row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #E5E7EB; font-size: 14px; }
+  .info-list__row:last-child { border-bottom: none; }
+  .info-list__label { color: #9CA3AF; }
+  .info-list__value { color: #1A1D29; font-weight: 500; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 500; }
+  .badge--success { background: #DCFCE7; color: #166534; }
+  .profile-actions { margin: 16px 0; }
+  .logout-btn { width: 100%; background: transparent; color: #3B6EF5; border: 1px solid #3B6EF5; border-radius: 6px; padding: 9px 0; font-size: 14px; cursor: pointer; }
+  .profile-tip { text-align: center; font-size: 11px; color: #9CA3AF; padding: 8px 0 16px; line-height: 1.5; }
+  .tabbar { position: absolute; bottom: 0; left: 0; right: 0; height: 56px; background: #fff; border-top: 1px solid #E5E7EB; display: flex; align-items: center; justify-content: space-around; font-size: 11px; }
+  .tab { display: flex; flex-direction: column; align-items: center; gap: 2px; color: #9CA3AF; }
+  .tab.active { color: #3B6EF5; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="profile-header">
+    <div class="avatar">签</div>
+    <div class="profile-info">
+      <div class="profile-name">签证用户_8000</div>
+      <div class="profile-phone">+86 13800138000</div>
+    </div>
+  </div>
+
+  <div class="info-card">
+    <div class="info-card-title">我的资料</div>
+    <div class="info-list">
+      <div class="info-list__row"><span class="info-list__label">用户 ID</span><span class="info-list__value">u_a1b2c3d4</span></div>
+      <div class="info-list__row"><span class="info-list__label">语言偏好</span><span class="info-list__value">zh-CN</span></div>
+      <div class="info-list__row"><span class="info-list__label">注册时间</span><span class="info-list__value">2026-06-12 17:30</span></div>
+      <div class="info-list__row"><span class="info-list__label">状态</span><span class="info-list__value"><span class="badge badge--success">正常</span></span></div>
+    </div>
+  </div>
+
+  <div class="profile-actions">
+    <button class="logout-btn">退出登录</button>
+  </div>
+
+  <div class="profile-tip">
+    W6b 仅展示登录后的简单信息卡,W2 接入订单/申请列表
+  </div>
+
+  <div class="tabbar">
+    <div class="tab">🏠<span>首页</span></div>
+    <div class="tab">🌐<span>选国家</span></div>
+    <div class="tab active">👤<span>我的</span></div>
+  </div>
+</div>
+</body>
+</html>

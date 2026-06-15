@@ -1,0 +1,77 @@
+# .dockerignore — keeps build context tiny and avoids leaking secrets / dev artifacts
+# into the image. Build context is sent to the Docker daemon, so EVERY file here
+# saves build time AND image size.
+
+# Git / version control
+.git
+.gitignore
+.gitattributes
+
+# Python artifacts — never bake __pycache__ or .pyc into layers
+__pycache__
+**/__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.egg-info
+*.egg
+.eggs
+build/
+dist/
+*.whl
+
+# Virtualenvs — Dockerfile builds its own, don't bring the host one
+.venv
+venv/
+env/
+.python-version
+
+# Tests in the IMAGE are fine for dev (docker-compose runs pytest if needed)
+# but for prod image we exclude them to save ~5MB. Uncomment if tests must ship:
+# tests/
+
+# Local data + logs — NEVER bake the SQLite DB or PII into the image
+data/
+logs/
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Secrets — must NEVER land in an image (would be visible in `docker history`)
+.env
+.env.*
+*.pem
+*.key
+secrets/
+
+# IDE / editor cruft
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Docker self-references (don't recurse)
+Dockerfile
+Dockerfile.*
+.dockerignore
+docker-compose.yml
+docker-compose.*.yml
+
+# CI / build outputs
+.coverage
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+*.log
+
+# Samples / fixtures that aren't needed at runtime
+samples/
+docs/
+tools/
+
+# Node / frontend (this is backend repo, but be defensive)
+node_modules/
+frontend/

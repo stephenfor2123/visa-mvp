@@ -1,0 +1,34 @@
+[
+  {
+    "name": "order_zh",
+    "file": "order.html",
+    "lang": "zh-CN",
+    "out": "/Users/stephen/Desktop/签证项目/frontend/miniprogram/screenshots/order_zh.png",
+    "bytes": 155248,
+    "sha256": "2c05ba95385d020c34a62bba08106eb0fcf770b2586d4792e9f042168ce1aa7a"
+  },
+  {
+    "name": "payment_en",
+    "file": "payment.html",
+    "lang": "en",
+    "out": "/Users/stephen/Desktop/签证项目/frontend/miniprogram/screenshots/payment_en.png",
+    "bytes": 124714,
+    "sha256": "10cc0e0e5e546658a5118dbb1f385ed2ab5b107316a1766b32809a51ab381ce8"
+  },
+  {
+    "name": "forgot_id",
+    "file": "forgot.html",
+    "lang": "id",
+    "out": "/Users/stephen/Desktop/签证项目/frontend/miniprogram/screenshots/forgot_id.png",
+    "bytes": 122216,
+    "sha256": "702313365c28475e659abde880eaed7d36739b0c5356b83457a0541941d9ad95"
+  },
+  {
+    "name": "agreement_vi",
+    "file": "agreement.html",
+    "lang": "vi",
+    "out": "/Users/stephen/Desktop/签证项目/frontend/miniprogram/screenshots/agreement_vi.png",
+    "bytes": 194756,
+    "sha256": "86f8da888a7464a783a027f25fe5b828e83ca6591e3a3b094bc9a30f30d04d8d"
+  }
+]

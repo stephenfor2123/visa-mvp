@@ -1,0 +1,53 @@
+# Web framework
+fastapi==0.115.6
+uvicorn[standard]==0.32.1
+python-multipart==0.0.20
+
+# Settings
+pydantic==2.10.4
+pydantic-settings==2.7.0
+python-dotenv==1.0.1
+
+# Database
+SQLAlchemy[asyncio]==2.0.36
+aiosqlite==0.20.0
+alembic==1.14.0
+
+# Auth
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.0.1
+pyotp>=2.9.0
+
+# Async tasks (Celery + Redis)
+celery==5.4.0
+redis==5.2.1
+
+# Logging
+loguru==0.7.3
+
+# HTTP client (used by SMS webhook + tests)
+httpx==0.28.1
+
+# Testing
+pytest==8.3.4
+pytest-asyncio==0.25.0
+pytest-cov==6.0.0
+
+# Python 3.9 PEP 604 / PEP 585 backport (Pydantic + typing compatibility)
+eval_type_backport==0.4.0
+
+# Observability
+prometheus-client==0.21.0
+
+# OCR (V2 §5.1)
+paddleocr>=2.7.0
+pillow>=10.0.0
+opencv-python>=4.8.0
+
+# Payment SDK (V2 §4.5 — V2 ships Mock-only, V2.1 wires Stripe)
+# Installed in W9-4 to validate the dep surface and lock the import
+# path. The V2.1 swap (see `app.services.payment_provider.StripePaymentProvider`
+# docstring) will fill in the create_order / query_order / handle_notify
+# method bodies — this requirement line stays put either way.
+stripe>=15.0.0

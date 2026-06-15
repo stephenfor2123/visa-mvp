@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<title>forgot preview</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; background: #1F2937; }
+  .frame { width: 375px; height: 812px; background: #FAFBFC; margin: 0 auto; display: flex; flex-direction: column; overflow: hidden; }
+  .nav-bar { background: linear-gradient(135deg, #3B6EF5, #5B86F7); color: #fff; padding: 14px 16px; font-size: 17px; font-weight: 600; text-align: center; }
+  .header { padding: 20px 16px 16px; }
+  .title { display: block; font-size: 22px; font-weight: 700; color: #111827; }
+  .subtitle { display: block; font-size: 12px; color: #6B7280; margin-top: 6px; }
+  .form { padding: 0 16px; }
+  .row { margin-bottom: 16px; }
+  .label { display: block; font-size: 14px; font-weight: 600; color: #374151; margin-bottom: 6px; }
+  .input-row { display: flex; align-items: center; background: #fff; border-radius: 8px; border: 1px solid #E5E7EB; }
+  .picker { display: flex; align-items: center; padding: 12px 10px; border-right: 1px solid #E5E7EB; font-size: 14px; color: #374151; }
+  .picker .caret { margin-left: 4px; color: #9CA3AF; font-size: 11px; }
+  .input { flex: 1; padding: 12px; font-size: 15px; background: #fff; border: none; outline: none; }
+  .input.solo { width: 100%; border: 1px solid #E5E7EB; border-radius: 8px; }
+  .btn-sms { padding: 8px 12px; background: linear-gradient(135deg, #3B6EF5, #5B86F7); color: #fff; font-size: 13px; font-weight: 600; border-radius: 6px; margin: 4px 4px 4px 0; white-space: nowrap; }
+  .btn-p { display: block; width: 100%; padding: 14px 0; background: linear-gradient(135deg, #3B6EF5, #5B86F7); color: #fff; border-radius: 8px; font-size: 16px; font-weight: 700; text-align: center; margin-top: 24px; }
+  .back { display: block; text-align: center; margin-top: 12px; font-size: 13px; color: #3B6EF5; }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="nav-bar" id="navBar">Reset Password</div>
+  <div class="header">
+    <span class="title" id="pageTitle">Reset Password</span>
+    <span class="subtitle" id="pageSubtitle">Reset via SMS verification code</span>
+  </div>
+  <div class="form">
+    <div class="row">
+      <span class="label" id="lblPhone">Phone</span>
+      <div class="input-row">
+        <div class="picker"><span>🇮🇩 +62</span><span class="caret">▾</span></div>
+        <input class="input" type="text" placeholder="Enter the phone used at signup" value="81234567890" readonly />
+      </div>
+    </div>
+    <div class="row">
+      <span class="label" id="lblCode">Code</span>
+      <div class="input-row">
+        <input class="input" type="text" placeholder="6-digit SMS code" value="847201" readonly />
+        <div class="btn-sms" id="btnResend">Resend</div>
+      </div>
+    </div>
+    <div class="row">
+      <span class="label" id="lblNewPwd">New Password</span>
+      <input class="input solo" type="text" placeholder="8-32 chars, letter + number" value="••••••••••" readonly />
+    </div>
+    <div class="row">
+      <span class="label" id="lblConfirm">Confirm Password</span>
+      <input class="input solo" type="text" placeholder="Re-enter the new password" value="••••••••••" readonly />
+    </div>
+    <div class="btn-p" id="btnSubmit">Reset Password</div>
+    <div class="back" id="backLogin">Back to Login</div>
+  </div>
+</div>
+
+<script>
+const I18N = {
+  'zh-CN': { nav: '找回密码', t: '找回密码', s: '通过手机短信验证码重置密码', lP: '手机号', lC: '验证码', lN: '新密码', lX: '确认新密码', btn: '重置密码', back: '返回登录' },
+  'en':     { nav: 'Reset Password', t: 'Reset Password', s: 'Reset via SMS verification code', lP: 'Phone', lC: 'Code', lN: 'New Password', lX: 'Confirm Password', btn: 'Reset Password', back: 'Back to Login' },
+  'id':     { nav: 'Reset Kata Sandi', t: 'Reset Kata Sandi', s: 'Reset melalui kode verifikasi SMS', lP: 'Nomor HP', lC: 'Kode', lN: 'Kata Sandi Baru', lX: 'Konfirmasi Kata Sandi', btn: 'Reset Kata Sandi', back: 'Kembali ke Masuk' },
+  'vi':     { nav: 'Đặt lại mật khẩu', t: 'Đặt lại mật khẩu', s: 'Đặt lại qua mã xác minh SMS', lP: 'Số điện thoại', lC: 'Mã xác minh', lN: 'Mật khẩu mới', lX: 'Xác nhận mật khẩu', btn: 'Đặt lại mật khẩu', back: 'Quay lại đăng nhập' }
+}
+const lang = new URLSearchParams(location.search).get('lang') || 'id'
+const t = I18N[lang] || I18N['id']
+document.getElementById('navBar').textContent = t.nav
+document.getElementById('pageTitle').textContent = t.t
+document.getElementById('pageSubtitle').textContent = t.s
+document.getElementById('lblPhone').textContent = t.lP
+document.getElementById('lblCode').textContent = t.lC
+document.getElementById('lblNewPwd').textContent = t.lN
+document.getElementById('lblConfirm').textContent = t.lX
+document.getElementById('btnSubmit').textContent = t.btn
+document.getElementById('backLogin').textContent = t.back
+</script>
+</body>
+</html>

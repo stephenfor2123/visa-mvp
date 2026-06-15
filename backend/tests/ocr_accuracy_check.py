@@ -18,10 +18,19 @@ import csv
 import sys
 from pathlib import Path
 
-import cv2
-import numpy as np
-from PIL import Image
-from paddleocr import PaddleOCR
+# cv2 (opencv-python) and paddleocr are heavy optional deps; exit early with
+# a friendly message if they are not installed in the current venv.
+try:
+    import cv2  # noqa: F401
+    import numpy as np  # noqa: F401
+    from PIL import Image  # noqa: F401
+    from paddleocr import PaddleOCR  # noqa: F401
+except ImportError as exc:  # pragma: no cover
+    sys.stderr.write(
+        f"[ocr_accuracy_test] SKIP: missing optional dependency '{exc.name}'. "
+        "Install with: pip install opencv-python pillow paddleocr\n"
+    )
+    sys.exit(0)
 
 
 def load_image(path: Path) -> np.ndarray | None:

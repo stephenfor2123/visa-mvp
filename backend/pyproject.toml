@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "visa-mvp-backend"
+version = "0.1.0"
+description = "Visa MVP backend — FastAPI + SQLAlchemy 2.0 + JWT"
+requires-python = ">=3.9"
+readme = "README.md"
+authors = [{ name = "Visa MVP team" }]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+addopts = "-v --tb=short --strict-markers"
+filterwarnings = ["ignore::DeprecationWarning"]

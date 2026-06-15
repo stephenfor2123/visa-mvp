@@ -1,0 +1,107 @@
+{
+  "agent": "coder",
+  "started_at": "2026-06-11T20:17:00+08:00",
+  "last_update": "2026-06-11T23:35:00+08:00",
+  "current_story": "W2 / Story 1.2.2a / A 前端",
+  "current_task": "订单状态详情页 N4 (5 态时间线 + WS 优先 + 30s polling 兜底)",
+  "stories": {
+    "1.1.1b": {
+      "task": "扫描页 N1 + 材料列表 + 3 入口(拍照/PDF/语音)",
+      "started_at": "2026-06-11T20:17:00+08:00",
+      "completed_at": "2026-06-11T20:32:00+08:00",
+      "sub_tasks": [
+        {"id": "i18n", "status": "done", "desc": "materials.* 31 keys (zh-CN + en)"},
+        {"id": "api_wrapper", "status": "done", "desc": "api/materials.js 8 函数, mock + real"},
+        {"id": "scan_view", "status": "done", "desc": "MaterialsScan.vue — N1 取景框 + 对齐线 + 闪光灯 + 倒计时 + 拍照"},
+        {"id": "list_view", "status": "done", "desc": "Materials.vue — 3 tab + 列表 + 提交校验 + voice 内嵌"},
+        {"id": "router_fix", "status": "done", "desc": "/materials 改指 Materials.vue + 加 /materials/scan + 清 duplicate"},
+        {"id": "vite_dev", "status": "done", "desc": "npm run dev 起 vite 200"},
+        {"id": "vite_build", "status": "done", "desc": "npm run build 通过"},
+        {"id": "screenshots", "status": "partial", "desc": "screenshots/a-1.1.1b/{materials,materials-scan}.png; materials.png 有 stale error overlay(代码已修,需重截)"},
+        {"id": "a_worklog", "status": "done", "desc": "A_WORKLOG.md + A_WORKLOG.json"},
+        {"id": "deliverable", "status": "done", "desc": "deliverable.md"},
+        {"id": "report_back", "status": "done", "desc": "mavis communication send parent"}
+      ],
+      "blocked": [],
+      "feedback_rounds": 0,
+      "files_changed": [
+        "frontend/shared/i18n/zh-CN.json (+31 materials.* keys)",
+        "frontend/shared/i18n/en.json (+31 materials.* keys)",
+        "frontend/web/src/api/materials.js (new, ~155 lines)",
+        "frontend/web/src/views/MaterialsScan.vue (new, ~330 lines)",
+        "frontend/web/src/views/Materials.vue (new, ~530 lines)",
+        "frontend/web/src/router/index.js (fix /materials + add /materials/scan + clean duplicate)",
+        "frontend/web/A_WORKLOG.md (new)",
+        "frontend/web/A_WORKLOG.json (this file)",
+        "frontend/web/screenshots/a-1.1.1b/materials.png (new, stale overlay issue)",
+        "frontend/web/screenshots/a-1.1.1b/materials-scan.png (new, clean)"
+      ],
+      "verification": {
+        "vite_dev_200": true,
+        "vite_build_ok": true,
+        "routes_200": ["/materials", "/materials/scan"],
+        "i18n_keys_count": 31,
+        "wrapper_functions": ["uploadMaterial", "listMaterials", "getMaterial", "deleteMaterial", "getDownloadUrl", "validateMaterials", "getMaterialTypeOptions", "getAcceptTypes", "getMaxBytes", "clearMockDb"]
+      }
+    },
+    "1.2.2a": {
+      "task": "订单状态详情页 N4 (5 态时间线 + WS 优先 + 30s polling 兜底)",
+      "started_at": "2026-06-11T21:25:00+08:00",
+      "code_completed_at": "2026-06-11T21:38:00+08:00",
+      "worklog_synced_at": "2026-06-11T23:35:00+08:00",
+      "sub_tasks": [
+        {"id": "i18n", "status": "done", "desc": "orderdetail.* 63 keys (zh-CN + en) — 5 态 label/desc/icon + time_line + rpa_section + cancel + logout + retry + reapply + visa_pdf + eta + ws_connected/fallback"},
+        {"id": "api_poll_helper", "status": "done", "desc": "api/orders.js pollOrderStatus(orderNo, onUpdate, {intervalMs=30000, wsTimeoutMs=3000}) — WS 优先 3s 超时降 polling, 返 cleanup"},
+        {"id": "api_cancel_helper", "status": "done", "desc": "api/orders.js cancelOrder(orderNo) — POST /orders/{no}/cancel, 4010 throw"},
+        {"id": "api_etag_passthrough", "status": "done", "desc": "getOrder wrapper 读 r.headers.etag → 透传 If-None-Match 复用 B-1.2.2a 304 路径"},
+        {"id": "orderdetail_view", "status": "done", "desc": "OrderDetail.vue 763 行 / 28.4 KB — 5 态时间线 + WS + 30s polling + 取消 + 退出登录 + ETA + WS 状态徽章"},
+        {"id": "router_swap", "status": "done", "desc": "router/index.js /orders/:orderNo component 替换 (Profile 占位 → OrderDetail.vue) + meta.title 改 orderdetail.page_title"},
+        {"id": "vite_build", "status": "done", "desc": "npm run build 11.21s PASS, dist < 1.5MB"},
+        {"id": "screenshots", "status": "done", "desc": "screenshots/a-1.2.2a/ 10 张: orderdetail-{created,submitted,reviewing,approved,rejected}.png + 5 张 full-page"},
+        {"id": "a_worklog", "status": "done", "desc": "A_WORKLOG.md 追加 1.2.2a 节 + A_WORKLOG.json 同步"},
+        {"id": "deliverable", "status": "done", "desc": "deliverable.md (150-200 行, 10 文件清单 + DoD 8 项 + 设计决策 6 + 复用 5 + B 集成点 + 已知小问题 4)"},
+        {"id": "report_back", "status": "in_progress", "desc": "mavis communication send parent"}
+      ],
+      "blocked": [],
+      "feedback_rounds": 0,
+      "files_changed": [
+        "frontend/web/src/views/OrderDetail.vue (new, 763 lines / 28.4 KB)",
+        "frontend/web/src/api/orders.js (+339 lines, pollOrderStatus + cancelOrder + ETag passthrough)",
+        "frontend/web/src/router/index.js (/orders/:orderNo component swap, 67-71)",
+        "frontend/shared/i18n/zh-CN.json (+63 orderdetail.* keys, line 306-)",
+        "frontend/shared/i18n/en.json (+63 orderdetail.* keys, line 306-)",
+        "frontend/web/A_WORKLOG.md (append A-1.2.2a section)",
+        "frontend/web/A_WORKLOG.json (this file, restructure to multi-story)",
+        "frontend/web/screenshots/a-1.2.2a/orderdetail-{created,submitted,reviewing,approved,rejected}.png (5 viewport)",
+        "frontend/web/screenshots/a-1.2.2a/orderdetail-{created,submitted,reviewing,approved,rejected}-full.png (5 full-page)"
+      ],
+      "verification": {
+        "vite_build_ok": true,
+        "vite_build_time_seconds": 11.21,
+        "dist_size_mb_under": 1.5,
+        "i18n_keys_count": 63,
+        "i18n_keys_count_en": 63,
+        "view_lines": 763,
+        "view_size_kb": 28.4,
+        "wrapper_helpers": ["pollOrderStatus", "cancelOrder", "getOrder (with ETag passthrough)"],
+        "screenshots_count": 10,
+        "route": "/orders/:orderNo"
+      },
+      "cycle_history": [
+        {"cycle": 1, "attempt": 1, "result": "code+build+screenshots 100% done", "kill_reason": "15min cap (build + screenshots accumulated)"},
+        {"cycle": 2, "attempt": "2-4", "result": "deliverable+worklog written", "kill_reason": "Producer session error (engine 唤起 worker session 失败)"},
+        {"cycle": 3, "attempt": 5, "result": "only deliverable.md + worklog sync", "target_minutes": "3-5"}
+      ],
+      "next_steps": [
+        "wait for C verifier W3 validation (E2E 留给 verifier 收口,本任务禁止新增)",
+        "real WS endpoint up: edit api/orders.js:402 single line",
+        "W4 polish: reduced-motion + real RPA screenshot render"
+      ]
+    }
+  },
+  "blocked": [],
+  "next_steps": [
+    "report-back parent mvs_42b1197bab5a42c89e1473122bdfd010 DONE A-1.2.2a",
+    "wait for C verifier W3 validation"
+  ]
+}

@@ -1,0 +1,22 @@
+# US/ — 美国护照样本 (12 张)
+
+## 护照格式 (ICAO 9303 TD1)
+- 护照号正则: `^[A-Z][0-9]{8}$` (例: `A123456789`)
+- 姓名: Surname + Given Name
+- 国籍代码: USA
+
+## 建议获取方式
+1. 合成工具 passport-photo 生成
+2. 使用 PIL 渲染 TD1 布局模板
+3. NIST ICAO 测试卡 (公共领域)
+
+## 样本文件名规范
+```
+US_001.jpg  # 第 1 张
+US_002.jpg
+...
+US_012.jpg  # 第 12 张
+```
+
+当前状态: 0/12 张 (占位目录)
+运行 `python tests/ocr_accuracy_test.py --dry-run --sample-dir samples/passport` 可验证目录结构。

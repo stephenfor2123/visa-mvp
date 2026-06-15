@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>order preview</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; background: #1F2937; padding: 0; }
+  .frame { width: 375px; height: 812px; background: #FAFBFC; margin: 0 auto; display: flex; flex-direction: column; overflow: hidden; }
+  .header { padding: 24px 16px 12px; background: #FAFBFC; }
+  .title { display: block; font-size: 22px; font-weight: 700; color: #111827; }
+  .subtitle { display: block; font-size: 12px; color: #6B7280; margin-top: 4px; }
+  .tabs { display: flex; gap: 6px; padding: 8px 12px 12px; overflow-x: auto; background: #FAFBFC; border-bottom: 1px solid #E5E7EB; }
+  .tab { padding: 5px 14px; border-radius: 999px; background: #F3F4F6; color: #6B7280; font-size: 12px; white-space: nowrap; }
+  .tab.active { background: linear-gradient(135deg, #3B6EF5, #5B86F7); color: #fff; font-weight: 600; }
+  .list { padding: 12px; overflow-y: auto; flex: 1; }
+  .card { background: #fff; border-radius: 12px; padding: 14px 14px 12px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+  .card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #F3F4F6; }
+  .country { font-size: 17px; font-weight: 700; color: #111827; }
+  .status { font-size: 11px; padding: 3px 8px; border-radius: 4px; font-weight: 500; }
+  .s-pending { background: #FEF3C7; color: #92400E; }
+  .s-paid { background: #DBEAFE; color: #1E40AF; }
+  .s-reviewing { background: #FEF9C3; color: #854D0E; }
+  .s-approved { background: #D1FAE5; color: #065F46; }
+  .s-rejected { background: #FEE2E2; color: #991B1B; }
+  .row { display: flex; justify-content: space-between; padding: 3px 0; }
+  .row-label { font-size: 12px; color: #6B7280; }
+  .row-value { font-size: 13px; color: #111827; }
+  .row-value.strong { font-weight: 700; }
+  .row-value.warn { color: #B91C1C; font-size: 12px; }
+  .actions { display: flex; justify-content: flex-end; margin-top: 10px; padding-top: 8px; border-top: 1px solid #F3F4F6; }
+  .btn-p { padding: 8px 16px; background: linear-gradient(135deg, #3B6EF5, #5B86F7); color: #fff; border-radius: 8px; font-size: 12px; font-weight: 600; margin-right: 8px; }
+  .btn-s { padding: 8px 16px; background: #fff; color: #3B6EF5; border: 1px solid #3B6EF5; border-radius: 8px; font-size: 12px; font-weight: 600; }
+  .nav-bar { background: linear-gradient(135deg, #3B6EF5, #5B86F7); color: #fff; padding: 14px 16px; font-size: 17px; font-weight: 600; text-align: center; }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="nav-bar" id="navBar">我的订单</div>
+  <div class="header">
+    <span class="title" id="pageTitle">我的订单</span>
+    <span class="subtitle" id="pageSubtitle">查看申请进度 · 待付款订单 1.5s 内可继续支付</span>
+  </div>
+  <div class="tabs" id="tabs">
+    <div class="tab active" data-k="all">全部</div>
+    <div class="tab" data-k="pending_payment">待付款</div>
+    <div class="tab" data-k="paid">已付款</div>
+    <div class="tab" data-k="reviewing">审核中</div>
+    <div class="tab" data-k="approved">已通过</div>
+    <div class="tab" data-k="rejected">已拒签</div>
+  </div>
+  <div class="list" id="list"></div>
+</div>
+
+<script>
+const I18N = {
+  'zh-CN': {
+    nav: '我的订单',
+    title: '我的订单', sub: '查看申请进度 · 待付款订单 1.5s 内可继续支付',
+    tabs: ['全部','待付款','已付款','审核中','已通过','已拒签'],
+    amt: '订单金额', vt: '签证类型', vTour: '旅游签', vStu: '学生签', cr: '创建于',
+    pay: '立即支付', view: '查看详情', rej: '拒签原因',
+    rows: [
+      { country: '美国', status: 'pending_payment', amount: '¥599.00', visa: '旅游签', created: '2026-06-10 14:23' },
+      { country: '日本', status: 'paid', amount: '¥799.00', visa: '学生签', created: '2026-06-08 09:15' },
+      { country: '德国(申根)', status: 'reviewing', amount: '¥899.00', visa: '旅游签', created: '2026-06-05 16:42' },
+      { country: '新加坡', status: 'approved', amount: '¥499.00', visa: '旅游签', created: '2026-05-28 11:05' }
+    ],
+    sLabel: { pending_payment: '待付款', paid: '已付款', reviewing: '审核中', approved: '已通过', rejected: '已拒签' }
+  },
+  'en': {
+    nav: 'My Orders', title: 'My Orders', sub: 'Track application · Pending orders can be paid within 1.5s',
+    tabs: ['All','Pending','Paid','Reviewing','Approved','Rejected'],
+    amt: 'Amount', vt: 'Visa Type', vTour: 'Tourism', vStu: 'Student', cr: 'Created',
+    pay: 'Pay Now', view: 'View', rej: 'Rejection',
+    rows: [
+      { country: 'United States', status: 'pending_payment', amount: '¥599.00', visa: 'Tourism', created: '2026-06-10 14:23' },
+      { country: 'Japan', status: 'paid', amount: '¥799.00', visa: 'Student', created: '2026-06-08 09:15' },
+      { country: 'Germany', status: 'reviewing', amount: '¥899.00', visa: 'Tourism', created: '2026-06-05 16:42' },
+      { country: 'Singapore', status: 'approved', amount: '¥499.00', visa: 'Tourism', created: '2026-05-28 11:05' }
+    ],
+    sLabel: { pending_payment: 'Pending', paid: 'Paid', reviewing: 'Reviewing', approved: 'Approved', rejected: 'Rejected' }
+  },
+  'id': {
+    nav: 'Pesanan Saya', title: 'Pesanan Saya', sub: 'Lacak permohonan · Pesanan tertunda dapat dibayar dalam 1,5 detik',
+    tabs: ['Semua','Tertunda','Dibayar','Ditinjau','Disetujui','Ditolak'],
+    amt: 'Jumlah', vt: 'Jenis Visa', vTour: 'Wisata', vStu: 'Pelajar', cr: 'Dibuat',
+    pay: 'Bayar', view: 'Lihat', rej: 'Alasan',
+    rows: [
+      { country: 'Amerika Serikat', status: 'pending_payment', amount: '¥599.00', visa: 'Wisata', created: '2026-06-10 14:23' },
+      { country: 'Jepang', status: 'paid', amount: '¥799.00', visa: 'Pelajar', created: '2026-06-08 09:15' },
+      { country: 'Jerman', status: 'reviewing', amount: '¥899.00', visa: 'Wisata', created: '2026-06-05 16:42' },
+      { country: 'Singapura', status: 'approved', amount: '¥499.00', visa: 'Wisata', created: '2026-05-28 11:05' }
+    ],
+    sLabel: { pending_payment: 'Tertunda', paid: 'Dibayar', reviewing: 'Ditinjau', approved: 'Disetujui', rejected: 'Ditolak' }
+  },
+  'vi': {
+    nav: 'Đơn hàng của tôi', title: 'Đơn hàng của tôi', sub: 'Theo dõi hồ sơ · Đơn chờ có thể thanh toán trong 1,5 giây',
+    tabs: ['Tất cả','Chờ','Đã TT','Xét duyệt','Phê duyệt','Từ chối'],
+    amt: 'Số tiền', vt: 'Loại visa', vTour: 'Du lịch', vStu: 'Du học', cr: 'Tạo lúc',
+    pay: 'Thanh toán', view: 'Xem', rej: 'Lý do',
+    rows: [
+      { country: 'Hoa Kỳ', status: 'pending_payment', amount: '¥599.00', visa: 'Du lịch', created: '2026-06-10 14:23' },
+      { country: 'Nhật Bản', status: 'paid', amount: '¥799.00', visa: 'Du học', created: '2026-06-08 09:15' },
+      { country: 'Đức', status: 'reviewing', amount: '¥899.00', visa: 'Du lịch', created: '2026-06-05 16:42' },
+      { country: 'Singapore', status: 'approved', amount: '¥499.00', visa: 'Du lịch', created: '2026-05-28 11:05' }
+    ],
+    sLabel: { pending_payment: 'Chờ TT', paid: 'Đã TT', reviewing: 'Xét duyệt', approved: 'Đã duyệt', rejected: 'Từ chối' }
+  }
+}
+
+const sCls = { pending_payment: 's-pending', paid: 's-paid', reviewing: 's-reviewing', approved: 's-approved', rejected: 's-rejected' }
+const lang = new URLSearchParams(location.search).get('lang') || 'zh-CN'
+const t = I18N[lang] || I18N['zh-CN']
+
+document.getElementById('navBar').textContent = t.nav
+document.getElementById('pageTitle').textContent = t.title
+document.getElementById('pageSubtitle').textContent = t.sub
+const tabsEl = document.getElementById('tabs')
+tabsEl.innerHTML = t.tabs.map((label, i) => '<div class="tab ' + (i === 0 ? 'active' : '') + '" data-k="' + label + '">' + label + '</div>').join('')
+const listEl = document.getElementById('list')
+listEl.innerHTML = t.rows.map(r => `
+  <div class="card">
+    <div class="card-head">
+      <span class="country">${r.country}</span>
+      <span class="status ${sCls[r.status]}">${t.sLabel[r.status]}</span>
+    </div>
+    <div class="row"><span class="row-label">${t.amt}</span><span class="row-value strong">${r.amount}</span></div>
+    <div class="row"><span class="row-label">${t.vt}</span><span class="row-value">${r.visa}</span></div>
+    <div class="row"><span class="row-label">${t.cr}</span><span class="row-value">${r.created}</span></div>
+    <div class="actions">
+      ${r.status === 'pending_payment' ? '<span class="btn-p">' + t.pay + '</span>' : ''}
+      <span class="btn-s">${t.view}</span>
+    </div>
+  </div>
+`).join('')
+</script>
+</body>
+</html>

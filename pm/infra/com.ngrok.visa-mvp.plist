@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  pm/infra/com.ngrok.visa-mvp.plist
+  用途: Mac 开机自启 ngrok 暴露 backend 8000
+  安装: bash pm/infra/install_autostart.sh
+  卸载: bash pm/infra/install_autostart.sh --uninstall
+  路径: ~/Library/LaunchAgents/com.ngrok.visa-mvp.plist
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.ngrok.visa-mvp</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/Users/stephen/Desktop/签证项目/pm/infra/start_ngrok.sh</string>
+    </array>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+        <key>Crashed</key>
+        <true/>
+    </dict>
+
+    <key>ThrottleInterval</key>
+    <integer>10</integer>
+
+    <key>StandardOutPath</key>
+    <string>/Users/stephen/Desktop/签证项目/pm/infra/.ngrok.launchd.out.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/stephen/Desktop/签证项目/pm/infra/.ngrok.launchd.err.log</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <key>HOME</key>
+        <string>/Users/stephen</string>
+        <!-- NGROK_TOKEN 如果不想放 ngrok.yml, 放这里 -->
+        <!-- <key>NGROK_TOKEN</key> -->
+        <!-- <string>YOUR_TOKEN_HERE</string> -->
+    </dict>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/stephen/Desktop/签证项目/pm/infra</string>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+</dict>
+</plist>

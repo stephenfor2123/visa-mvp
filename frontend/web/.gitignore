@@ -1,0 +1,22 @@
+# dependencies
+node_modules/
+
+# build
+dist/
+dist-ssr/
+
+# logs
+*.log
+npm-debug.log*
+
+# env
+.env.local
+.env.*.local
+
+# editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# screenshots 临时
+screenshots/*.tmp.png
