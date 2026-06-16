@@ -29,13 +29,13 @@ jobs:
           python -m venv .venv
           .venv/bin/pip install --upgrade pip
           .venv/bin/pip install -r requirements.txt || true
-          .venv/bin/pip install fastapi uvicorn sqlalchemy aiosqlite pydantic pyjwt bcrypt httpx python-multipart pytest pytest-asyncio httpx 2>&1 | tail -3
+          .venv/bin/pip install fastapi 'uvicorn[standard]' sqlalchemy aiosqlite pydantic 'pyjwt' bcrypt httpx python-multipart pytest pytest-asyncio 2>&1 | tail -3
 
-      - name: Start backend (FastAPI)
+      - name: Start backend (FastAPI) on 8000
         working-directory: backend
         run: |
           nohup ./.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 > /tmp/uvicorn.log 2>&1 &
-          for i in 1 2 3 4 5 6 7 8 9 10; do
+          for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
             if curl -s http://127.0.0.1:8000/health > /dev/null 2>&1; then
               echo "uvicorn up after ${i}s"
               break
@@ -46,74 +46,30 @@ jobs:
 
       - name: Install frontend deps
         working-directory: frontend/web
-        run: |
-          npm ci
-          npm run build
+        run: npm ci
 
-      - name: Start reverse proxy + serve dist
+      - name: Start vite dev server (with /api proxy to backend)
         working-directory: frontend/web
         run: |
-          nohup python3 -c "
-          import http.server, socketserver, urllib.request, os
-          PORT=4176
-          class H(http.server.BaseHTTPRequestHandler):
-              def log_message(self, *a): pass
-              def _route(self):
-                  if self.path.startswith(('/api/','/health','/docs','/openapi.json')):
-                      try:
-                          length = int(self.headers.get('Content-Length',0))
-                          body = self.rfile.read(length) if length else None
-                          req = urllib.request.Request('http://127.0.0.1:8000'+self.path, data=body, method=self.command)
-                          for k,v in self.headers.items():
-                              if k.lower() not in ('host','content-length'): req.add_header(k,v)
-                          with urllib.request.urlopen(req, timeout=30) as r:
-                              self.send_response(r.status)
-                              for k,v in r.getheaders():
-                                  if k.lower() not in ('transfer-encoding','connection'): self.send_header(k,v)
-                              p = r.read()
-                              self.send_header('Content-Length', str(len(p)))
-                              self.end_headers(); self.wfile.write(p)
-                      except Exception as e:
-                          msg = str(e).encode()
-                          self.send_response(502); self.send_header('Content-Type','text/plain')
-                          self.send_header('Content-Length', str(len(msg))); self.end_headers()
-                          self.wfile.write(msg)
-                  else:
-                      p = self.path.split('?')[0].lstrip('/') or 'index.html'
-                      full = os.path.join('/Users/runner/work/visa-mvp/visa-mvp/frontend/web/dist', p)
-                      if not os.path.exists(full) or os.path.isdir(full):
-                          full = os.path.join('/Users/runner/work/visa-mvp/visa-mvp/frontend/web/dist', 'index.html')
-                      with open(full,'rb') as f: data = f.read()
-                      ctype = 'text/html; charset=utf-8' if full.endswith('.html') else \
-                              'text/javascript; charset=utf-8' if full.endswith('.js') else \
-                              'text/css; charset=utf-8' if full.endswith('.css') else \
-                              'application/json' if full.endswith('.json') else \
-                              'application/octet-stream'
-                      self.send_response(200); self.send_header('Content-Type', ctype)
-                      self.send_header('Content-Length', str(len(data))); self.end_headers()
-                      self.wfile.write(data)
-              def do_GET(self): self._route()
-              def do_POST(self): self._route()
-              def do_PUT(self): self._route()
-              def do_DELETE(self): self._route()
-          socketserver.TCPServer.allow_reuse_address=True
-          with socketserver.TCPServer(('0.0.0.0', 4176), H) as h: h.serve_forever()
-          " > /tmp/proxy.log 2>&1 &
-          for i in 1 2 3 4 5; do
-            if curl -s http://127.0.0.1:4176/health > /dev/null 2>&1; then
-              echo "proxy up after ${i}s"
+          nohup npx vite --host 127.0.0.1 --port 4173 > /tmp/vite.log 2>&1 &
+          for i in 1 2 3 4 5 6 7 8 9 10 15 20 25 30; do
+            if curl -s http://127.0.0.1:4173/ | head -c 200 | grep -q 'visa-mvp\|id="app"'; then
+              echo "vite up after ${i}s"
               break
             fi
             sleep 1
           done
-          curl -s http://127.0.0.1:4176/health
+          curl -s -o /dev/null -w "vite: %{http_code}\n" http://127.0.0.1:4173/
+          curl -s -o /dev/null -w "vite/api proxy: %{http_code}\n" http://127.0.0.1:4173/api/v2/destinations
 
       - name: Install Playwright browsers
         working-directory: frontend/web
         run: npx playwright install --with-deps chromium
 
-      - name: Run Playwright tests (208 spec)
+      - name: Run Playwright tests (208 spec) against 4173
         working-directory: frontend/web
+        env:
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:4173
         run: |
           npx playwright test \
             tests/e2e/flows/06-text.spec.js \
@@ -124,7 +80,8 @@ jobs:
             tests/e2e/flows/12-compat.spec.js \
             --reporter=list 2>&1 | tee /tmp/playwright-output.txt
           echo "---"
-          tail -50 /tmp/playwright-output.txt
+          echo "Final lines:"
+          tail -10 /tmp/playwright-output.txt
 
       - name: Upload Playwright report
         if: always()
