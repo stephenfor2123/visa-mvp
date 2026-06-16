@@ -9,12 +9,12 @@
  *   5. ARIA 属性 (tabs / dialogs)
  *   6. 表单错误有 aria-invalid/aria-describedby
  *
- * 与 cross 相同: 跑在 main checkout, 用 http://127.0.0.1:4176 绝对 URL,
+ * 与 cross 相同: 跑在 main checkout, 用 /base 绝对 URL,
  * 避开 playwright.config.cjs 写死的 baseURL=5173.
  */
 import { test, expect } from '@playwright/test'
 
-const BASE = 'http://127.0.0.1:4176'
+const BASE = ''
 
 test.setTimeout(30_000)
 

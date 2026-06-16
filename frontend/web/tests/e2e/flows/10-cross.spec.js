@@ -1,11 +1,11 @@
 /**
  * W19 cross-page / global assertions (E block, 25+ tests)
  *
- * 跑法:在 main checkout 跑,dist 通过 http://127.0.0.1:4176 暴露(由
+ * 跑法:在 main checkout 跑,dist 通过 /base 暴露(由
  * /tmp/w19-reverse-proxy.py 起,/api -> 8000,其他 -> frontend/web/dist)。
  *
  * 这里不用相对 baseURL 5173(那是 dev server,已死),所有 page.goto 用
- * 绝对 URL http://127.0.0.1:4176/... 这样可避开 playwright.config.cjs
+ * 绝对 URL /base/... 这样可避开 playwright.config.cjs
  * 里写死的 baseURL。
  *
  * 设计原则:
@@ -15,7 +15,7 @@
  */
 import { test, expect } from '@playwright/test'
 
-const BASE = 'http://127.0.0.1:4176'
+const BASE = ''
 
 // 所有 test 跑得更快: 30s 默认 navigationTimeout 在 CI 太长
 test.setTimeout(30_000)

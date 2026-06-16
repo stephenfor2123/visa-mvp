@@ -9,11 +9,11 @@
  *   - i18n 切语言 + viewport 交叉 = 4 tests
  *   - 兼容性边界 (横竖屏 / 像素比 / 缺 viewport meta) = 4 tests
  *
- * 跑法: 同 10-cross — 绝对 URL http://127.0.0.1:4176, 主 checkout 跑.
+ * 跑法: 同 10-cross — 绝对 URL /base, 主 checkout 跑.
  */
 import { test, expect } from '@playwright/test'
 
-const BASE = 'http://127.0.0.1:4176'
+const BASE = ''
 
 test.setTimeout(45_000)
 
