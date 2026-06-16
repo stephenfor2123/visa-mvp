@@ -69,7 +69,8 @@ jobs:
       - name: Run Playwright tests (208 spec) against 4173
         working-directory: frontend/web
         env:
-          PLAYWRIGHT_BASE_URL: http://127.0.0.1:4173
+          PW_BASE_URL: http://127.0.0.1:4173
+          PW_NO_GLOBAL_SETUP: '1'
         run: |
           npx playwright test \
             tests/e2e/flows/06-text.spec.js \
