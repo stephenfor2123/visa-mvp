@@ -24,10 +24,14 @@ module.exports = defineConfig({
     ['list'],
     ['html', { open: 'never', outputFolder: 'playwright-report' }]
   ],
-  globalSetup: './tests/e2e/global-setup.cjs',
-  globalTeardown: './tests/e2e/global-teardown.cjs',
+  globalSetup: process.env.PW_NO_GLOBAL_SETUP === '1'
+    ? undefined
+    : './tests/e2e/global-setup.cjs',
+  globalTeardown: process.env.PW_NO_GLOBAL_SETUP === '1'
+    ? undefined
+    : './tests/e2e/global-teardown.cjs',
   use: {
-    baseURL: 'http://127.0.0.1:5173',
+    baseURL: process.env.PW_BASE_URL || 'http://127.0.0.1:5173',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
@@ -36,8 +40,8 @@ module.exports = defineConfig({
   },
   projects: [
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] }
+      name: 'chrome',
+      use: { ...devices['Desktop Chrome'], channel: 'chrome' }
     }
   ]
 })
