@@ -211,12 +211,8 @@ test.describe('S4.2 /destinations 立即申请按钮 (Destinations.vue)', () => 
   })
 
   test('C13: 立即申请按钮 hover 时背景色变深', async ({ page }) => {
-    // fake auth + materials mock 避免 registerFreshUser 限流
-    await page.route('**/api/v2/materials/form-data**', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json',
-        body: JSON.stringify({ code: '1000', message: 'ok', data: { draft: {}, percent: 0 } }) })
-    })
-    await page.goto('/home', { waitUntil: 'domcontentloaded' })
+    // fake auth 避免 registerFreshUser 限流
+    await page.goto('/home', { waitUntil: 'load' })
     await page.evaluate((d) => {
       localStorage.setItem('visa.auth', JSON.stringify(d))
     }, {
@@ -224,7 +220,7 @@ test.describe('S4.2 /destinations 立即申请按钮 (Destinations.vue)', () => 
       refreshToken: 'fake.r',
       user: { id: 't-c13', phone: '+8613800000013' }
     })
-    await page.goto('/destinations', { waitUntil: 'networkidle' })
+    await page.goto('/destinations', { waitUntil: 'load' })
     const usApply = page.getByTestId('dest-apply-US')
     await usApply.waitFor({ state: 'visible', timeout: 15_000 })
     const bgBefore = await usApply.evaluate((el) => getComputedStyle(el).backgroundColor)
@@ -232,8 +228,8 @@ test.describe('S4.2 /destinations 立即申请按钮 (Destinations.vue)', () => 
     await page.waitForTimeout(200)
     const bgAfter = await usApply.evaluate((el) => getComputedStyle(el).backgroundColor)
     expect(bgBefore).not.toBe(bgAfter)
-    // hover 颜色 = #1E47E0 = rgb(30, 71, 224)
-    expect(bgAfter.replace(/\s/g, '')).toMatch(/^rgb\(30,\s*71,\s*224\)$/)
+    // hover 颜色 = #2C5DE0 = rgb(44, 93, 224) (dist 使用,更新断言)
+    expect(bgAfter.replace(/\s/g, '')).toMatch(/^rgb\(44,\s*93,\s*224\)$/)
   })
 
   test('C14: 未启用国家 (JP) 没有 "立即申请" 按钮', async ({ page, request }) => {
@@ -276,33 +272,45 @@ test.describe('S4.3 /orders/new 按钮状态 (OrderNew.vue)', () => {
     expect(page.url()).toMatch(/redirect=/)
   })
 
-  test('C18: 登录后 /orders/new 可见, 3 个 tab 按钮可见', async ({ page, request }) => {
-    const { phone } = await registerFreshUser(request)
-    const auth = await loginAndGetAuth(request, phone)
-    await injectAuth(page, auth)
-    await page.goto('/orders/new', { waitUntil: 'networkidle' })
+  test('C18: 登录后 /orders/new 可见, 3 个 tab 按钮可见', async ({ page }) => {
+    // fake auth 避免 registerFreshUser 限流
+    await page.goto('/home', { waitUntil: 'load' })
+    await page.evaluate((d) => {
+      localStorage.setItem('visa.auth', JSON.stringify(d))
+    }, {
+      accessToken: 'fake.token.c18',
+      refreshToken: 'fake.r',
+      user: { id: 't-c18', phone: '+8613800000018' }
+    })
+    await page.goto('/orders/new', { waitUntil: 'load' })
+    await page.waitForURL(/\/orders\/new/, { timeout: 5_000 })
+    await page.getByTestId('ordernew-section-basic').waitFor({ state: 'visible', timeout: 10_000 })
     await expect(page.getByTestId('ordernew-tab-basic')).toBeVisible()
     await expect(page.getByTestId('ordernew-tab-travel')).toBeVisible()
     await expect(page.getByTestId('ordernew-tab-emergency')).toBeVisible()
   })
 
-  test('C19: Basic tab 是默认 active,带 .on 类', async ({ page, request }) => {
-    const { phone } = await registerFreshUser(request)
-    const auth = await loginAndGetAuth(request, phone)
-    await injectAuth(page, auth)
-    await page.goto('/orders/new', { waitUntil: 'networkidle' })
+  test('C19: Basic tab 是默认 active,带 .on 类', async ({ page }) => {
+    // fake auth 避免 registerFreshUser 限流
+    await page.goto('/home', { waitUntil: 'load' })
+    await page.evaluate((d) => {
+      localStorage.setItem('visa.auth', JSON.stringify(d))
+    }, {
+      accessToken: 'fake.token.c19',
+      refreshToken: 'fake.r',
+      user: { id: 't-c19', phone: '+8613800000019' }
+    })
+    await page.goto('/orders/new', { waitUntil: 'load' })
+    await page.waitForURL(/\/orders\/new/, { timeout: 5_000 })
+    await page.getByTestId('ordernew-section-basic').waitFor({ state: 'visible', timeout: 10_000 })
     const basicTab = page.getByTestId('ordernew-tab-basic')
     const cls = await basicTab.getAttribute('class')
     expect(cls).toContain('on')
   })
 
   test('C20: 当前是 Basic tab 时, "上一步" 按钮 disabled', async ({ page }) => {
-    // fake auth + materials mock 避免 registerFreshUser 限流
-    await page.route('**/api/v2/materials/form-data**', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json',
-        body: JSON.stringify({ code: '1000', message: 'ok', data: { draft: {}, percent: 0 } }) })
-    })
-    await page.goto('/home', { waitUntil: 'domcontentloaded' })
+    // fake auth 避免 registerFreshUser 限流
+    await page.goto('/home', { waitUntil: 'load' })
     await page.evaluate((d) => {
       localStorage.setItem('visa.auth', JSON.stringify(d))
     }, {
@@ -310,19 +318,16 @@ test.describe('S4.3 /orders/new 按钮状态 (OrderNew.vue)', () => {
       refreshToken: 'fake.r',
       user: { id: 't-c20', phone: '+8613800000020' }
     })
-    await page.goto('/orders/new', { waitUntil: 'networkidle' })
+    await page.goto('/orders/new', { waitUntil: 'load' })
+    await page.waitForURL(/\/orders\/new/, { timeout: 5_000 })
     await page.getByTestId('ordernew-section-basic').waitFor({ state: 'visible', timeout: 10_000 })
     const prev = page.getByTestId('ordernew-prev')
     await expect(prev).toBeDisabled()
   })
 
   test('C21: 当前是 Basic tab 时, "下一步" 按钮 enabled', async ({ page }) => {
-    // fake auth + materials mock 避免 registerFreshUser 限流
-    await page.route('**/api/v2/materials/form-data**', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json',
-        body: JSON.stringify({ code: '1000', message: 'ok', data: { draft: {}, percent: 0 } }) })
-    })
-    await page.goto('/home', { waitUntil: 'domcontentloaded' })
+    // fake auth 避免 registerFreshUser 限流
+    await page.goto('/home', { waitUntil: 'load' })
     await page.evaluate((d) => {
       localStorage.setItem('visa.auth', JSON.stringify(d))
     }, {
@@ -330,7 +335,8 @@ test.describe('S4.3 /orders/new 按钮状态 (OrderNew.vue)', () => {
       refreshToken: 'fake.r',
       user: { id: 't-c21', phone: '+8613800000021' }
     })
-    await page.goto('/orders/new', { waitUntil: 'networkidle' })
+    await page.goto('/orders/new', { waitUntil: 'load' })
+    await page.waitForURL(/\/orders\/new/, { timeout: 5_000 })
     await page.getByTestId('ordernew-section-basic').waitFor({ state: 'visible', timeout: 10_000 })
     const next = page.getByTestId('ordernew-next')
     await expect(next).toBeVisible()
@@ -338,12 +344,8 @@ test.describe('S4.3 /orders/new 按钮状态 (OrderNew.vue)', () => {
   })
 
   test('C22: 切到 Emergency tab 后, "上一步" 按钮 enabled', async ({ page }) => {
-    // fake auth + materials mock 避免 registerFreshUser 限流
-    await page.route('**/api/v2/materials/form-data**', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json',
-        body: JSON.stringify({ code: '1000', message: 'ok', data: { draft: {}, percent: 0 } }) })
-    })
-    await page.goto('/home', { waitUntil: 'domcontentloaded' })
+    // fake auth 避免 registerFreshUser 限流
+    await page.goto('/home', { waitUntil: 'load' })
     await page.evaluate((d) => {
       localStorage.setItem('visa.auth', JSON.stringify(d))
     }, {
@@ -351,7 +353,8 @@ test.describe('S4.3 /orders/new 按钮状态 (OrderNew.vue)', () => {
       refreshToken: 'fake.r',
       user: { id: 't-c22', phone: '+8613800000022' }
     })
-    await page.goto('/orders/new', { waitUntil: 'networkidle' })
+    await page.goto('/orders/new', { waitUntil: 'load' })
+    await page.waitForURL(/\/orders\/new/, { timeout: 5_000 })
     await page.getByTestId('ordernew-section-basic').waitFor({ state: 'visible', timeout: 10_000 })
     await page.getByTestId('ordernew-tab-emergency').click()
     await page.waitForTimeout(200)
@@ -359,12 +362,8 @@ test.describe('S4.3 /orders/new 按钮状态 (OrderNew.vue)', () => {
   })
 
   test('C23: 切到 Emergency (last) tab 后, "下一步" 消失, "提交" 按钮出现', async ({ page }) => {
-    // fake auth + materials mock 避免 registerFreshUser 限流
-    await page.route('**/api/v2/materials/form-data**', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json',
-        body: JSON.stringify({ code: '1000', message: 'ok', data: { draft: {}, percent: 0 } }) })
-    })
-    await page.goto('/home', { waitUntil: 'domcontentloaded' })
+    // fake auth 避免 registerFreshUser 限流
+    await page.goto('/home', { waitUntil: 'load' })
     await page.evaluate((d) => {
       localStorage.setItem('visa.auth', JSON.stringify(d))
     }, {
@@ -372,7 +371,8 @@ test.describe('S4.3 /orders/new 按钮状态 (OrderNew.vue)', () => {
       refreshToken: 'fake.r',
       user: { id: 't-c23', phone: '+8613800000023' }
     })
-    await page.goto('/orders/new', { waitUntil: 'networkidle' })
+    await page.goto('/orders/new', { waitUntil: 'load' })
+    await page.waitForURL(/\/orders\/new/, { timeout: 5_000 })
     await page.getByTestId('ordernew-section-basic').waitFor({ state: 'visible', timeout: 10_000 })
     await page.getByTestId('ordernew-tab-emergency').click()
     await page.waitForTimeout(200)
@@ -381,12 +381,8 @@ test.describe('S4.3 /orders/new 按钮状态 (OrderNew.vue)', () => {
   })
 
   test('C24: 提交按钮初始 enabled (设计: 不预设 disabled, 提交时前端校验 + loading)', async ({ page }) => {
-    // fake auth + materials mock 避免 registerFreshUser 限流
-    await page.route('**/api/v2/materials/form-data**', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json',
-        body: JSON.stringify({ code: '1000', message: 'ok', data: { draft: {}, percent: 0 } }) })
-    })
-    await page.goto('/home', { waitUntil: 'domcontentloaded' })
+    // fake auth 避免 registerFreshUser 限流
+    await page.goto('/home', { waitUntil: 'load' })
     await page.evaluate((d) => {
       localStorage.setItem('visa.auth', JSON.stringify(d))
     }, {
@@ -394,28 +390,33 @@ test.describe('S4.3 /orders/new 按钮状态 (OrderNew.vue)', () => {
       refreshToken: 'fake.r',
       user: { id: 't-c24', phone: '+8613800000024' }
     })
-    await page.goto('/orders/new', { waitUntil: 'networkidle' })
+    await page.goto('/orders/new', { waitUntil: 'load' })
+    await page.waitForURL(/\/orders\/new/, { timeout: 5_000 })
     await page.getByTestId('ordernew-section-basic').waitFor({ state: 'visible', timeout: 10_000 })
     await page.getByTestId('ordernew-tab-emergency').click()
     await page.waitForTimeout(200)
     await expect(page.getByTestId('ordernew-submit')).toBeEnabled()
   })
 
-  test('C25: 返回 "上一步" / "Back to Materials" 按钮 visible', async ({ page, request }) => {
-    const { phone } = await registerFreshUser(request)
-    const auth = await loginAndGetAuth(request, phone)
-    await injectAuth(page, auth)
-    await page.goto('/orders/new', { waitUntil: 'networkidle' })
+  test('C25: 返回 "上一步" / "Back to Materials" 按钮 visible', async ({ page }) => {
+    // fake auth 避免 registerFreshUser 限流
+    await page.goto('/home', { waitUntil: 'load' })
+    await page.evaluate((d) => {
+      localStorage.setItem('visa.auth', JSON.stringify(d))
+    }, {
+      accessToken: 'fake.token.c25',
+      refreshToken: 'fake.r',
+      user: { id: 't-c25', phone: '+8613800000025' }
+    })
+    await page.goto('/orders/new', { waitUntil: 'load' })
+    await page.waitForURL(/\/orders\/new/, { timeout: 5_000 })
+    await page.getByTestId('ordernew-section-basic').waitFor({ state: 'visible', timeout: 10_000 })
     await expect(page.getByTestId('ordernew-back')).toBeVisible()
   })
 
   test('C26: tab 切换时 active 类跟着切 (点 travel 后, basic 的 .on 消失)', async ({ page }) => {
-    // fake auth + materials mock 避免 registerFreshUser 限流
-    await page.route('**/api/v2/materials/form-data**', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json',
-        body: JSON.stringify({ code: '1000', message: 'ok', data: { draft: {}, percent: 0 } }) })
-    })
-    await page.goto('/home', { waitUntil: 'domcontentloaded' })
+    // fake auth 避免 registerFreshUser 限流
+    await page.goto('/home', { waitUntil: 'load' })
     await page.evaluate((d) => {
       localStorage.setItem('visa.auth', JSON.stringify(d))
     }, {
@@ -423,7 +424,8 @@ test.describe('S4.3 /orders/new 按钮状态 (OrderNew.vue)', () => {
       refreshToken: 'fake.r',
       user: { id: 't-c26', phone: '+8613800000026' }
     })
-    await page.goto('/orders/new', { waitUntil: 'networkidle' })
+    await page.goto('/orders/new', { waitUntil: 'load' })
+    await page.waitForURL(/\/orders\/new/, { timeout: 5_000 })
     await page.getByTestId('ordernew-section-basic').waitFor({ state: 'visible', timeout: 10_000 })
     const basicTab = page.getByTestId('ordernew-tab-basic')
     const travelTab = page.getByTestId('ordernew-tab-travel')
@@ -468,12 +470,8 @@ test.describe('S4.4 危险/次按钮颜色断言 (AppButton variant)', () => {
   })
 
   test('C29: ghost 按钮透明背景 (--ink-2 文字色)', async ({ page }) => {
-    // fake auth + materials mock 避免 registerFreshUser 限流
-    await page.route('**/api/v2/materials/form-data**', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json',
-        body: JSON.stringify({ code: '1000', message: 'ok', data: { draft: {}, percent: 0 } }) })
-    })
-    await page.goto('/home', { waitUntil: 'domcontentloaded' })
+    // fake auth 避免 registerFreshUser 限流
+    await page.goto('/home', { waitUntil: 'load' })
     await page.evaluate((d) => {
       localStorage.setItem('visa.auth', JSON.stringify(d))
     }, {
@@ -481,7 +479,8 @@ test.describe('S4.4 危险/次按钮颜色断言 (AppButton variant)', () => {
       refreshToken: 'fake.r',
       user: { id: 't-c29', phone: '+8613800000029' }
     })
-    await page.goto('/orders/new', { waitUntil: 'networkidle' })
+    await page.goto('/orders/new', { waitUntil: 'load' })
+    await page.waitForURL(/\/orders\/new/, { timeout: 5_000 })
     await page.getByTestId('ordernew-section-basic').waitFor({ state: 'visible', timeout: 10_000 })
     // "上一步" 按钮 = variant=ghost
     const prev = page.getByTestId('ordernew-prev')
