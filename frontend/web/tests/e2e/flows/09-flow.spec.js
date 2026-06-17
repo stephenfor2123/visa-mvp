@@ -307,31 +307,37 @@ test.describe('S5.4 /orders/new 流程 (3-tab 提交)', () => {
     expect(cls).toContain('on')
   })
 
-  test('D20: 点 Basic tab → 验证 surname 字段 (surname/given_name/sex/dob/nationality/passport_no 必填)', async ({ page, request }) => {
-    // fake auth 避免 registerFreshUser 限流
+  test('D20: 点 Basic tab → 验证 surname 字段 (surname/given_name/sex/dob/nationality/passport_no 必填)', async ({ page }) => {
+    // fake auth + materials mock 避免 registerFreshUser 限流
+    await page.route('**/api/v2/materials/form-data**', async (route) => {
+      await route.fulfill({ status: 200, contentType: 'application/json',
+        body: JSON.stringify({ code: '1000', message: 'ok', data: { draft: {}, percent: 0 } }) })
+    })
     await page.goto('/home', { waitUntil: 'load' })
     await injectAuth(page, {
       accessToken: 'fake.token.d20',
       refreshToken: 'fake.r',
       user: { id: 't-d20', phone: '+8613800000020' }
     })
-    await page.goto('/orders/new', { waitUntil: 'load' })
-    await page.waitForURL(/\/orders\/new/, { timeout: 5_000 })
+    await page.goto('/orders/new', { waitUntil: 'networkidle' })
     await page.getByTestId('ordernew-section-basic').waitFor({ state: 'visible', timeout: 10_000 })
     await expect(page.getByTestId('ordernew-surname')).toBeVisible()
     await expect(page.getByTestId('ordernew-given-name')).toBeVisible()
   })
 
-  test('D21: 切到 Travel tab → arrival_date / departure_date 字段可见', async ({ page, request }) => {
-    // fake auth 避免 registerFreshUser 限流
+  test('D21: 切到 Travel tab → arrival_date / departure_date 字段可见', async ({ page }) => {
+    // fake auth + materials mock 避免 registerFreshUser 限流
+    await page.route('**/api/v2/materials/form-data**', async (route) => {
+      await route.fulfill({ status: 200, contentType: 'application/json',
+        body: JSON.stringify({ code: '1000', message: 'ok', data: { draft: {}, percent: 0 } }) })
+    })
     await page.goto('/home', { waitUntil: 'load' })
     await injectAuth(page, {
       accessToken: 'fake.token.d21',
       refreshToken: 'fake.r',
       user: { id: 't-d21', phone: '+8613800000021' }
     })
-    await page.goto('/orders/new', { waitUntil: 'load' })
-    await page.waitForURL(/\/orders\/new/, { timeout: 5_000 })
+    await page.goto('/orders/new', { waitUntil: 'networkidle' })
     await page.getByTestId('ordernew-section-basic').waitFor({ state: 'visible', timeout: 10_000 })
     await page.getByTestId('ordernew-tab-travel').click()
     await page.waitForTimeout(300)
@@ -339,16 +345,19 @@ test.describe('S5.4 /orders/new 流程 (3-tab 提交)', () => {
     await expect(page.getByTestId('ordernew-departure')).toBeVisible()
   })
 
-  test('D22: 切到 Travel → destination 字段 select 渲染 + 默认选 US (auto-fill)', async ({ page, request }) => {
-    // fake auth 避免 registerFreshUser 限流
+  test('D22: 切到 Travel → destination 字段 select 渲染 + 默认选 US (auto-fill)', async ({ page }) => {
+    // fake auth + materials mock 避免 registerFreshUser 限流
+    await page.route('**/api/v2/materials/form-data**', async (route) => {
+      await route.fulfill({ status: 200, contentType: 'application/json',
+        body: JSON.stringify({ code: '1000', message: 'ok', data: { draft: {}, percent: 0 } }) })
+    })
     await page.goto('/home', { waitUntil: 'load' })
     await injectAuth(page, {
       accessToken: 'fake.token.d22',
       refreshToken: 'fake.r',
       user: { id: 't-d22', phone: '+8613800000022' }
     })
-    await page.goto('/orders/new?country=US&visa_type=tourism', { waitUntil: 'load' })
-    await page.waitForURL(/\/orders\/new/, { timeout: 5_000 })
+    await page.goto('/orders/new?country=US&visa_type=tourism', { waitUntil: 'networkidle' })
     await page.getByTestId('ordernew-section-basic').waitFor({ state: 'visible', timeout: 10_000 })
     await page.getByTestId('ordernew-tab-travel').click()
     await page.waitForTimeout(300)
@@ -358,16 +367,19 @@ test.describe('S5.4 /orders/new 流程 (3-tab 提交)', () => {
     expect(val).toBeTruthy() // 选 US 自动填了
   })
 
-  test('D23: 切到 Emergency tab → emergency_name/phone/relation 字段可见', async ({ page, request }) => {
-    // fake auth 避免 registerFreshUser 限流
+  test('D23: 切到 Emergency tab → emergency_name/phone/relation 字段可见', async ({ page }) => {
+    // fake auth + materials mock 避免 registerFreshUser 限流
+    await page.route('**/api/v2/materials/form-data**', async (route) => {
+      await route.fulfill({ status: 200, contentType: 'application/json',
+        body: JSON.stringify({ code: '1000', message: 'ok', data: { draft: {}, percent: 0 } }) })
+    })
     await page.goto('/home', { waitUntil: 'load' })
     await injectAuth(page, {
       accessToken: 'fake.token.d23',
       refreshToken: 'fake.r',
       user: { id: 't-d23', phone: '+8613800000023' }
     })
-    await page.goto('/orders/new', { waitUntil: 'load' })
-    await page.waitForURL(/\/orders\/new/, { timeout: 5_000 })
+    await page.goto('/orders/new', { waitUntil: 'networkidle' })
     await page.getByTestId('ordernew-section-basic').waitFor({ state: 'visible', timeout: 10_000 })
     await page.getByTestId('ordernew-tab-emergency').click()
     await page.waitForTimeout(300)
@@ -376,32 +388,38 @@ test.describe('S5.4 /orders/new 流程 (3-tab 提交)', () => {
     await expect(page.getByTestId('ordernew-emergency-relation')).toBeVisible()
   })
 
-  test('D24: 切到 Emergency 后 "上一步" 按钮 enabled', async ({ page, request }) => {
-    // fake auth 避免 registerFreshUser 限流
+  test('D24: 切到 Emergency 后 "上一步" 按钮 enabled', async ({ page }) => {
+    // fake auth + materials mock 避免 registerFreshUser 限流
+    await page.route('**/api/v2/materials/form-data**', async (route) => {
+      await route.fulfill({ status: 200, contentType: 'application/json',
+        body: JSON.stringify({ code: '1000', message: 'ok', data: { draft: {}, percent: 0 } }) })
+    })
     await page.goto('/home', { waitUntil: 'load' })
     await injectAuth(page, {
       accessToken: 'fake.token.d24',
       refreshToken: 'fake.r',
       user: { id: 't-d24', phone: '+8613800000024' }
     })
-    await page.goto('/orders/new', { waitUntil: 'load' })
-    await page.waitForURL(/\/orders\/new/, { timeout: 5_000 })
+    await page.goto('/orders/new', { waitUntil: 'networkidle' })
     await page.getByTestId('ordernew-section-basic').waitFor({ state: 'visible', timeout: 10_000 })
     await page.getByTestId('ordernew-tab-emergency').click()
     await page.waitForTimeout(200)
     await expect(page.getByTestId('ordernew-prev')).toBeEnabled()
   })
 
-  test('D25: 切到 Emergency 后 "下一步" 消失, "提交" 出现', async ({ page, request }) => {
-    // fake auth 避免 registerFreshUser 限流
+  test('D25: 切到 Emergency 后 "下一步" 消失, "提交" 出现', async ({ page }) => {
+    // fake auth + materials mock 避免 registerFreshUser 限流
+    await page.route('**/api/v2/materials/form-data**', async (route) => {
+      await route.fulfill({ status: 200, contentType: 'application/json',
+        body: JSON.stringify({ code: '1000', message: 'ok', data: { draft: {}, percent: 0 } }) })
+    })
     await page.goto('/home', { waitUntil: 'load' })
     await injectAuth(page, {
       accessToken: 'fake.token.d25',
       refreshToken: 'fake.r',
       user: { id: 't-d25', phone: '+8613800000025' }
     })
-    await page.goto('/orders/new', { waitUntil: 'load' })
-    await page.waitForURL(/\/orders\/new/, { timeout: 5_000 })
+    await page.goto('/orders/new', { waitUntil: 'networkidle' })
     await page.getByTestId('ordernew-section-basic').waitFor({ state: 'visible', timeout: 10_000 })
     await page.getByTestId('ordernew-tab-emergency').click()
     await page.waitForTimeout(200)
@@ -409,32 +427,38 @@ test.describe('S5.4 /orders/new 流程 (3-tab 提交)', () => {
     await expect(page.getByTestId('ordernew-submit')).toBeVisible()
   })
 
-  test('D26: 提交按钮初始 enabled (设计: 提交时前端 validateAll() 拦截错误)', async ({ page, request }) => {
-    // fake auth 避免 registerFreshUser 限流
+  test('D26: 提交按钮初始 enabled (设计: 提交时前端 validateAll() 拦截错误)', async ({ page }) => {
+    // fake auth + materials mock 避免 registerFreshUser 限流
+    await page.route('**/api/v2/materials/form-data**', async (route) => {
+      await route.fulfill({ status: 200, contentType: 'application/json',
+        body: JSON.stringify({ code: '1000', message: 'ok', data: { draft: {}, percent: 0 } }) })
+    })
     await page.goto('/home', { waitUntil: 'load' })
     await injectAuth(page, {
       accessToken: 'fake.token.d26',
       refreshToken: 'fake.r',
       user: { id: 't-d26', phone: '+8613800000026' }
     })
-    await page.goto('/orders/new', { waitUntil: 'load' })
-    await page.waitForURL(/\/orders\/new/, { timeout: 5_000 })
+    await page.goto('/orders/new', { waitUntil: 'networkidle' })
     await page.getByTestId('ordernew-section-basic').waitFor({ state: 'visible', timeout: 10_000 })
     await page.getByTestId('ordernew-tab-emergency').click()
     await page.waitForTimeout(200)
     await expect(page.getByTestId('ordernew-submit')).toBeEnabled()
   })
 
-  test('D27: 空表单点 submit → 留在 /orders/new (前端 validateAll 失败,不跳走)', async ({ page, request }) => {
-    // fake auth 避免 registerFreshUser 限流
+  test('D27: 空表单点 submit → 留在 /orders/new (前端 validateAll 失败,不跳走)', async ({ page }) => {
+    // fake auth + materials mock 避免 registerFreshUser 限流
+    await page.route('**/api/v2/materials/form-data**', async (route) => {
+      await route.fulfill({ status: 200, contentType: 'application/json',
+        body: JSON.stringify({ code: '1000', message: 'ok', data: { draft: {}, percent: 0 } }) })
+    })
     await page.goto('/home', { waitUntil: 'load' })
     await injectAuth(page, {
       accessToken: 'fake.token.d27',
       refreshToken: 'fake.r',
       user: { id: 't-d27', phone: '+8613800000027' }
     })
-    await page.goto('/orders/new', { waitUntil: 'load' })
-    await page.waitForURL(/\/orders\/new/, { timeout: 5_000 })
+    await page.goto('/orders/new', { waitUntil: 'networkidle' })
     await page.getByTestId('ordernew-section-basic').waitFor({ state: 'visible', timeout: 10_000 })
     await page.getByTestId('ordernew-tab-emergency').click()
     await page.waitForTimeout(200)
