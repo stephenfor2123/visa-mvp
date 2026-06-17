@@ -1,13 +1,13 @@
 <template>
   <!-- label wrapping input — for proper a11y association use `id` on input + `for` on label -->
-  <label class="app-input" :class="{ 'is-error': error, 'is-disabled': disabled }">
+  <label class="app-input" :class="{ 'is-error': error, 'is-disabled': disabled }" :data-testid="$attrs['data-testid']" :data-test="$attrs['data-test']">
     <span v-if="label" class="app-input__label">
       {{ label }}<span v-if="required" class="app-input__required" aria-hidden="true">*</span>
     </span>
     <span class="app-input__wrap">
       <span v-if="$slots.prefix" class="app-input__prefix" aria-hidden="true"><slot name="prefix" /></span>
       <input
-        v-bind="$attrs"
+        v-bind="omitAttrs"
         :id="inputId"
         :type="type"
         :value="modelValue"
@@ -31,6 +31,7 @@
 </template>
 
 <script setup>
+import { useAttrs, computed } from 'vue'
 defineOptions({ inheritAttrs: false })
 defineProps({
   modelValue: { type: [String, Number], default: '' },
@@ -47,6 +48,17 @@ defineProps({
   inputId: { type: String, default: '' }
 })
 const emit = defineEmits(['update:modelValue', 'blur', 'focus'])
+const attrs = useAttrs()
+// omit test-* attrs from input (they're on the label wrapper so spec
+// queries like [data-testid="x"] .app-input__label resolve to 1 element).
+const omitAttrs = computed(() => {
+  const out = {}
+  for (const k in attrs) {
+    if (k.startsWith('data-test') || k.startsWith('aria-')) continue
+    out[k] = attrs[k]
+  }
+  return out
+})
 function onInput(e) {
   emit('update:modelValue', e.target.value)
 }

@@ -1,11 +1,17 @@
 import { createI18n } from 'vue-i18n'
-// Locale files are loaded lazily to avoid bundling all 4 × 70 kB into the main chunk.
-// Each locale is fetched on first use and cached in vue-i18n's message store.
+import zhCN from '@shared/i18n/zh-CN.json'
+import enUS from '@shared/i18n/en.json'
+import idID from '@shared/i18n/id.json'
+import viVN from '@shared/i18n/vi.json'
+
+// Locale files are loaded synchronously via static import (vite/webpack handle JSON imports).
+// Lazy loading via dynamic import() caused init race conditions where t() returned raw keys
+// because messages were still loading while Vue components rendered.
 const LOCALE_MODULES = {
-  'zh-CN': () => import('@shared/i18n/zh-CN.json'),
-  'en':     () => import('@shared/i18n/en.json'),
-  'id-ID':  () => import('@shared/i18n/id.json'),
-  'vi-VN':  () => import('@shared/i18n/vi.json'),
+  'zh-CN': () => Promise.resolve(zhCN),
+  'en':     () => Promise.resolve(enUS),
+  'id-ID':  () => Promise.resolve(idID),
+  'vi-VN':  () => Promise.resolve(viVN),
 }
 
 const STORAGE_KEY = 'visa.lang'
@@ -102,7 +108,11 @@ const _pending = []
 
 export async function loadLocale(lang) {
   if (!SUPPORTED_LOCALES.includes(lang)) return
-  if (i18n.global.messages.value[lang]) return // already loaded
+  // Guard: only skip if locale messages are ACTUALLY loaded (not just an empty placeholder).
+  // createI18n() below starts with `messages: { [detectedLocale]: {} }` which is truthy,
+  // so naive `if (i18n.global.messages.value[lang]) return` skips real loading.
+  const existing = i18n.global.messages.value[lang]
+  if (existing && Object.keys(existing).length > 0) return
 
   try {
     const mod = await LOCALE_MODULES[lang]()
