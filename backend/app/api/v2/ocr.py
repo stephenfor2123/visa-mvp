@@ -12,6 +12,7 @@ from app.core.logging import get_logger
 from app.core.security import get_current_user
 from app.models.user import User
 from app.schemas.common import ApiResponse
+from app.services.audit import record_audit
 from app.services.ocr import OCREngine
 
 router = APIRouter(tags=["ocr"])
@@ -62,8 +63,11 @@ async def recognize(
     """
     # Read image bytes
     content = await file.read()
+    file_size = len(content) if content else 0
 
     # Decode image (handle non-PIL formats)
+    decode_ok = True
+    decode_error = None
     try:
         image = Image.open(BytesIO(content))
         # Convert to RGB (Pillow may return RGBA or P mode)
@@ -77,7 +81,28 @@ async def recognize(
 
         img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
     except Exception as exc:
+        decode_ok = False
+        decode_error = str(exc)
         _log.warning("ocr recognize failed to decode image: {}", exc)
+        # W19-2: 合规审计 — 失败也留痕
+        try:
+            await record_audit(
+                db,
+                actor_type="user",
+                actor_id=current_user.id,
+                action="ocr.recognize",
+                target_type="ocr",
+                target_id=None,
+                payload={
+                    "lang": lang,
+                    "file_size": file_size,
+                    "result": "decode_failed",
+                    "error": decode_error,
+                },
+            )
+            await db.commit()
+        except Exception as audit_exc:
+            _log.warning("audit write failed for ocr: {}", audit_exc)
         return ApiResponse[OCRResultOut](
             code="1000",
             message="OK",
@@ -85,17 +110,18 @@ async def recognize(
         )
 
     # Run OCR
+    engine_error = None
+    items: list = []
+    fields: dict = {}
     try:
         engine = OCREngine(lang=lang)
         items = engine.recognize(img_bgr)
         fields = engine.extract_passport_fields(img_bgr)
     except Exception as exc:
+        engine_error = str(exc)
         _log.error("ocr engine error: {}", exc)
-        return ApiResponse[OCRResultOut](
-            code="1000",
-            message="OK",
-            data=OCRResultOut(items=[], fields={"error": str(exc)}, lang=lang),
-        )
+        items = []
+        fields = {"error": str(exc)}
 
     # Build response
     item_out_list = [
@@ -111,4 +137,34 @@ async def recognize(
         len(items),
         fields.get("passport_no"),
     )
+
+    # W19-2: 合规审计 — 记录每次 OCR 调用, 含抽取出的关键字段
+    # (只记录字段名 + 长度, 不记录 PII 原文)
+    try:
+        audit_payload = {
+            "lang": lang,
+            "file_size": file_size,
+            "result": "ok" if engine_error is None else "engine_error",
+            "items_count": len(items),
+            "extracted_fields": {
+                k: (bool(v) and len(str(v)) if v else False)
+                for k, v in fields.items()
+                if k not in ("raw_text", "error")
+            },
+        }
+        if engine_error:
+            audit_payload["error"] = engine_error
+        await record_audit(
+            db,
+            actor_type="user",
+            actor_id=current_user.id,
+            action="ocr.recognize",
+            target_type="ocr",
+            target_id=None,
+            payload=audit_payload,
+        )
+        await db.commit()
+    except Exception as audit_exc:
+        _log.warning("audit write failed for ocr: {}", audit_exc)
+
     return ApiResponse[OCRResultOut](code="1000", message="OK", data=result)

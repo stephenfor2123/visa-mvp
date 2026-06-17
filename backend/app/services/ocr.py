@@ -1,4 +1,10 @@
-"""OCR Engine — PaddleOCR 2.7+ 主引擎, Tesseract 5 兜底 (V2 §5.1.2)."""
+"""OCR Engine — PaddleOCR 2.7+ 主引擎, Tesseract 5 兜底 (V2 §5.1.2).
+
+W19-2: 启用 Tesseract 5 作为真正的兜底. paddleocr 包虽然装了, 但底层
+paddlepaddle 推理引擎 ~700MB 没装, 实际 PaddleOCR 一调就报
+"paddle_static unavailable because paddlepaddle not installed". Tesseract binary
+(/opt/homebrew/bin/tesseract) 一直在系统里, pytesseract 也装了, 之前没接通.
+"""
 import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -10,6 +16,28 @@ try:
 except ImportError:
     PaddleOCR = None  # type: ignore
     _PADDLE_AVAILABLE = False
+
+# W19-2: tesseract fallback (实测可工作)
+try:
+    import pytesseract  # type: ignore
+    from PIL import Image as _PILImage
+    _TESSERACT_AVAILABLE = True
+    _TESSERACT_LANG_MAP = {
+        "en": "eng",
+        "zh-CN": "chi_sim",
+        "ch": "chi_sim",
+        "id": "eng",  # 印尼语 tesseract 包不一定有, fallback eng
+        "vi": "vie",  # 越南语
+        "ko": "kor",
+        "korean": "kor",
+        "ja": "jpn",
+        "japan": "jpn",
+    }
+except ImportError:
+    pytesseract = None  # type: ignore
+    _PILImage = None  # type: ignore
+    _TESSERACT_AVAILABLE = False
+    _TESSERACT_LANG_MAP = {}
 
 # Supported languages map (internal key → PaddleOCR lang arg)
 LANG_MAP: Dict[str, str] = {
@@ -30,9 +58,10 @@ SUPPORTED_LANGS: List[str] = list(LANG_MAP.keys())
 
 class OCREngine:
     """
-    PaddleOCR-based OCR engine (CPU mode, no GPU).
+    OCR engine (PaddleOCR primary + Tesseract 5 fallback).
 
-    V2 §5.1.2 spec reference implementation.
+    W19-2: 主引擎失败时自动 fallback 到 Tesseract 5. 字段抽取逻辑对两个引擎
+    的输出都通用 (统一映射成 [{text, bbox, confidence}] 形态).
 
     Usage:
         engine = OCREngine("en")
@@ -43,11 +72,66 @@ class OCREngine:
     def __init__(self, lang: str = "en") -> None:
         lang_key = lang if lang in LANG_MAP else "en"
         self.lang = LANG_MAP[lang_key]
-        self._engine = PaddleOCR(lang=self.lang)
+        # W19-2: PaddleOCR 包虽然装了, 但 paddlepaddle 推理后端没装, __init__
+        # 会抛 RuntimeError. 包 try/except, 让主引擎不可用时 recognize() 自动
+        # 走 Tesseract 兜底.
+        self._engine = None
+        if _PADDLE_AVAILABLE:
+            try:
+                self._engine = PaddleOCR(lang=self.lang)
+            except Exception:
+                # 装包但跑不起来 (paddlepaddle 缺), 留给 recognize() 走 fallback
+                self._engine = None
+
+    def _recognize_tesseract(self, image: np.ndarray) -> List[Dict[str, Any]]:
+        """
+        Tesseract 5 兜底: pytesseract.image_to_data() 拿每 word + bbox + conf.
+        输出形态对齐 PaddleOCR: [{text, bbox, confidence}].
+        """
+        if not _TESSERACT_AVAILABLE:
+            raise RuntimeError("Tesseract fallback unavailable: pytesseract/Pillow not installed")
+        tess_lang = _TESSERACT_LANG_MAP.get(self.lang, "eng")
+        pil_img = _PILImage.fromarray(image)
+        try:
+            data = pytesseract.image_to_data(
+                pil_img, lang=tess_lang, output_type=pytesseract.Output.DICT
+            )
+        except pytesseract.TesseractError:
+            # 语言包缺失, fallback eng
+            data = pytesseract.image_to_data(
+                pil_img, lang="eng", output_type=pytesseract.Output.DICT
+            )
+        items: List[Dict[str, Any]] = []
+        n = len(data.get("text", []))
+        for i in range(n):
+            text = (data["text"][i] or "").strip()
+            if not text:
+                continue
+            try:
+                conf_raw = float(data.get("conf", [0] * n)[i])
+            except (TypeError, ValueError):
+                conf_raw = 0.0
+            # pytesseract conf 是 -1..100, PaddleOCR 是 0..1, 归一到 0..1
+            conf = max(0.0, min(1.0, conf_raw / 100.0)) if conf_raw >= 0 else 0.0
+            left = int(data.get("left", [0] * n)[i])
+            top = int(data.get("top", [0] * n)[i])
+            width = int(data.get("width", [0] * n)[i])
+            height = int(data.get("height", [0] * n)[i])
+            bbox = [
+                [float(left), float(top)],
+                [float(left + width), float(top)],
+                [float(left + width), float(top + height)],
+                [float(left), float(top + height)],
+            ]
+            items.append({"text": text, "bbox": bbox, "confidence": conf})
+        return items
 
     def recognize(self, image: np.ndarray) -> List[Dict[str, Any]]:
         """
         Run OCR on the given image array.
+
+        W19-2: 主引擎 (PaddleOCR) 优先, 失败时自动 fallback 到 Tesseract 5.
+        返回形态统一.
 
         Args:
             image: numpy.ndarray, HWC/BGR format (cv2-style).
@@ -55,22 +139,32 @@ class OCREngine:
         Returns:
             List of items: [{text, bbox, confidence}, ...]
         """
-        result = self._engine.ocr(image, cls=True)
-        items = []
-        # result structure: [[line1, line2, ...], []] or []
-        raw_lines = result[0] if result and result[0] else []
-        for line in raw_lines:
-            if not line:
-                continue
-            bbox, (text, conf) = line
-            items.append(
-                {
-                    "text": str(text),
-                    "bbox": [[float(x), float(y)] for x, y in bbox],
-                    "confidence": float(conf),
-                }
-            )
-        return items
+        # W19-2: 主引擎可用就跑 PaddleOCR
+        if self._engine is not None:
+            try:
+                result = self._engine.ocr(image, cls=True)
+                items: List[Dict[str, Any]] = []
+                raw_lines = result[0] if result and result[0] else []
+                for line in raw_lines:
+                    if not line:
+                        continue
+                    bbox, (text, conf) = line
+                    items.append(
+                        {
+                            "text": str(text),
+                            "bbox": [[float(x), float(y)] for x, y in bbox],
+                            "confidence": float(conf),
+                        }
+                    )
+                if items:
+                    return items
+                # 主引擎跑了但啥也没认出来, 也 fallback 一次
+            except Exception:
+                # 主引擎抛异常, 直接 fallback
+                pass
+
+        # W19-2: fallback 到 Tesseract 5
+        return self._recognize_tesseract(image)
 
     def extract_passport_fields(self, image: np.ndarray) -> Dict[str, Any]:
         """
