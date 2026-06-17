@@ -208,7 +208,7 @@
               >
                 <option value="">— {{ t('orders.placeholder_select') }} —</option>
                 <option v-for="d in destinations" :key="d.id" :value="d.id" :disabled="!d.enabled">
-                  {{ flagEmoji(d.country_code) }} {{ t(d.country_name_key) }} ({{ d.country_code }}){{ d.enabled ? '' : ' · ' + t('dest.coming_soon') }}
+                  {{ flagEmoji(d.country_code) }} {{ d.country_name || t(d.country_name_key) }} ({{ d.country_code }}){{ d.enabled ? '' : ' · ' + t('dest.coming_soon') }}
                 </option>
               </select>
               <span v-if="errors.destination_id" class="form-cell__error">{{ errors.destination_id }}</span>
@@ -728,7 +728,7 @@ async function onSubmit() {
     const payload = {
       destination_id: Number(form.destination_id),
       visa_type: form.visa_type,
-      material_ids: materialIds.value.map((x) => Number(x)).filter(Boolean),
+      material_ids: materialIds.value.filter(Boolean),
       applicant_data: {
         surname: form.surname.trim().toUpperCase(),
         given_name: form.given_name.trim().toUpperCase(),
