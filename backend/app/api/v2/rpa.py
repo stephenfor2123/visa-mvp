@@ -20,6 +20,10 @@ from app.core.db import get_db
 from app.core.errors import BizException, ErrorCode
 from app.core.security import get_current_user
 from app.models.user import User
+# W19: import the shared ApiResponse envelope from app.schemas.common
+# (the local class ApiResponse declared below was Pydantic v1-style and crashes
+# Pydantic v2 — and it duplicates the canonical envelope anyway)
+from app.schemas.common import ApiResponse
 from app.services.rpa.rpa_scheduler import RateLimitExceeded, RPASchedulerError
 
 logger = logging.getLogger(__name__)
@@ -91,11 +95,8 @@ class RPAConfigUpdateRequest(BaseModel):
     mock_mode: Optional[bool] = None
 
 
-class ApiResponse(BaseModel, generic_field=True):
-    """Standard API response envelope."""
-    code: str = "1000"
-    message: str = "OK"
-    data: Any = None
+class ApiResponse_REMOVED:  # noqa: E800  # placeholder
+    pass
 
 
 # ------------------------------------------------------------------ #

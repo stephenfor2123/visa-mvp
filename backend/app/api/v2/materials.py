@@ -102,6 +102,38 @@ async def upload_material(
 
 
 # --------------------------------------------------------------------------- #
+# / (list)                                                                    #
+# --------------------------------------------------------------------------- #
+@router.get(
+    "",
+    response_model=ApiResponse[list[MaterialOut]],
+    summary="List materials for the current user (optional filters)",
+)
+async def list_materials(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    order_no: Optional[str] = Query(
+        None,
+        description="Filter by order_no (frontend sends the public order id like 'V2-...')",
+    ),
+    material_type: Optional[str] = Query(
+        None, description="Filter by material_type (passport / photo / form / other)"
+    ),
+) -> ApiResponse[list[MaterialOut]]:
+    # W19: order_no is a public string id, not the DB integer. For now we accept
+    # the filter but don't join through Order (orders table is not yet in scope
+    # for materials listing in V2). The frontend treats order_no as best-effort.
+    service = MaterialService(db)
+    rows = await service.list_for_user(
+        user_id=current_user.id,
+        order_id=None,
+        material_type=material_type,
+    )
+    items = [MaterialOut.model_validate(r) for r in rows]
+    return ApiResponse[list[MaterialOut]](code="1000", message="OK", data=items)
+
+
+# --------------------------------------------------------------------------- #
 # /{id}                                                                       #
 # --------------------------------------------------------------------------- #
 @router.get(

@@ -1,10 +1,15 @@
 // /api/v2/rpa 前端 wrapper
 //
 // W14 RPA 端点:
-//   POST   /api/v2/rpa/submit              - 触发 RPA 提交 (body: { order_no })
+//   POST   /api/v2/rpa/submit              - 触发 RPA 提交 (body: { order_id, country_code, visa_type, passport_data })
 //   GET    /api/v2/rpa/status/{taskId}     - 查询 RPA 任务状态
 //   GET    /api/v2/rpa/config              - 获取 RPA 配置
 //   PUT    /api/v2/rpa/config              - 更新 RPA 配置 (body: { enabled, retry_interval, ... })
+//
+// W19 fix: backend Pydantic schema requires order_id (not order_no), country_code,
+// visa_type and passport_data. MOCK mode task_id format aligned with backend
+// (rpa-xxxxxxxxxxx, hyphen + 11 hex) so dev/UAT can match the same format
+// the real scheduler will produce.
 //
 // Mock 模式: VITE_MOCK !== 'false' 时使用本地 mock 数据
 
@@ -20,8 +25,19 @@ function delay(ms = 300) {
 // 模拟真实 RPA 流程: 访问官网 -> 填写表单 -> 提交申请
 let MOCK_TASK_STATES = {}
 
+// W19: align mock task_id format with backend (`rpa-` + 11 hex chars)
+function makeMockTaskId() {
+  // crypto.getRandomValues not always available; use Math.random fallback that
+  // produces hex chars only
+  let hex = ''
+  while (hex.length < 11) {
+    hex += Math.floor(Math.random() * 16).toString(16)
+  }
+  return `rpa-${hex.slice(0, 11)}`
+}
+
 function makeMockTask(orderNo) {
-  const taskId = 'rpa_' + Math.random().toString(36).slice(2, 10)
+  const taskId = makeMockTaskId()
   const task = {
     task_id: taskId,
     order_no: orderNo,
@@ -77,10 +93,37 @@ function advanceMockTask(taskId) {
 
 /**
  * 触发 RPA 提交
- * @param {string} orderNo - 订单号
- * @returns {Promise<{task_id, order_no, status, created_at}>}
+ *
+ * W19: backend RPASubmitRequest (Pydantic) requires:
+ *   - order_id (string)
+ *   - country_code (2-char ISO)
+ *   - visa_type
+ *   - passport_data (object)
+ * Accept either the new object form `{ orderNo, countryCode, visaType, passportData }`
+ * or the legacy single-arg form `postRpaSubmit(orderNo)` for backwards compatibility
+ * (MOCK mode only).
+ *
+ * @param {string|object} orderNoOrPayload - order number (legacy) or full payload object
+ * @returns {Promise<{task_id, order_id, status, created_at}>}
  */
-export async function postRpaSubmit(orderNo) {
+export async function postRpaSubmit(orderNoOrPayload) {
+  // Normalize to object payload
+  let payload
+  if (typeof orderNoOrPayload === 'string') {
+    // Legacy single-arg form (MOCK-mode only; backend would 422)
+    payload = {
+      orderNo: orderNoOrPayload,
+      countryCode: '',
+      visaType: 'tourism',
+      passportData: {}
+    }
+  } else if (orderNoOrPayload && typeof orderNoOrPayload === 'object') {
+    payload = orderNoOrPayload
+  } else {
+    throw new Error('postRpaSubmit requires an orderNo string or payload object')
+  }
+
+  const { orderNo, countryCode, visaType, passportData } = payload
   if (!orderNo) throw new Error('orderNo is required')
 
   if (MOCK_MODE) {
@@ -98,7 +141,13 @@ export async function postRpaSubmit(orderNo) {
     return task
   }
 
-  const env = await http.post('/v2/rpa/submit', { order_no: orderNo })
+  // Real backend call — align field names with Pydantic RPASubmitRequest
+  const env = await http.post('/v2/rpa/submit', {
+    order_id: orderNo,
+    country_code: (countryCode || '').toUpperCase(),
+    visa_type: visaType || 'tourism',
+    passport_data: passportData || {}
+  })
   if (env?.code && env.code !== '1000') {
     throw new Error(env.message || 'RPA submit failed')
   }

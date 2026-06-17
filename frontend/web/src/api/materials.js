@@ -106,7 +106,9 @@ export async function uploadMaterial(file, materialType = 'passport', orderNo = 
   if (envelope?.code && envelope.code !== '1000') {
     throw new Error(envelope.message || 'upload failed')
   }
-  return envelope?.data || envelope
+  // W19: backend UploadResponse wraps the material in `material` field —
+  // unwrap so callers get the MaterialOut directly (matches the GET /{id} shape)
+  return envelope?.data?.material || envelope?.data || envelope
 }
 
 // --------------------------------------------------------------------------- //
@@ -351,7 +353,8 @@ async function _uploadChunked(file, materialType, orderNo, onProgress) {
     throw new Error(env.message || 'upload merge failed')
   }
   onProgress && onProgress(100)
-  return env?.data || env
+  // W19: unwrap `material` from UploadResponse envelope
+  return env?.data?.material || env?.data || env
 }
 
 export async function listMaterials({ orderNo, materialType } = {}) {

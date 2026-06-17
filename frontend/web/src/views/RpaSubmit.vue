@@ -126,6 +126,29 @@ const stepLabelKey = ref('rpa.step_accessing')
 const errorMessage = ref('')
 const submitting = ref(false)
 const orderNo = ref('')
+// W19: backend RPA submit endpoint requires country_code + visa_type + passport_data
+// (read from router query set by OrderNew, and passport from sessionStorage stash)
+const countryCode = ref('')
+const visaType = ref('tourism')
+
+/**
+ * Read passport data stashed by OrderNew in sessionStorage.
+ * Falls back to {} (backend will reject with 422 if a real submission is attempted
+ * with empty passport data; MOCK mode ignores it).
+ */
+function readPassportData(orderNoKey) {
+  if (!orderNoKey) return {}
+  try {
+    const raw = sessionStorage.getItem(`rpa_passport_${orderNoKey}`)
+    if (!raw) return {}
+    // Clean up after read so it's not lingering
+    sessionStorage.removeItem(`rpa_passport_${orderNoKey}`)
+    return JSON.parse(raw) || {}
+  } catch (e) {
+    console.warn('[rpa] readPassportData failed:', e?.message)
+    return {}
+  }
+}
 
 // AppButton refs
 const retryBtnRef = ref(null)
@@ -206,7 +229,14 @@ async function doSubmit() {
   stepLabelKey.value = 'rpa.step_accessing'
 
   try {
-    const data = await postRpaSubmit(orderNo.value)
+    // W19: pass country_code + visa_type + passport_data (backend Pydantic schema)
+    const passportData = readPassportData(orderNo.value)
+    const data = await postRpaSubmit({
+      orderNo: orderNo.value,
+      countryCode: countryCode.value,
+      visaType: visaType.value,
+      passportData
+    })
     taskId.value = data.task_id
     toast.info(t('rpa.toast_started'))
     startPolling()
@@ -232,6 +262,9 @@ function goOrderDetail() {
 // ── Lifecycle ────────────────────────────────────────────────────────────────
 onMounted(async () => {
   orderNo.value = route.query.orderNo || route.params.orderNo || 'ORD_DEMO_001'
+  // W19: read country_code + visa_type from query (set by OrderNew)
+  countryCode.value = (route.query.countryCode || '').toString().toUpperCase()
+  visaType.value = (route.query.visaType || 'tourism').toString()
 
   // 绑定 AppButton refs
   await nextTick()
