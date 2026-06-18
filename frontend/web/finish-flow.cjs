@@ -445,7 +445,7 @@ const fs = require('fs')
     await page.screenshot({ path: `${screenshotDir}/9a-before-rpa.png`, fullPage: true })
     if (!page.url().includes('/rpa/submit')) {
       log('S9.0', `not on /rpa/submit (at ${page.url()}), navigating directly`)
-      await page.goto('http://127.0.0.1:5173/rpa/submit?orderNo=' + (orderNo || 'V2-20260617-999999') + '&countryCode=US&visaType=tourism', { waitUntil: 'domcontentloaded' })
+      await page.goto('http://127.0.0.1:5173/rpa/submit?orderNo=' + (orderNo || 'V2-DEMO-001') + '&countryCode=ID&visaType=e_visa', { waitUntil: 'domcontentloaded' })
       await page.waitForTimeout(2000)
     }
     log('S9', `RPA submit 页 URL: ${page.url()}`)
