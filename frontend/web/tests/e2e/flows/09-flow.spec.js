@@ -575,7 +575,7 @@ test.describe('S5.6 /payment/result 状态翻页 (mock via page.route)', () => {
       cancelled_at: null
     }
 
-    await page.route(`**/api/v2/payment/status/${ORDER}`, async (route) => {
+    await page.route(`**/api/v2/payment/${ORDER}`, async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -611,7 +611,7 @@ test.describe('S5.6 /payment/result 状态翻页 (mock via page.route)', () => {
       cancelled_at: null
     }
 
-    await page.route(`**/api/v2/payment/status/${ORDER}`, async (route) => {
+    await page.route(`**/api/v2/payment/${ORDER}`, async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -652,7 +652,7 @@ test.describe('S5.6 /payment/result 状态翻页 (mock via page.route)', () => {
       cancelled_at: new Date().toISOString()
     }
 
-    await page.route(`**/api/v2/payment/status/${ORDER}`, async (route) => {
+    await page.route(`**/api/v2/payment/${ORDER}`, async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -692,7 +692,7 @@ test.describe('S5.6 /payment/result 状态翻页 (mock via page.route)', () => {
       cancelled_at: null
     }
 
-    await page.route(`**/api/v2/payment/status/${ORDER}`, async (route) => {
+    await page.route(`**/api/v2/payment/${ORDER}`, async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
