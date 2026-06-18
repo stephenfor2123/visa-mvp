@@ -10,6 +10,8 @@ from app.api.v2 import materials
 from app.api.v2 import ocr
 from app.api.v2 import orders
 from app.api.v2 import payment
+# W19 — RPA submission (was missing from api_v2_router include list, endpoint registered but unreachable)
+from app.api.v2 import rpa
 from app.api.v2 import sms
 from app.api.v2 import voice
 
@@ -25,6 +27,8 @@ api_v2_router.include_router(materials.router, prefix="/materials", tags=["mater
 api_v2_router.include_router(ocr.router, prefix="/ocr", tags=["ocr"])
 api_v2_router.include_router(orders.router, prefix="/orders", tags=["orders"])
 api_v2_router.include_router(payment.router, prefix="/payment", tags=["payment"])
+# W19 — RPA submission endpoint (no extra prefix; rpa.router already has prefix="/rpa")
+api_v2_router.include_router(rpa.router, tags=["rpa"])
 # B-W6-1 — standalone SMS service (Mock-only in V2)
 api_v2_router.include_router(sms.router, prefix="/sms", tags=["sms"])
 # W14-5 — voice / speech-to-text endpoint

@@ -374,3 +374,5 @@ test.describe('E. 跨页 / 全局断言 (W19)', () => {
     await ctx.close()
   })
 })
+
+// (extra comment for CI re-trigger)

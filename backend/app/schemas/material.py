@@ -67,7 +67,8 @@ class ValidateRequest(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    material_ids: list[int] = Field(
+    # W19: accept string IDs (frontend uses "mat_xxx" prefixed IDs, not numeric)
+    material_ids: list[str] = Field(
         ...,
         min_length=1,
         max_length=50,

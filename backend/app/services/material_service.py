@@ -143,6 +143,32 @@ class MaterialService:
         row = await self._get_owned(user_id, material_id)
         return row
 
+    # W19: list materials for current user (powers /v2/materials list endpoint)
+    async def list_for_user(
+        self,
+        *,
+        user_id: int,
+        order_id: Optional[int] = None,
+        material_type: Optional[str] = None,
+    ) -> list[Material]:
+        """Return non-deleted materials for this user, newest first.
+
+        Optional filters: order_id (FK), material_type (e.g. 'passport', 'photo').
+        """
+        stmt = select(Material).where(
+            and_(
+                Material.user_id == user_id,
+                Material.deleted_at.is_(None),
+            )
+        )
+        if order_id is not None:
+            stmt = stmt.where(Material.order_id == order_id)
+        if material_type is not None:
+            stmt = stmt.where(Material.material_type == material_type)
+        stmt = stmt.order_by(Material.id.desc())
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())
+
     async def get_detail(self, *, user_id: int, material_id: int) -> dict[str, Any]:
         """Return row as a dict with ocr_result parsed to a JSON object."""
         row = await self._get_owned(user_id, material_id)
@@ -195,27 +221,59 @@ class MaterialService:
         self,
         *,
         user_id: int,
-        material_ids: list[int],
+        material_ids: list[str],
         fields: Optional[dict[str, Any]] = None,
     ) -> dict[str, Any]:
         if not material_ids:
             raise BizException(
                 ErrorCode.INVALID_PARAMS, message="material_ids must be non-empty"
             )
-        # Load all rows in one shot, scoped to this user
+        # W19: accept string IDs (frontend may send numeric strings like "12"
+        # OR public token-style IDs like "mat_demo_passport" / "mat_<uuid>").
+        # Resolve numeric ones to int, look up non-numeric by uuid.
+        numeric_ids: list[int] = []
+        token_ids: list[str] = []
+        for mid in material_ids:
+            try:
+                numeric_ids.append(int(mid))
+            except (TypeError, ValueError):
+                token_ids.append(mid)
+
+        # Load all rows in one shot, scoped to this user.
+        # Build a single OR condition covering both int and uuid matches.
+        from sqlalchemy import or_
+
+        conditions = []
+        if numeric_ids:
+            conditions.append(Material.id.in_(numeric_ids))
+        if token_ids:
+            conditions.append(Material.uuid.in_(token_ids))
+
         rows = (
             await self.db.execute(
                 select(Material).where(
                     and_(
-                        Material.id.in_(material_ids),
+                        or_(*conditions) if conditions else False,
                         Material.user_id == user_id,
                         Material.deleted_at.is_(None),
                     )
                 )
             )
         ).scalars().all()
-        rows_by_id = {r.id: r for r in rows}
-        missing = [mid for mid in material_ids if mid not in rows_by_id]
+
+        # Index by both numeric ID and uuid so the missing-check works for both forms
+        rows_by_numeric: dict[int, Material] = {r.id: r for r in rows}
+        rows_by_token: dict[str, Material] = {r.uuid: r for r in rows}
+        missing: list[str] = []
+        for mid in material_ids:
+            try:
+                if int(mid) in rows_by_numeric:
+                    continue
+            except (TypeError, ValueError):
+                pass
+            if mid in rows_by_token:
+                continue
+            missing.append(mid)
         if missing:
             raise BizException(
                 ErrorCode.NOT_FOUND,

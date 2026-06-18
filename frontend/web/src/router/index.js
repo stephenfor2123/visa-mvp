@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import i18n from '@/i18n'
 import { useAuthStore } from '@/stores/auth'
 import { adminRoutes, adminGuard } from './admin'
 
@@ -157,10 +158,11 @@ router.beforeEach((to, from, next) => {
 
 router.afterEach((to) => {
   const i18nKey = to.meta?.title
+  // W19-3: use i18n.global.t to translate (was showing raw key like "nav.home" before)
   if (i18nKey) {
-    document.title = `签证助手 · ${i18nKey}`
+    document.title = `签证助手 · ${i18n.global.t(i18nKey)}`
   } else {
-    document.title = '签证助手'
+    document.title = i18n.global.t('common.app_name') || '签证助手'
   }
 })
 

@@ -208,7 +208,7 @@
               >
                 <option value="">— {{ t('orders.placeholder_select') }} —</option>
                 <option v-for="d in destinations" :key="d.id" :value="d.id" :disabled="!d.enabled">
-                  {{ flagEmoji(d.country_code) }} {{ t(d.country_name_key) }} ({{ d.country_code }}){{ d.enabled ? '' : ' · ' + t('dest.coming_soon') }}
+                  {{ flagEmoji(d.country_code) }} {{ d.country_name || t(d.country_name_key) }} ({{ d.country_code }}){{ d.enabled ? '' : ' · ' + t('dest.coming_soon') }}
                 </option>
               </select>
               <span v-if="errors.destination_id" class="form-cell__error">{{ errors.destination_id }}</span>
@@ -728,7 +728,7 @@ async function onSubmit() {
     const payload = {
       destination_id: Number(form.destination_id),
       visa_type: form.visa_type,
-      material_ids: materialIds.value.map((x) => Number(x)).filter(Boolean),
+      material_ids: materialIds.value.filter(Boolean),
       applicant_data: {
         surname: form.surname.trim().toUpperCase(),
         given_name: form.given_name.trim().toUpperCase(),
@@ -760,8 +760,33 @@ async function onSubmit() {
     }
     toast.success(t('orders.submit_success'))
     setTimeout(() => {
-      // W14: 订单创建成功后自动触发 RPA 提交,跳转至 RPA 提交页面
-      router.push({ name: 'RpaSubmit', query: { orderNo: order.order_no } }).catch(() => {
+      // W19: rpa submit needs country_code + visa_type + passport_data (align with backend Pydantic schema).
+      // Look up country_code from the resolved destination.
+      const destCountry = (destination.value && destination.value.country_code) || ''
+      const visa = form.visa_type || 'tourism'
+      const passportData = {
+        surname: form.surname.trim().toUpperCase(),
+        given_name: form.given_name.trim().toUpperCase(),
+        sex: form.sex,
+        dob: form.dob,
+        nationality: form.nationality,
+        passport_no: form.passport_no.toUpperCase(),
+        passport_expiry: form.passport_expiry
+      }
+      // Stash passport data in sessionStorage so RpaSubmit can pick it up
+      // (URL query is too long; history.state is not always preserved across
+      // router.push when the target page is a separate chunk).
+      try {
+        sessionStorage.setItem(`rpa_passport_${order.order_no}`, JSON.stringify(passportData))
+      } catch (e) { /* sessionStorage may be unavailable */ }
+      router.push({
+        name: 'RpaSubmit',
+        query: {
+          orderNo: order.order_no,
+          countryCode: destCountry,
+          visaType: visa
+        }
+      }).catch(() => {
         router.push({ name: 'OrderDetail', params: { orderNo: order.order_no } })
       })
     }, 600)
