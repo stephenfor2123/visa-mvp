@@ -394,20 +394,13 @@ test.describe('S4.3 /orders/new 按钮状态 (OrderNew.vue)', () => {
       refreshToken: 'fake.r',
       user: { id: 't-c23', phone: '+8613800000023' }
     })
-    await page.goto('/orders/new', { waitUntil: 'networkidle' })
-    await page.getByTestId('ordernew-section-basic').waitFor({ state: 'visible', timeout: 10_000 })
-    await page.getByTestId('ordernew-tab-emergency').click()
-    await page.waitForTimeout(200)
-    await expect(page.getByTestId('ordernew-next')).toHaveCount(0)
-    await expect(page.getByTestId('ordernew-submit')).toBeEnabled()
-  })
     await page.goto('/orders/new', { waitUntil: 'load' })
     await page.waitForURL(/\/orders\/new/, { timeout: 5_000 })
     await page.getByTestId('ordernew-section-basic').waitFor({ state: 'visible', timeout: 10_000 })
     await page.getByTestId('ordernew-tab-emergency').click()
     await page.waitForTimeout(200)
     await expect(page.getByTestId('ordernew-next')).toHaveCount(0)
-    await expect(page.getByTestId('ordernew-submit')).toBeVisible()
+    await expect(page.getByTestId('ordernew-submit')).toBeEnabled()
   })
 
   test('C24: 提交按钮初始 enabled (设计: 不预设 disabled, 提交时前端校验 + loading)', async ({ page }) => {
@@ -428,13 +421,6 @@ test.describe('S4.3 /orders/new 按钮状态 (OrderNew.vue)', () => {
     await page.getByTestId('ordernew-section-basic').waitFor({ state: 'visible', timeout: 10_000 })
     const submit = page.getByTestId('ordernew-submit')
     await expect(submit).toBeEnabled()
-  })
-    await page.goto('/orders/new', { waitUntil: 'load' })
-    await page.waitForURL(/\/orders\/new/, { timeout: 5_000 })
-    await page.getByTestId('ordernew-section-basic').waitFor({ state: 'visible', timeout: 10_000 })
-    await page.getByTestId('ordernew-tab-emergency').click()
-    await page.waitForTimeout(200)
-    await expect(page.getByTestId('ordernew-submit')).toBeEnabled()
   })
 
   test('C25: 返回 "上一步" / "Back to Materials" 按钮 visible', async ({ page }) => {
