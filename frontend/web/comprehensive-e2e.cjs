@@ -117,12 +117,16 @@ async function testPayment(token, orderNo) {
       record('Payment close → 1000', close?.code === '1000' || close?.code === '4012', `code=${close?.code} status=${close?.data?.status}`)
     }
 
-    // 2.4 notify callback (mock)
+    // 2.4 notify callback (mock) — requires pending payment; create a fresh one with amount_cents
+    const freshCreate = await fetch(`${BACKEND}/api/v2/payment/create`, {
+      method: 'POST', headers: auth,
+      body: JSON.stringify({ order_no: orderNo, amount_cents: 10000, currency: 'USD', method: 'mock_wechat' })
+    }).then(r => r.json())
     const notify = await fetch(`${BACKEND}/api/v2/payment/notify`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ order_no: orderNo, trade_no: create?.data?.trade_no })
+      body: JSON.stringify({ order_no: orderNo, trade_no: freshCreate?.data?.trade_no })
     }).then(r => r.json())
-    record('Payment notify (callback) → 1000', notify?.code === '1000', JSON.stringify(notify?.data || notify).slice(0, 100))
+    record('Payment notify (callback) → 1000', notify?.code === '1000', `status=${notify?.data?.status || 'n/a'} msg=${notify?.message?.slice(0,60)}`)
   } catch (e) { record('Payment section', false, e.message) }
 }
 
@@ -149,19 +153,19 @@ async function testInsurance(token, orderNo) {
       }).then(r => r.json())
       record('Insurance bind → 1000 + policy_id', bind?.code === '1000' && bind?.data?.policy_id, `policy_id=${bind?.data?.policy_id}`)
 
-      // 3.4 query policy
+      // 3.4 query policy — actual backend route is GET /api/v2/insurance/{policy_id}
       if (bind?.data?.policy_id) {
-        const pol = await fetch(`${BACKEND}/api/v2/insurance/policy/${bind.data.policy_id}`, {
+        const pol = await fetch(`${BACKEND}/api/v2/insurance/${bind.data.policy_id}`, {
           headers: { Authorization: `Bearer ${token}` }
         }).then(r => r.json())
         record('Insurance policy query → 1000', pol?.code === '1000' && pol?.data?.policy_id, `status=${pol?.data?.status}`)
 
-        // 3.3 claim (mock: always approved)
+        // 3.3 claim (mock: always approved) — backend wants order_id + rejection_reason (extra="forbid")
         const claim = await fetch(`${BACKEND}/api/v2/insurance/claim`, {
           method: 'POST', headers: auth,
-          body: JSON.stringify({ policy_id: bind.data.policy_id, reason: 'Visa denied' })
+          body: JSON.stringify({ order_id: orderNo, rejection_reason: 'Visa denied by consulate - passport photo rejected' })
         }).then(r => r.json())
-        record('Insurance claim → 1000 + claim_id', claim?.code === '1000' && claim?.data?.claim_id, `status=${claim?.data?.status}`)
+        record('Insurance claim → 1000 + claim_id', claim?.code === '1000' && claim?.data?.claim_id, `status=${claim?.data?.status} id=${claim?.data?.claim_id}`)
       }
     }
   } catch (e) { record('Insurance section', false, e.message) }
@@ -345,11 +349,32 @@ async function testErrorRecovery(token) {
     const r3 = await fetch(`${BACKEND}/api/v2/orders`).then(r => r)
     record('No token → 401', r3.status === 401, `status=${r3.status}`)
 
-    // 7.4 cancel an order (use a real order we created earlier)
+    // 7.4 cancel an order — create a fresh draft (status='created') if none exists
+    let draft = null
     const ordList = await fetch(`${BACKEND}/api/v2/orders?page=1&page_size=20`, {
       headers: { Authorization: `Bearer ${token}` }
     }).then(r => r.json())
-    const draft = ordList?.data?.items?.find(o => o.status === 'created' || o.status === 'draft')
+    draft = ordList?.data?.items?.find(o => o.status === 'created' || o.status === 'draft')
+    if (!draft) {
+      // Upload a tiny material + create a fresh draft
+      const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64')
+      const fd = new FormData()
+      fd.append('file', new Blob([png], { type: 'image/png' }), 'tiny.png')
+      fd.append('material_type', 'passport')
+      const up = await fetch(`${BACKEND}/api/v2/materials/upload`, {
+        method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd
+      }).then(r => r.json())
+      const mid = up?.data?.material?.id
+      if (mid) {
+        const newOrd = await fetch(`${BACKEND}/api/v2/orders`, {
+          method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ destination_id: 1, visa_type: 'tourism', material_ids: [mid] })
+        }).then(r => r.json())
+        if (newOrd?.code === '1000') {
+          draft = { order_no: newOrd.data.order_no, status: newOrd.data.status }
+        }
+      }
+    }
     if (draft) {
       const cancel = await fetch(`${BACKEND}/api/v2/orders/${draft.order_no}/cancel`, {
         method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
