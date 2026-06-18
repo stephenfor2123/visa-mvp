@@ -62,6 +62,7 @@ const router = createRouter({
   history: createWebHashHistory(),
   routes: [
     { path: '/', redirect: '/payment/result' },
+    { path: '/home', component: { template: '<div />' } },
     { path: '/payment/result', component: PaymentResult },
     { path: '/orders', component: { template: '<div />' } },
     { path: '/orders/:id', component: { template: '<div />' } },
@@ -78,8 +79,14 @@ const makeAppButtonStub = () => ({
   }
 })
 
-const mountPaymentResult = (query: Record<string, string> = {}) =>
-  mount(PaymentResult, {
+const mountPaymentResult = async (query: Record<string, string> = {}) => {
+  // Push query params onto router so PaymentResult's route.query.orderId resolves
+  if (Object.keys(query).length > 0) {
+    await router.push({ path: '/payment/result', query })
+  } else {
+    await router.push('/payment/result')
+  }
+  return mount(PaymentResult, {
     global: {
       plugins: [router, i18n],
       stubs: {
@@ -89,6 +96,7 @@ const mountPaymentResult = (query: Record<string, string> = {}) =>
       config: { warnHandler: () => {} }
     }
   })
+}
 
 describe('PaymentResult', () => {
   beforeEach(() => {
@@ -105,7 +113,7 @@ describe('PaymentResult', () => {
   describe('not-found state', () => {
     it('shows not-found block when no orderId is provided', async () => {
       mockQueryStatus.mockResolvedValue({ data: null })
-      const wrapper = mountPaymentResult({})
+      const wrapper = await mountPaymentResult({})
       await flushPromises()
       await nextTick()
       expect(wrapper.find('[data-testid="paymentresult-not-found"]').exists()).toBe(true)
@@ -120,7 +128,7 @@ describe('PaymentResult', () => {
           currency: 'USD', estimated_processing_hours: 24, method: 'card'
         }
       })
-      const wrapper = mountPaymentResult({ orderId: 'ORD001' })
+      const wrapper = await mountPaymentResult({ orderId: 'ORD001' })
       await flushPromises()
       await nextTick()
       expect(wrapper.find('[data-testid="paymentresult-status-success"]').exists()).toBe(true)
@@ -133,7 +141,7 @@ describe('PaymentResult', () => {
           currency: 'USD', estimated_processing_hours: 24, method: 'card'
         }
       })
-      const wrapper = mountPaymentResult({ orderId: 'ORD001' })
+      const wrapper = await mountPaymentResult({ orderId: 'ORD001' })
       await flushPromises()
       await nextTick()
       expect(wrapper.find('[data-testid="paymentresult-eta"]').exists()).toBe(true)
@@ -148,7 +156,7 @@ describe('PaymentResult', () => {
           amount_cents: 9900, currency: 'USD', method: 'card'
         }
       })
-      const wrapper = mountPaymentResult({ orderId: 'ORD002' })
+      const wrapper = await mountPaymentResult({ orderId: 'ORD002' })
       await flushPromises()
       await nextTick()
       expect(wrapper.find('[data-testid="paymentresult-status-failed"]').exists()).toBe(true)
@@ -163,7 +171,7 @@ describe('PaymentResult', () => {
           currency: 'USD', method: 'card'
         }
       })
-      const wrapper = mountPaymentResult({ orderId: 'ORD003' })
+      const wrapper = await mountPaymentResult({ orderId: 'ORD003' })
       await flushPromises()
       await nextTick()
       expect(wrapper.find('[data-testid="paymentresult-status-pending"]').exists()).toBe(true)
@@ -176,7 +184,7 @@ describe('PaymentResult', () => {
           currency: 'USD', method: 'card'
         }
       })
-      const wrapper = mountPaymentResult({ orderId: 'ORD003' })
+      const wrapper = await mountPaymentResult({ orderId: 'ORD003' })
       await flushPromises()
       await nextTick()
       expect(wrapper.find('[data-testid="paymentresult-polling-label"]').exists()).toBe(true)
@@ -191,7 +199,7 @@ describe('PaymentResult', () => {
           currency: 'USD', method: 'card'
         }
       })
-      const wrapper = mountPaymentResult({ orderId: 'ORD004' })
+      const wrapper = await mountPaymentResult({ orderId: 'ORD004' })
       await flushPromises()
       await nextTick()
       expect(wrapper.find('[data-testid="paymentresult-status-cancelled"]').exists()).toBe(true)
@@ -206,7 +214,7 @@ describe('PaymentResult', () => {
           currency: 'USD', method: 'card'
         }
       })
-      const wrapper = mountPaymentResult({ orderId: 'ORD001' })
+      const wrapper = await mountPaymentResult({ orderId: 'ORD001' })
       await flushPromises()
       await nextTick()
       expect(wrapper.find('[data-testid="paymentresult-summary"]').exists()).toBe(true)
@@ -217,7 +225,7 @@ describe('PaymentResult', () => {
   describe('network error handling', () => {
     it('shows error block when API throws', async () => {
       mockQueryStatus.mockRejectedValue(new Error('Network error'))
-      const wrapper = mountPaymentResult({ orderId: 'ORD005' })
+      const wrapper = await mountPaymentResult({ orderId: 'ORD005' })
       await flushPromises()
       await nextTick()
       expect(wrapper.find('[data-testid="paymentresult-error"]').exists()).toBe(true)
@@ -225,7 +233,7 @@ describe('PaymentResult', () => {
 
     it('shows retry load button on API error', async () => {
       mockQueryStatus.mockRejectedValue(new Error('Network error'))
-      const wrapper = mountPaymentResult({ orderId: 'ORD005' })
+      const wrapper = await mountPaymentResult({ orderId: 'ORD005' })
       await flushPromises()
       await nextTick()
       expect(wrapper.find('[data-testid="paymentresult-retry-load"]').exists()).toBe(true)

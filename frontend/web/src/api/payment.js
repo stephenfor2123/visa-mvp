@@ -1,12 +1,13 @@
 // /api/v2/payment 前端 wrapper
 //
-// W14 支付端点:
-//   GET  /api/v2/payment/status/{orderId}   - 查询支付状态(轮询用)
-//   POST /api/v2/payment/cancel/{orderId}   - 取消未支付订单
-//   POST /api/v2/payment/retry/{orderId}    - 失败重试支付
+// V2 §3.5.6 支付端点 (对齐 backend/app/api/v2/payment.py):
+//   POST /api/v2/payment/create            - 创建 mock 支付单 (order_no + amount_cents + currency + method)
+//   POST /api/v2/payment/notify            - 支付回调 (no auth, mock 自调用)
+//   GET  /api/v2/payment/{order_no}        - 查询支付状态 (无 /status/ 前缀)
+//   POST /api/v2/payment/{order_no}/close  - 关闭未支付订单 (无 /cancel/ 前缀)
 //
-// V2 §3.5.6 + W9 Stripe 真接路径:
-//   - status:  success | failed | pending | cancelled
+// V2 §3.5.6 状态集:
+//   - status:  success | failed | pending | cancelled | closed | paid
 //   - amount 单位:分(cents),返回后前端按 currency 格式化
 //
 // Mock 模式: VITE_MOCK !== 'false' 时使用本地 mock 数据 + localStorage 状态机
@@ -91,9 +92,10 @@ function writeMockPayment(orderId, patch) {
   return next
 }
 
-// ============== GET /api/v2/payment/status/:orderId ==============
+// ============== GET /api/v2/payment/:order_no ==============
+// 真实后端路径 (无 /status/ 前缀): GET /api/v2/payment/{order_no}
 // 用于支付结果页轮询 (默认 30s 一次)
-// 返回结构: { order_id, status, amount_cents, currency, method, reason, transaction_id, ... }
+// 返回结构: { code, message, data: { order_no, status, amount_cents, currency, method, paid_at, ... } }
 // 错误:
 //   - 404 → 抛 NOT_FOUND
 //   - 401 → 走 http.js 拦截器自动 logout
@@ -112,7 +114,7 @@ export async function queryPaymentStatus(orderId) {
   }
 
   try {
-    const resp = await http.get(`/v2/payment/status/${orderId}`, { __silent: true })
+    const resp = await http.get(`/v2/payment/${encodeURIComponent(orderId)}`, { __silent: true })
     if (resp?.code && resp.code !== '1000') {
       const e = new Error(resp.message || 'query payment status failed')
       e.code = resp.code
@@ -128,8 +130,9 @@ export async function queryPaymentStatus(orderId) {
   }
 }
 
-// ============== POST /api/v2/payment/cancel/:orderId ==============
-// 取消未支付订单 → 状态翻成 cancelled
+// ============== POST /api/v2/payment/:order_no/close ==============
+// 真实后端路径 (无 /cancel/ 前缀): POST /api/v2/payment/{order_no}/close
+// 关闭未支付订单 → 状态翻成 closed
 export async function cancelPayment(orderId) {
   if (!orderId) throw new Error('orderId required')
 
@@ -154,7 +157,7 @@ export async function cancelPayment(orderId) {
   }
 
   try {
-    const resp = await http.post(`/v2/payment/cancel/${orderId}`, {}, { __silent: true })
+    const resp = await http.post(`/v2/payment/${encodeURIComponent(orderId)}/close`, {}, { __silent: true })
     if (resp?.code && resp.code !== '1000') {
       const e = new Error(resp.message || 'cancel payment failed')
       e.code = resp.code
@@ -169,9 +172,10 @@ export async function cancelPayment(orderId) {
   }
 }
 
-// ============== POST /api/v2/payment/retry/:orderId ==============
-// 失败重试:返回新的支付链接或 session(V2 §3.5.6),前端可跳回 Stripe / 支付宝
-// 简化实现:把状态从 failed 翻回 pending,允许前端重新触发轮询或跳转
+// ============== retryPayment ==============
+// 后端 V2 没有专门的 retry 端点 — 失败/取消后要重试得走 create_payment 重新下单
+// 这里保留 retryPayment 作为兼容 alias,内部调 createPayment 重新生成 trade_no
+// 状态机:failed/cancelled → 重新 create → 拿到新 trade_no + code_url
 export async function retryPayment(orderId) {
   if (!orderId) throw new Error('orderId required')
 
@@ -196,16 +200,35 @@ export async function retryPayment(orderId) {
     }
   }
 
+  // 真业务路径: 后端无 retry 端点,统一改走 createPayment 重新下单
+  // amount_cents: 兼容旧 mock 默认 9900;真实 UI 应从 order 读 amount
+  return await createPayment({
+    order_no: orderId,
+    amount_cents: 9900,
+    currency: 'USD',
+    method: 'mock_wechat',
+    desc: 'retry'
+  })
+}
+
+// ============== POST /api/v2/payment/create ==============
+// 真实后端 create 端点: 调 create_payment 后端路由
+export async function createPayment({ order_no, amount_cents, currency = 'USD', method = 'mock_wechat', desc = '' }) {
+  if (!order_no) throw new Error('order_no required')
+  if (!amount_cents || amount_cents <= 0) throw new Error('amount_cents required (>0)')
+
   try {
-    const resp = await http.post(`/v2/payment/retry/${orderId}`, {}, { __silent: true })
+    const resp = await http.post('/v2/payment/create', {
+      order_no, amount_cents, currency, method, desc
+    }, { __silent: true })
     if (resp?.code && resp.code !== '1000') {
-      const e = new Error(resp.message || 'retry payment failed')
+      const e = new Error(resp.message || 'create payment failed')
       e.code = resp.code
       throw e
     }
     return resp
   } catch (err) {
-    const e = new Error(err?.response?.data?.message || err.message || 'retry payment failed')
+    const e = new Error(err?.response?.data?.message || err.message || 'create payment failed')
     e.code = err?.response?.data?.code || err?.code
     e.status = err?.response?.status
     throw e
