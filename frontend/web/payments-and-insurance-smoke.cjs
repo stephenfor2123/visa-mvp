@@ -32,7 +32,7 @@ async function getJson(url, token) {
 
 async function go() {
   // Login
-  const login = await postJson(`${BACKEND}/api/v2/auth/login`, { phone: '138001380001', password: 'demo1234' })
+  const login = await postJson(`${BACKEND}/api/v2/auth/login`, { phone: '138001380001', password: '123456', phone_country: '+86' })
   if (login.code !== '1000') {
     console.log('FAIL login:', JSON.stringify(login).slice(0, 200))
     process.exit(1)
