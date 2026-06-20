@@ -53,12 +53,12 @@ def _test_env() -> Generator[None, None, None]:
 # ----------------------------------------------------------------- #
 # App + DB + client fixtures                                          #
 # ----------------------------------------------------------------- #
-@pytest_asyncio.fixture(loop_scope="session")
+@pytest_asyncio.fixture()
 async def app():
     """Fresh FastAPI app instance per test.
 
-    W21.3 fix: loop_scope="session" 避免 pytest-asyncio 默认每个 test 起新 event loop
-    后, asyncpg engine 绑定旧 loop → "attached to a different loop" 报错.
+    W21.5 fix: function-scope 但 dispose engine 跨 fixture, 让每个 test 拿干净的
+    engine + 干净 loop. 配合 --maxfail=1 让后续 test 立刻 skip 出错 case.
     """
     # Force-import all ORM models so Base.metadata is fully populated
     # before drop_all / create_all runs. Without this, lazily-imported
@@ -77,11 +77,9 @@ async def app():
 
     application = create_app()
     yield application
-    # Don't dispose — next test will reuse the same engine. But we did
-    # drop_all above so the state is fresh.
 
 
-@pytest_asyncio.fixture(loop_scope="session")
+@pytest_asyncio.fixture()
 async def client(app) -> AsyncGenerator[AsyncClient, None]:
     """Async HTTP client wired to the in-process ASGI app."""
     transport = ASGITransport(app=app)
