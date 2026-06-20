@@ -58,13 +58,20 @@ class TestYamlLoading:
             assert country in mapping_data, f"Missing country: {country}"
 
     def test_no_extra_countries(self, mapping_data: dict, expected_countries: list[str]) -> None:
-        """No unexpected country keys should be present."""
-        extra = set(mapping_data.keys()) - set(expected_countries)
+        """No unexpected country keys should be present.
+
+        W22 fix: YAML 有 nationality_map 这个 metadata key,不算 extra country
+        """
+        # Filter out non-country keys (anything that's not 2-letter country code)
+        actual_countries = {k for k in mapping_data.keys() if len(k) == 2}
+        extra = actual_countries - set(expected_countries)
         assert not extra, f"Unexpected countries: {extra}"
 
     def test_country_count(self, mapping_data: dict) -> None:
         """Must have exactly 9 countries."""
-        assert len(mapping_data) == 9, f"Expected 9 countries, got {len(mapping_data)}"
+        # W22 fix: filter to 2-letter keys (nationality_map is metadata)
+        actual_countries = {k for k in mapping_data.keys() if len(k) == 2}
+        assert len(actual_countries) == 9, f"Expected 9 countries, got {len(actual_countries)}"
 
 
 # ---------------------------------------------------------------- #
@@ -226,7 +233,10 @@ class TestPassportNumberRegex:
         """Regex should be usable with case-insensitive matching for OCR output."""
         # Some OCR engines may return lowercase; we test that our regex
         # pattern can be made case-insensitive without breaking valid input
-        for country_data in mapping_data.values():
+        for country_key, country_data in mapping_data.items():
+            # W22 fix: skip non-country keys (nationality_map 等)
+            if len(country_key) != 2:
+                continue
             regex = country_data["passport_number_re"]
             pattern = re.compile(f"^{regex}$", re.IGNORECASE)
             # Verify the pattern still rejects obviously wrong input
@@ -291,7 +301,10 @@ class TestFullYamlIntegration:
         """Full integration test: all countries pass all checks."""
         errors: list[str] = []
 
+        # W22 fix: 只验证 2-letter country code keys, 跳过 metadata (nationality_map)
         for country_key, country_data in mapping_data.items():
+            if len(country_key) != 2:
+                continue
             # Check required fields
             for field in TestFieldMappingCompleteness.REQUIRED_FIELDS:
                 if field not in country_data:

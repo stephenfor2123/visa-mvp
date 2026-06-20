@@ -28,8 +28,8 @@ class PaymentResult:
     ok: bool
     channel_txn_id: str
     status: str          # pending / succeeded / failed
-    error:Optional[str]= None
-    rawOptional[dict] = None
+    error: Optional[str] = None
+    raw: Optional[dict] = None
 
 
 class PaymentAdapter(ABC):

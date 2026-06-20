@@ -99,7 +99,10 @@ class RPAScheduler:
 
         # In-memory task store (production: Redis + DB)
         self._tasks: dict[str, RPATask] = {}
-        self._lock = asyncio.Lock()
+        # W22 fix: lazy lock init — 创建 asyncio.Lock 在 Python 3.10+ 绑当前 event loop
+        # 在 asyncio.run() 后, 已关闭 loop 上的 lock 不能跨 thread 复用.
+        # 改成懒加载: 第一次用时建新 lock
+        self._lock: Optional[asyncio.Lock] = None
 
         # Rate limit tracking: IP -> list of timestamps
         self._ip_visits: dict[str, list[datetime]] = {}
@@ -353,9 +356,11 @@ class RPAScheduler:
             return {"task_id": task_id, "status": "not_found"}
 
         if task.status not in (TaskStatus.IDLE, TaskStatus.SUBMITTING, TaskStatus.WAITING):
+            # W22 fix: include progress field so RPATaskStatus response validation passes
             return {
                 "task_id": task_id,
                 "status": task.status.value,
+                "progress": task.progress,
                 "message": f"Cannot cancel task in status '{task.status.value}'",
             }
 

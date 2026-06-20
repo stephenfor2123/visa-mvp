@@ -1,7 +1,7 @@
 """Material endpoint DTOs (request/response) — V2 §4.3."""
 import re
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -67,12 +67,13 @@ class ValidateRequest(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    # W19: accept string IDs (frontend uses "mat_xxx" prefixed IDs, not numeric)
-    material_ids: list[str] = Field(
+    # W22 fix: accept both int (DB id from tests/scripts) and str (frontend "mat_xxx" tokens).
+    # Frontend typically sends numeric IDs as strings ("12"), but tests/scripts pass raw int.
+    material_ids: list[Union[int, str]] = Field(
         ...,
         min_length=1,
         max_length=50,
-        description="Material IDs to validate (1-50)",
+        description="Material IDs to validate (1-50) — int or str",
     )
     fields: dict[str, Any] = Field(
         default_factory=dict,

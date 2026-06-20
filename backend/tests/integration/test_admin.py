@@ -1,6 +1,8 @@
 """Integration tests for /api/v2/admin/* — W14-3 admin panel."""
 from __future__ import annotations
 
+import time
+
 import pytest
 
 
@@ -90,6 +92,63 @@ class TestAdminAuthenticated:
             json={"username": "admin", "password": "visa-admin-2024"},
         )
         return r.json()["data"]["access_token"]
+
+    async def _seed_order_for_admin(self, client, admin_token: str) -> str:
+        """W22 helper: register user → upload material → create draft order → return order_no."""
+        # Seed destination 1 if missing (fresh test DB may not have it)
+        from app.core.db import AsyncSessionLocal
+        from app.models.destination import VisaDestination
+        from sqlalchemy import select
+        async with AsyncSessionLocal() as s:
+            existing = await s.scalar(select(VisaDestination).where(VisaDestination.id == 1))
+            if existing is None:
+                import json as _json
+                s.add(VisaDestination(
+                    id=1, country_code="US",
+                    country_name_i18n=_json.dumps({"zh-CN": "美国", "en": "United States"}),
+                    visa_types=_json.dumps(["tourism", "student"]),
+                    enabled=True, display_order=1,
+                ))
+                await s.commit()
+
+        # Register a user
+        phone = f"13899{int(time.time() * 1000) % 1000000:06d}"
+        r = await client.post(
+            "/api/v2/auth/send-code",
+            json={"phone": phone, "phone_country": "+86", "purpose": "register"},
+        )
+        sms = r.json()["data"]["code"]
+        r = await client.post(
+            "/api/v2/auth/register",
+            json={
+                "phone": phone,
+                "phone_country": "+86",
+                "password": "abc12345",
+                "sms_code": sms,
+                "language_pref": "zh-CN",
+            },
+        )
+        user_token = r.json()["data"]["access_token"]
+        # Upload a tiny material
+        import io as _io
+        from PIL import Image as _Image
+        buf = _io.BytesIO()
+        _Image.new("RGB", (10, 10), "white").save(buf, "JPEG")
+        buf.seek(0)
+        r = await client.post(
+            "/api/v2/materials/upload",
+            files={"file": ("tiny.jpg", buf, "image/jpeg")},
+            data={"material_type": "passport"},
+            headers={"Authorization": f"Bearer {user_token}"},
+        )
+        mid = r.json()["data"]["material"]["id"]
+        # Create a draft order
+        r = await client.post(
+            "/api/v2/orders",
+            json={"destination_id": 1, "visa_type": "tourism", "material_ids": [mid]},
+            headers={"Authorization": f"Bearer {user_token}"},
+        )
+        return r.json()["data"]["order_no"]
 
     async def test_list_users_authenticated(self, client):
         token = await self._admin_token(client)
@@ -217,12 +276,22 @@ class TestAdminAuthenticated:
 
     async def test_update_order_status_invalid_status(self, client):
         token = await self._admin_token(client)
+        # W22 fix: create a real order first so 404 vs 409 distinction works
+        order_no = await self._seed_order_for_admin(client, token)
+        # Look up the integer id from the order_no
+        from app.core.db import AsyncSessionLocal
+        from app.models.order import Order
+        from sqlalchemy import select
+        async with AsyncSessionLocal() as s:
+            row = await s.scalar(select(Order).where(Order.order_no == order_no))
+            assert row is not None, f"order {order_no} not found"
+            oid = row.id
         r = await client.put(
-            "/api/v2/admin/orders/1/status",
+            f"/api/v2/admin/orders/{oid}/status",
             json={"status": "invalid_status"},
             headers={"Authorization": f"Bearer {token}"},
         )
-        assert r.status_code == 409
+        assert r.status_code == 409, r.text
         assert r.json()["code"] == "4008"
 
     async def test_update_order_status_not_found(self, client):

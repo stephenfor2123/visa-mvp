@@ -113,7 +113,13 @@ class PageParser:
 
     @property
     def mock_mode(self) -> bool:
-        """Whether mock mode is enabled."""
+        """Whether mock mode is enabled.
+
+        W22 fix: if mock_html was passed to __init__, force mock_mode=True
+        so tests using `PageParser(mock_html="...")` work without a real config.
+        """
+        if self._mock_html is not None:
+            return True
         return self._config.get("mock_mode", True)
 
     def fetch_page(self, url: str, session_cookies: Optional[dict] = None) -> str:
@@ -334,6 +340,12 @@ class PageParser:
             captcha_img = soup.find("img", alt=re.compile(r"captcha", re.I))
         if not captcha_img:
             captcha_img = soup.find("img", src=re.compile(r"captcha", re.I))
+        # W22 fix: also detect data: URI images (base64 inline captcha) as captcha
+        if not captcha_img:
+            for img in soup.find_all("img", src=True):
+                if img.get("src", "").startswith("data:image/"):
+                    captcha_img = img
+                    break
 
         if captcha_img:
             img_src = captcha_img.get("src", "")
@@ -342,7 +354,7 @@ class PageParser:
                 result["image_data"] = img_src
             else:
                 result["image_url"] = img_src
-            result["type"] = "image"
+                result["type"] = "image"
 
         # Strategy 2: Look for slider captcha
         slider_bg = soup.find(
