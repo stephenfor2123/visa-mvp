@@ -34,7 +34,7 @@ def upgrade() -> None:
         sa.Column("country_code", sa.String(length=8), nullable=False),
         sa.Column("country_name_zh", sa.String(length=128), nullable=False),
         sa.Column("country_name_en", sa.String(length=128), nullable=False),
-        sa.Column("enabled", sa.Boolean(), nullable=False, server_default="1"),
+        sa.Column("enabled", sa.Boolean(), nullable=False, server_default=sa.text("true")),
         sa.Column("base_url", sa.Text(), nullable=True),
         sa.Column("form_path", sa.Text(), nullable=True),
         sa.Column(
@@ -90,7 +90,7 @@ def upgrade() -> None:
         sa.Column(
             "params", sa.Text(), nullable=True, comment="JSON object with rule-type params"
         ),
-        sa.Column("enabled", sa.Boolean(), nullable=False, server_default="1"),
+        sa.Column("enabled", sa.Boolean(), nullable=False, server_default=sa.text("true")),
         sa.Column(
             "created_at",
             sa.DateTime(),

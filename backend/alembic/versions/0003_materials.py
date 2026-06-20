@@ -57,7 +57,7 @@ def upgrade() -> None:
             "archived",
             sa.Boolean(),
             nullable=False,
-            server_default=sa.text("0"),
+            server_default=sa.text("false"),
         ),
         sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
         sa.Column("deleted_at", sa.DateTime(), nullable=True),

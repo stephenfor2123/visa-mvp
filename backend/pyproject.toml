@@ -12,7 +12,11 @@ authors = [{ name = "Visa MVP team" }]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-asyncio_default_fixture_loop_scope = "function"
+# W21.3 fix: session-scope loop 避免 asyncpg engine 跨 event loop 冲突
+# (旧配置 function-scope 在 postgres + asyncpg 下会触发
+# "attached to a different loop" / "another operation is in progress")
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
 testpaths = ["tests"]
 addopts = "-v --tb=short --strict-markers"
 filterwarnings = ["ignore::DeprecationWarning"]

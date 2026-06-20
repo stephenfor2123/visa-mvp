@@ -53,9 +53,13 @@ def _test_env() -> Generator[None, None, None]:
 # ----------------------------------------------------------------- #
 # App + DB + client fixtures                                          #
 # ----------------------------------------------------------------- #
-@pytest_asyncio.fixture()
+@pytest_asyncio.fixture(loop_scope="session")
 async def app():
-    """Fresh FastAPI app instance per test."""
+    """Fresh FastAPI app instance per test.
+
+    W21.3 fix: loop_scope="session" 避免 pytest-asyncio 默认每个 test 起新 event loop
+    后, asyncpg engine 绑定旧 loop → "attached to a different loop" 报错.
+    """
     # Force-import all ORM models so Base.metadata is fully populated
     # before drop_all / create_all runs. Without this, lazily-imported
     # models (e.g. SmsCode via /auth routes) are missing from
@@ -77,7 +81,7 @@ async def app():
     # drop_all above so the state is fresh.
 
 
-@pytest_asyncio.fixture()
+@pytest_asyncio.fixture(loop_scope="session")
 async def client(app) -> AsyncGenerator[AsyncClient, None]:
     """Async HTTP client wired to the in-process ASGI app."""
     transport = ASGITransport(app=app)

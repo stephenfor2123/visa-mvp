@@ -356,6 +356,15 @@ class AdminService:
             "country_name_zh": country.country_name_zh,
             "country_name_en": country.country_name_en,
             "enabled": country.enabled,
+            "base_url": country.base_url,
+            "form_path": country.form_path,
+            "rpa_config": country.rpa_config,
+            "visa_types": country.visa_types,
+            "fee_usd": country.fee_usd,
+            "processing_days": country.processing_days,
+            "extra": country.extra,
+            "created_at": country.created_at,
+            "updated_at": country.updated_at,
         }
 
     async def update_country(self, country_id: int, data: dict[str, Any]) -> dict[str, Any]:
@@ -399,7 +408,18 @@ class AdminService:
         return {
             "id": country.id,
             "country_code": country.country_code,
+            "country_name_zh": country.country_name_zh,
+            "country_name_en": country.country_name_en,
             "enabled": country.enabled,
+            "base_url": country.base_url,
+            "form_path": country.form_path,
+            "rpa_config": country.rpa_config,
+            "visa_types": country.visa_types,
+            "fee_usd": country.fee_usd,
+            "processing_days": country.processing_days,
+            "extra": country.extra,
+            "created_at": country.created_at,
+            "updated_at": country.updated_at,
         }
 
     async def delete_country(self, country_id: int) -> None:
@@ -422,7 +442,11 @@ class AdminService:
     # Validation rules                                                      #
     # ------------------------------------------------------------------ #
     async def get_validation_rules(self) -> list[dict[str, Any]]:
-        """Return all rules as a list of dicts."""
+        """Return all rules as a list of dicts.
+
+        W21.3 fix: params 是 JSON 字符串 (跟 DB 一致), 不要 json.loads,
+        ValidationRuleOut.params 期望 str 不是 dict.
+        """
         rows = (
             await self.db.execute(select(ValidationRule).order_by(ValidationRule.code))
         ).scalars().all()
@@ -433,7 +457,7 @@ class AdminService:
                 "rule_type": r.rule_type,
                 "severity": r.severity,
                 "message_key": r.message_key,
-                "params": json.loads(r.params) if r.params else {},
+                "params": r.params,
                 "enabled": r.enabled,
                 "created_at": r.created_at,
                 "updated_at": r.updated_at,
@@ -501,18 +525,39 @@ class AdminService:
     def _rpa_config_path(self) -> Path:
         return Path(self.settings.log_dir).parent / "data" / "rpa_config.yaml"
 
+    # Default RPA config — used when YAML file missing (CI / first run)
+    _DEFAULT_RPA_CONFIG: dict[str, Any] = {
+        "rate_limits": {"requests_per_minute": 30, "burst": 5},
+        "timeouts": {"page_load_ms": 15000, "submit_ms": 30000},
+        "retry": {"max_attempts": 3, "backoff_seconds": 5},
+        "captcha": {"provider": "mock", "timeout_seconds": 60},
+        "session": {"cookie_ttl_seconds": 3600, "user_agent_pool": []},
+        "countries": {},
+        "mock_mode": True,
+    }
+
     def get_rpa_config(self) -> dict[str, Any]:
-        """Load RPA config from YAML file."""
+        """Load RPA config from YAML file, merged over defaults.
+
+        W21.3 fix: return full default config (not empty dict) when YAML missing,
+        so Pydantic RpaConfigOut validation doesn't fail.
+        """
         path = self._rpa_config_path()
+        config: dict[str, Any] = dict(self._DEFAULT_RPA_CONFIG)
         if not path.exists():
-            return {}
+            return config
         try:
             import yaml
 
             with open(path, "r", encoding="utf-8") as f:
-                return yaml.safe_load(f) or {}
+                loaded = yaml.safe_load(f) or {}
+            # Merge: defaults < yaml overrides
+            for key, value in loaded.items():
+                if value is not None:
+                    config[key] = value
+            return config
         except Exception:
-            return {}
+            return config
 
     def update_rpa_config(self, updates: dict[str, Any]) -> dict[str, Any]:
         """Merge updates into RPA YAML and write back."""
