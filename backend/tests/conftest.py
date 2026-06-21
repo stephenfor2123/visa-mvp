@@ -28,7 +28,7 @@ def _test_env() -> Generator[None, None, None]:
     os.environ["SMS_COOLDOWN_SECONDS"] = "1"        # test-friendly cooldown
     os.environ["SMS_DAILY_LIMIT"] = "10000"          # disable for tests
     os.environ["RATE_LIMIT_PER_IP_PER_MIN"] = "10000"  # disable IP rate limit
-    os.environ["RATE_LIMIT_SLOW_API_PER_IP_PER_MIN"] = "10000"
+    os.environ["RATE_LIMIT_SLOW_API_PER_MIN"] = "10000"
     os.environ["JWT_SECRET"] = "test-secret-test-secret-test-secret-2026"
     os.environ["ADMIN_PASSWORD_SECRET"] = "visa-admin-2024"
     os.environ["ENV"] = "test"
@@ -59,12 +59,22 @@ async def app():
 
     Root cause (W22): app.core.db module-level `engine` and AsyncSessionLocal
     are created at import time (first test's event loop).  Subsequent tests
-    run in a new pytest-asyncio event loop but reuse the same engine → 
+    run in a new pytest-asyncio event loop but reuse the same engine →
     "Future attached to a different loop" / "another operation is in progress".
 
     Fix: inside this fixture (which runs inside pytest-asyncio's per-test loop)
     we create a fresh test engine and patch app.core.db module-level objects
     so that lifespan() and get_db() both use the correct, loop-bound engine.
+
+    CRITICAL additional fix: aiosqlite uses a SEPARATE connection per session.
+    When two async sessions (one from _seed_destination, one from the API's
+    get_db) open separate connections to the same in-memory DB, the second
+    connection starts EMPTY (SQLite in-memory is connection-local).
+    Solution: (a) use a named in-memory URI with a shared cache so all
+    connections share the same data, AND (b) patch AsyncSessionLocal.kw['bind']
+    to point to the test engine so that code which already imported
+    AsyncSessionLocal (e.g. test_orders.py, test_checklist.py) automatically
+    uses the test engine.
     """
     import app.models  # noqa: F401  -- registers all ORM models
     from app.main import create_app
@@ -72,22 +82,18 @@ async def app():
     from app.core.db import Base
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-    # Always use a fresh SQLite temp file for tests, regardless of what DATABASE_URL
-    # is set to in .env (CI overrides it to Postgres). pytest-asyncio creates a new
-    # event loop per function-scope test, so we need a per-test SQLite engine bound
-    # to the current loop to avoid "attached to a different loop" errors.
-    import tempfile
-    _tmp_db = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
-    _tmp_db.close()
-    db_url = f"sqlite+aiosqlite:///{_tmp_db.name}"
-    db_path = Path(_tmp_db.name)
+    # Always use a fresh shared-cache in-memory SQLite per test, regardless
+    # of what DATABASE_URL is set to in .env (CI overrides it to Postgres).
+    import uuid
+    _mem_name = f"file:visa_test_{uuid.uuid4().hex}?mode=memory&cache=shared&uri=true"
+    db_url = f"sqlite+aiosqlite:///{_mem_name}"
 
-    # Create a fresh engine bound to THIS fixture's event loop (the current loop).
+    # Create a fresh engine bound to THIS fixture's event loop.
     test_engine = create_async_engine(
         db_url,
         echo=False,
         future=True,
-        connect_args={"check_same_thread": False},  # always SQLite in tests
+        connect_args={"check_same_thread": False},
     )
     TestSessionLocal: async_sessionmaker[AsyncSession] = async_sessionmaker(
         test_engine,
@@ -96,14 +102,30 @@ async def app():
         autoflush=False,
     )
 
-    # Replace module-level objects so lifespan() + get_db() pick up the test engine.
+    # Save originals for cleanup
     old_engine = db_module.engine
     old_session_local = db_module.AsyncSessionLocal
+    old_get_db = db_module.get_db
 
+    # Patch engine in app.main — it does `from app.core.db import engine` and
+    # uses the bound name inside lifespan().
+    import app.main as main_module
+    old_main_engine = main_module.engine
+    main_module.engine = test_engine
     db_module.engine = test_engine
-    db_module.AsyncSessionLocal = TestSessionLocal
 
-    # Also patch get_db to use our TestSessionLocal (reads AsyncSessionLocal at call time).
+    # CRITICAL: patch AsyncSessionLocal.kw['bind'] so that code which already
+    # imported AsyncSessionLocal (test_orders.py, test_checklist.py, and the
+    # original get_db) automatically uses the test engine.  This works because
+    # async_sessionmaker.__call__ reads kw['bind'] to determine the session's
+    # bind at call time.
+    # Also patch autoflush to False to match TestSessionLocal.
+    old_bind = db_module.AsyncSessionLocal.kw.get("bind")
+    db_module.AsyncSessionLocal.kw["bind"] = test_engine
+    db_module.AsyncSessionLocal.kw["autoflush"] = False
+    db_module.AsyncSessionLocal.kw["expire_on_commit"] = False
+
+    # Override get_db to use the test sessionmaker directly.
     async def _test_get_db() -> AsyncGenerator[AsyncSession, None]:
         async with TestSessionLocal() as session:
             try:
@@ -116,6 +138,35 @@ async def app():
 
     db_module.get_db = _test_get_db
 
+    # Also patch router modules that have their own get_db bindings
+    # (FastAPI captured the original get_db at decoration time).
+    _original_router_attrs: dict[tuple[str, str], object] = {}
+
+    def _safe_patch(module_name: str, attr: str, new_value) -> None:
+        try:
+            mod = __import__(module_name, fromlist=[attr])
+            if hasattr(mod, attr):
+                _original_router_attrs[(module_name, attr)] = getattr(mod, attr)
+                setattr(mod, attr, new_value)
+        except Exception:
+            pass
+
+    for module_name, attr in [
+        ("app.api.v2.orders", "get_db"),
+        ("app.api.v2.auth", "get_db"),
+        ("app.api.v2.payment", "get_db"),
+        ("app.api.v2.materials", "get_db"),
+        ("app.api.v2.admin", "get_db"),
+        ("app.api.v2.destinations", "get_db"),
+        ("app.api.v2.ocr", "get_db"),
+        ("app.api.v2.rpa", "get_db"),
+        ("app.api.v2.voice", "get_db"),
+        ("app.api.v2.scheduler", "get_db"),
+        ("app.api.v2.affiliate", "get_db"),
+        ("app.core.security", "get_db"),
+    ]:
+        _safe_patch(module_name, attr, _test_get_db)
+
     # Create schema using the fresh test engine.
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
@@ -124,16 +175,22 @@ async def app():
     application = create_app()
     yield application
 
-    # Cleanup: restore originals, dispose test engine, remove temp DB file.
+    # Cleanup: restore originals, dispose test engine
     db_module.engine = old_engine
-    db_module.AsyncSessionLocal = old_session_local
-    db_module.get_db = old_session_local  # restore using old_session_local as callable
+    db_module.AsyncSessionLocal.kw["bind"] = old_bind
+    db_module.AsyncSessionLocal.kw["autoflush"] = True
+    db_module.AsyncSessionLocal.kw["expire_on_commit"] = False
+    db_module.get_db = old_get_db
+    main_module.engine = old_main_engine
+    # Restore router module bindings
+    for (module_name, attr), original_value in _original_router_attrs.items():
+        try:
+            mod = __import__(module_name, fromlist=[attr])
+            setattr(mod, attr, original_value)
+        except Exception:
+            pass
 
     await test_engine.dispose()
-    try:
-        Path(db_path).unlink(missing_ok=True)
-    except Exception:
-        pass
 
 
 @pytest_asyncio.fixture()
