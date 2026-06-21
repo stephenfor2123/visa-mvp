@@ -114,11 +114,11 @@ def upgrade() -> None:
         INSERT INTO validation_rules (code, rule_type, severity, message_key, params, enabled)
         VALUES
             ('PASSPORT_EXPIRY_MIN_6M', 'expiry', 'error', 'passport_expiry_min_6m',
-             '{"field": "expiry", "min_months": 6}', 1),
+             '{"field": "expiry", "min_months": 6}', TRUE),
             ('PASSPORT_NO_FORMAT', 'regex', 'error', 'passport_no_format',
-             '{"field": "passport_no", "pattern": "^[A-Z0-9]{6,12}$"}', 1),
+             '{"field": "passport_no", "pattern": "^[A-Z0-9]{6,12}$"}', TRUE),
             ('IMAGE_BLUR_THRESHOLD', 'image_quality', 'error', 'image_blur_threshold',
-             '{"field": "__file__", "min_laplacian": 100}', 1)
+             '{"field": "__file__", "min_laplacian": 100}', TRUE)
         """
     )
 
