@@ -83,6 +83,7 @@ def _flutter_available() -> bool:
 # --------------------------------------------------------------------------- #
 # Test 1: iOS build (flutter build ios --no-codesign --debug)                 #
 # --------------------------------------------------------------------------- #
+@pytest.mark.slow
 class TestIosBuild:
     """iOS Flutter 工程: pub get + analyze + test + build 三道关。
 
@@ -191,6 +192,7 @@ import re  # noqa: E402
 # --------------------------------------------------------------------------- #
 # Test 2: Miniprogram build (npm run build:weapp)                             #
 # --------------------------------------------------------------------------- #
+@pytest.mark.slow
 class TestMiniprogramBuild:
     """微信原生小程序 dry-run 静态校验。
 
@@ -308,6 +310,7 @@ class TestMiniprogramBuild:
 # --------------------------------------------------------------------------- #
 # Test 3: Cross-system i18n parity (iOS ARB vs miniprogram i18n)              #
 # --------------------------------------------------------------------------- #
+@pytest.mark.slow
 class TestCrossSystemParity:
     """iOS Flutter 4 语种 ARB key parity + miniprogram 5 页面 i18n 完整性。"""
 
