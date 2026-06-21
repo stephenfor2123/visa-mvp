@@ -242,6 +242,7 @@ class TestPaymentEndToEnd:
 # --------------------------------------------------------------------------- #
 # Test 3: AppButton 治本覆盖率 (B-W6-7)                                       #
 # --------------------------------------------------------------------------- #
+@pytest.mark.slow
 class TestAppButtonTreatCoverage:
     """扫描 5 个高频 view (Home / Login / Register / Materials / OrderDetail)
     验证 AppButton 治本模式: 全部用 ref + setOnTrigger 注入,不再依赖 @click 冒泡。
@@ -297,6 +298,7 @@ class TestAppButtonTreatCoverage:
 # --------------------------------------------------------------------------- #
 # Test 4: OCR 9 国 (B-W6-8)                                                   #
 # --------------------------------------------------------------------------- #
+@pytest.mark.slow
 class TestOcr9Countries:
     """复用 B-W6-8 test_ocr_end_to_end 9 国 fixture + regex,验证 passport_no
     抽取对 9 国 (US/JP/GB/AU/SG/DE/FR/IT/KR) 都正确。"""
@@ -336,6 +338,7 @@ class TestOcr9Countries:
 # --------------------------------------------------------------------------- #
 # Test 5: iOS Flutter filesystem (A-W6-4)                                     #
 # --------------------------------------------------------------------------- #
+@pytest.mark.slow
 class TestIosFlutterFilesystem:
     """A-W6-4 实证 iOS Flutter scaffold: main.dart + login_page.dart 在盘。"""
 
@@ -362,6 +365,7 @@ class TestIosFlutterFilesystem:
 # --------------------------------------------------------------------------- #
 # Test 6: Miniprogram filesystem (A-W6-5)                                     #
 # --------------------------------------------------------------------------- #
+@pytest.mark.slow
 class TestMiniprogramFilesystem:
     """A-W6-5 实证 5 页 + 3 组件 + 4 语种 + 5 截图 + 6 tabBar 图标。"""
 
@@ -426,6 +430,7 @@ class TestMiniprogramFilesystem:
 # --------------------------------------------------------------------------- #
 # Test 7: V2.1 文档 diff (A-W6-3)                                             #
 # --------------------------------------------------------------------------- #
+@pytest.mark.slow
 class TestV21DocDiff:
     """A-W6-3 实证: V2_需求文档_v2.1.md vs V2_需求文档.md 新增 828 行 (≥ 50 行阈值)。
 
