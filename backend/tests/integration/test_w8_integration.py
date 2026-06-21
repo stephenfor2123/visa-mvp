@@ -229,6 +229,7 @@ class TestMinipgmBuild:
 # --------------------------------------------------------------------------- #
 # Test 3: Insurance flow (pytest test_insurance.py)                           #
 # --------------------------------------------------------------------------- #
+@pytest.mark.slow
 class TestInsuranceFlow:
     """拒签险接保 API — B-W8-3 sub-task.
 
@@ -269,6 +270,7 @@ class TestInsuranceFlow:
 # --------------------------------------------------------------------------- #
 # Test 4: Affiliate flow (pytest test_affiliate.py)                           #
 # --------------------------------------------------------------------------- #
+@pytest.mark.slow
 class TestAffiliateFlow:
     """Affiliate 系统 — B-W8-4 sub-task.
 
