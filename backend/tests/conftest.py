@@ -72,15 +72,22 @@ async def app():
     from app.core.db import Base
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-    db_url = os.environ["DATABASE_URL"]
-    is_sqlite = "sqlite" in db_url
+    # Always use a fresh SQLite temp file for tests, regardless of what DATABASE_URL
+    # is set to in .env (CI overrides it to Postgres). pytest-asyncio creates a new
+    # event loop per function-scope test, so we need a per-test SQLite engine bound
+    # to the current loop to avoid "attached to a different loop" errors.
+    import tempfile
+    _tmp_db = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+    _tmp_db.close()
+    db_url = f"sqlite+aiosqlite:///{_tmp_db.name}"
+    db_path = Path(_tmp_db.name)
 
     # Create a fresh engine bound to THIS fixture's event loop (the current loop).
     test_engine = create_async_engine(
         db_url,
         echo=False,
         future=True,
-        connect_args={"check_same_thread": False} if is_sqlite else {},
+        connect_args={"check_same_thread": False},  # always SQLite in tests
     )
     TestSessionLocal: async_sessionmaker[AsyncSession] = async_sessionmaker(
         test_engine,
@@ -117,12 +124,16 @@ async def app():
     application = create_app()
     yield application
 
-    # Cleanup: restore originals, dispose test engine.
+    # Cleanup: restore originals, dispose test engine, remove temp DB file.
     db_module.engine = old_engine
     db_module.AsyncSessionLocal = old_session_local
     db_module.get_db = old_session_local  # restore using old_session_local as callable
 
     await test_engine.dispose()
+    try:
+        Path(db_path).unlink(missing_ok=True)
+    except Exception:
+        pass
 
 
 @pytest_asyncio.fixture()

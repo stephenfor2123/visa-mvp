@@ -71,9 +71,9 @@ def upgrade() -> None:
         """
         INSERT INTO visa_countries (country_code, country_name_zh, country_name_en, enabled, visa_types)
         VALUES
-            ('ID', '印度尼西亚', 'Indonesia', 1, '["tourism","student"]'),
-            ('VN', '越南', 'Vietnam', 1, '["tourism"]'),
-            ('PH', '菲律宾', 'Philippines', 0, '["tourism"]')
+            ('ID', '印度尼西亚', 'Indonesia', TRUE, '["tourism","student"]'),
+            ('VN', '越南', 'Vietnam', TRUE, '["tourism"]'),
+            ('PH', '菲律宾', 'Philippines', FALSE, '["tourism"]')
         """
     )
 
