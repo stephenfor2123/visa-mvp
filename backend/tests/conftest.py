@@ -55,28 +55,74 @@ def _test_env() -> Generator[None, None, None]:
 # ----------------------------------------------------------------- #
 @pytest_asyncio.fixture()
 async def app():
-    """Fresh FastAPI app instance per test.
+    """Fresh FastAPI app instance per test, with a per-test async engine.
 
-    W21.5 fix: function-scope 但 dispose engine 跨 fixture, 让每个 test 拿干净的
-    engine + 干净 loop. 配合 --maxfail=1 让后续 test 立刻 skip 出错 case.
+    Root cause (W22): app.core.db module-level `engine` and AsyncSessionLocal
+    are created at import time (first test's event loop).  Subsequent tests
+    run in a new pytest-asyncio event loop but reuse the same engine → 
+    "Future attached to a different loop" / "another operation is in progress".
+
+    Fix: inside this fixture (which runs inside pytest-asyncio's per-test loop)
+    we create a fresh test engine and patch app.core.db module-level objects
+    so that lifespan() and get_db() both use the correct, loop-bound engine.
     """
-    # Force-import all ORM models so Base.metadata is fully populated
-    # before drop_all / create_all runs. Without this, lazily-imported
-    # models (e.g. SmsCode via /auth routes) are missing from
-    # Base.metadata.tables on the first test that touches them, causing
-    # "no such table: sms_codes" failures partway through the suite.
     import app.models  # noqa: F401  -- registers all ORM models
     from app.main import create_app
-    from app.core.db import engine, Base
+    from app.core import db as db_module
+    from app.core.db import Base
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-    # Create schema in a fresh in-memory engine per test would be cleaner,
-    # but our settings are cached at import — so we drop + recreate tables.
-    async with engine.begin() as conn:
+    db_url = os.environ["DATABASE_URL"]
+    is_sqlite = "sqlite" in db_url
+
+    # Create a fresh engine bound to THIS fixture's event loop (the current loop).
+    test_engine = create_async_engine(
+        db_url,
+        echo=False,
+        future=True,
+        connect_args={"check_same_thread": False} if is_sqlite else {},
+    )
+    TestSessionLocal: async_sessionmaker[AsyncSession] = async_sessionmaker(
+        test_engine,
+        expire_on_commit=False,
+        class_=AsyncSession,
+        autoflush=False,
+    )
+
+    # Replace module-level objects so lifespan() + get_db() pick up the test engine.
+    old_engine = db_module.engine
+    old_session_local = db_module.AsyncSessionLocal
+
+    db_module.engine = test_engine
+    db_module.AsyncSessionLocal = TestSessionLocal
+
+    # Also patch get_db to use our TestSessionLocal (reads AsyncSessionLocal at call time).
+    async def _test_get_db() -> AsyncGenerator[AsyncSession, None]:
+        async with TestSessionLocal() as session:
+            try:
+                yield session
+            except Exception:
+                await session.rollback()
+                raise
+            finally:
+                await session.close()
+
+    db_module.get_db = _test_get_db
+
+    # Create schema using the fresh test engine.
+    async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
 
     application = create_app()
     yield application
+
+    # Cleanup: restore originals, dispose test engine.
+    db_module.engine = old_engine
+    db_module.AsyncSessionLocal = old_session_local
+    db_module.get_db = old_session_local  # restore using old_session_local as callable
+
+    await test_engine.dispose()
 
 
 @pytest_asyncio.fixture()
