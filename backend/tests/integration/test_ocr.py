@@ -19,6 +19,7 @@ FIXTURE_DIR = Path(__file__).parent.parent / "fixtures"
 # Test OCR Engine (unit-level, no DB needed)                                 #
 # --------------------------------------------------------------------------- #
 class TestOCREngine:
+    @pytest.mark.slow
     @pytest.mark.asyncio
     async def test_ocr_engine_basic(self):
         """

@@ -162,6 +162,7 @@ def _load_fixture_as_bgr(code: str) -> "np.ndarray":
 # Test 1: Full pipeline (US) — HTTP recognize → field extraction → create order #
 # --------------------------------------------------------------------------- #
 class TestOCRFullPipeline:
+    @pytest.mark.slow
     async def test_ocr_full_pipeline(self, client: AsyncClient):
         """
         End-to-end:
@@ -279,6 +280,7 @@ class TestOCRFullPipeline:
     ids=[c[0] for c in COUNTRIES_9],
 )
 class TestOCR9Countries:
+    @pytest.mark.slow
     async def test_ocr_9_countries_parametrize(
         self,
         code: str,
@@ -328,6 +330,7 @@ class TestOCR9Countries:
 # Test 3: US passport_no format + accuracy asserts                           #
 # --------------------------------------------------------------------------- #
 class TestOCRFieldExtractionAccuracy:
+    @pytest.mark.slow
     def test_ocr_field_extraction_accuracy(self):
         """
         US passport fixture:
