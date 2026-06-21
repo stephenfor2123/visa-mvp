@@ -72,6 +72,7 @@ def _xcodebuild_full_install() -> bool:
 # --------------------------------------------------------------------------- #
 # Test 1: iOS build (flutter build ios --no-codesign --debug)                 #
 # --------------------------------------------------------------------------- #
+@pytest.mark.slow
 class TestIosBuild:
     """iOS Flutter 工程 — A-W8-1 sub-task.
 
@@ -157,6 +158,7 @@ class TestIosBuild:
 # --------------------------------------------------------------------------- #
 # Test 2: Minipgm build (npm run build:weapp)                                 #
 # --------------------------------------------------------------------------- #
+@pytest.mark.slow
 class TestMinipgmBuild:
     """微信小程序 build — A-W8-2 sub-task.
 
@@ -310,6 +312,7 @@ class TestAffiliateFlow:
 # --------------------------------------------------------------------------- #
 # Test 5: 跨子系统 端到端 smoke (wire-level 4 子系统收口)                       #
 # --------------------------------------------------------------------------- #
+@pytest.mark.slow
 class TestCrossSubsystem:
     """W8 gate 收口 — 4 子系统联动 sanity check。
     

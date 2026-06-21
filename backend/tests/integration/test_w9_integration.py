@@ -165,6 +165,7 @@ async def client():
 # --------------------------------------------------------------------------- #
 # Test 1: iOS screenshots (3 张, sha256 distinct)                              #
 # --------------------------------------------------------------------------- #
+@pytest.mark.slow
 class TestIosScreenshots:
     """A-W9-1 sub-task — iOS 截图补 + flutter build 验证 (3 张, sha256 distinct)."""
 
@@ -414,6 +415,7 @@ class TestStripeProviderFactory:
 # --------------------------------------------------------------------------- #
 # Test 4: 复用 B-W9-3 affiliate pytest 关键 3 case                              #
 # --------------------------------------------------------------------------- #
+@pytest.mark.slow
 class TestOrderAffiliateThreeCases:
     """复用 B-W9-3 pytest 关键 3 路径:
       - test_attribute_after_track_binds_order: track+attribute 完整链路
@@ -461,6 +463,7 @@ class TestOrderAffiliateThreeCases:
 # --------------------------------------------------------------------------- #
 # Test 5: 跨子系统 4 子系统收口 (deliverable 4 件 + WORKLOG 4 行)               #
 # --------------------------------------------------------------------------- #
+@pytest.mark.slow
 class TestW9CrossSubsystem:
     """W9 gate 收口 — 4 子系统 deliverable / WORKLOG / 配置 / 文件存在性 4 维校验。"""
 
