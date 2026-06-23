@@ -65,3 +65,15 @@ docs/screenshots/
 frontend/web/dist/
 frontend/ios/build/
 backend/.coverage*
+
+# Backend runtime data (user-uploaded materials + test artifacts)
+backend/data/materials/
+backend/data/backups/
+backend/data/visa_mvp.db
+backend/data/perf_baseline.db
+backend/data/visa.db
+backend/data/*.bak
+backend/logs/
+
+# Local PPT tooling (Htex pitch deck etc., not part of project)
+slides/
