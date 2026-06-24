@@ -77,3 +77,9 @@ backend/logs/
 
 # Local PPT tooling (Htex pitch deck etc., not part of project)
 slides/
+
+# Mini build artifacts (regenerated on each build; should not be tracked)
+frontend/miniprogram/build_report.json
+
+# Vite dev server temp files (created when config has parse issues)
+frontend/web/vite.config.js.timestamp-*.mjs
