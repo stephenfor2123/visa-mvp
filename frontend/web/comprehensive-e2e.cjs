@@ -21,6 +21,24 @@ if (!fs.existsSync(SCREENSHOT_DIR)) fs.mkdirSync(SCREENSHOT_DIR, { recursive: tr
 const BACKEND = 'http://127.0.0.1:8000'
 const FRONTEND = 'http://127.0.0.1:5173'
 
+// 全局超时兜底：任何 SECTION 卡住 180s 仍未结束就强制退出，避免 CI runner 整个 job 被拖死。
+// 退出码 124 跟 POSIX `timeout` 命令约定保持一致，方便 CI 识别 "global timeout" 而非一般 fail。
+// 覆盖：GLOBAL_TIMEOUT_MS=0 表示禁用。
+const GLOBAL_TIMEOUT_MS = Number(process.env.GLOBAL_TIMEOUT_MS ?? 180_000)
+let _globalTimer = null
+function armGlobalTimeout() {
+  if (!GLOBAL_TIMEOUT_MS || _globalTimer) return
+  _globalTimer = setTimeout(() => {
+    console.error(`\n[timeout] global ${GLOBAL_TIMEOUT_MS / 1000}s exceeded, force exit`)
+    // 尽量清理 chromium child
+    try { require('child_process').execSync("pkill -f 'chrome.*--headless' || true") } catch {}
+    process.exit(124)
+  }, GLOBAL_TIMEOUT_MS)
+}
+function disarmGlobalTimeout() {
+  if (_globalTimer) { clearTimeout(_globalTimer); _globalTimer = null }
+}
+
 const results = { pass: 0, fail: 0, errors: [] }
 const log = (s, m) => console.log(`[${s}] ${m}`)
 const section = (n) => console.log(`\n${'='.repeat(70)}\n${n}\n${'='.repeat(70)}`)
@@ -405,8 +423,9 @@ async function testErrorRecovery(token) {
 // MAIN
 // =====================================================================
 async function main() {
+  armGlobalTimeout()
   console.log('=' .repeat(70))
-  console.log('签证项目 全面 e2e (W19-3)')
+  console.log(`签证项目 全面 e2e (W19-3) — global timeout ${GLOBAL_TIMEOUT_MS ? GLOBAL_TIMEOUT_MS / 1000 + 's' : 'disabled'}`)
   console.log('=' .repeat(70))
   const token = await testOcrVoice()
   // Upload a real material first (need real id), then create order
@@ -448,8 +467,10 @@ async function main() {
   if (results.fail > 0) {
     console.log('\nFAILED:')
     for (const e of results.errors) console.log('  - ' + e)
+    disarmGlobalTimeout()
     process.exit(1)
   }
+  disarmGlobalTimeout()
 }
 
 main().catch(e => { console.error('FATAL:', e); process.exit(1) })
