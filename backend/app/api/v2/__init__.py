@@ -14,6 +14,8 @@ from app.api.v2 import payment
 from app.api.v2 import rpa
 from app.api.v2 import sms
 from app.api.v2 import voice
+# Case 4 — RAG: retrieval-augmented Q&A over official visa info
+from app.api.v2 import rag
 
 
 api_v2_router = APIRouter()
@@ -27,6 +29,8 @@ api_v2_router.include_router(materials.router, prefix="/materials", tags=["mater
 api_v2_router.include_router(ocr.router, prefix="/ocr", tags=["ocr"])
 api_v2_router.include_router(orders.router, prefix="/orders", tags=["orders"])
 api_v2_router.include_router(payment.router, prefix="/payment", tags=["payment"])
+# Case 4 — RAG endpoint (registered after rpa, no extra prefix; rag.router already has /rag prefix)
+api_v2_router.include_router(rag.router, tags=["rag"])
 # W19 — RPA submission endpoint (no extra prefix; rpa.router already has prefix="/rpa")
 api_v2_router.include_router(rpa.router, tags=["rpa"])
 # B-W6-1 — standalone SMS service (Mock-only in V2)
