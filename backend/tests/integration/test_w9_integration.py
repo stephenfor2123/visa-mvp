@@ -37,12 +37,17 @@ from sqlalchemy import select
 
 
 # --------------------------------------------------------------------------- #
-# Paths                                                                       #
+# Paths — resolved from __file__ so the suite is portable across machines.   #
+# Override with PROJECT_ROOT env var if a non-default checkout layout is used.#
 # --------------------------------------------------------------------------- #
-WORKSPACE = Path("/Users/stephen/Desktop/签证项目")
-IOS_DIR = WORKSPACE / "frontend" / "ios"
+PROJECT_ROOT = Path(
+    os.environ.get("PROJECT_ROOT")
+    or Path(__file__).resolve().parents[3]
+)
+WORKSPACE = PROJECT_ROOT
+IOS_DIR = PROJECT_ROOT / "frontend" / "ios"
 SCREENSHOTS_DIR = IOS_DIR / "screenshots"
-BACKEND_DIR = WORKSPACE / "backend"
+BACKEND_DIR = PROJECT_ROOT / "backend"
 PYTEST_BIN = BACKEND_DIR / ".venv" / "bin" / "pytest"
 
 # Test env (per backend/tests/conftest.py contract — must be set before app import)
@@ -499,7 +504,12 @@ class TestW9CrossSubsystem:
         所以这里只查 3 个 producer deliverable.md; B-W9-3 收口在本测试的 wire-level
         TestOmsAffCodeEndToEnd + test_strict_evidence 中。
         """
-        plan_outputs = Path("/Users/stephen/.mavis/plans/plan_b88c1fca/outputs")
+        plan_outputs = Path(os.environ.get("W9_PLAN_OUTPUTS", "/nonexistent"))
+        if not plan_outputs.is_dir():
+            pytest.skip(
+                f"W9_PLAN_OUTPUTS not set or not a directory ({plan_outputs}); "
+                "deliverable.md presence check skipped on this machine."
+            )
         expected = {
             "A-W9-1": plan_outputs / "A-W9-1" / "deliverable.md",
             "A-W9-2": plan_outputs / "A-W9-2" / "deliverable.md",

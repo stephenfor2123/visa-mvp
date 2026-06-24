@@ -39,11 +39,16 @@ from typing import Tuple
 import pytest
 
 # --------------------------------------------------------------------------- #
-# Paths                                                                       #
+# Paths — resolved from __file__ so the suite is portable across machines.   #
+# Override with PROJECT_ROOT env var if a non-default checkout layout is used.#
 # --------------------------------------------------------------------------- #
-WORKSPACE = Path("/Users/stephen/Desktop/签证项目")
-IOS_DIR = WORKSPACE / "frontend" / "ios"
-MP_DIR = WORKSPACE / "frontend" / "miniprogram"
+PROJECT_ROOT = Path(
+    os.environ.get("PROJECT_ROOT")
+    or Path(__file__).resolve().parents[3]
+)
+WORKSPACE = PROJECT_ROOT
+IOS_DIR = PROJECT_ROOT / "frontend" / "ios"
+MP_DIR = PROJECT_ROOT / "frontend" / "miniprogram"
 MP_SCREENSHOTS_DIR = MP_DIR / "screenshots"
 
 

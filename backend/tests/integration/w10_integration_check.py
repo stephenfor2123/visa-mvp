@@ -7,11 +7,14 @@ Run from backend/:
     python3 ../backend/tests/integration/test_w10_integration.py
 
 Requires:
-    - frontend project at /Users/stephen/Desktop/签证项目/
-    - backend project at /Users/stephen/Desktop/签证项目/backend/
+    - frontend project at <project_root>/frontend/
+    - backend project at <project_root>/backend/
     - node/npm in PATH
     - Flutter in PATH (for iOS build test)
     - Python 3.9+ with stripe, pytest
+
+Paths are resolved from __file__ so the suite is portable across machines.
+Override with PROJECT_ROOT env var for a non-default checkout layout.
 """
 
 import subprocess
@@ -22,12 +25,14 @@ import hashlib
 import re
 from pathlib import Path
 
-# Project roots
-PROJECT_ROOT = Path("/Users/stephen/Desktop/签证项目")
+# Project roots — override via PROJECT_ROOT env var when needed.
+PROJECT_ROOT = Path(
+    os.environ.get("PROJECT_ROOT")
+    or Path(__file__).resolve().parents[3]
+)
 FRONTEND_WEB = PROJECT_ROOT / "frontend/web"
 FRONTEND_IOS = PROJECT_ROOT / "frontend/ios"
 BACKEND = PROJECT_ROOT / "backend"
-WORKSPACE = Path("/Users/stephen/.mavis/plans/plan_4a8f622c/workspace")
 
 
 class Results:

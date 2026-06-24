@@ -31,6 +31,7 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -42,16 +43,21 @@ import pytest
 
 
 # --------------------------------------------------------------------------- #
-# Paths                                                                       #
+# Paths — resolved from __file__ so the suite is portable across machines.   #
+# Override with PROJECT_ROOT env var if a non-default checkout layout is used.#
 # --------------------------------------------------------------------------- #
-WORKSPACE = Path("/Users/stephen/Desktop/签证项目")
-BACKEND = WORKSPACE / "backend"
+PROJECT_ROOT = Path(
+    os.environ.get("PROJECT_ROOT")
+    or Path(__file__).resolve().parents[3]
+)
+WORKSPACE = PROJECT_ROOT
+BACKEND = PROJECT_ROOT / "backend"
 FIXTURE_DIR = BACKEND / "tests" / "fixtures"
-IOS_DIR = WORKSPACE / "frontend" / "ios"
-MP_DIR = WORKSPACE / "frontend" / "miniprogram"
-WEB_VIEWS = WORKSPACE / "frontend" / "web" / "src" / "views"
-SOURCES_V20 = WORKSPACE / "sources" / "V2_需求文档.md"
-SOURCES_V21 = WORKSPACE / "sources" / "V2_需求文档_v2.1.md"
+IOS_DIR = PROJECT_ROOT / "frontend" / "ios"
+MP_DIR = PROJECT_ROOT / "frontend" / "miniprogram"
+WEB_VIEWS = PROJECT_ROOT / "frontend" / "web" / "src" / "views"
+SOURCES_V20 = PROJECT_ROOT / "sources" / "V2_需求文档.md"
+SOURCES_V21 = PROJECT_ROOT / "sources" / "V2_需求文档_v2.1.md"
 
 
 JPEG_BYTES = b"\xff\xd8\xff\xe0" + b"FAKE-JPEG-W7-INTEGRATION" * 32
