@@ -210,13 +210,16 @@ class TestMiniprogramBuild:
             assert (MP_DIR / f).is_file(), f"missing {f}"
 
     def test_miniprogram_5_pages_registered(self):
-        """app.json pages 必含 5 页:home/login/register/destinations/profile。"""
+        """app.json pages 必含 5 核心页:home/login/register/destinations/profile。
+
+        W24+ 新增了 order/payment/forgot/agreement 等业务页,核心 5 页必须保留,
+        总数 >= 5 (后续可能继续增长,不锁死上限)。"""
         app_json = json.loads((MP_DIR / "app.json").read_text())
         pages = app_json.get("pages", [])
         for p in ("pages/home/home", "pages/login/login", "pages/register/register",
                   "pages/destinations/destinations", "pages/profile/profile"):
             assert p in pages, f"app.json missing page: {p}"
-        assert len(pages) == 5, f"expected 5 pages, got {len(pages)}"
+        assert len(pages) >= 5, f"expected at least 5 pages, got {len(pages)}"
 
     def test_miniprogram_3_components(self):
         """components/ 必含 Button/Input/Card 三组件(每个 4 文件:js/json/wxml/wxss)。
@@ -242,12 +245,16 @@ class TestMiniprogramBuild:
         assert ok > 0 and fail == 0
 
     def test_miniprogram_all_js_syntax_valid(self):
-        """所有 .js 文件必须 node --check 通过。"""
+        """所有 .js 文件必须 node --check 通过(排除 node_modules / 临时构建产物)。"""
         import glob
         if shutil.which("node") is None:
             pytest.skip("node not on PATH")
         ok = fail = 0
+        # 排除 node_modules / 临时构建目录 — 这些是第三方库,语法不在我们控制范围,
+        # 且 ESM/CJS 混用会在新版 node 报 "type" 字段警告 (W24+ protobufjs 命中此问题)。
         for f in glob.glob(str(MP_DIR / "**" / "*.js"), recursive=True):
+            if any(part in f for part in ("/node_modules/", "/miniprogram_npm/", "/.miniprogram/", "/__pycache__/")):
+                continue
             rc, _, err = _run(["node", "--check", f], cwd=None, timeout=10)
             if rc == 0:
                 ok += 1

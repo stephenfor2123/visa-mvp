@@ -17,6 +17,10 @@ Paths are resolved from __file__ so the suite is portable across machines.
 Override with PROJECT_ROOT env var for a non-default checkout layout.
 """
 
+# 标记为非 pytest 集合模块 — 这是 standalone 脚本,test_* 函数通过 main() 顺序调用,
+# 不应该被 pytest 当成测试去收集 (否则会因缺少 `results` fixture 全部 ERROR)。
+__test__ = False
+
 import subprocess
 import sys
 import os
