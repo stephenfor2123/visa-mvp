@@ -1,16 +1,6 @@
 <template>
   <div class="mat-page">
-    <header class="app-header app-container">
-      <router-link to="/home" class="app-header__brand">
-        <HtexLogo :size="28" />
-        <span>{{ t('common.app_name') }}</span>
-      </router-link>
-      <div class="app-header__right">
-        <LangSwitch />
-        <span v-if="auth.user" class="app-header__user">👋 {{ auth.user.nickname || auth.user.phone }}</span>
-      </div>
-    </header>
-
+    <AppHeader scope="materials" />
     <main class="mat-shell">
       <h1 class="page-title">{{ t('materials.title') }}</h1>
       <p class="page-sub">{{ t('materials.subtitle') }}</p>
@@ -167,11 +157,11 @@
 
 <script setup>
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
-import HtexLogo from '@/components/HtexLogo.vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import AppCard from '@/components/AppCard.vue'
 import AppButton from '@/components/AppButton.vue'
+import AppHeader from '@/components/AppHeader.vue'
 import MaterialUploader from '@/components/MaterialUploader.vue'
 import VoiceRecorder from '@/components/VoiceRecorder.vue'
 import LangSwitch from '@/components/LangSwitch.vue'
