@@ -39,6 +39,12 @@ const routes = [
     meta: { title: 'nav.destinations' }
   },
   {
+    path: '/schengen-countries',
+    name: 'SchengenCountries',
+    component: () => import('@/views/SchengenCountries.vue'),
+    meta: { title: 'nav.schengen' }
+  },
+  {
     path: '/materials/scan',
     name: 'MaterialsScan',
     component: () => import('@/views/MaterialsScan.vue'),
