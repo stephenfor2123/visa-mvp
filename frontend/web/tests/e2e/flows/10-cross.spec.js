@@ -307,7 +307,7 @@ test.describe('E. 跨页 / 全局断言 (W19)', () => {
     await page.waitForLoadState('networkidle')
     // 仍能看到 Home 页的关键文案
     const body = await page.locator('body').innerText()
-    expect(body).toMatch(/签证助手|Visa/i)
+    expect(body).toMatch(/Htex|i)
   })
 
   // ============== E13. document.title 路由切换变化 ==============

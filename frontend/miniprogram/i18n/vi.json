@@ -1,12 +1,12 @@
 {
   "_meta": {
-    "description": "Visa Helper - Tiếng Việt (W6b mini-program)",
+    "description": "Htex - Tiếng Việt (W6b mini-program)",
     "version": "0.1.0",
     "lang": "vi",
     "scope": "5 pages: login / register / destinations / home / profile"
   },
   "common": {
-    "app_name": "Trợ lý Visa",
+    "app_name": "Htex",
     "app_slogan": "Visa thật đơn giản",
     "ok": "OK",
     "cancel": "Hủy",
@@ -212,10 +212,10 @@
     "page_subtitle": "Vui lòng đọc kỹ các điều khoản sau",
     "tab_terms": "Điều khoản",
     "tab_privacy": "Bảo mật",
-    "terms_title": "Trợ lý Visa — Điều khoản dịch vụ",
+    "terms_title": "Htex — Điều khoản dịch vụ",
     "terms_effective": "Có hiệu lực: 2026-06-01",
     "terms_section_1_title": "1. Phạm vi dịch vụ",
-    "terms_section_1_body": "Trợ lý Visa ('Nền tảng') cung cấp sắp xếp hồ sơ, OCR, kiểm tra AI, RPA tự động và bảo hiểm từ chối visa. Nền tảng không cấp visa; quyết định cuối cùng thuộc về đại sứ quán/lãnh sự quán.",
+    "terms_section_1_body": "Htex ('Nền tảng') cung cấp sắp xếp hồ sơ, OCR, kiểm tra AI, RPA tự động và bảo hiểm từ chối visa. Nền tảng không cấp visa; quyết định cuối cùng thuộc về đại sứ quán/lãnh sự quán.",
     "terms_section_2_title": "2. Quyền và nghĩa vụ",
     "terms_section_2_body": "Người dùng phải đảm bảo thông tin gửi đi là chính xác và đầy đủ. Mọi hậu quả từ thông tin sai lệch do người dùng chịu trách nhiệm.",
     "terms_section_3_title": "3. Phí và hoàn tiền",

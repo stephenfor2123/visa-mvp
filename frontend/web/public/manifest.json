@@ -1,6 +1,6 @@
 {
-  "name": "签证助手",
-  "short_name": "签证助手",
+  "name": "Htex",
+  "short_name": "Htex",
   "description": "签证申请一站式助手",
   "start_url": "/",
   "display": "standalone",

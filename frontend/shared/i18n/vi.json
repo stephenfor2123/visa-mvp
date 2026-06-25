@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "description": "Visa MVP V2 W1 - Chuỗi i18n dùng chung (Tiếng Việt)",
+    "description": "Htex - Chuỗi i18n dùng chung (Tiếng Việt)",
     "version": "0.1.0",
     "langs": [
       "zh-CN",
@@ -11,7 +11,7 @@
     "reserved": []
   },
   "common": {
-    "app_name": "Trợ lý Visa",
+    "app_name": "Htex",
     "app_slogan": "Visa thật đơn giản",
     "ok": "OK",
     "cancel": "Hủy",
@@ -639,17 +639,17 @@
     "page_subtitle": "Vui lòng đọc kỹ các điều khoản sau",
     "tab_terms": "Điều khoản",
     "tab_privacy": "Bảo mật",
-    "terms_title": "Trợ lý Visa — Điều khoản dịch vụ",
+    "terms_title": "Htex — Điều khoản dịch vụ",
     "terms_effective": "Có hiệu lực: 2026-06-01",
     "terms_section_1_title": "1. Phạm vi dịch vụ",
-    "terms_section_1_body": "Trợ lý Visa ('Nền tảng') cung cấp sắp xếp hồ sơ, OCR, kiểm tra AI, RPA tự động và bảo hiểm từ chối visa. Nền tảng không cấp visa; quyết định cuối cùng thuộc về đại sứ quán/lãnh sự quán.",
+    "terms_section_1_body": "Htex ('Nền tảng') cung cấp sắp xếp hồ sơ, OCR, kiểm tra AI, RPA tự động và bảo hiểm từ chối visa. Nền tảng không cấp visa; quyết định cuối cùng thuộc về đại sứ quán/lãnh sự quán.",
     "terms_section_2_title": "2. Quyền và nghĩa vụ",
     "terms_section_2_body": "Người dùng phải đảm bảo thông tin gửi đi là chính xác và đầy đủ. Mọi hậu quả từ thông tin sai lệch do người dùng chịu trách nhiệm.",
     "terms_section_3_title": "3. Phí và hoàn tiền",
     "terms_section_3_body": "Phí dịch vụ tính theo đơn hàng. Lỗi do Nền tảng được hoàn tiền đầy đủ; từ chối do người dùng theo Điều khoản Bảo hiểm Từ chối.",
     "terms_section_4_title": "4. Bảo mật",
     "terms_section_4_body": "Nền tảng bảo vệ quyền riêng tư nghiêm ngặt. Xem Chính sách Bảo mật để biết chi tiết.",
-    "privacy_title": "Trợ lý Visa — Chính sách bảo mật",
+    "privacy_title": "Htex — Chính sách bảo mật",
     "privacy_effective": "Có hiệu lực: 2026-06-01",
     "privacy_section_1_title": "1. Thông tin thu thập",
     "privacy_section_1_body": "Để cung cấp dịch vụ visa, Nền tảng thu thập số điện thoại, giấy tờ tùy thân, hộ chiếu, thông tin du lịch và thanh toán khi cần.",

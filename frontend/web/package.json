@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Visa MVP Web (User-facing) - V2 W1",
+  "description": "Htex - Visa AI Web (User-facing)",
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 5173",
     "build": "vite build",

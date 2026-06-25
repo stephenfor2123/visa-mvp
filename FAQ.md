@@ -1,4 +1,4 @@
-# FAQ — 签证助手（Visa Helper）常见问题清单
+# FAQ — Htex 常见问题清单
 
 > 适用对象：开发 / 用户 / 运营三类人群；覆盖 W1–W15 已知问题与最佳实践。
 > 最近更新：2026-06-15 · 维护：Coder · 来源：README、API.md、LEGAL_REVIEW_NOTES.md、pm/infra/README.md、CI workflow

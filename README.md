@@ -1,4 +1,4 @@
-# 签证助手 · Visa Helper
+# Htex · 跨境签证 AI
 
 > **跨境签证一站式服务 MVP** — 用户提交申请、平台 OCR 识别护照字段、RPA 自动递交官方签证门户、Mock 支付通道闭环、状态可实时查询。
 > 三端共享同一套 `/api/v2/*` 后端协议：Web（Vue 3）+ iOS（Flutter）+ 微信小程序。
@@ -24,7 +24,7 @@
 
 ## 项目简介
 
-**签证助手（Visa Helper）** 是一款跨境签证申请的 MVP 产品，覆盖以下核心闭环：
+**Htex** 是一款跨境签证申请的 MVP 产品，覆盖以下核心闭环：
 
 1. **账号** — 手机号 + 验证码注册 / 登录，JWT 滑动刷新
 2. **申请录入** — 选择目的国 / 签证类型 / 出行日期，填写个人信息
@@ -170,7 +170,7 @@ python3 -m venv .venv
 
 # 健康检查
 curl http://localhost:8000/health
-# => {"status":"ok","app":"Visa MVP API","version":"0.1.0"}
+# => {"status":"ok","app":"Htex API","version":"0.1.0"}
 ```
 
 **Docker Compose 一键起**（含 Redis）：
@@ -406,5 +406,5 @@ git push origin feature/my-change
 ---
 
 <p align="center">
-  <sub>Built with ❤️ by the Visa Helper team · Last updated 2026-06-15 (W15 P0 收口)</sub>
+  <sub>Built with ❤️ by the Htex team · Last updated 2026-06-15 (W15 P0 收口)</sub>
 </p>

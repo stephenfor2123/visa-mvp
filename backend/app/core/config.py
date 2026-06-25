@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     )
 
     # --- App ---
-    app_name: str = "Visa MVP API"
+    app_name: str = "Htex API"
     app_version: str = "0.1.0"
     env: Literal["dev", "test", "prod"] = "dev"
     debug: bool = True

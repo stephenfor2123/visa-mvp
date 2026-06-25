@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "description": "Visa MVP V2 W1 - Shared i18n strings (English)",
+    "description": "Htex - Shared i18n strings (English)",
     "version": "0.1.0",
     "langs": [
       "zh-CN",
@@ -11,7 +11,7 @@
     "reserved": []
   },
   "common": {
-    "app_name": "Visa Helper",
+    "app_name": "Htex",
     "app_slogan": "Visa made simple",
     "ok": "OK",
     "cancel": "Cancel",
@@ -639,17 +639,17 @@
     "page_subtitle": "Please read the following terms carefully",
     "tab_terms": "Terms",
     "tab_privacy": "Privacy",
-    "terms_title": "Visa Helper — Terms of Service",
+    "terms_title": "Htex — Terms of Service",
     "terms_effective": "Effective: 2026-06-01",
     "terms_section_1_title": "1. Scope of Service",
-    "terms_section_1_body": "Visa Helper (the 'Platform') provides visa application material organization, OCR recognition, AI pre-validation, RPA auto-submission, and visa refusal insurance. The Platform does not issue visas; final decisions are made by embassies and consulates.",
+    "terms_section_1_body": "Htex (the 'Platform') provides visa application material organization, OCR recognition, AI pre-validation, RPA auto-submission, and visa refusal insurance. The Platform does not issue visas; final decisions are made by embassies and consulates.",
     "terms_section_2_title": "2. User Rights and Obligations",
     "terms_section_2_body": "Users must ensure all submitted identity, passport, and travel information is true, accurate, and complete. Any consequences from false information (refusal, fines, legal action) are the user's responsibility.",
     "terms_section_3_title": "3. Fees and Refunds",
     "terms_section_3_body": "Service fees are charged per order. Platform-caused failures are fully refunded; user-caused refusals are handled per the Refusal Insurance Terms.",
     "terms_section_4_title": "4. Privacy",
     "terms_section_4_body": "The Platform strictly protects user privacy. See the Privacy Policy for details.",
-    "privacy_title": "Visa Helper — Privacy Policy",
+    "privacy_title": "Htex — Privacy Policy",
     "privacy_effective": "Effective: 2026-06-01",
     "privacy_section_1_title": "1. Information Collected",
     "privacy_section_1_body": "To provide visa services, the Platform collects phone number, identity, passport, travel, and payment information as necessary.",

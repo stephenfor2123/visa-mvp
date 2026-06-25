@@ -1,5 +1,5 @@
 """
-Visa MVP — FastAPI application entry point.
+Htex — FastAPI application entry point.
 
 Run locally:
     cd backend && .venv/bin/uvicorn app.main:app --reload --port 8000
@@ -69,7 +69,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title=settings.app_name,
         version=settings.app_version,
-        description="Visa MVP API (V2) — Auth, Orders, Materials, RPA, Payments.",
+        description="Htex API (V2) — Auth, Orders, Materials, RPA, Payments.",
         lifespan=lifespan,
     )
 

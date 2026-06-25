@@ -1,6 +1,6 @@
-# Contributing to Visa Helper (签证项目)
+# Contributing to Htex (签证项目)
 
-欢迎加入 **Visa Helper** 的开发!本文档面向所有贡献者,涵盖开发环境、Git workflow、commit 规范、本地启动、代码风格、PR 流程与测试要求。
+欢迎加入 **Htex** 的开发!本文档面向所有贡献者,涵盖开发环境、Git workflow、commit 规范、本地启动、代码风格、PR 流程与测试要求。
 
 > 仓库布局:`backend/`(FastAPI 服务) + `frontend/{web,ios,miniprogram}`(三端客户端)+ `docs/`(设计 & 协议文档)+ `pm/`(产品说明)+ `qa/`(质量验收)。
 

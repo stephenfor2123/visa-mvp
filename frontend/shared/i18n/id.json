@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "description": "Visa MVP V2 W1 - String i18n bersama (Bahasa Indonesia)",
+    "description": "Htex - String i18n bersama (Bahasa Indonesia)",
     "version": "0.1.0",
     "langs": [
       "zh-CN",
@@ -11,7 +11,7 @@
     "reserved": []
   },
   "common": {
-    "app_name": "Asisten Visa",
+    "app_name": "Htex",
     "app_slogan": "Visa jadi mudah",
     "ok": "OK",
     "cancel": "Batal",

@@ -26,10 +26,10 @@ const HOME_SPOT = {
 
 const SPOT_CHECKS = {
   Home: {
-    'zh-CN': '签证助手',
-    'en':    'Visa Helper',
-    'id-ID': 'Asisten Visa',
-    'vi-VN': 'Trợ lý Visa'
+    'zh-CN': 'Htex',
+    'en':    'Htex',
+    'id-ID': 'Htex',
+    'vi-VN': 'Htex'
   },
   Login: {
     'zh-CN': '欢迎回来',
@@ -53,10 +53,10 @@ const SPOT_CHECKS = {
   OrderDetail: {
     // OrderDetail body always shows common.app_name in the nav header regardless
     // of whether the order fetch succeeded (we don't need a real backend for an i18n check).
-    'zh-CN': '签证助手',
-    'en':    'Visa Helper',
-    'id-ID': 'Asisten Visa',
-    'vi-VN': 'Trợ lý Visa'
+    'zh-CN': 'Htex',
+    'en':    'Htex',
+    'id-ID': 'Htex',
+    'vi-VN': 'Htex'
   }
 }
 

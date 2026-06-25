@@ -1,4 +1,4 @@
-# Visa Helper V2 — API Reference
+# Htex V2 — API Reference
 
 > 基于 `backend/app/api/v2/` (commit 2026-06-14) 整理，覆盖所有 REST 端点 + WebSocket。
 > 对应前端 `frontend/web/src/api/` 模块。
