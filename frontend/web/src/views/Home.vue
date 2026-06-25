@@ -132,7 +132,6 @@ import { useRouter } from 'vue-router'
 import AppCard from '@/components/AppCard.vue'
 import AppButton from '@/components/AppButton.vue'
 import LangSwitch from '@/components/LangSwitch.vue'
-import ThemeToggle from '@/components/ThemeToggle.vue'
 import { useAuthStore } from '@/stores/auth'
 import AppHeader from '@/components/AppHeader.vue'
 
@@ -318,10 +317,13 @@ watch(locale, async () => {
 }, { immediate: false })
 
 function onCountry(countryCode) {
+  // W26 产品逻辑:首页 4 大卡点进去直接进申请页,不再"再选一次国家"。
+  // - 单一国家(US/AU/GB)→ 直接进 OrderNew,带 country + 默认 visa_type
+  // - 申根(26 国)→ 还是去 Destinations 选具体国家,因为一个卡不能代表 26 国
   if (countryCode === 'SCHENGEN') {
     router.push({ path: '/destinations' })
   } else {
-    router.push({ path: '/destinations', query: { country: countryCode } })
+    router.push({ path: '/orders/new', query: { country: countryCode, visa_type: 'tourism' } })
   }
 }
 </script>

@@ -1,16 +1,6 @@
 <template>
   <div class="ordernew-page">
-    <header class="app-header app-container">
-      <router-link to="/home" class="app-header__brand">
-        <HtexLogo :size="28" />
-        <span>{{ t('common.app_name') }}</span>
-      </router-link>
-      <div class="app-header__right">
-        <LangSwitch />
-        <span v-if="auth.user" class="app-header__user">👋 {{ auth.user.nickname || auth.user.phone }}</span>
-      </div>
-    </header>
-
+    <AppHeader scope="order-new" />
     <main class="app-container app-page ordernew-shell">
       <!-- Top country + progress -->
       <div class="hero">
@@ -389,7 +379,6 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, watch, nextTick } from 'vue'
-import HtexLogo from '@/components/HtexLogo.vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
 import AppInput from '@/components/AppInput.vue'
@@ -405,6 +394,7 @@ import {
 import { listDestinations } from '@/api/destinations'
 // A-W9-2: affiliate wrapper - affiliate link auto-fill + submit-time attribute
 import { trackClick, attributeOrder, loadPendingClick, savePendingClick } from '@/api/affiliate'
+import AppHeader from '@/components/AppHeader.vue'
 
 const { t, te, locale } = useI18n()
 const router = useRouter()
@@ -644,8 +634,8 @@ function isTabDone(key) {
   return false
 }
 
-const currentTabIndex = computed(() => tabs.findIndex((x) => x.key === activeTab.value))
-const isLastTab = computed(() => currentTabIndex.value === tabs.length - 1)
+const currentTabIndex = computed(() => subTabs.findIndex((x) => x.key === activeTab.value))
+const isLastTab = computed(() => currentTabIndex.value === subTabs.length - 1)
 const hasPrevTab = computed(() => currentTabIndex.value > 0)
 
 function goNext() {
@@ -654,12 +644,12 @@ function goNext() {
     return
   }
   if (!isLastTab.value) {
-    activeTab.value = tabs[currentTabIndex.value + 1].key
+    activeTab.value = subTabs[currentTabIndex.value + 1].key
   }
 }
 function goPrev() {
   if (hasPrevTab.value) {
-    activeTab.value = tabs[currentTabIndex.value - 1].key
+    activeTab.value = subTabs[currentTabIndex.value - 1].key
   }
 }
 
@@ -927,10 +917,7 @@ watch(isLastTab, async (val) => {
 .app-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 14px 24px; background: #fff; border-bottom: 1px solid var(--border, #E2E8F0);
-}
-.app-header__brand { display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--ink, #1A1D29); font-weight: 600; }
-.app-header__right { display: flex; align-items: center; gap: 12px; }
-.app-header__user { font-size: 13px; color: var(--ink-3, #64748B); }
+}.app-header__user { font-size: 13px; color: var(--ink-3, #64748B); }
 
 .ordernew-shell { max-width: 960px; margin: 0 auto; padding: 24px 20px 60px; }
 
