@@ -19,7 +19,7 @@
   <div class="orderdetail-page">
     <header class="app-header app-container">
       <router-link to="/home" class="app-header__brand">
-        <span class="app-header__brand-mark">V</span>
+        <HtexLogo :size="28" />
         <span>{{ t('common.app_name') }}</span>
       </router-link>
       <div class="app-header__right">
@@ -304,6 +304,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
+import HtexLogo from '@/components/HtexLogo.vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
 import AppButton from '@/components/AppButton.vue'
@@ -652,7 +653,6 @@ onBeforeUnmount(() => {
   padding: 14px 24px; background: #fff; border-bottom: 1px solid var(--border, #E2E8F0);
 }
 .app-header__brand { display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--ink, #1A1D29); font-weight: 600; }
-.app-header__brand-mark { width: 28px; height: 28px; border-radius: 8px; background: #3B6EF5; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; }
 .app-header__right { display: flex; align-items: center; gap: 12px; }
 
 .ws-pill {

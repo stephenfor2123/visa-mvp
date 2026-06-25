@@ -3,7 +3,7 @@
   <div class="orders-page">
     <header class="app-header app-container">
       <router-link to="/home" class="app-header__brand">
-        <span class="app-header__brand-mark">V</span>
+        <HtexLogo :size="28" />
         <span>{{ t('common.app_name') }}</span>
       </router-link>
       <div class="app-header__right">
@@ -75,6 +75,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import HtexLogo from '@/components/HtexLogo.vue'
 import { useI18n } from 'vue-i18n'
 import { listOrders } from '@/api/orders'
 import LangSwitch from '@/components/LangSwitch.vue'

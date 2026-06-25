@@ -1,1 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3B6EF5"/><stop offset="1" stop-color="#6E59F0"/></linearGradient></defs><rect width="32" height="32" rx="8" fill="url(#g)"/><text x="50%" y="58%" text-anchor="middle" fill="white" font-size="16" font-weight="700" font-family="-apple-system,sans-serif">V</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3B6EF5"/>
+      <stop offset="1" stop-color="#6E59F0"/>
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="8" fill="url(#g)"/>
+  <path d="M 5 22 Q 12 19, 16 14 T 23 6" stroke="#fff" stroke-opacity="0.45" stroke-width="1" stroke-dasharray="1.4 1.6" stroke-linecap="round" fill="none"/>
+  <g fill="#fff">
+    <rect x="6" y="9" width="3.5" height="14" rx="1.2"/>
+    <rect x="18.5" y="9" width="3.5" height="14" rx="1.2"/>
+    <rect x="6" y="14.5" width="16" height="3" rx="1.2"/>
+  </g>
+  <path d="M 22 3.5 L 30 6 L 22.5 8.8 L 24.5 6.2 Z" fill="#fff"/>
+</svg>

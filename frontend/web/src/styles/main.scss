@@ -65,13 +65,6 @@ a:hover { text-decoration: underline; }
   font-size: 18px;
   color: var(--ink-1);
 }
-.app-header__brand-mark {
-  width: 28px; height: 28px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #3B6EF5 0%, #6E59F0 100%);
-  display: inline-flex; align-items: center; justify-content: center;
-  color: #fff; font-weight: 700;
-}
 .app-header__nav {
   display: flex; gap: 22px;
   font-size: 14px;

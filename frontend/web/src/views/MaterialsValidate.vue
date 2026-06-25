@@ -2,7 +2,7 @@
   <div class="validate-page">
     <header class="app-header app-container">
       <router-link to="/home" class="app-header__brand">
-        <span class="app-header__brand-mark">V</span>
+        <HtexLogo :size="28" />
         <span>{{ t('common.app_name') }}</span>
       </router-link>
       <div class="app-header__right">
@@ -160,6 +160,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import HtexLogo from '@/components/HtexLogo.vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'

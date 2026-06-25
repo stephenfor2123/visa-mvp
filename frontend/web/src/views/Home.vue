@@ -2,7 +2,7 @@
   <div class="home-page">
     <header class="app-header app-container">
       <router-link to="/home" class="app-header__brand">
-        <span class="app-header__brand-mark">V</span>
+        <HtexLogo :size="28" />
         <span>{{ t('common.app_name') }}</span>
       </router-link>
       <nav class="app-header__nav">
@@ -24,19 +24,11 @@
     </header>
 
     <main class="app-container app-page">
-      <!-- Hero: 干净的 slogan + CTA -->
+      <!-- Hero: 干净的 slogan + 装饰 orbit(CTA 由下面 4 国卡片承担) -->
       <section class="hero">
         <div class="hero__copy">
           <h1 class="hero__title">{{ t('common.app_slogan') }}</h1>
           <p v-if="t('home.hero.sub')" class="hero__sub">{{ t('home.hero.sub') }}</p>
-          <div class="hero__cta">
-            <AppButton ref="heroLoginBtnRef" variant="primary" size="lg" data-testid="home-hero-login">
-              {{ t('nav.login') }}
-            </AppButton>
-            <AppButton ref="heroExploreBtnRef" variant="outline" size="lg" data-testid="home-hero-explore">
-              {{ t('home.hero.explore_cta') }}
-            </AppButton>
-          </div>
         </div>
         <div class="hero__visual">
           <div class="hero__orbit">
@@ -121,11 +113,12 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick, onMounted } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import AppCard from '@/components/AppCard.vue'
 import AppButton from '@/components/AppButton.vue'
+import HtexLogo from '@/components/HtexLogo.vue'
 import LangSwitch from '@/components/LangSwitch.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -139,8 +132,6 @@ const toast = useToast()
 // ============== W6-7 ref + setOnTrigger 模式 ==============
 const loginBtnRef = ref(null)
 const logoutBtnRef = ref(null)
-const heroLoginBtnRef = ref(null)
-const heroExploreBtnRef = ref(null)
 
 // ============== W25 重新定位:4 大签证目的地 ==============
 // 国家大图卡片(借鉴 atlys 设计):US / AU / Schengen / GB
@@ -195,10 +186,6 @@ function onLogout() {
   router.push('/home')
 }
 
-function onExplore() {
-  router.push('/destinations')
-}
-
 function onCountry(countryCode) {
   if (countryCode === 'SCHENGEN') {
     router.push({ path: '/destinations' })
@@ -210,11 +197,6 @@ function onCountry(countryCode) {
 function onLogin() {
   router.push('/login')
 }
-
-onMounted(() => {
-  if (heroLoginBtnRef.value) heroLoginBtnRef.value.setOnTrigger(onLogin)
-  if (heroExploreBtnRef.value) heroExploreBtnRef.value.setOnTrigger(onExplore)
-})
 
 watch(
   () => auth.isLoggedIn,
