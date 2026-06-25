@@ -28,6 +28,20 @@
         </div>
       </div>
 
+      <!-- 整体进度条 + 百分比 -->
+      <div class="wizard-progress" data-testid="ordernew-progress">
+        <div class="wizard-progress__bar">
+          <div class="wizard-progress__fill" :style="{ width: overallPercent + '%' }" />
+        </div>
+        <div class="wizard-progress__meta">
+          <span class="wizard-progress__pct">{{ overallPercent }}%</span>
+          <span class="wizard-progress__label">{{ t('orders.progress_completed', 'COMPLETED') }}</span>
+          <span v-if="wizardActiveStep === 'fill'" class="wizard-progress__sub">
+            {{ t('orders.progress_sub', { n: subDoneCount, m: subTotal }) }}
+          </span>
+        </div>
+      </div>
+
       <!-- W25 redesign: 5-step 拉链/锯齿状 wizard nav (matches Destinations zigzag style) -->
       <nav class="wizard" role="navigation" aria-label="签证申请步骤">
         <template v-for="(step, idx) in wizardSteps" :key="step.key">
@@ -49,7 +63,7 @@
             </span>
             <span class="wizard__body">
               <span class="wizard__title">{{ t(step.titleKey) }}</span>
-              <span class="wizard__sub">{{ t(step.subKey) }}</span>
+              <span class="wizard__sub">{{ step.subOverride || t(step.subKey) }}</span>
             </span>
           </button>
           <!-- Zigzag connector between steps -->
@@ -88,6 +102,9 @@
           <span class="form-tab__check form-tab__check--empty" v-else>•</span>
           <span>{{ t(tab.label) }}</span>
         </button>
+        <span class="form-tabs__counter" data-testid="ordernew-sub-counter">
+          {{ subDoneCount }} / {{ subTotal }} {{ t('orders.sub_tabs_done', 'sections completed') }}
+        </span>
       </nav>
 
       <!-- Loading/Error -->
@@ -467,13 +484,28 @@ const wizardSteps = computed(() => {
   //   - rpa:      pending
   const current = wizardActiveStep.value
   const order = ['country', 'visa', 'fill', 'pay', 'rpa']
+  // Fill step 副标根据 sub tab 完成度动态显示
+  const fillSub = `${subDoneCount.value}/${subTotal} ${t('orders.wz_fill_sub_count', 'sections done')}`
   return [
     { key: 'country', titleKey: 'orders.wz_country', subKey: 'orders.wz_country_sub', status: 'done' },
     { key: 'visa',    titleKey: 'orders.wz_visa',    subKey: 'orders.wz_visa_sub',    status: 'done' },
-    { key: 'fill',    titleKey: 'orders.wz_fill',    subKey: 'orders.wz_fill_sub',    status: 'active' },
+    { key: 'fill',    titleKey: 'orders.wz_fill',    subKey: current === 'fill' ? 'orders.wz_fill_sub_active' : 'orders.wz_fill_sub',    status: 'active', subOverride: fillSub },
     { key: 'pay',     titleKey: 'orders.wz_pay',     subKey: 'orders.wz_pay_sub',     status: 'pending' },
     { key: 'rpa',     titleKey: 'orders.wz_rpa',     subKey: 'orders.wz_rpa_sub',     status: 'pending' },
   ]
+})
+
+// Sub tab 完成进度
+const subDoneCount = computed(() => subTabs.filter(t => isTabDone(t.key)).length)
+const subTotal = subTabs.length
+
+// 整体百分比:每主步 20%,fill 内 3 sub 各算 20/3 ≈ 6.67%
+// = 2 done 主步 40% + 3 sub 各 6.67% × done 数
+const overallPercent = computed(() => {
+  const MAIN_STEP_WEIGHT = 20
+  const SUB_WEIGHT = MAIN_STEP_WEIGHT / subTotal  // 6.67
+  const base = 2 * MAIN_STEP_WEIGHT  // country + visa 已 done
+  return Math.round(base + subDoneCount.value * SUB_WEIGHT)
 })
 
 function onWizardStepClick(step) {
@@ -956,7 +988,7 @@ watch(isLastTab, async (val) => {
 }
 
 // ============== Tabs ==============
-.form-tabs { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+.form-tabs { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; align-items: center; }
 .form-tab {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 7px 14px; font-size: 13px; font-weight: 500;
@@ -967,6 +999,45 @@ watch(isLastTab, async (val) => {
 .form-tab:hover { border-color: #3B6EF5; color: #2D5BFF; }
 .form-tab.on { background: #3B6EF5; color: #fff; border-color: #3B6EF5; font-weight: 600; }
 .form-tab.done .form-tab__check { color: #16A34A; }
+.form-tabs__counter {
+  margin-left: auto;
+  font-size: 12px; font-weight: 600; color: #3B6EF5;
+  background: rgba(59, 110, 245, .08);
+  padding: 6px 12px; border-radius: 999px;
+  letter-spacing: 0.2px;
+}
+
+// ============== Wizard progress bar (top of wizard) ==============
+.wizard-progress {
+  margin: 8px 0 16px;
+  background: #fff;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 12px 16px;
+}
+.wizard-progress__bar {
+  height: 6px; background: #E2E8F0; border-radius: 999px; overflow: hidden;
+  margin-bottom: 8px;
+}
+.wizard-progress__fill {
+  height: 100%; background: linear-gradient(90deg, #3B6EF5, #6E59F0);
+  border-radius: 999px;
+  transition: width .5s cubic-bezier(.4,0,.2,1);
+}
+.wizard-progress__meta {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px;
+}
+.wizard-progress__pct { font-weight: 800; color: #3B6EF5; font-size: 14px; letter-spacing: -0.3px; }
+.wizard-progress__label {
+  font-weight: 700; letter-spacing: 1px; color: var(--ink-3, #64748B);
+}
+.wizard-progress__sub {
+  margin-left: auto;
+  color: var(--ink-2, #475569);
+  font-size: 12px;
+}
+.wizard-progress__sub b { color: #3B6EF5; }
 .form-tab.on.done .form-tab__check { color: #fff; }
 .form-tab__check--empty { color: #94A3B8; }
 .form-tab.on .form-tab__check--empty { color: rgba(255,255,255,.7); }
