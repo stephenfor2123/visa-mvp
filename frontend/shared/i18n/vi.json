@@ -38,7 +38,8 @@
     "settings": "Cài đặt",
     "logout": "Đăng xuất",
     "destinations": "Chọn quốc gia",
-    "materials": "Hồ sơ"
+    "materials": "Hồ sơ",
+    "orders": "Đơn của tôi"
   },
   "login": {
     "title": "Chào mừng trở lại",
@@ -509,11 +510,11 @@
       "sub": "",
       "explore_cta": "Xem 4 điểm đến",
       "chip_meta": "3 ngày xử lý · Minh bạch toàn bộ",
-      "cap1": "Vượt qua đỉnh núi, đón bình minh",
-      "cap2": "Khám phá thành phố, mỗi con phố là câu chuyện",
-      "cap3": "Bay vào hoàng hôn, visa đã sẵn sàng",
-      "cap4": "Bước chân khắp thế giới, từng con đường",
-      "cap5": "Trên mây, sẵn sàng hạ cánh"
+      "cap1": "Bầu trời sao, đỉnh tuyết hùng vĩ",
+      "cap2": "Chân trời vô tận, visa dễ dàng",
+      "cap3": "Cực quang rực rỡ, tự do Bắc Âu",
+      "cap4": "Xuyên sa mạc, visa như gió",
+      "cap5": "Hẹn hò Ngân Hà, visa khởi hành"
     },
     "destinations": {
       "title": "4 Điểm đến nổi bật",

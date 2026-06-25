@@ -38,7 +38,8 @@
     "settings": "Pengaturan",
     "logout": "Keluar",
     "destinations": "Pilih Negara",
-    "materials": "Dokumen"
+    "materials": "Dokumen",
+    "orders": "Aplikasi Saya"
   },
   "login": {
     "title": "Selamat Datang Kembali",
@@ -509,11 +510,11 @@
       "sub": "",
       "explore_cta": "Lihat 4 destinasi",
       "chip_meta": "3 hari proses · Transparan penuh",
-      "cap1": "Melewati pegunungan, menyongsong matahari",
-      "cap2": "Menjelajahi kota, setiap jalan punya cerita",
-      "cap3": "Terbang menuju senja, visa sudah di tangan",
-      "cap4": "Mendaki dunia, setapak demi setapak",
-      "cap5": "Di atas awan, siap mendarat"
+      "cap1": "Langit berbintang, puncak bersalju",
+      "cap2": "Cakrawala luas, visa mudah",
+      "cap3": "Tarian aurora, kebebasan Nordik",
+      "cap4": "Melintasi bukit pasir, selembut angin",
+      "cap5": "Pertemuan Bima Sakti, visa berangkat"
     },
     "destinations": {
       "title": "4 Destinasi Utama",

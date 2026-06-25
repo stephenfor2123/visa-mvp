@@ -38,7 +38,8 @@
     "settings": "Settings",
     "logout": "Log Out",
     "destinations": "Destinations",
-    "materials": "Materials"
+    "materials": "Materials",
+    "orders": "My Applications"
   },
   "login": {
     "title": "Welcome Back",
@@ -509,11 +510,11 @@
       "sub": "",
       "explore_cta": "See 4 destinations",
       "chip_meta": "3-day turnaround · Full transparency",
-      "cap1": "Beyond the peaks, into the sunrise",
-      "cap2": "Wander the city, every street tells a story",
-      "cap3": "Soar into the sunset, visa in hand",
-      "cap4": "Trek the world, one trail at a time",
-      "cap5": "Above the clouds, ready to land"
+      "cap1": "Starry peaks, snow-capped horizons",
+      "cap2": "Endless horizon, visa made easy",
+      "cap3": "Aurora dance, Nordic freedom",
+      "cap4": "Across the dunes, swift as the wind",
+      "cap5": "Milky Way rendezvous, departure awaits"
     },
     "destinations": {
       "title": "4 Featured Destinations",
