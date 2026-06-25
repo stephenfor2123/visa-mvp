@@ -27,7 +27,7 @@
       <section class="hero">
         <div class="hero__copy">
           <h1 class="hero__title">{{ t('common.app_slogan') }}</h1>
-          <p class="hero__sub">{{ t('home.hero.sub') }}</p>
+          <p v-if="t('home.hero.sub')" class="hero__sub">{{ t('home.hero.sub') }}</p>
           <div class="hero__cta">
             <AppButton ref="heroLoginBtnRef" variant="primary" size="lg" data-testid="home-hero-login">
               {{ t('nav.login') }}
