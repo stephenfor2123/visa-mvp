@@ -12,7 +12,7 @@
   },
   "common": {
     "app_name": "Htex",
-    "app_slogan": "Visa jadi mudah",
+    "app_slogan": "Fokus pada 4 tujuan visa utama",
     "ok": "OK",
     "cancel": "Batal",
     "back": "Kembali",
@@ -503,9 +503,9 @@
   },
   "home": {
     "hero": {
-      "sub": "Mencakup visa Asia Tenggara · Daftar dokumen otomatis · Asuransi penolakan · Layanan ekspres",
-      "explore_cta": "Lihat negara yang didukung",
-      "chip_meta": "Cepat 3 hari"
+      "sub": "Dibangun untuk pengguna Tionghoa & Asia — dari daftar dokumen hingga RPA auto-submit, end-to-end.",
+      "explore_cta": "Lihat 4 destinasi",
+      "chip_meta": "3 hari proses · Transparan penuh"
     },
     "features": {
       "title": "Mengapa memilih kami",
@@ -571,7 +571,12 @@
     "kr": "Korea Selatan",
     "nz": "Selandia Baru",
     "de_schengen": "Jerman (Schengen)",
-    "fr_schengen": "Prancis (Schengen)"
+    "fr_schengen": "Prancis (Schengen)",
+    "schengen": "Schengen (26 negara)",
+    "us_sub": "B1/B2 · Pelajar · Kerja",
+    "au_sub": "Wisata · Pelajar · Kerja",
+    "schengen_sub": "FR/DE/IT/ES/NL…",
+    "gb_sub": "Wisata · Pelajar · Kerja"
   },
   "stripe": {
     "card_label": "Detail Kartu",

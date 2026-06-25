@@ -41,7 +41,8 @@
           <div class="hero__chip" v-for="c in heroCountries" :key="c.code" @click="onCountry(c.code)" role="button" tabindex="0" @keydown.enter="onCountry(c.code)" style="cursor: pointer">
             <span class="flag">{{ c.flag }}</span>
             <span class="name">{{ c.name }}</span>
-            <span class="meta">{{ t('home.hero.chip_meta') }}</span>
+            <span class="sub">{{ c.sub }}</span>
+            <span class="meta">⏱ {{ t('home.hero.chip_meta') }}</span>
           </div>
         </div>
       </section>
@@ -91,17 +92,22 @@ const logoutBtnRef = ref(null)
 const heroLoginBtnRef = ref(null)
 const heroExploreBtnRef = ref(null)
 
-// W10-2 L4 i18n: heroCountries 用 computed + t() 确保 i18n 加载后才渲染
-// 国家名来自 i18n keys (country.xxx) 而非硬编码
+// W25: 重新定位 — 主打 4 大签证目的地 (US / AU / Schengen / GB)
+// 针对中国 / 亚洲客户,而不是东南亚本地签
 const countryNameKeys = {
-  TH: 'country.th', VN: 'country.vn', ID: 'country.id',
-  PH: 'country.ph', MY: 'country.my', SG: 'country.sg'
+  US: 'country.us', AU: 'country.au',
+  SCHENGEN: 'country.schengen', GB: 'country.gb',
+}
+const countrySubKeys = {
+  US: 'country.us_sub', AU: 'country.au_sub',
+  SCHENGEN: 'country.schengen_sub', GB: 'country.gb_sub',
 }
 const heroCountries = computed(() =>
-  ['TH', 'VN', 'ID', 'PH', 'MY', 'SG'].map(code => ({
+  ['US', 'AU', 'SCHENGEN', 'GB'].map(code => ({
     code,
-    flag: { TH: '🇹🇭', VN: '🇻🇳', ID: '🇮🇩', PH: '🇵🇭', MY: '🇲🇾', SG: '🇸🇬' }[code],
-    name: t(countryNameKeys[code])
+    flag: { US: '🇺🇸', AU: '🇦🇺', SCHENGEN: '🇪🇺', GB: '🇬🇧' }[code],
+    name: t(countryNameKeys[code]),
+    sub: t(countrySubKeys[code]),
   }))
 )
 
@@ -131,7 +137,13 @@ function onExplore() {
 }
 
 function onCountry(countryCode) {
-  router.push({ path: '/destinations', query: { country: countryCode } })
+  // W25: 申根 (SCHENGEN) 不是 country code — 直接跳 destinations 不带 filter,
+  //      用户从 list 选具体的法/德/意/西/荷
+  if (countryCode === 'SCHENGEN') {
+    router.push({ path: '/destinations' })
+  } else {
+    router.push({ path: '/destinations', query: { country: countryCode } })
+  }
 }
 
 // Login navigation
@@ -186,23 +198,32 @@ watch(
 
 .hero__visual {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(2, 1fr);   /* W25: 4 chip → 2x2 grid (was 3x2) */
+  gap: 12px;
 }
 .hero__chip {
   background: rgba(255,255,255,.15);
   backdrop-filter: blur(6px);
   border: 1px solid rgba(255,255,255,.2);
-  border-radius: 12px;
-  padding: 14px 12px;
+  border-radius: 14px;
+  padding: 18px 16px;
   display: flex;
   flex-direction: column;
   gap: 4px;
   font-size: 13px;
+  transition: all .2s ease;
+  min-height: 110px;
+  justify-content: center;
 }
-.hero__chip .flag { font-size: 22px; }
-.hero__chip .name { font-weight: 600; }
-.hero__chip .meta { opacity: .8; font-size: 11px; }
+.hero__chip:hover {
+  background: rgba(255,255,255,.25);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0,0,0,.15);
+}
+.hero__chip .flag { font-size: 30px; line-height: 1; }
+.hero__chip .name { font-weight: 700; font-size: 16px; }
+.hero__chip .sub { opacity: .92; font-size: 11px; line-height: 1.3; }
+.hero__chip .meta { opacity: .75; font-size: 10px; margin-top: 4px; }
 
 .features__grid {
   display: grid;

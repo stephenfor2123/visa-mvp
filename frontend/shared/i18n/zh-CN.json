@@ -12,7 +12,7 @@
   },
   "common": {
     "app_name": "Htex",
-    "app_slogan": "让签证更简单",
+    "app_slogan": "专注 4 大主流签证目的地",
     "ok": "确定",
     "cancel": "取消",
     "back": "返回",
@@ -504,9 +504,9 @@
   },
   "home": {
     "hero": {
-      "sub": "覆盖东南亚多国签证 · 材料清单智能生成 · 拒签险 · 一键加急",
-      "explore_cta": "查看支持国家",
-      "chip_meta": "最快 3 天出签"
+      "sub": "为中国人与亚洲客户打造,从材料清单到 RPA 自动提交,一条龙搞定。",
+      "explore_cta": "查看 4 大目的地",
+      "chip_meta": "3 天出签 · 全程透明"
     },
     "features": {
       "title": "为什么选我们",
@@ -592,7 +592,12 @@
     "kr": "韩国",
     "nz": "新西兰",
     "de_schengen": "德国(申根)",
-    "fr_schengen": "法国(申根)"
+    "fr_schengen": "法国(申根)",
+    "schengen": "申根 (26 国)",
+    "us_sub": "B1/B2 学生/工作",
+    "au_sub": "旅游/学生/工作",
+    "schengen_sub": "法/德/意/西/荷…",
+    "gb_sub": "旅游/学生/工作"
   },
   "stripe": {
     "card_label": "信用卡信息",

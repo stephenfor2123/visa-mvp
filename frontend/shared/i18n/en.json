@@ -12,7 +12,7 @@
   },
   "common": {
     "app_name": "Htex",
-    "app_slogan": "Visa made simple",
+    "app_slogan": "Focused on the 4 major visa destinations",
     "ok": "OK",
     "cancel": "Cancel",
     "back": "Back",
@@ -503,9 +503,9 @@
   },
   "home": {
     "hero": {
-      "sub": "Covering Southeast Asian visas · Auto-generated checklists · Refusal insurance · Express service",
-      "explore_cta": "View supported countries",
-      "chip_meta": "Fastest 3 days"
+      "sub": "Built for Chinese and Asian travelers — from checklist to RPA auto-submission, end-to-end.",
+      "explore_cta": "See 4 destinations",
+      "chip_meta": "3-day turnaround · Full transparency"
     },
     "features": {
       "title": "Why choose us",
@@ -571,7 +571,12 @@
     "kr": "South Korea",
     "nz": "New Zealand",
     "de_schengen": "Germany (Schengen)",
-    "fr_schengen": "France (Schengen)"
+    "fr_schengen": "France (Schengen)",
+    "schengen": "Schengen (26 countries)",
+    "us_sub": "B1/B2 · Student · Work",
+    "au_sub": "Tourist · Student · Work",
+    "schengen_sub": "FR/DE/IT/ES/NL…",
+    "gb_sub": "Tourist · Student · Work"
   },
   "stripe": {
     "card_label": "Card Details",

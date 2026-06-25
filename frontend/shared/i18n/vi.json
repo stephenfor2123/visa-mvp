@@ -12,7 +12,7 @@
   },
   "common": {
     "app_name": "Htex",
-    "app_slogan": "Visa thật đơn giản",
+    "app_slogan": "Tập trung 4 điểm đến visa chính",
     "ok": "OK",
     "cancel": "Hủy",
     "back": "Quay lại",
@@ -503,9 +503,9 @@
   },
   "home": {
     "hero": {
-      "sub": "Bao phủ visa Đông Nam Á · Danh sách tài liệu tự động · Bảo hiểm từ chối · Dịch vụ nhanh",
-      "explore_cta": "Xem các quốc gia hỗ trợ",
-      "chip_meta": "Nhanh nhất 3 ngày"
+      "sub": "Dành cho người Trung Quốc & châu Á — từ checklist đến RPA tự động nộp, trọn gói.",
+      "explore_cta": "Xem 4 điểm đến",
+      "chip_meta": "3 ngày xử lý · Minh bạch toàn bộ"
     },
     "features": {
       "title": "Tại sao chọn chúng tôi",
@@ -562,7 +562,7 @@
     "sg": "Singapore",
     "us": "Hoa Kỳ",
     "jp": "Nhật Bản",
-    "gb": "Vương quốc Anh",
+    "gb": "Anh",
     "uk": "Vương quốc Anh",
     "au": "Úc",
     "ca": "Canada",
@@ -571,7 +571,12 @@
     "kr": "Hàn Quốc",
     "nz": "New Zealand",
     "de_schengen": "Đức (Schengen)",
-    "fr_schengen": "Pháp (Schengen)"
+    "fr_schengen": "Pháp (Schengen)",
+    "schengen": "Schengen (26 quốc gia)",
+    "us_sub": "B1/B2 · Du học · Lao động",
+    "au_sub": "Du lịch · Du học · Lao động",
+    "schengen_sub": "FR/DE/IT/ES/NL…",
+    "gb_sub": "Du lịch · Du học · Lao động"
   },
   "stripe": {
     "card_label": "Chi tiết thẻ",
