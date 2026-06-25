@@ -25,7 +25,10 @@
     "confirm": "Xác nhận",
     "w2_coming_soon": "{feature} (sẽ có ở W2)",
     "auth_footer": "© 2026 Visa Assistant · demo V2 W1 · Chỉ để minh họa",
-    "network_error": "Lỗi mạng, vui lòng thử lại sau"
+    "network_error": "Lỗi mạng, vui lòng thử lại sau",
+    "lang_switch_aria": "Ngôn ngữ hiện tại {lang}, nhấp để chuyển",
+    "lang_switch_aria_menu": "Chọn ngôn ngữ",
+    "lang_switched_by_ip": "Đã chuyển ngôn ngữ sang {locale} theo khu vực của bạn"
   },
   "nav": {
     "home": "Trang chủ",

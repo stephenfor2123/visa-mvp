@@ -144,9 +144,12 @@ test.describe('E. 跨页 / 全局断言 (W19)', () => {
       { code: 'vi-VN', btnText: 'VI' }
     ]
     for (const { code, btnText } of langs) {
-      // 点击 LangSwitch 对应按钮
-      const btn = page.locator('.lang-switch__btn', { hasText: btnText }).first()
-      await btn.click()
+      // Open the LangSwitch dropdown, then pick the option.
+      // (W19-2: redesigned from 4 inline pills to a single dropdown trigger.)
+      await page.locator('.lang-switch__trigger').first().click()
+      await page.waitForTimeout(80)
+      const item = page.locator('.lang-switch__item', { hasText: btnText }).first()
+      await item.click()
       await page.waitForTimeout(400) // i18n 切语言有动画
       // URL 不变
       expect(page.url()).toBe(url)

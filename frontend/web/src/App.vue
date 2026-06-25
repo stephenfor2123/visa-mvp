@@ -15,8 +15,14 @@ import ToastContainer from '@/components/ToastContainer.vue'
 // applies data-theme="light|dark" to <html> before the app mounts, which
 // avoids a flash of light theme for users with dark saved.
 import { useTheme } from '@/composables/useTheme'
+// useGeoLocale is imported for its side effect: it queries the visitor's
+// public IP via ipapi.co and auto-switches the UI locale (unless the user
+// has previously picked one manually). The actual toast is shown by
+// LangSwitch via the onLocaleChange event bus.
+import { useGeoLocale } from '@/composables/useGeoLocale'
 
 useTheme()
+useGeoLocale()
 
 const { locale } = useI18n()
 const elLocale = computed(() => (locale.value === 'en' ? en : zhCn))

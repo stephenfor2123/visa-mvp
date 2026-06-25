@@ -247,11 +247,16 @@ test.describe('F. a11y / 可访问性基础 (W19)', () => {
   })
 
   // ============== F11. lang switch 按钮可访问 ==============
-  test('F11.1 /home LangSwitch 按钮 (>= 4 个) 存在', async ({ page }) => {
+  test('F11.1 /home LangSwitch 触发后下拉里 4 个选项存在', async ({ page }) => {
     await page.goto(`${BASE}/home`, { waitUntil: 'domcontentloaded' })
     await page.waitForLoadState('networkidle')
-    const buttons = page.locator('.lang-switch__btn')
-    const count = await buttons.count()
+    // W19-2: redesign — 1 trigger button + 4 dropdown items
+    const trigger = page.locator('.lang-switch__trigger')
+    await expect(trigger).toHaveCount(1)
+    await trigger.first().click()
+    await page.waitForTimeout(80)
+    const items = page.locator('.lang-switch__item')
+    const count = await items.count()
     expect(count).toBeGreaterThanOrEqual(4)
   })
 

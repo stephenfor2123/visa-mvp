@@ -25,7 +25,10 @@
     "confirm": "Konfirmasi",
     "w2_coming_soon": "{feature} (akan datang di W2)",
     "auth_footer": "© 2026 Visa Assistant · demo V2 W1 · Hanya untuk demonstrasi",
-    "network_error": "Kesalahan jaringan, coba lagi nanti"
+    "network_error": "Kesalahan jaringan, coba lagi nanti",
+    "lang_switch_aria": "Bahasa saat ini {lang}, klik untuk mengganti",
+    "lang_switch_aria_menu": "Pilih bahasa",
+    "lang_switched_by_ip": "Bahasa telah diganti ke {locale} sesuai wilayah Anda"
   },
   "nav": {
     "home": "Beranda",

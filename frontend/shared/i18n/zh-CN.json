@@ -25,7 +25,10 @@
     "confirm": "确认",
     "w2_coming_soon": "{feature} W2 接入",
     "auth_footer": "© 2026 Htex · 仅供演示",
-    "network_error": "网络异常,请稍后重试"
+    "network_error": "网络异常,请稍后重试",
+    "lang_switch_aria": "当前语言 {lang},点击切换",
+    "lang_switch_aria_menu": "选择语言",
+    "lang_switched_by_ip": "已根据您所在的地区自动切换为 {locale}"
   },
   "nav": {
     "home": "首页",

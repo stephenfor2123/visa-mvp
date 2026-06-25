@@ -25,7 +25,10 @@
     "confirm": "Confirm",
     "w2_coming_soon": "{feature} (coming in W2)",
     "auth_footer": "© 2026 Visa Assistant · V2 W1 demo · For demonstration only",
-    "network_error": "Network error, please try again"
+    "network_error": "Network error, please try again",
+    "lang_switch_aria": "Current language {lang}, click to switch",
+    "lang_switch_aria_menu": "Choose language",
+    "lang_switched_by_ip": "We've switched the language to {locale} based on your region"
   },
   "nav": {
     "home": "Home",
