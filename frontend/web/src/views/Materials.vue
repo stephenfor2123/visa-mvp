@@ -56,9 +56,19 @@
       <section class="mat-list-section" data-testid="mat-list-section">
         <header class="mat-list-section__head">
           <h2>{{ t('materials.collected_count', { n: items.length }) }}</h2>
-          <span v-if="lastValidated" class="mat-list-section__badge">
-            ✓ {{ t('materials.validated_ok') }}
-          </span>
+          <div class="mat-list-section__actions">
+            <router-link
+              v-if="items.length > 0"
+              to="/materials/diagnose"
+              class="mat-list-section__diagnose"
+              data-testid="mat-diagnose-cta"
+            >
+              🩺 AI 拒签诊断
+            </router-link>
+            <span v-if="lastValidated" class="mat-list-section__badge">
+              ✓ {{ t('materials.validated_ok') }}
+            </span>
+          </div>
         </header>
 
         <div v-if="loading" class="state-loading">⏳ {{ t('common.loading') }}</div>
@@ -96,6 +106,34 @@
                   <span class="badge" :class="ocrBadgeClass(m.ocr_status)">
                     {{ ocrLabel(m.ocr_status) }}
                   </span>
+                </div>
+
+                <!-- 功能2: AI 自动分类提示 -->
+                <div
+                  v-if="m._classification && m._classification.predicted"
+                  class="mat-item__classify-prompt"
+                  :data-testid="`mat-classify-${m.id || m.material_id}`"
+                >
+                  <span class="mat-item__classify-icon">🤖</span>
+                  <span class="mat-item__classify-text">
+                    系统判断这是 <strong>{{ t(`materials.type_${m._classification.predicted}`) }}</strong>
+                    <span class="mat-item__classify-conf">{{ Math.round(m._classification.confidence * 100) }}%</span>
+                  </span>
+                  <button
+                    class="mat-item__classify-btn mat-item__classify-btn--ok"
+                    @click="acceptClassification(m)"
+                    :data-testid="`mat-classify-accept-${m.id || m.material_id}`"
+                  >✓ 接受</button>
+                  <select
+                    class="mat-item__classify-select"
+                    @change="changeClassification(m, $event.target.value)"
+                    :data-testid="`mat-classify-change-${m.id || m.material_id}`"
+                  >
+                    <option value="">✎ 修改为…</option>
+                    <option v-for="opt in typeOptions" :key="opt.value" :value="opt.value">
+                      {{ t(opt.label) }}
+                    </option>
+                  </select>
                 </div>
               </div>
               <button
@@ -155,7 +193,9 @@ import {
   validateMaterials,
   getAcceptTypes,
   getMaterialTypeOptions,
-  clearMockDb
+  clearMockDb,
+  classifyMaterial,
+  confirmClassification,
 } from '@/api/materials'
 
 const { t, locale } = useI18n()
@@ -175,6 +215,7 @@ const loading = ref(false)
 const validating = ref(false)
 const lastValidated = ref(false)
 const selectedType = ref(route.query.type || 'passport')
+const typeOptions = getMaterialTypeOptions()
 
 const currentI18nLang = computed(() => String(locale.value || ''))
 const voiceLang = computed(() => {
@@ -232,6 +273,54 @@ function onUploaded(material) {
   // MaterialUploader emitted — add to list + show toast
   items.value.unshift(material)
   toast.success(`✓ ${material.file_name}`)
+  // 功能2: 自动跑 classify,拿到 AI 判断后提示用户确认
+  runClassifyPrompt(material)
+}
+
+// 功能2: 自动分类 → 用户确认/修改
+async function runClassifyPrompt(material) {
+  try {
+    const data = await classifyMaterial({
+      filename: material.file_name || material.original_filename,
+      mime_type: material.mime_type || 'image/jpeg',
+    })
+    material._classification = {
+      predicted: data.predicted_type,
+      confidence: data.confidence,
+      candidates: data.candidates || [],
+    }
+    // 自动接受高置信度 (>0.8) 的猜测
+    if (data.confidence >= 0.8) {
+      await acceptClassification(material)
+    }
+  } catch (err) {
+    console.warn('[classify] failed:', err)
+  }
+}
+
+async function acceptClassification(material) {
+  if (!material._classification) return
+  const pred = material._classification.predicted
+  if (pred && pred !== material.material_type) {
+    try {
+      await confirmClassification(material.id || material.material_id, pred, true)
+      material.material_type = pred
+    } catch (err) {
+      console.warn('[confirm] failed:', err)
+    }
+  }
+  material._classification = null  // dismiss prompt
+}
+
+async function changeClassification(material, newType) {
+  try {
+    await confirmClassification(material.id || material.material_id, newType, false)
+    material.material_type = newType
+    material._classification = null
+    toast.success(`✓ 已更正为 ${newType}`)
+  } catch (err) {
+    toast.error(`更正失败: ${err.message || err}`)
+  }
 }
 
 function toggleRecord() {
@@ -515,6 +604,25 @@ watch(lastValidated, async (val) => {
   margin-bottom: 12px;
   h2 { margin: 0; font-size: 16px; font-weight: 600; color: var(--ink-1, #0F172A); }
 }
+.mat-list-section__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.mat-list-section__diagnose {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  background: linear-gradient(135deg, #3B6EF5, #6E59F0);
+  color: #fff;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity .15s;
+  &:hover { opacity: .85; }
+}
 .mat-list-section__badge {
   font-size: 12px;
   padding: 4px 10px;
@@ -610,6 +718,56 @@ watch(lastValidated, async (val) => {
   flex-shrink: 0;
 }
 .mat-item__del:hover { background: #FEE2E2; color: #B91C1C; }
+
+/* 功能2: AI 自动分类提示 */
+.mat-item__classify-prompt {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: linear-gradient(135deg, #EEF2FF, #F0F9FF);
+  border: 1px solid #C7D2FE;
+  border-radius: 8px;
+  font-size: 12px;
+  flex-wrap: wrap;
+}
+.mat-item__classify-icon { font-size: 14px; }
+.mat-item__classify-text {
+  flex: 1;
+  color: #1E293B;
+  strong { color: #4338CA; font-weight: 600; }
+}
+.mat-item__classify-conf {
+  margin-left: 4px;
+  font-size: 11px;
+  color: #6366F1;
+  background: #fff;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+.mat-item__classify-btn {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  &--ok {
+    background: #16A34A;
+    color: #fff;
+  }
+  &:hover { opacity: .85; }
+}
+.mat-item__classify-select {
+  padding: 4px 8px;
+  border: 1px solid #CBD5E1;
+  border-radius: 6px;
+  font-size: 12px;
+  background: #fff;
+  cursor: pointer;
+}
 
 .mat-foot {
   margin-top: 28px;

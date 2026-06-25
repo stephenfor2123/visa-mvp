@@ -462,3 +462,184 @@ export async function validateMaterials(materialIds) {
 export function clearMockDb() {
   MOCK_DB = []
 }
+
+// --------------------------------------------------------------------------- //
+// V2 §4.3.3 — 图片预处理 (auto-scan + 透视变换 + 降噪)                         //
+// --------------------------------------------------------------------------- //
+
+/**
+ * Run the document-scan preprocessing pipeline on an image.
+ * Returns { image_base64, meta: { width, height, confidence, corrected, ... } }
+ */
+export async function preprocessImage(file, { applyBinarize = false, forceGrayscale = false } = {}) {
+  if (MOCK_MODE) {
+    await delay()
+    // Mock: just return the file as base64
+    const dataUrl = await new Promise((res) => {
+      const r = new FileReader()
+      r.onload = () => res(r.result)
+      r.readAsDataURL(file)
+    })
+    return {
+      image_base64: dataUrl.split(',')[1],
+      meta: {
+        width: 1200,
+        height: 800,
+        size_bytes: file.size,
+        mime_type: file.type || 'image/jpeg',
+        confidence: 0.85,
+        corrected: true,
+        corners: [[0, 0], [1200, 0], [1200, 800], [0, 800]],
+        stages: ['decoded', 'edge_detect', 'perspective_corrected', 'contrast_enhanced', 'resized'],
+        warnings: [],
+      },
+    }
+  }
+  const form = new FormData()
+  form.append('file', file)
+  form.append('apply_binarize', String(applyBinarize))
+  form.append('force_grayscale', String(forceGrayscale))
+  const env = await http.post('/v2/materials/preprocess', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 30000,
+  })
+  if (env?.code && env.code !== '1000') {
+    throw new Error(env.message || 'preprocess failed')
+  }
+  return env?.data || env
+}
+
+// --------------------------------------------------------------------------- //
+// V2 §4.3.4 — 自动分类                                                          //
+// --------------------------------------------------------------------------- //
+
+/**
+ * Auto-classify a material by filename + mime (fast path) or by material_id
+ * (server fetches stored OCR result).
+ *
+ * @param {{ filename?: string, mime_type?: string, material_id?: number|File }} args
+ * @returns { predicted_type, confidence, candidates, hints }
+ */
+export async function classifyMaterial(args = {}) {
+  if (MOCK_MODE) {
+    await delay(150)
+    const fname = (args.filename || '').toLowerCase()
+    let predicted = 'other'
+    if (/passport|护照/.test(fname)) predicted = 'passport'
+    else if (/身份证|id_card|sfz/.test(fname)) predicted = 'id_card'
+    else if (/户口|hukou|household/.test(fname)) predicted = 'household'
+    else if (/学生|student|enrollment|在学/.test(fname)) predicted = 'enrollment'
+    else if (/photo|照片|2寸/.test(fname)) predicted = 'photo'
+    else if (/ds-?160|form|申请表|签证表/.test(fname)) predicted = 'form'
+    return {
+      predicted_type: predicted,
+      confidence: predicted === 'other' ? 0.0 : 0.9,
+      candidates: [{ material_type: predicted, score: 3.0, reasons: [`mock: filename contains '${predicted}'`] }],
+      hints: [],
+    }
+  }
+
+  let form
+  if (args.file) {
+    form = new FormData()
+    form.append('file', args.file)
+    if (args.filename) form.append('filename', args.filename)
+    if (args.mime_type) form.append('mime_type', args.mime_type)
+  } else {
+    form = new FormData()
+    if (args.filename) form.append('filename', args.filename)
+    if (args.mime_type) form.append('mime_type', args.mime_type)
+    if (args.material_id != null) form.append('material_id', String(args.material_id))
+  }
+  const env = await http.post('/v2/materials/classify', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 30000,
+  })
+  if (env?.code && env.code !== '1000') {
+    throw new Error(env.message || 'classify failed')
+  }
+  return env?.data || env
+}
+
+/**
+ * Confirm or correct the AI's classification guess.
+ * @param {number} materialId
+ * @param {string} materialType
+ * @param {boolean} confirmed  true=user accepts, false=user corrected
+ */
+export async function confirmClassification(materialId, materialType, confirmed = true) {
+  if (MOCK_MODE) {
+    await delay(80)
+    return { id: materialId, material_type: materialType, classification_corrected: confirmed ? null : materialType }
+  }
+  const env = await http.post(`/v2/materials/${materialId}/classification`, {
+    material_type: materialType,
+    confirmed,
+  })
+  if (env?.code && env.code !== '1000') {
+    throw new Error(env.message || 'confirm classification failed')
+  }
+  return env?.data?.material || env?.data || env
+}
+
+// --------------------------------------------------------------------------- //
+// V2 §4.3.5 — AI 拒签风险诊断                                                    //
+// --------------------------------------------------------------------------- //
+
+/**
+ * Diagnose the refusal risk of an application.
+ * @param {{ material_ids: number[], country_code: string, visa_type?: string, fields?: object }} args
+ * @returns { overall_risk, risk_score, summary, issues, positives, policy_refs, rule_count }
+ */
+export async function diagnoseMaterials(args) {
+  if (MOCK_MODE) {
+    await delay(500)
+    const materialCount = args.material_ids?.length || 0
+    const hasExpiryIssue = Math.random() > 0.5
+    const issues = []
+    const positives = []
+    if (materialCount >= 1) positives.push('护照号已成功识别')
+    if (hasExpiryIssue) {
+      issues.push({
+        code: 'passport.expiry_short',
+        severity: 'critical',
+        title: '护照有效期不足 6 个月',
+        detail: '剩余约 3 个月,大多数国家要求 ≥6 个月',
+        fix_suggestion: '出发前必须续期护照,否则会被直接拒签。',
+        related_material_id: args.material_ids[0],
+      })
+    } else {
+      positives.push('护照有效期充足')
+    }
+    if (materialCount < 3) {
+      issues.push({
+        code: 'checklist.incomplete',
+        severity: 'warning',
+        title: '材料不完整',
+        detail: '建议补充签证照片和申请表',
+        fix_suggestion: '请上传白底照片 + 填写完整的申请表',
+      })
+    }
+    return {
+      overall_risk: hasExpiryIssue ? 'critical' : 'low',
+      risk_score: hasExpiryIssue ? 0.65 : 0.05,
+      summary: hasExpiryIssue
+        ? `${args.country_code || '目标国'}申请存在关键问题,直接提交大概率被拒签。`
+        : `${args.country_code || '目标国'}申请材料看起来很完整,可以提交。`,
+      issues,
+      positives,
+      policy_refs: [],
+      rule_count: 8,
+    }
+  }
+  const env = await http.post('/v2/materials/diagnose', {
+    material_ids: args.material_ids,
+    country_code: args.country_code,
+    visa_type: args.visa_type,
+    fields: args.fields || {},
+  })
+  if (env?.code && env.code !== '1000') {
+    throw new Error(env.message || 'diagnose failed')
+  }
+  return env?.data || env
+}

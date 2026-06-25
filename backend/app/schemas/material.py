@@ -122,3 +122,161 @@ def safe_filename(name: str, fallback: str = "file") -> str:
     if not name or name in {".", ".."}:
         return fallback
     return name[:200]
+
+
+# --------------------------------------------------------------------------- #
+# Preprocess (image auto-scan + crop) — V2 §4.3.3                            #
+# --------------------------------------------------------------------------- #
+class PreprocessMeta(BaseModel):
+    """Diagnostics from the image preprocessing pipeline."""
+
+    width: int
+    height: int
+    size_bytes: int
+    mime_type: str = "image/jpeg"
+    confidence: float = Field(
+        0.0,
+        ge=0.0,
+        le=1.0,
+        description="0–1, heuristic for how confident we are the detected quad is the document",
+    )
+    corrected: bool = Field(
+        False,
+        description="True if perspective correction was applied; False = passthrough",
+    )
+    corners: Optional[list[list[int]]] = Field(
+        None,
+        description="Detected 4 corners in original image [TL,TR,BR,BL]; None if no doc found",
+    )
+    stages: list[str] = Field(
+        default_factory=list,
+        description="Pipeline stages executed (for telemetry/debug)",
+    )
+    warnings: list[str] = Field(
+        default_factory=list,
+        description="Non-fatal warnings (e.g. 'image_too_small')",
+    )
+
+
+class PreprocessResponse(BaseModel):
+    """POST /preprocess response — returns the processed image + diagnostics.
+
+    The image is base64-encoded so it can be returned inline without an
+    extra round-trip to a download URL.
+    """
+
+    image_base64: str = Field(..., description="Processed image, base64 encoded")
+    meta: PreprocessMeta
+
+
+# --------------------------------------------------------------------------- #
+# Classify (auto material type) — V2 §4.3.4                                   #
+# --------------------------------------------------------------------------- #
+class ClassifyHint(BaseModel):
+    """Single keyword/regex hit that contributed to the classification."""
+
+    source: str = Field(..., description="filename | ocr_field | ocr_text | mime")
+    match: str = Field(..., description="what matched (e.g. 'passport_no', 'passport.jpg')")
+    weight: float = Field(..., description="how much this match contributed to the score")
+
+
+class ClassifyResult(BaseModel):
+    """One candidate material type with score."""
+
+    material_type: str
+    score: float = Field(..., ge=0.0, description="Higher = more likely")
+    reasons: list[str] = Field(default_factory=list)
+
+
+class ClassifyResponse(BaseModel):
+    """POST /classify response."""
+
+    predicted_type: str = Field(..., description="Top-1 candidate material type")
+    confidence: float = Field(..., ge=0.0, le=1.0)
+    candidates: list[ClassifyResult] = Field(
+        default_factory=list,
+        description="Top-3 candidates ordered by score",
+    )
+    hints: list[ClassifyHint] = Field(
+        default_factory=list,
+        description="All keyword/regex hits that contributed (for transparency)",
+    )
+
+
+class ConfirmClassificationRequest(BaseModel):
+    """POST /{id}/classification — user confirms or corrects the AI guess."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    material_type: str
+    confirmed: bool = Field(
+        True,
+        description=(
+            "True if user accepts the AI guess; False if they correct it. "
+            "We use this to learn (store classification_corrected only when wrong)."
+        ),
+    )
+
+
+# --------------------------------------------------------------------------- #
+# Diagnose (AI refusal-risk assessment) — V2 §4.3.5                           #
+# --------------------------------------------------------------------------- #
+class DiagnoseIssue(BaseModel):
+    """One potential issue / improvement opportunity in the application."""
+
+    code: str = Field(..., description="stable identifier, e.g. 'passport.expiry_short'")
+    severity: str = Field(..., description="info | warning | error | critical")
+    title: str
+    detail: str
+    fix_suggestion: Optional[str] = None
+    related_material_id: Optional[int] = None
+
+
+class DiagnoseRequest(BaseModel):
+    """POST /diagnose request — diagnose the refusal risk of an application."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    material_ids: list[int] = Field(
+        ...,
+        min_length=1,
+        max_length=50,
+        description="Material IDs to include in the diagnosis",
+    )
+    country_code: str = Field(
+        ...,
+        min_length=2,
+        max_length=8,
+        description="Destination country code, e.g. 'US', 'VN', 'ID'",
+    )
+    visa_type: Optional[str] = Field(
+        None,
+        description="Visa subclass, e.g. 'B1', 'tourist', 'student'. Optional.",
+    )
+    fields: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Optional form fields (travel_date, purpose, etc.)",
+    )
+
+
+class DiagnoseResponse(BaseModel):
+    """POST /diagnose response — overall risk + per-issue breakdown."""
+
+    overall_risk: str = Field(
+        ..., description="low | medium | high | critical"
+    )
+    risk_score: float = Field(
+        ..., ge=0.0, le=1.0,
+        description="0 = no risk, 1 = certain refusal",
+    )
+    summary: str
+    issues: list[DiagnoseIssue]
+    positives: list[str] = Field(
+        default_factory=list,
+        description="Things that look good (so user doesn't only see negatives)",
+    )
+    policy_refs: list[str] = Field(
+        default_factory=list,
+        description="RAG-sourced policy URLs/snippets that informed the diagnosis",
+    )
+    rule_count: int = Field(..., description="How many rules were evaluated")

@@ -53,13 +53,58 @@
       <div class="uploader__done-name">{{ doneName }}</div>
       <div class="uploader__done-count">{{ t('materials.uploaded_count', { n: uploadedCount }) }}</div>
     </template>
+
+    <!-- preprocess preview (功能1: 自动扫描剪裁) -->
+    <template v-else-if="phase === 'preview'">
+      <div class="uploader__preview-title">🔍 {{ t('materials.preview_title', '自动扫描结果') }}</div>
+      <div class="uploader__preview-grid">
+        <div class="uploader__preview-cell">
+          <div class="uploader__preview-label">原图</div>
+          <img v-if="originalPreview" :src="originalPreview" class="uploader__preview-img" alt="原图" />
+        </div>
+        <div class="uploader__preview-arrow">→</div>
+        <div class="uploader__preview-cell">
+          <div class="uploader__preview-label">剪裁后 ({{ previewMeta.width }}×{{ previewMeta.height }})</div>
+          <img v-if="processedPreview" :src="processedPreview" class="uploader__preview-img" alt="剪裁后" />
+        </div>
+      </div>
+      <div v-if="previewMeta.corrected" class="uploader__preview-info">
+        ✨ 检测到文档边缘,自动透视变换 · 置信度 {{ Math.round((previewMeta.confidence || 0) * 100) }}%
+      </div>
+      <div v-else class="uploader__preview-info warn">
+        ⚠️ 未检测到清晰文档边界,建议手动重拍或使用原图上传
+      </div>
+      <div class="uploader__preview-actions">
+        <button
+          class="uploader__btn uploader__btn--primary"
+          @click.stop="confirmProcessed"
+          data-testid="uploader-confirm-processed"
+        >
+          ✅ 使用剪裁版本
+        </button>
+        <button
+          class="uploader__btn uploader__btn--ghost"
+          @click.stop="confirmOriginal"
+          data-testid="uploader-confirm-original"
+        >
+          📷 使用原图
+        </button>
+      </div>
+    </template>
+
+    <!-- scanning -->
+    <template v-else-if="phase === 'scanning'">
+      <div class="uploader__icon">🔍</div>
+      <div class="uploader__title">{{ t('materials.scanning', '正在自动扫描...') }}</div>
+      <div class="uploader__hint">{{ scanningFileName }}</div>
+    </template>
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { uploadMaterial, getAcceptTypes, getMaxBytes } from '@/api/materials'
+import { uploadMaterial, preprocessImage, getAcceptTypes, getMaxBytes } from '@/api/materials'
 
 const emit = defineEmits(['uploaded'])
 
@@ -67,12 +112,20 @@ const { t } = useI18n()
 
 const fileInput = ref(null)
 const isDragOver = ref(false)
-const phase = ref('idle')          // 'idle' | 'uploading' | 'done'
+const phase = ref('idle')          // 'idle' | 'scanning' | 'preview' | 'uploading' | 'done'
 const progress = ref(0)
 const uploadingName = ref('')
+const scanningFileName = ref('')
 const doneName = ref('')
 const previewUrl = ref('')
 const uploadedCount = ref(0)
+
+// preprocess state (功能1)
+const pendingFile = ref(null)          // user-picked file waiting for confirmation
+const processedBlob = ref(null)        // cropped/scan-optimized blob
+const originalPreview = ref('')       // data: URL of original
+const processedPreview = ref('')      // data: URL of processed
+const previewMeta = ref({})
 
 const ACCEPT = getAcceptTypes()
 const MAX_BYTES = getMaxBytes()
@@ -91,9 +144,72 @@ function validate(file) {
   return true
 }
 
-function pickFile(file) {
+// image MIME types that benefit from preprocess
+const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+
+async function pickFile(file) {
   if (!validate(file)) return
+  // 功能1: 图片类型才走 preprocess; PDF 直接 upload
+  if (IMAGE_TYPES.includes(file.type)) {
+    await runPreprocess(file)
+  } else {
+    doUpload(file)
+  }
+}
+
+async function runPreprocess(file) {
+  phase.value = 'scanning'
+  scanningFileName.value = file.name
+  pendingFile.value = file
+
+  // 显示原图
+  originalPreview.value = await fileToDataUrl(file)
+
+  try {
+    const result = await preprocessImage(file, {})
+    processedBlob.value = base64ToBlob(result.image_base64, result.meta.mime_type || 'image/jpeg')
+    processedPreview.value = `data:${result.meta.mime_type || 'image/jpeg'};base64,${result.image_base64}`
+    previewMeta.value = result.meta
+    phase.value = 'preview'
+  } catch (err) {
+    // preprocess failed — fall back to original
+    console.warn('[uploader] preprocess failed, using original:', err)
+    phase.value = 'uploading'
+    doUpload(file)
+  }
+}
+
+function confirmProcessed() {
+  if (!processedBlob.value) {
+    confirmOriginal()
+    return
+  }
+  // wrap blob into a File with the original name
+  const file = new File([processedBlob.value], pendingFile.value.name, {
+    type: processedBlob.value.type,
+  })
+  phase.value = 'uploading'
   doUpload(file)
+}
+
+function confirmOriginal() {
+  phase.value = 'uploading'
+  doUpload(pendingFile.value)
+}
+
+function fileToDataUrl(file) {
+  return new Promise((resolve) => {
+    const r = new FileReader()
+    r.onload = () => resolve(r.result)
+    r.readAsDataURL(file)
+  })
+}
+
+function base64ToBlob(b64, mime) {
+  const bytes = atob(b64)
+  const arr = new Uint8Array(bytes.length)
+  for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i)
+  return new Blob([arr], { type: mime })
 }
 
 function onChange(e) {
@@ -227,5 +343,81 @@ async function doUpload(file) {
   font-size: 12px;
   color: #16A34A;
   font-weight: 500;
+}
+
+/* preprocess preview (功能1) */
+.uploader__preview-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0F172A;
+  margin-bottom: 8px;
+}
+.uploader__preview-grid {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0;
+  width: 100%;
+  max-width: 520px;
+}
+.uploader__preview-cell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.uploader__preview-label {
+  font-size: 11px;
+  color: #94A3B8;
+  font-weight: 500;
+}
+.uploader__preview-img {
+  max-width: 180px;
+  max-height: 120px;
+  border-radius: 6px;
+  border: 1px solid #E2E8F0;
+  object-fit: contain;
+  background: #fff;
+}
+.uploader__preview-arrow {
+  font-size: 24px;
+  color: #3B6EF5;
+  font-weight: 600;
+}
+.uploader__preview-info {
+  font-size: 12px;
+  color: #16A34A;
+  background: #F0FDF4;
+  padding: 6px 12px;
+  border-radius: 6px;
+  margin: 8px 0;
+  &.warn {
+    color: #B45309;
+    background: #FEF3C7;
+  }
+}
+.uploader__preview-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.uploader__btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity .15s;
+  &:hover { opacity: .85; }
+}
+.uploader__btn--primary {
+  background: #3B6EF5;
+  color: #fff;
+}
+.uploader__btn--ghost {
+  background: #F1F5F9;
+  color: #475569;
 }
 </style>

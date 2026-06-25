@@ -58,6 +58,13 @@ const routes = [
     meta: { title: 'validation.page_title', requiresAuth: true }
   },
   {
+    // 2026-06-25: AI 拒签风险诊断 — 基于 RAG + 规则引擎综合评估
+    path: '/materials/diagnose',
+    name: 'MaterialsDiagnose',
+    component: () => import('@/views/MaterialsDiagnose.vue'),
+    meta: { title: 'diagnose.title', requiresAuth: true }
+  },
+  {
     // Story 1.2.1b: 申请表填写页 (OCR 预填 + 手动编辑 + 紧急联系人)
     path: '/orders/new',
     name: 'OrderNew',
