@@ -505,7 +505,12 @@
     "hero": {
       "sub": "",
       "explore_cta": "Lihat 4 destinasi",
-      "chip_meta": "3 hari proses · Transparan penuh"
+      "chip_meta": "3 hari proses · Transparan penuh",
+      "cap1": "Melewati pegunungan, menyongsong matahari",
+      "cap2": "Menjelajahi kota, setiap jalan punya cerita",
+      "cap3": "Terbang menuju senja, visa sudah di tangan",
+      "cap4": "Mendaki dunia, setapak demi setapak",
+      "cap5": "Di atas awan, siap mendarat"
     },
     "destinations": {
       "title": "4 Destinasi Utama",

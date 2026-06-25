@@ -505,7 +505,12 @@
     "hero": {
       "sub": "",
       "explore_cta": "Xem 4 điểm đến",
-      "chip_meta": "3 ngày xử lý · Minh bạch toàn bộ"
+      "chip_meta": "3 ngày xử lý · Minh bạch toàn bộ",
+      "cap1": "Vượt qua đỉnh núi, đón bình minh",
+      "cap2": "Khám phá thành phố, mỗi con phố là câu chuyện",
+      "cap3": "Bay vào hoàng hôn, visa đã sẵn sàng",
+      "cap4": "Bước chân khắp thế giới, từng con đường",
+      "cap5": "Trên mây, sẵn sàng hạ cánh"
     },
     "destinations": {
       "title": "4 Điểm đến nổi bật",

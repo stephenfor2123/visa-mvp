@@ -505,7 +505,12 @@
     "hero": {
       "sub": "",
       "explore_cta": "See 4 destinations",
-      "chip_meta": "3-day turnaround · Full transparency"
+      "chip_meta": "3-day turnaround · Full transparency",
+      "cap1": "Beyond the peaks, into the sunrise",
+      "cap2": "Wander the city, every street tells a story",
+      "cap3": "Soar into the sunset, visa in hand",
+      "cap4": "Trek the world, one trail at a time",
+      "cap5": "Above the clouds, ready to land"
     },
     "destinations": {
       "title": "4 Featured Destinations",

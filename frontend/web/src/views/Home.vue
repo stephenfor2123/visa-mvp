@@ -24,21 +24,54 @@
     </header>
 
     <main class="app-container app-page">
-      <!-- Hero: 干净的 slogan + 装饰 orbit(CTA 由下面 4 国卡片承担) -->
-      <section class="hero">
+      <!-- Hero: 旅行图轮播背景 + slogan 永远在前景 -->
+      <section class="hero hero--slideshow" @mouseenter="pauseCarousel" @mouseleave="resumeCarousel">
+        <!-- 5 张背景图 crossfade -->
+        <div class="hero__slides" aria-hidden="true">
+          <div
+            v-for="(s, i) in slides"
+            :key="i"
+            class="hero__slide"
+            :class="{ 'is-active': i === activeIdx }"
+          >
+            <img
+              v-if="s.image"
+              :src="s.image"
+              :alt="t(s.captionKey)"
+              class="hero__slide-img"
+              loading="lazy"
+              @error="onHeroImgError(i)"
+            />
+            <div class="hero__slide-overlay" />
+          </div>
+        </div>
+
+        <!-- 前景文案 -->
         <div class="hero__copy">
           <h1 class="hero__title">{{ t('common.app_slogan') }}</h1>
           <p v-if="t('home.hero.sub')" class="hero__sub">{{ t('home.hero.sub') }}</p>
+          <p class="hero__caption" :key="`cap-${activeIdx}`">
+            <span class="hero__caption-tag">{{ String(activeIdx + 1).padStart(2, '0') }} / 05</span>
+            <span class="hero__caption-text">{{ t(slides[activeIdx].captionKey) }}</span>
+          </p>
         </div>
-        <div class="hero__visual">
-          <div class="hero__orbit">
-            <div class="hero__orbit-ring"></div>
-            <span class="hero__orbit-flag hero__orbit-flag--us">🇺🇸</span>
-            <span class="hero__orbit-flag hero__orbit-flag--au">🇦🇺</span>
-            <span class="hero__orbit-flag hero__orbit-flag--eu">🇪🇺</span>
-            <span class="hero__orbit-flag hero__orbit-flag--gb">🇬🇧</span>
-            <div class="hero__orbit-center">🌏</div>
-          </div>
+
+        <!-- 左右翻页箭头 -->
+        <button class="hero__nav hero__nav--prev" @click="prev" aria-label="Previous">‹</button>
+        <button class="hero__nav hero__nav--next" @click="next" aria-label="Next">›</button>
+
+        <!-- 底部进度条 + 点指示 -->
+        <div class="hero__dots">
+          <button
+            v-for="(s, i) in slides"
+            :key="i"
+            class="hero__dot"
+            :class="{ 'is-active': i === activeIdx }"
+            @click="setActive(i)"
+            :aria-label="`Slide ${i + 1}`"
+          >
+            <span class="hero__dot-bar" :style="i === activeIdx ? { animation: `heroProgress 5s linear` } : null" />
+          </button>
         </div>
       </section>
 
@@ -113,7 +146,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import AppCard from '@/components/AppCard.vue'
@@ -132,6 +165,49 @@ const toast = useToast()
 // ============== W6-7 ref + setOnTrigger 模式 ==============
 const loginBtnRef = ref(null)
 const logoutBtnRef = ref(null)
+
+// ============== Hero 旅行图轮播 ==============
+// 5 张 Unsplash 旅行图,每 5s 自动切换,hover 暂停,左右箭头可手翻
+const SLIDE_DURATION = 5000
+const slides = [
+  { image: '/hero/t1_hiker.jpg',         captionKey: 'home.hero.cap1' },
+  { image: '/hero/t2_backpack_city.jpg', captionKey: 'home.hero.cap2' },
+  { image: '/hero/t3_plane_sunset.jpg',  captionKey: 'home.hero.cap3' },
+  { image: '/hero/t4_dolomites.jpg',     captionKey: 'home.hero.cap4' },
+  { image: '/hero/t5_window_clouds.jpg', captionKey: 'home.hero.cap5' },
+]
+const activeIdx = ref(0)
+let timer = null
+const failedHero = ref(new Set())
+
+function onHeroImgError(i) {
+  const next = new Set(failedHero.value)
+  next.add(i)
+  failedHero.value = next
+}
+
+function setActive(i) {
+  activeIdx.value = i
+  startTimer()
+}
+function next() { setActive((activeIdx.value + 1) % slides.length) }
+function prev() { setActive((activeIdx.value - 1 + slides.length) % slides.length) }
+
+function startTimer() {
+  stopTimer()
+  timer = setInterval(next, SLIDE_DURATION)
+}
+function stopTimer() {
+  if (timer) { clearInterval(timer); timer = null }
+}
+function pauseCarousel() { stopTimer() }
+function resumeCarousel() { startTimer() }
+
+onMounted(startTimer)
+onBeforeUnmount(stopTimer)
+
+// 切语种时重置,避免 caption 切换不流畅
+watch(locale, () => { /* 触发 caption 重新渲染,无需操作 */ }, { immediate: false })
 
 // ============== W25 重新定位:4 大签证目的地 ==============
 // 国家大图卡片(借鉴 atlys 设计):US / AU / Schengen / GB
@@ -213,89 +289,173 @@ watch(
 </script>
 
 <style scoped lang="scss">
-/* ============== Hero: slogan + CTA + 装饰 orbit ============== */
-.hero {
+/* ============== Hero: 旅行图轮播 + slogan 前景 ============== */
+.hero--slideshow {
   position: relative;
-  display: grid;
-  grid-template-columns: 1.4fr 1fr;
-  gap: 40px;
-  align-items: center;
-  background: linear-gradient(135deg, #3B6EF5 0%, #6E59F0 100%);
+  display: block;
+  min-height: 420px;
   color: #fff;
   border-radius: 20px;
-  padding: 64px 56px;
   margin-bottom: 56px;
-  box-shadow: 0 16px 40px rgba(59,110,245,.25);
+  box-shadow: 0 16px 40px rgba(15,23,42,.25);
   overflow: hidden;
+  isolation: isolate;
+  // 加载图前的渐变底色(防止白屏闪)
+  background: linear-gradient(135deg, #3B6EF5 0%, #6E59F0 100%);
 }
-.hero__title { font-size: 40px; font-weight: 800; margin: 0 0 14px; line-height: 1.15; letter-spacing: -.5px; }
-.hero__sub { font-size: 16px; opacity: .9; margin: 0 0 28px; max-width: 460px; }
-.hero__cta { display: flex; gap: 12px; }
-.hero__cta .app-btn--primary { background: #fff; color: var(--el-color-primary); }
-.hero__cta .app-btn--primary:hover { background: #F1F5FE; }
-.hero__cta .app-btn--outline { color: #fff; border-color: rgba(255,255,255,.6); background: transparent; }
-.hero__cta .app-btn--outline:hover { background: rgba(255,255,255,.1); }
-
-/* 装饰性 orbit:4 个国家旗围绕地球,纯 CSS 动画 */
-.hero__visual {
-  position: relative;
-  height: 320px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.hero__orbit {
-  position: relative;
-  width: 280px;
-  height: 280px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.hero__orbit-ring {
+.hero__slides {
   position: absolute;
   inset: 0;
-  border: 2px dashed rgba(255,255,255,.35);
-  border-radius: 50%;
-  animation: spin 24s linear infinite;
+  z-index: 0;
 }
-.hero__orbit-center {
-  font-size: 100px;
-  filter: drop-shadow(0 8px 20px rgba(0,0,0,.3));
-  animation: spin 24s linear infinite reverse;
-}
-.hero__orbit-flag {
+.hero__slide {
   position: absolute;
-  width: 56px;
-  height: 56px;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1.2s ease-in-out;
+}
+.hero__slide.is-active {
+  opacity: 1;
+}
+.hero__slide.is-active .hero__slide-img {
+  animation: kenburns 6s ease-in-out;
+}
+.hero__slide-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transform-origin: center;
+}
+.hero__slide-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(110deg, rgba(15,23,42,.78) 0%, rgba(15,23,42,.55) 45%, rgba(15,23,42,.25) 100%),
+    linear-gradient(180deg, rgba(59,110,245,.15) 0%, rgba(110,89,240,.15) 100%);
+}
+@keyframes kenburns {
+  from { transform: scale(1.0); }
+  to   { transform: scale(1.12); }
+}
+
+.hero__copy {
+  position: relative;
+  z-index: 2;
+  padding: 72px 64px;
+  max-width: 720px;
+}
+.hero__title {
+  font-size: 44px;
+  font-weight: 800;
+  margin: 0 0 14px;
+  line-height: 1.15;
+  letter-spacing: -.5px;
+  text-shadow: 0 4px 20px rgba(0,0,0,.25);
+}
+.hero__sub {
+  font-size: 16px;
+  opacity: .92;
+  margin: 0 0 24px;
+  max-width: 480px;
+  text-shadow: 0 2px 8px rgba(0,0,0,.2);
+}
+.hero__caption {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  padding: 8px 14px;
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 999px;
+  backdrop-filter: blur(8px);
+  font-size: 13px;
+  animation: captionIn .5s ease;
+}
+.hero__caption-tag {
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  opacity: .85;
+  font-variant-numeric: tabular-nums;
+}
+.hero__caption-text {
+  font-weight: 500;
+}
+@keyframes captionIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* 左右翻页箭头 */
+.hero__nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  width: 44px;
+  height: 44px;
+  border: 0;
   border-radius: 50%;
-  background: #fff;
+  background: rgba(255,255,255,.18);
+  color: #fff;
+  font-size: 28px;
+  line-height: 1;
+  font-weight: 300;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
-  box-shadow: 0 8px 20px rgba(0,0,0,.25);
-  animation: spin 24s linear infinite reverse;
+  backdrop-filter: blur(8px);
+  transition: background .2s ease, transform .2s ease;
+  opacity: 0;
 }
-.hero__orbit-flag--us { top: 0;   left: 50%; transform: translate(-50%, 0); }
-.hero__orbit-flag--au { top: 50%; right: 0;  transform: translate(0, -50%); }
-.hero__orbit-flag--gb { bottom: 0; left: 50%; transform: translate(-50%, 0); }
-.hero__orbit-flag--eu { top: 50%; left: 0;   transform: translate(0, -50%); }
-@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-.hero__orbit-flag--us, .hero__orbit-flag--au, .hero__orbit-flag--gb, .hero__orbit-flag--eu {
-  /* 保持 flag 自身不翻转,父级旋转 */
+.hero--slideshow:hover .hero__nav { opacity: 1; }
+.hero__nav:hover { background: rgba(255,255,255,.32); }
+.hero__nav--prev { left: 20px; }
+.hero__nav--next { right: 20px; }
+.hero__nav:active { transform: translateY(-50%) scale(.92); }
+
+/* 底部进度条 + 点指示 */
+.hero__dots {
+  position: absolute;
+  bottom: 24px;
+  left: 64px;
+  right: 64px;
+  display: flex;
+  gap: 10px;
+  z-index: 3;
 }
-.hero__orbit-flag--us, .hero__orbit-flag--au, .hero__orbit-flag--gb, .hero__orbit-flag--eu {
-  animation: orbit-counter 24s linear infinite;
+.hero__dot {
+  flex: 1;
+  height: 3px;
+  border: 0;
+  border-radius: 2px;
+  background: rgba(255,255,255,.28);
+  cursor: pointer;
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+  transition: background .25s ease;
 }
-@keyframes orbit-counter {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(-360deg); }
+.hero__dot.is-active {
+  background: rgba(255,255,255,.5);
 }
-.hero__orbit-flag--us { transform-origin: 50% 140px; animation: orbit-counter 24s linear infinite; }
-.hero__orbit-flag--au { transform-origin: -140px 50%; animation: orbit-counter 24s linear infinite; }
-.hero__orbit-flag--gb { transform-origin: 50% -140px; animation: orbit-counter 24s linear infinite; }
-.hero__orbit-flag--eu { transform-origin: 140px 50%; animation: orbit-counter 24s linear infinite; }
+.hero__dot-bar {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  transform: scaleX(0);
+  transform-origin: left;
+  border-radius: 2px;
+}
+.hero__dot.is-active .hero__dot-bar {
+  transform: scaleX(1);
+}
+@keyframes heroProgress {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
 
 /* ============== 4 大目的地:大图卡片网格 ============== */
 .destinations {
@@ -457,15 +617,23 @@ watch(
 @media (max-width: 1080px) {
   .destinations__grid { grid-template-columns: repeat(2, 1fr); }
   .country-card { height: 320px; }
+  .hero__copy { padding: 56px 48px; }
+  .hero__title { font-size: 38px; }
+  .hero__dots { left: 48px; right: 48px; }
 }
 @media (max-width: 960px) {
-  .hero { grid-template-columns: 1fr; padding: 36px 28px; text-align: center; }
-  .hero__visual { height: 240px; }
-  .hero__cta { justify-content: center; }
+  .hero--slideshow { min-height: 380px; }
+  .hero__copy { padding: 48px 32px; }
+  .hero__title { font-size: 32px; }
+  .hero__nav { display: none; }
   .features__grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 600px) {
-  .hero__title { font-size: 30px; }
+  .hero--slideshow { min-height: 340px; border-radius: 14px; }
+  .hero__copy { padding: 40px 24px; }
+  .hero__title { font-size: 26px; }
+  .hero__sub { font-size: 14px; }
+  .hero__dots { left: 24px; right: 24px; bottom: 16px; }
   .destinations__grid { grid-template-columns: 1fr; }
   .country-card { height: 280px; }
   .features__grid { grid-template-columns: 1fr; }
