@@ -39,7 +39,13 @@
     "logout": "Keluar",
     "destinations": "Pilih Negara",
     "materials": "Dokumen",
-    "orders": "Aplikasi Saya"
+    "orders": "Aplikasi Saya",
+    "orders_menu": {
+      "all": "Semua Aplikasi",
+      "new_order": "Aplikasi Baru",
+      "profile": "Profil Saya",
+      "materials": "Dokumen Aplikasi"
+    }
   },
   "login": {
     "title": "Selamat Datang Kembali",

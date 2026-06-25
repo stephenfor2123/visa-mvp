@@ -39,7 +39,13 @@
     "logout": "退出登录",
     "destinations": "选国家",
     "materials": "材料采集",
-    "orders": "我的申请"
+    "orders": "我的申请",
+    "orders_menu": {
+      "all": "全部申请",
+      "new_order": "新建申请",
+      "profile": "我的资料",
+      "materials": "申请材料"
+    }
   },
   "login": {
     "title": "欢迎回来",

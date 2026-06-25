@@ -39,7 +39,13 @@
     "logout": "Log Out",
     "destinations": "Destinations",
     "materials": "Materials",
-    "orders": "My Applications"
+    "orders": "My Applications",
+    "orders_menu": {
+      "all": "All Applications",
+      "new_order": "New Application",
+      "profile": "My Profile",
+      "materials": "Application Materials"
+    }
   },
   "login": {
     "title": "Welcome Back",

@@ -39,7 +39,13 @@
     "logout": "Đăng xuất",
     "destinations": "Chọn quốc gia",
     "materials": "Hồ sơ",
-    "orders": "Đơn của tôi"
+    "orders": "Đơn của tôi",
+    "orders_menu": {
+      "all": "Tất cả đơn",
+      "new_order": "Tạo đơn mới",
+      "profile": "Hồ sơ cá nhân",
+      "materials": "Tài liệu đơn"
+    }
   },
   "login": {
     "title": "Chào mừng trở lại",
