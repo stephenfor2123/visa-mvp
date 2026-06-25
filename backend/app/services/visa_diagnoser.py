@@ -17,7 +17,10 @@ from dataclasses import dataclass, field
 from datetime import date, datetime
 from typing import Any, Dict, List, Optional, Tuple
 
+from app.core.logging import get_logger
 from app.models.material import MATERIAL_TYPES
+
+_log = get_logger()
 
 
 # ---------------------------------------------------------------- #
@@ -367,26 +370,44 @@ class VisaDiagnoser:
     def _fetch_policy_refs(self, country_code: str, visa_type: Optional[str]) -> List[str]:
         """Best-effort RAG lookup. Falls back to empty list on any failure."""
         if self._rag is None:
-            # try lazy import
-            try:
-                from app.services.rag.retriever import get_retriever
-                self._rag = get_retriever()
-            except Exception:
-                return []
+            # cache an async session + retriever lazily
+            self._rag = "lazy"  # mark as initialized; actual session created per call
         try:
-            query = f"{country_code} {_visa_label(visa_type)} 签证申请所需材料"
-            results = self._rag.query(query=query, country_code=country_code, top_k=3)
-            refs: List[str] = []
-            for r in results:
-                src = r.get("source", {})
-                url = src.get("url") if isinstance(src, dict) else None
-                name = src.get("name") if isinstance(src, dict) else None
-                if url:
-                    refs.append(url)
-                elif name:
-                    refs.append(name)
-            return refs
-        except Exception:
+            import asyncio
+            from app.core.db import AsyncSessionLocal
+            from app.services.rag.retriever import retrieve
+
+            async def _fetch():
+                async with AsyncSessionLocal() as db:
+                    query = f"{country_code} {_visa_label(visa_type)} 签证申请所需材料"
+                    chunks = await retrieve(
+                        db,
+                        query=query,
+                        country_code=country_code,
+                        top_k=3,
+                    )
+                    refs = []
+                    for c in chunks:
+                        if c.source_url:
+                            refs.append(c.source_url)
+                        else:
+                            refs.append(c.source_name)
+                    return refs
+
+            # run async in sync context (RAG is best-effort, fail soft)
+            try:
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    # if we're inside an async context, fall back to a new thread
+                    import concurrent.futures
+                    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
+                        return ex.submit(asyncio.run, _fetch()).result()
+                else:
+                    return loop.run_until_complete(_fetch())
+            except RuntimeError:
+                return asyncio.run(_fetch())
+        except Exception as exc:
+            _log.debug(f"RAG policy lookup failed: {exc}")
             return []
 
     @staticmethod

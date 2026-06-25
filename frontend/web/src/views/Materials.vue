@@ -40,17 +40,7 @@
         />
       </div>
 
-      <!-- Audio recording -->
-      <div v-if="activeTab === 'voice'" class="mat-voice" data-testid="mat-voice-panel">
-        <VoiceRecorder
-          :default-lang="voiceLang"
-          :max-seconds="60"
-          :i18n-lang="currentI18nLang"
-          @recognized="onVoiceRecognized"
-          @error="onVoiceError"
-          data-testid="mat-voice-recorder"
-        />
-      </div>
+      <!-- W25: voice tab 暂不开放(用户反馈),占位隐藏 -->
 
       <!-- Collected list -->
       <section class="mat-list-section" data-testid="mat-list-section">
@@ -204,10 +194,10 @@ const router = useRouter()
 const toast = useToast()
 const auth = useAuthStore()
 
+// W25: voice tab 暂不开放(用户反馈),只保留图片 + PDF
 const tabs = [
   { key: 'photo', label: t('materials.tab_photo'), icon: '📷' },
   { key: 'pdf', label: t('materials.tab_pdf'), icon: '📄' },
-  { key: 'voice', label: t('materials.tab_voice'), icon: '🎙' }
 ]
 const activeTab = ref('photo')
 const items = ref([])

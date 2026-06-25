@@ -31,6 +31,49 @@ SOURCES = [
         "content_type": "curated",
         "enabled": True,
     },
+    # W25: add main 6 destinations (US/FR/JP/KR/SG/GB) for diagnose policy_refs
+    {
+        "name": "美国 B1/B2 旅游商务签证 (curated FAQ)",
+        "country_code": "US",
+        "url": "https://travel.state.gov",
+        "content_type": "curated",
+        "enabled": True,
+    },
+    {
+        "name": "法国 Schengen 短期签证 (curated FAQ)",
+        "country_code": "FR",
+        "url": "https://france-visas.gouv.fr",
+        "content_type": "curated",
+        "enabled": True,
+    },
+    {
+        "name": "日本旅游签证 (curated FAQ)",
+        "country_code": "JP",
+        "url": "https://www.mofa.go.jp",
+        "content_type": "curated",
+        "enabled": True,
+    },
+    {
+        "name": "韩国旅游签证 (curated FAQ)",
+        "country_code": "KR",
+        "url": "https://overseas.mofa.go.kr",
+        "content_type": "curated",
+        "enabled": True,
+    },
+    {
+        "name": "新加坡旅游签证 (curated FAQ)",
+        "country_code": "SG",
+        "url": "https://www.ica.gov.sg",
+        "content_type": "curated",
+        "enabled": True,
+    },
+    {
+        "name": "英国旅游签证 (curated FAQ)",
+        "country_code": "GB",
+        "url": "https://www.gov.uk/standard-visitor",
+        "content_type": "curated",
+        "enabled": True,
+    },
 ]
 
 

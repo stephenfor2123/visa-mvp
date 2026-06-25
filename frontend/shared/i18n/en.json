@@ -406,7 +406,17 @@
     "err_emergency_relation": "Please select relationship",
     "no_material": "No materials linked",
     "stay_days_auto": "Auto-calculated",
-    "stay_days_hint": "{next}: {days} days"
+    "stay_days_hint": "{next}: {days} days",
+    "wz_country": "Country",
+    "wz_country_sub": "Pick destination",
+    "wz_visa": "Visa Type",
+    "wz_visa_sub": "Choose visa category",
+    "wz_fill": "Fill Form",
+    "wz_fill_sub": "Complete 3 sections",
+    "wz_pay": "Payment",
+    "wz_pay_sub": "Pay visa fee",
+    "wz_rpa": "Submit",
+    "wz_rpa_sub": "Auto-submit via bot"
   },
   "orderdetail": {
     "page_title": "Order Detail",

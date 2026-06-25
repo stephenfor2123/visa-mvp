@@ -38,10 +38,54 @@
         </div>
       </div>
 
-      <!-- 4 section tabs (use Basic/Travel/Emergency three, W2 scope) -->
-      <nav class="form-tabs" role="tablist">
+      <!-- W25 redesign: 5-step 拉链/锯齿状 wizard nav (matches Destinations zigzag style) -->
+      <nav class="wizard" role="navigation" aria-label="签证申请步骤">
+        <template v-for="(step, idx) in wizardSteps" :key="step.key">
+          <button
+            class="wizard__step"
+            :class="{
+              'is-done': step.status === 'done',
+              'is-active': step.status === 'active',
+              'is-pending': step.status === 'pending',
+              'is-locked': step.status === 'locked',
+            }"
+            :disabled="step.status === 'locked' || step.status === 'pending'"
+            :data-testid="`ordernew-wizard-${step.key}`"
+            @click="onWizardStepClick(step)"
+          >
+            <span class="wizard__num">
+              <template v-if="step.status === 'done'">✓</template>
+              <template v-else>{{ idx + 1 }}</template>
+            </span>
+            <span class="wizard__body">
+              <span class="wizard__title">{{ t(step.titleKey) }}</span>
+              <span class="wizard__sub">{{ t(step.subKey) }}</span>
+            </span>
+          </button>
+          <!-- Zigzag connector between steps -->
+          <div
+            v-if="idx < wizardSteps.length - 1"
+            class="wizard__zip"
+            :class="{
+              'is-done': step.status === 'done' && wizardSteps[idx + 1].status !== 'pending',
+              'is-active': step.status === 'active',
+            }"
+            aria-hidden="true"
+          >
+            <svg viewBox="0 0 32 24" preserveAspectRatio="none">
+              <polygon
+                points="0,12 6,0 12,12 18,0 24,12 30,0 32,12 30,24 24,12 18,24 12,12 6,24 0,12"
+                fill="currentColor"
+              />
+            </svg>
+          </div>
+        </template>
+      </nav>
+
+      <!-- Sub-step tabs (only visible when wizard is on "fill" step) -->
+      <nav v-if="wizardActiveStep === 'fill'" class="form-tabs" role="tablist">
         <button
-          v-for="tab in tabs"
+          v-for="tab in subTabs"
           :key="tab.key"
           class="form-tab"
           :class="{ on: activeTab === tab.key, done: isTabDone(tab.key) }"
@@ -409,12 +453,49 @@ const relations = [
   { value: 'other', label: 'orders.relation_other' }
 ]
 
-const tabs = [
+// 5-step wizard (拉链/锯齿状导航)
+//   1. 选国家  2. 选签证  3. 填表 (含 3 个 sub-tab)  4. 付款  5. RPA 提交
+// current step status: done | active | pending | locked
+const subTabs = [
   { key: 'basic', label: 'orders.tab_basic' },
   { key: 'travel', label: 'orders.tab_travel' },
   { key: 'emergency', label: 'orders.tab_emergency' }
 ]
 const activeTab = ref('basic')
+
+// Map current destination/visa/form progress into wizard step status
+const wizardActiveStep = ref('fill')   // 'country' | 'visa' | 'fill' | 'pay' | 'rpa'
+
+// All 5 wizard steps — status computed reactively from current state
+const wizardSteps = computed(() => {
+  // W25 logic:
+  //   - country:  always done (came from /destinations with ?country=XX)
+  //   - visa:     always done (came with ?type=tourism)
+  //   - fill:     active when on this page
+  //   - pay:      pending until submit
+  //   - rpa:      pending
+  const current = wizardActiveStep.value
+  const order = ['country', 'visa', 'fill', 'pay', 'rpa']
+  return [
+    { key: 'country', titleKey: 'orders.wz_country', subKey: 'orders.wz_country_sub', status: 'done' },
+    { key: 'visa',    titleKey: 'orders.wz_visa',    subKey: 'orders.wz_visa_sub',    status: 'done' },
+    { key: 'fill',    titleKey: 'orders.wz_fill',    subKey: 'orders.wz_fill_sub',    status: 'active' },
+    { key: 'pay',     titleKey: 'orders.wz_pay',     subKey: 'orders.wz_pay_sub',     status: 'pending' },
+    { key: 'rpa',     titleKey: 'orders.wz_rpa',     subKey: 'orders.wz_rpa_sub',     status: 'pending' },
+  ]
+})
+
+function onWizardStepClick(step) {
+  // Only "done" or "active" steps are clickable; locked/pending are no-op
+  if (step.status === 'pending' || step.status === 'locked') return
+  // In this MVP, only "fill" is interactive on this page.
+  // Future: wire up "country" → /destinations, "pay" → payment, "rpa" → /rpa/submit
+  if (step.key === 'country') {
+    router.push('/destinations')
+  } else if (step.key === 'fill') {
+    wizardActiveStep.value = 'fill'
+  }
+}
 
 // Query params
 const materialIds = computed(() => {
@@ -902,6 +983,131 @@ watch(isLastTab, async (val) => {
 .form-tab.on.done .form-tab__check { color: #fff; }
 .form-tab__check--empty { color: #94A3B8; }
 .form-tab.on .form-tab__check--empty { color: rgba(255,255,255,.7); }
+
+/* ============================================================
+   W25 — 5-step 拉链/锯齿状 wizard 导航 (matches Destinations zigzag)
+   ============================================================ */
+.wizard {
+  display: flex;
+  align-items: stretch;
+  margin: 0 0 24px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  border: 1px solid #E5E7EB;
+}
+
+.wizard__step {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background .2s ease, color .2s ease;
+  text-align: left;
+  position: relative;
+  z-index: 1;
+}
+.wizard__step:not(:disabled):hover { background: #F0F4FF; }
+.wizard__step:disabled { cursor: not-allowed; }
+
+.wizard__num {
+  flex-shrink: 0;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700;
+  font-size: 15px;
+  border: 2px solid #CBD5E1;
+  color: #94A3B8;
+  background: #fff;
+  transition: all .25s ease;
+}
+
+.wizard__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.wizard__title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #475569;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wizard__sub {
+  font-size: 11px;
+  color: #94A3B8;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wizard__step.is-done .wizard__num {
+  background: linear-gradient(135deg, #16A34A 0%, #22C55E 100%);
+  border-color: #16A34A;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.3);
+}
+.wizard__step.is-done .wizard__title { color: #15803D; }
+.wizard__step.is-done .wizard__sub { color: #16A34A; }
+
+.wizard__step.is-active {
+  background: linear-gradient(135deg, #EEF2FF 0%, #F0F9FF 100%);
+}
+.wizard__step.is-active .wizard__num {
+  background: linear-gradient(135deg, #3B6EF5 0%, #6E59F0 100%);
+  border-color: #3B6EF5;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(59, 110, 245, 0.4);
+  transform: scale(1.1);
+  animation: wiz-pulse 2s ease-in-out infinite;
+}
+.wizard__step.is-active .wizard__title { color: #1E40AF; }
+.wizard__step.is-active .wizard__sub { color: #3B6EF5; font-weight: 600; }
+
+@keyframes wiz-pulse {
+  0%, 100% { box-shadow: 0 4px 12px rgba(59, 110, 245, 0.4); }
+  50% { box-shadow: 0 4px 20px rgba(59, 110, 245, 0.6); }
+}
+
+.wizard__step.is-pending .wizard__num,
+.wizard__step.is-locked .wizard__num {
+  background: #F8FAFC;
+  color: #CBD5E1;
+  border-color: #E2E8F0;
+}
+.wizard__step.is-pending .wizard__title,
+.wizard__step.is-locked .wizard__title { color: #94A3B8; font-weight: 500; }
+
+/* zigzag connector (zip) */
+.wizard__zip {
+  flex-shrink: 0;
+  width: 28px;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  color: #E2E8F0;
+  transition: color .25s ease;
+}
+.wizard__zip svg { width: 100%; height: 100%; display: block; }
+.wizard__zip.is-done { color: #16A34A; }
+.wizard__zip.is-active { color: #3B6EF5; }
+
+@media (max-width: 720px) {
+  .wizard { flex-direction: column; }
+  .wizard__zip { width: 100%; height: 16px; }
+  .wizard__zip svg { transform: rotate(90deg); }
+}
 
 // ============== Form Card ==============
 .form-card {

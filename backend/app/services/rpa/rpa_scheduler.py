@@ -227,18 +227,21 @@ class RPAScheduler:
         # Check concurrent task limit
         self._check_concurrent_limit(user_id)
 
-        # Check country enabled (case-insensitive lookup, supports both ISO codes and names)
+        # Check country enabled.
+        # W25 fix: prefer ISO 3166-1 alpha-2 code as the primary key in rpa_config.yaml.
+        # Legacy support: also resolve by full English country name (back-compat).
         countries = self._config.get("countries", {})
-        # ISO code → config key mapping
         ISO_TO_NAME = {
             "ID": "Indonesia", "VN": "Vietnam", "PH": "Philippines",
             "TH": "Thailand", "MY": "Malaysia", "SG": "Singapore",
             "CN": "China", "JP": "Japan", "KR": "Korea",
+            "US": "United States", "FR": "France", "GB": "United Kingdom",
+            "AU": "Australia", "DE": "Germany", "CA": "Canada",
         }
-        resolved_code = ISO_TO_NAME.get(country_code, country_code)
         country_config = (
-            countries.get(resolved_code)
-            or countries.get(country_code)
+            countries.get(country_code)               # ISO 2-letter (preferred)
+            or countries.get(country_code.upper())     # case
+            or countries.get(ISO_TO_NAME.get(country_code.upper(), ""))  # full name
             or countries.get(country_code.lower())
             or countries.get(country_code.title())
             or {}

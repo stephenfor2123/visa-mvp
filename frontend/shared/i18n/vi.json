@@ -406,7 +406,17 @@
     "err_emergency_relation": "Vui lòng chọn mối quan hệ",
     "no_material": "Không có tài liệu nào được liên kết",
     "stay_days_auto": "Tự động tính",
-    "stay_days_hint": "{next}: {days} ngày"
+    "stay_days_hint": "{next}: {days} ngày",
+    "wz_country": "Quốc gia",
+    "wz_country_sub": "Chọn điểm đến",
+    "wz_visa": "Loại visa",
+    "wz_visa_sub": "Chọn loại visa",
+    "wz_fill": "Điền form",
+    "wz_fill_sub": "Hoàn thành 3 mục",
+    "wz_pay": "Thanh toán",
+    "wz_pay_sub": "Trả phí visa",
+    "wz_rpa": "Gửi",
+    "wz_rpa_sub": "Tự động gửi qua bot"
   },
   "orderdetail": {
     "page_title": "Chi tiết đơn hàng",

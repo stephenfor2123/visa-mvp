@@ -23,25 +23,75 @@ session:
   user_agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML,
     like Gecko) Chrome/120.0.0.0 Safari/537.36
 countries:
-  Indonesia:
-    base_url: https://visa-online.imigration.go.id
+  # ISO 3166-1 alpha-2 codes (preferred key) — also support full name aliases below
+  ID:
+    base_url: https://visa-online.imigrasi.go.id
     form_path: /apply
     captcha_type: image
     captcha_url_path: /captcha
     submit_button_id: btn-submit
     enabled: true
-  Vietnam:
-    base_url: https://visaonline.vn
+  VN:
+    base_url: https://evisa.xuatnhapcanh.gov.vn
     form_path: /application
     captcha_type: image
     captcha_url_path: /captcha.jpg
     submit_button_id: submit-btn
     enabled: true
-  Philippines:
-    base_url: https://onlinetravel. Bureau of Immigration
+  US:
+    base_url: https://ceac.state.gov/GenNIV/Default.aspx
+    form_path: /DS-160
+    captcha_type: image
+    captcha_url_path: /captcha
+    submit_button_id: btn-submit
+    enabled: true
+  FR:
+    base_url: https://france-visas.gouv.fr
+    form_path: /en-GB/web/guest/saisie
+    captcha_type: image
+    captcha_url_path: /captcha
+    submit_button_id: btn-submit
+    enabled: true
+  JP:
+    base_url: https://www.mofa.go.jp/j_info/visit/visa/
+    form_path: /apply
+    captcha_type: image
+    captcha_url_path: /captcha
+    submit_button_id: btn-submit
+    enabled: true
+  KR:
+    base_url: https://www.visa.go.kr
+    form_path: /apply
+    captcha_type: image
+    captcha_url_path: /captcha
+    submit_button_id: btn-submit
+    enabled: true
+  SG:
+    base_url: https://eservices.ica.gov.sg/savedraft
+    form_path: /visa-application
+    captcha_type: image
+    captcha_url_path: /captcha
+    submit_button_id: btn-submit
+    enabled: true
+  GB:
+    base_url: https://www.gov.uk/standard-visitor
+    form_path: /apply
+    captcha_type: image
+    captcha_url_path: /captcha
+    submit_button_id: btn-submit
+    enabled: true
+  TH:
+    base_url: https://thaievisa.go.th
+    form_path: /visa-application
+    captcha_type: image
+    captcha_url_path: /captcha
+    submit_button_id: btn-submit
+    enabled: true
+  PH:
+    base_url: https://onlinetravel.dfa.gov.ph
     form_path: /visa-application
     captcha_type: image
     captcha_url_path: /captcha
     submit_button_id: btn-submit-visa
-    enabled: false
+    enabled: false   # not yet wired up
 mock_mode: false
