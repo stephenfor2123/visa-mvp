@@ -16,12 +16,13 @@ import { test, expect } from '@playwright/test'
 
 const SUPPORTED = ['zh-CN', 'en', 'id-ID', 'vi-VN']
 
-// W10-2: Home hero sub text spot-check (verifier feedback — must NOT show raw key)
+// W10-2: Home slogan spot-check (verifier feedback — must NOT show raw key)
+// W25: slogan moved from `home.hero.sub` to `common.app_slogan`
 const HOME_SPOT = {
-  'zh-CN': '覆盖东南亚多国签证',
-  'en':    'Covering Southeast Asian visas',
-  'id-ID': 'Mencakup visa Asia Tenggara',
-  'vi-VN': 'Bao phủ visa Đông Nam Á'
+  'zh-CN': '无限可能,随行而至',
+  'en':    'Wherever you go, life is infinite',
+  'id-ID': 'Ke mana pun Anda pergi',
+  'vi-VN': 'Đi đến nơi nào'
 }
 
 const SPOT_CHECKS = {
