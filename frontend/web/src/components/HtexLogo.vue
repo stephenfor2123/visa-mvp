@@ -18,30 +18,24 @@
       <!-- 渐变圆角方块底 -->
       <rect width="32" height="32" rx="8" :fill="`url(#${gradId})`" />
 
-      <!-- 虚线航迹:H 出发到纸飞机 -->
-      <path
-        d="M 5 22 Q 12 19, 16 14 T 23 6"
-        stroke="#fff"
-        stroke-opacity="0.45"
-        stroke-width="1"
-        stroke-dasharray="1.4 1.6"
-        stroke-linecap="round"
-        fill="none"
-      />
-
-      <!-- H 字(粗,白)— 经典 H 形 -->
-      <g fill="#fff">
-        <!-- 左竖 -->
-        <rect x="6" y="9" width="3.5" height="14" rx="1.2" />
-        <!-- 右竖 -->
-        <rect x="18.5" y="9" width="3.5" height="14" rx="1.2" />
-        <!-- 横 -->
-        <rect x="6" y="14.5" width="16" height="3" rx="1.2" />
+      <!-- 方形签证章(略 -4° 旋转,模拟盖章质感) -->
+      <g transform="rotate(-4 16 17)">
+        <rect
+          x="6.5" y="8" width="19" height="19" rx="2"
+          fill="none" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"
+        />
       </g>
 
-      <!-- 纸飞机(右上,白) -->
+      <!-- H 字母(也跟随印章旋转) -->
+      <g transform="rotate(-4 16 17)" fill="#fff">
+        <rect x="11"   y="12"   width="2.4" height="11" rx="0.5" />
+        <rect x="18.6" y="12"   width="2.4" height="11" rx="0.5" />
+        <rect x="11"   y="16.5" width="10"  height="2.4" rx="0.5" />
+      </g>
+
+      <!-- 纸飞机(印章上方,小一角,营造"已盖章+启程") -->
       <path
-        d="M 22 3.5 L 30 6 L 22.5 8.8 L 24.5 6.2 Z"
+        d="M 22 3 L 29 5 L 22.8 7.4 L 24.4 5 Z"
         fill="#fff"
       />
     </svg>

@@ -330,9 +330,10 @@ watch(
 .hero__slide-overlay {
   position: absolute;
   inset: 0;
+  // 左侧只留极轻的"可读区"暗角,主体保持原图色彩
   background:
-    linear-gradient(110deg, rgba(15,23,42,.78) 0%, rgba(15,23,42,.55) 45%, rgba(15,23,42,.25) 100%),
-    linear-gradient(180deg, rgba(59,110,245,.15) 0%, rgba(110,89,240,.15) 100%);
+    linear-gradient(90deg, rgba(15,23,42,.42) 0%, rgba(15,23,42,.18) 35%, rgba(15,23,42,0) 60%),
+    linear-gradient(180deg, rgba(0,0,0,0) 60%, rgba(15,23,42,.18) 100%);
 }
 @keyframes kenburns {
   from { transform: scale(1.0); }
@@ -351,7 +352,7 @@ watch(
   margin: 0 0 14px;
   line-height: 1.15;
   letter-spacing: -.5px;
-  text-shadow: 0 4px 20px rgba(0,0,0,.25);
+  text-shadow: 0 2px 12px rgba(15,23,42,.55), 0 0 1px rgba(15,23,42,.4);
 }
 .hero__sub {
   font-size: 16px;
