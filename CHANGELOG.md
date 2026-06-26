@@ -27,6 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **frontend/web Dark Mode support** (W16-P0-Dark-Mode) — `data-theme` token switch in `src/styles/tokens.scss`, `useTheme()` composable with `localStorage` persistence (key: `visa-theme`), `<ThemeToggle />` Sun/Moon icon button mounted in Home header. Light/dark token sets cover `--ink-1/2/3`, `--bg`, `--bg-alt`, `--bg-card`, `--border`, `--primary-bg`, and Element Plus `--el-color-*`.
 
+### Changed
+- **Home / 4 大签证目的地 色彩鲜艳度** (W29) — `.country-card__media::after` 冷蓝 overlay `opacity: .55 → .35`；`.country-card__img` 滤镜 `saturate(.85) → 1.3` / `contrast(1.05) → 1.08`。设计参考图存档到 `sources/design-references/destinations-hero-vibrant.png` (v1)。
+
 ### Fixed
 - **`useTheme.js` runtime crash** — TypeScript syntax (`as const`, `: Theme`) in a `.js` file caused `SyntaxError` on import, breaking any page that pulled in the theme system. Removed TS annotations, added try/catch around `localStorage`, renamed storage key from `visa_theme` to spec's `visa-theme`.
 
