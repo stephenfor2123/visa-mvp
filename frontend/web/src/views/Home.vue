@@ -3,25 +3,28 @@
     <AppHeader scope="home" />
     <main class="app-container app-page">
       <!-- Hero: 旅行图轮播背景 + slogan 永远在前景 -->
-      <section class="hero hero--slideshow" @mouseenter="pauseCarousel" @mouseleave="resumeCarousel">
-        <!-- 5 张背景图 crossfade + 平移 + SVG 动效层(雪花/海鸟/极光/沙粒/流星) -->
+      <!-- W29: 用户不能手动切换,纯自动轮播 -->
+      <section class="hero hero--slideshow">
+        <!-- 10 张真实运动视频(轮船开/海浪动/云动/极光流动) — atlys 风格 -->
         <div class="hero__slides" aria-hidden="true">
           <div
             v-for="(s, i) in slides"
             :key="i"
             class="hero__slide"
-            :class="[`hero__slide--pan-${s.pan}`, { 'is-active': i === activeIdx }]"
+            :class="{ 'is-active': i === activeIdx }"
           >
-            <img
+            <video
               v-if="s.image"
               :src="s.image"
               :alt="t(s.captionKey)"
-              class="hero__slide-img"
-              loading="lazy"
+              class="hero__slide-video"
+              autoplay
+              loop
+              muted
+              playsinline
+              preload="auto"
               @error="onHeroImgError(i)"
             />
-            <!-- SVG 动效层(每张图配一个,内容在图上动) -->
-            <div class="hero__fx" v-html="s.fx" />
             <div class="hero__slide-overlay" />
           </div>
         </div>
@@ -31,28 +34,12 @@
           <h1 class="hero__title">{{ t('common.app_slogan') }}</h1>
           <p v-if="t('home.hero.sub')" class="hero__sub">{{ t('home.hero.sub') }}</p>
           <p class="hero__caption" :key="`cap-${activeIdx}`">
-            <span class="hero__caption-tag">{{ String(activeIdx + 1).padStart(2, '0') }} / 05</span>
             <span class="hero__caption-text">{{ t(slides[activeIdx].captionKey) }}</span>
+            <span class="hero__caption-sep" aria-hidden="true">·</span>
+            <span class="hero__caption-city">{{ t(slides[activeIdx].cityKey) }}</span>
           </p>
         </div>
 
-        <!-- 左右翻页箭头 -->
-        <button class="hero__nav hero__nav--prev" @click="prev" aria-label="Previous">‹</button>
-        <button class="hero__nav hero__nav--next" @click="next" aria-label="Next">›</button>
-
-        <!-- 底部进度条 + 点指示 -->
-        <div class="hero__dots">
-          <button
-            v-for="(s, i) in slides"
-            :key="i"
-            class="hero__dot"
-            :class="{ 'is-active': i === activeIdx }"
-            @click="setActive(i)"
-            :aria-label="`Slide ${i + 1}`"
-          >
-            <span class="hero__dot-bar" :style="i === activeIdx ? { animation: `heroProgress 5s linear` } : null" />
-          </button>
-        </div>
       </section>
 
       <!-- 4 大签证目的地:大图卡片 -->
@@ -95,8 +82,32 @@
             <div class="country-card__bottom">
               <h3 class="country-card__name">{{ c.name }}</h3>
               <p class="country-card__sub">{{ c.sub }}</p>
+              <!-- W28 P1: SCHENGEN 卡显示 "Apply through this country" 提示 -->
+              <p v-if="c.code === 'SCHENGEN'" class="country-card__hint" data-testid="home-card-hint-schengen">
+                <span class="country-card__hint-icon" aria-hidden="true">🇪🇺</span>
+                {{ t('home.card.apply_through') }}
+              </p>
+              <!-- W28 Atlys-style: 3 列属性 TYPE / VALID / FEES -->
+              <div class="country-card__attrs" v-if="c.fee_usd != null">
+                <div class="country-card__attr">
+                  <span class="country-card__attr-label">{{ t('home.card.type') || 'TYPE' }}</span>
+                  <span class="country-card__attr-val">{{ c.visa_type_label }}</span>
+                </div>
+                <div class="country-card__attr">
+                  <span class="country-card__attr-label">{{ t('home.card.valid') || 'VALID' }}</span>
+                  <span class="country-card__attr-val">{{ c.valid_label }}</span>
+                </div>
+                <div class="country-card__attr">
+                  <span class="country-card__attr-label">{{ t('home.card.fees') || 'FEES' }}</span>
+                  <span class="country-card__attr-val">\${{ c.fee_usd }}</span>
+                </div>
+              </div>
+              <!-- W28 Atlys-style: 精准交付时间 "Guaranteed Visa on DD MMM, HH:MM" -->
+              <div class="country-card__eta" v-if="c.eta_label">
+                <span class="country-card__eta-icon" aria-hidden="true">⏱</span>
+                <span class="country-card__eta-text">{{ t('home.card.guaranteed_on') || 'Guaranteed Visa on' }} <b>{{ c.eta_label }}</b></span>
+              </div>
               <div class="country-card__meta">
-                <span class="country-card__chip">⏱ {{ t('home.hero.chip_meta') }}</span>
                 <span class="country-card__arrow" aria-hidden="true">→</span>
               </div>
             </div>
@@ -104,21 +115,24 @@
         </div>
       </section>
 
-      <!-- 为什么选我们 -->
+      <!-- W28 重构:Why choose us — 从"功能描述"改成"用户利益 + SVG icon" -->
       <section class="features">
         <h2 class="section-title">{{ t('home.features.title') }}</h2>
         <p class="section-sub">{{ t('home.features.subtitle') }}</p>
         <div class="features__grid">
-          <AppCard
+          <article
             v-for="f in features"
-            :key="f.title"
-            hoverable
+            :key="f.id"
+            class="feature"
+            :class="`feature--${f.id}`"
+            :data-testid="`home-feature-${f.id}`"
           >
-            <template #header>
+            <span class="feature__icon" v-html="f.icon" aria-hidden="true" />
+            <div class="feature__body">
               <h3 class="feature__title">{{ t(f.titleKey) }}</h3>
-            </template>
-            <p class="feature__desc">{{ t(f.descKey) }}</p>
-          </AppCard>
+              <p class="feature__desc">{{ t(f.descKey) }}</p>
+            </div>
+          </article>
         </div>
       </section>
     </main>
@@ -134,107 +148,27 @@ import AppButton from '@/components/AppButton.vue'
 import LangSwitch from '@/components/LangSwitch.vue'
 import { useAuthStore } from '@/stores/auth'
 import AppHeader from '@/components/AppHeader.vue'
+import { listDestinations } from '@/api/destinations'
 
 const { t, locale } = useI18n()
 const router = useRouter()
 const auth = useAuthStore()
 
-// ============== Hero 旅行图轮播 ==============
-// 5 张 Unsplash 旅行图,每 5s 自动切换,hover 暂停,左右箭头可手翻
-// 每张图配 pan 方向 + SVG 动效层(雪花/海鸟/极光/沙粒/流星),图像本身"内容在动"
-const SLIDE_DURATION = 5000
-const FX_SNOWFALL = `
-  <svg class="fx fx-snow" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice">
-    <g class="fx-snow__layer">
-      <circle cx="120" cy="80"  r="2" fill="rgba(255,255,255,.9)"/>
-      <circle cx="280" cy="40"  r="1.5" fill="rgba(255,255,255,.75)"/>
-      <circle cx="420" cy="120" r="2.5" fill="rgba(255,255,255,.95)"/>
-      <circle cx="620" cy="60"  r="1.8" fill="rgba(255,255,255,.8)"/>
-      <circle cx="780" cy="150" r="2.2" fill="rgba(255,255,255,.9)"/>
-      <circle cx="950" cy="50"  r="1.6" fill="rgba(255,255,255,.7)"/>
-      <circle cx="1100" cy="180" r="2" fill="rgba(255,255,255,.85)"/>
-    </g>
-    <g class="fx-snow__layer fx-snow__layer--2">
-      <circle cx="80"  cy="180" r="1.5" fill="rgba(255,255,255,.7)"/>
-      <circle cx="240" cy="220" r="2" fill="rgba(255,255,255,.85)"/>
-      <circle cx="380" cy="280" r="1.2" fill="rgba(255,255,255,.6)"/>
-      <circle cx="560" cy="240" r="1.8" fill="rgba(255,255,255,.75)"/>
-      <circle cx="720" cy="320" r="2.2" fill="rgba(255,255,255,.9)"/>
-      <circle cx="900" cy="260" r="1.5" fill="rgba(255,255,255,.7)"/>
-      <circle cx="1060" cy="340" r="1.8" fill="rgba(255,255,255,.8)"/>
-    </g>
-  </svg>`
-const FX_BIRDS = `
-  <svg class="fx fx-birds" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice">
-    <g class="fx-bird fx-bird--1">
-      <path d="M0 0 q 6 -6 12 0 q 6 -6 12 0" fill="none" stroke="rgba(15,23,42,.7)" stroke-width="1.6" stroke-linecap="round"/>
-    </g>
-    <g class="fx-bird fx-bird--2">
-      <path d="M0 0 q 4 -4 8 0 q 4 -4 8 0" fill="none" stroke="rgba(15,23,42,.5)" stroke-width="1.4" stroke-linecap="round"/>
-    </g>
-    <g class="fx-bird fx-bird--3">
-      <path d="M0 0 q 5 -5 10 0 q 5 -5 10 0" fill="none" stroke="rgba(15,23,42,.6)" stroke-width="1.5" stroke-linecap="round"/>
-    </g>
-  </svg>`
-const FX_AURORA = `
-  <svg class="fx fx-aurora" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice">
-    <defs>
-      <linearGradient id="aurora-grad" x1="0" y1="0" x2="1" y2="0.4">
-        <stop offset="0%"  stop-color="rgba(74,222,128,0)"/>
-        <stop offset="30%" stop-color="rgba(74,222,128,.55)"/>
-        <stop offset="55%" stop-color="rgba(167,243,208,.7)"/>
-        <stop offset="80%" stop-color="rgba(110,231,183,.4)"/>
-        <stop offset="100%" stop-color="rgba(74,222,128,0)"/>
-      </linearGradient>
-    </defs>
-    <g class="fx-aurora__band">
-      <path d="M -200 200 Q 200 100 600 220 T 1400 180 L 1400 380 Q 1000 320 600 380 T -200 380 Z" fill="url(#aurora-grad)"/>
-    </g>
-    <g class="fx-aurora__band fx-aurora__band--2">
-      <path d="M -200 260 Q 300 200 700 300 T 1400 260 L 1400 420 Q 900 380 600 420 T -200 420 Z" fill="url(#aurora-grad)" opacity=".6"/>
-    </g>
-  </svg>`
-const FX_SAND = `
-  <svg class="fx fx-sand" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice">
-    <g class="fx-sand__layer">
-      <circle cx="100"  cy="380" r="1.5" fill="rgba(253,224,71,.9)"/>
-      <circle cx="260"  cy="320" r="1.2" fill="rgba(253,224,71,.7)"/>
-      <circle cx="420"  cy="420" r="1.8" fill="rgba(253,224,71,.85)"/>
-      <circle cx="580"  cy="360" r="1.3" fill="rgba(253,224,71,.75)"/>
-      <circle cx="740"  cy="400" r="1.5" fill="rgba(253,224,71,.8)"/>
-      <circle cx="900"  cy="340" r="1.2" fill="rgba(253,224,71,.7)"/>
-      <circle cx="1060" cy="420" r="1.7" fill="rgba(253,224,71,.85)"/>
-    </g>
-    <g class="fx-sand__layer fx-sand__layer--2">
-      <circle cx="160"  cy="460" r="1" fill="rgba(253,224,71,.55)"/>
-      <circle cx="320"  cy="500" r="1.4" fill="rgba(253,224,71,.7)"/>
-      <circle cx="500"  cy="480" r="1.1" fill="rgba(253,224,71,.6)"/>
-      <circle cx="680"  cy="520" r="1.5" fill="rgba(253,224,71,.75)"/>
-      <circle cx="860"  cy="490" r="1.2" fill="rgba(253,224,71,.65)"/>
-      <circle cx="1020" cy="530" r="1.3" fill="rgba(253,224,71,.7)"/>
-    </g>
-  </svg>`
-const FX_METEOR = `
-  <svg class="fx fx-meteor" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice">
-    <defs>
-      <linearGradient id="meteor-grad" x1="1" y1="0" x2="0" y2="1">
-        <stop offset="0%"  stop-color="rgba(255,255,255,0)"/>
-        <stop offset="40%" stop-color="rgba(244,232,255,.4)"/>
-        <stop offset="100%" stop-color="rgba(255,255,255,1)"/>
-      </linearGradient>
-    </defs>
-    <line class="fx-meteor__trail" x1="1000" y1="80" x2="1180" y2="20" stroke="url(#meteor-grad)" stroke-width="1.4" stroke-linecap="round"/>
-    <circle class="fx-meteor__head" cx="1180" cy="20" r="2.2" fill="white"/>
-    <line class="fx-meteor__trail fx-meteor__trail--2" x1="800" y1="180" x2="950" y2="125" stroke="url(#meteor-grad)" stroke-width="1" stroke-linecap="round" opacity=".5"/>
-    <circle class="fx-meteor__head fx-meteor__head--2" cx="950" cy="125" r="1.5" fill="white" opacity=".7"/>
-  </svg>`
+// ============== Hero 真实动图轮播(atlys 风格) ==============
+// 10 段真实视频(轮船开/海浪动/云动/极光流动/风沙动),每 4.5s 自动切换
+const SLIDE_DURATION = 4500
 
 const slides = [
-  { image: '/hero/t1_snow.jpg',   captionKey: 'home.hero.cap1', pan: 'tl', fx: FX_SNOWFALL },
-  { image: '/hero/t2_island.jpg', captionKey: 'home.hero.cap2', pan: 'br', fx: FX_BIRDS },
-  { image: '/hero/t3_aurora.jpg', captionKey: 'home.hero.cap3', pan: 'r',  fx: FX_AURORA },
-  { image: '/hero/t4_desert.jpg', captionKey: 'home.hero.cap4', pan: 'l',  fx: FX_SAND },
-  { image: '/hero/t5_stars.jpg',  captionKey: 'home.hero.cap5', pan: 't',  fx: FX_METEOR },
+  { image: '/hero/videos/t1_snow.mp4',          captionKey: 'home.hero.cap1',  cityKey: 'home.hero.city1' },
+  { image: '/hero/videos/t1_hiker.mp4',         captionKey: 'home.hero.cap6',  cityKey: 'home.hero.city2' },
+  { image: '/hero/videos/t2_island.mp4',        captionKey: 'home.hero.cap2',  cityKey: 'home.hero.city3' },
+  { image: '/hero/videos/t2_backpack_city.mp4', captionKey: 'home.hero.cap7',  cityKey: 'home.hero.city4' },
+  { image: '/hero/videos/t3_aurora.mp4',        captionKey: 'home.hero.cap3',  cityKey: 'home.hero.city5' },
+  { image: '/hero/videos/t3_plane_sunset.mp4',  captionKey: 'home.hero.cap8',  cityKey: 'home.hero.city6' },
+  { image: '/hero/videos/t4_desert.mp4',        captionKey: 'home.hero.cap4',  cityKey: 'home.hero.city7' },
+  { image: '/hero/videos/t4_dolomites.mp4',     captionKey: 'home.hero.cap9',  cityKey: 'home.hero.city8' },
+  { image: '/hero/videos/t5_stars.mp4',         captionKey: 'home.hero.cap5',  cityKey: 'home.hero.city9' },
+  { image: '/hero/videos/t5_window_clouds.mp4', captionKey: 'home.hero.cap10', cityKey: 'home.hero.city10' },
 ]
 const activeIdx = ref(0)
 let timer = null
@@ -248,10 +182,8 @@ function onHeroImgError(i) {
 
 function setActive(i) {
   activeIdx.value = i
-  startTimer()
 }
 function next() { setActive((activeIdx.value + 1) % slides.length) }
-function prev() { setActive((activeIdx.value - 1 + slides.length) % slides.length) }
 
 function startTimer() {
   stopTimer()
@@ -260,10 +192,11 @@ function startTimer() {
 function stopTimer() {
   if (timer) { clearInterval(timer); timer = null }
 }
-function pauseCarousel() { stopTimer() }
-function resumeCarousel() { startTimer() }
 
-onMounted(startTimer)
+onMounted(() => {
+  startTimer()
+  applyDestinationsMeta()
+})
 onBeforeUnmount(stopTimer)
 
 // 切语种时重置,避免 caption 切换不流畅
@@ -302,14 +235,185 @@ const heroCountries = computed(() =>
     name: t(countryNameKeys[code]),
     sub: t(countrySubKeys[code]),
     image: failedImages.value.has(code) ? null : HERO_COUNTRY_IMAGES[code],
+    // W28 Atlys-style meta (filled from destinations API via applyMeta later)
+    fee_usd: null,
+    valid_days: null,
+    process_days: null,
+    eta_iso: null,
+    visa_type_label: t('home.card.type_evisa'),
+    valid_label: '',
+    eta_label: '',
   }))
 )
 
+// 把 destinations API 返回的价格/有效期/ETA 注入 heroCountries
+// 注意: heroCountries 是静态 4 国(US/AU/SCHENGEN/GB),SCHENGEN 在 API 里没有 row,
+// 用 AT/FR/DE 等价 fallback.
+async function applyDestinationsMeta() {
+  try {
+    const rows = await listDestinations()
+    const byCode = Object.fromEntries(rows.map(r => [r.country_code, r]))
+    // SCHENGEN 用 FR 的 ETA (代表整个申根的处理时间)
+    const schengenProxy = byCode['FR'] || byCode['DE'] || byCode['IT']
+    const metaByCode = {
+      US:       byCode['US'],
+      AU:       byCode['AU'],
+      GB:       byCode['GB'],
+      SCHENGEN: schengenProxy,
+    }
+    for (let i = 0; i < heroCountries.value.length; i++) {
+      const c = heroCountries.value[i]
+      const m = metaByCode[c.code]
+      if (!m) continue
+      c.fee_usd     = m.visa_fee_usd != null ? Math.round(m.visa_fee_usd / 100) : null
+      c.valid_days  = m.valid_days
+      c.process_days = m.process_days
+      c.eta_iso     = m.eta_iso
+      // visa type label: tourism 视为 E-VISA;work/student 为普通 VISA
+      const types = (m.visa_types || [])
+      if (types.includes('tourism')) {
+        c.visa_type_label = t('home.card.type_evisa')
+      } else if (types.includes('work') || types.includes('student')) {
+        c.visa_type_label = t('home.card.type_visa')
+      }
+      // valid label
+      if (m.valid_days) {
+        if (m.valid_days % 365 === 0) {
+          const y = m.valid_days / 365
+          c.valid_label = y === 1 ? '1 YEAR' : `${y} YEARS`
+        } else if (m.valid_days % 30 === 0) {
+          const mo = m.valid_days / 30
+          c.valid_label = mo === 1 ? '1 MONTH' : `${mo} MONTHS`
+        } else {
+          c.valid_label = `${m.valid_days} DAYS`
+        }
+      }
+      // ETA label - "DD MMM, HH:MM"
+      if (m.eta_iso) {
+        try {
+          const d = new Date(m.eta_iso)
+          const dd = String(d.getUTCDate()).padStart(2, '0')
+          const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+          const mm = months[d.getUTCMonth()]
+          const hh = String(d.getUTCHours()).padStart(2, '0')
+          const mi = String(d.getUTCMinutes()).padStart(2, '0')
+          c.eta_label = `${dd} ${mm} ${d.getUTCFullYear()}, ${hh}:${mi}`
+        } catch (_) { c.eta_label = '' }
+      }
+    }
+  } catch (e) {
+    // 静默失败,卡仍可点;只是没有价格/ETA
+    console.warn('[home] destinations meta load failed:', e?.message)
+  }
+}
+onMounted(() => {
+  startTimer()
+  applyDestinationsMeta()
+})
+
+// W28 重构:Why choose us — 4 个用户利益点(从功能描述→用户价值)
+// 每个 feature 带专属 SVG icon(紫色/绿色/蓝色/橙色色调),不用 emoji
+const ICON_PAY_LATER = `
+  <svg viewBox="0 0 48 48" fill="none">
+    <defs>
+      <linearGradient id="ft-pay-grad" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%"  stop-color="#6366F1"/>
+        <stop offset="100%" stop-color="#8B5CF6"/>
+      </linearGradient>
+    </defs>
+    <rect x="6" y="12" width="36" height="26" rx="4" fill="url(#ft-pay-grad)"/>
+    <rect x="6" y="16" width="36" height="6" fill="rgba(0,0,0,.18)"/>
+    <circle cx="24" cy="26" r="5" fill="#fff"/>
+    <path d="M22 26 L23.6 27.6 L26.5 24.7" stroke="#6366F1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="14" y="30" width="8" height="2" rx="1" fill="rgba(255,255,255,.7)"/>
+    <rect x="14" y="34" width="6" height="2" rx="1" fill="rgba(255,255,255,.5)"/>
+  </svg>`
+const ICON_SHIELD = `
+  <svg viewBox="0 0 48 48" fill="none">
+    <defs>
+      <linearGradient id="ft-shield-grad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"  stop-color="#10B981"/>
+        <stop offset="100%" stop-color="#059669"/>
+      </linearGradient>
+    </defs>
+    <path d="M24 4 L40 10 V22 C40 32 33 40 24 44 C15 40 8 32 8 22 V10 Z"
+          fill="url(#ft-shield-grad)"/>
+    <path d="M16 22 L21 27 L32 16" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="36" cy="14" r="5" fill="#fff" opacity=".95"/>
+    <path d="M33.5 14 L35.5 16 L38.5 13" stroke="#10B981" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+const ICON_TEMPLATE = `
+  <svg viewBox="0 0 48 48" fill="none">
+    <defs>
+      <linearGradient id="ft-tpl-grad" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%"  stop-color="#3B6EF5"/>
+        <stop offset="100%" stop-color="#6366F1"/>
+      </linearGradient>
+    </defs>
+    <rect x="8" y="6" width="26" height="34" rx="3" fill="url(#ft-tpl-grad)"/>
+    <rect x="14" y="40" width="26" height="6" rx="2" fill="#6366F1" opacity=".25"/>
+    <path d="M22 6 V14 H34" fill="rgba(0,0,0,.15)"/>
+    <rect x="13" y="18" width="16" height="2" rx="1" fill="#fff" opacity=".85"/>
+    <rect x="13" y="22" width="12" height="2" rx="1" fill="#fff" opacity=".65"/>
+    <rect x="13" y="26" width="14" height="2" rx="1" fill="#fff" opacity=".65"/>
+    <rect x="13" y="30" width="10" height="2" rx="1" fill="#fff" opacity=".5"/>
+    <circle cx="38" cy="32" r="7" fill="#fff"/>
+    <path d="M35 32 L37.5 34.5 L42 30" stroke="#3B6EF5" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`
+const ICON_CLOCK = `
+  <svg viewBox="0 0 48 48" fill="none">
+    <defs>
+      <linearGradient id="ft-clock-grad" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%"  stop-color="#F59E0B"/>
+        <stop offset="100%" stop-color="#EF4444"/>
+      </linearGradient>
+    </defs>
+    <circle cx="24" cy="24" r="18" fill="url(#ft-clock-grad)"/>
+    <circle cx="24" cy="24" r="13" fill="#fff"/>
+    <path d="M24 17 V24 L29 27" stroke="#F59E0B" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="24" cy="24" r="1.8" fill="#F59E0B"/>
+    <text x="24" y="11" font-size="6" font-weight="800" fill="#fff" text-anchor="middle" font-family="ui-sans-serif, sans-serif">24</text>
+  </svg>`
+// ICON_LOCK: 数据安全 — 蓝绿色渐变 + 锁图标
+const ICON_LOCK = `
+  <svg viewBox="0 0 48 48" fill="none">
+    <defs>
+      <linearGradient id="ft-lock-grad" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%"  stop-color="#10B981"/>
+        <stop offset="100%" stop-color="#0891B2"/>
+      </linearGradient>
+    </defs>
+    <rect x="8" y="20" width="32" height="22" rx="5" fill="url(#ft-lock-grad)"/>
+    <path d="M15 20 V14 a9 9 0 0 1 18 0 V20" stroke="#10B981" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <circle cx="24" cy="30" r="2.4" fill="#fff"/>
+    <path d="M24 30 V34" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+  </svg>`
+
 const features = computed(() => [
-  { titleKey: 'home.features.materials.title', descKey: 'home.features.materials.desc' },
-  { titleKey: 'home.features.insurance.title', descKey: 'home.features.insurance.desc' },
-  { titleKey: 'home.features.templates.title', descKey: 'home.features.templates.desc' },
-  { titleKey: 'home.features.affiliate.title', descKey: 'home.features.affiliate.desc' }
+  {
+    id: 'pay-after',
+    titleKey: 'home.features.pay_after.title',
+    descKey:  'home.features.pay_after.desc',
+    icon: ICON_PAY_LATER,
+  },
+  {
+    id: 'system-check',
+    titleKey: 'home.features.system_check.title',
+    descKey:  'home.features.system_check.desc',
+    icon: ICON_SHIELD,
+  },
+  {
+    id: 'templates',
+    titleKey: 'home.features.templates.title',
+    descKey:  'home.features.templates.desc',
+    icon: ICON_TEMPLATE,
+  },
+  {
+    id: 'data-safety',
+    titleKey: 'home.features.data_safety.title',
+    descKey:  'home.features.data_safety.desc',
+    icon: ICON_LOCK,
+  },
 ])
 
 watch(locale, async () => {
@@ -337,11 +441,12 @@ function onCountry(countryCode) {
   color: #fff;
   border-radius: 20px;
   margin-bottom: 56px;
-  box-shadow: 0 16px 40px rgba(15,23,42,.25);
+  // 中性暖灰阴影(避免在浅背景下渲染出"蓝边"错觉)
+  box-shadow: 0 12px 32px rgba(50, 50, 70, .18);
   overflow: hidden;
   isolation: isolate;
-  // 加载图前的渐变底色(防止白屏闪)
-  background: linear-gradient(135deg, #3B6EF5 0%, #6E59F0 100%);
+  // 加载图前的深色底色(防止白屏闪 & 避免跟 box-shadow 形成蓝边)
+  background: #0f172a;
 }
 .hero__slides {
   position: absolute;
@@ -358,116 +463,19 @@ function onCountry(countryCode) {
 .hero__slide.is-active {
   opacity: 1;
 }
-// 用平移(pan)代替 Ken Burns 放大,每张图不同方向 — 图像在动,不是放大
-.hero__slide.is-active .hero__slide-img {
-  animation-duration: 8s;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-  animation-direction: alternate;
-  will-change: transform;
-}
-.hero__slide--pan-tl .hero__slide-img { animation-name: panTL; }
-.hero__slide--pan-br .hero__slide-img { animation-name: panBR; }
-.hero__slide--pan-r  .hero__slide-img { animation-name: panR;  }
-.hero__slide--pan-l  .hero__slide-img { animation-name: panL;  }
-.hero__slide--pan-t  .hero__slide-img { animation-name: panT;  }
-@keyframes panTL {
-  from { transform: translate3d(2%, 1.5%, 0) scale(1.04); }
-  to   { transform: translate3d(-3%, -2%, 0) scale(1.04); }
-}
-@keyframes panBR {
-  from { transform: translate3d(-2.5%, -1.5%, 0) scale(1.04); }
-  to   { transform: translate3d(2.5%, 2%, 0) scale(1.04); }
-}
-@keyframes panR {
-  from { transform: translate3d(-3%, 0, 0) scale(1.04); }
-  to   { transform: translate3d(3%, 1%, 0) scale(1.04); }
-}
-@keyframes panL {
-  from { transform: translate3d(3%, 0, 0) scale(1.04); }
-  to   { transform: translate3d(-3%, -1%, 0) scale(1.04); }
-}
-@keyframes panT {
-  from { transform: translate3d(0, 2.5%, 0) scale(1.05); }
-  to   { transform: translate3d(0, -2.5%, 0) scale(1.05); }
-}
-.hero__slide-img {
+// 真实动图:视频本身在动(轮船/海浪/云/极光),不需要 pan/zoom
+.hero__slide-video {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
-  transform-origin: center;
-}
-
-// SVG 动效层 — 图像本身"有内容在动"
-.hero__fx {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
-  opacity: 0;
-  transition: opacity 1.2s ease-in-out;
-}
-.hero__slide.is-active .hero__fx {
-  opacity: 1;
-}
-.fx {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
-// 雪山:雪花飘落
-.hero__fx :deep(.fx-snow__layer) { animation: snowFall 6s linear infinite; }
-.hero__fx :deep(.fx-snow__layer--2) { animation: snowFall 9s linear infinite; animation-delay: -3s; opacity: .7; }
-@keyframes snowFall {
-  0%   { transform: translate3d(0, -10%, 0); }
-  100% { transform: translate3d(20px, 110%, 0); }
-}
-
-// 海岛:海鸟飞过(三条不同路径)
-.hero__fx :deep(.fx-bird) { transform: translate3d(-200px, 0, 0); }
-.hero__fx :deep(.fx-bird--1) { animation: birdFly 7s linear infinite; --s: 1; }
-.hero__fx :deep(.fx-bird--2) { animation: birdFly 9s linear infinite; animation-delay: -3s; --s: .7; }
-.hero__fx :deep(.fx-bird--3) { animation: birdFly 11s linear infinite; animation-delay: -6s; --s: 1.2; }
-@keyframes birdFly {
-  0%   { transform: translate3d(-100px, 0, 0) scale(var(--s, 1)); }
-  50%  { transform: translate3d(50vw, 30px, 0) scale(var(--s, 1)); }
-  100% { transform: translate3d(calc(100vw + 100px), -20px, 0) scale(var(--s, 1)); }
-}
-
-// 极光:渐变光带缓慢飘动
-.hero__fx :deep(.fx-aurora__band) { animation: auroraDrift 7s ease-in-out infinite alternate; transform-origin: center; }
-.hero__fx :deep(.fx-aurora__band--2) { animation: auroraDrift 11s ease-in-out infinite alternate; animation-delay: -2s; opacity: .55; }
-@keyframes auroraDrift {
-  0%   { transform: translate3d(-3%, -2%, 0) skewX(-3deg); }
-  100% { transform: translate3d(3%, 2%, 0) skewX(3deg); }
-}
-
-// 沙漠:沙粒横向飘移
-.hero__fx :deep(.fx-sand__layer) { animation: sandDrift 8s linear infinite; }
-.hero__fx :deep(.fx-sand__layer--2) { animation: sandDrift 12s linear infinite; animation-delay: -4s; opacity: .65; }
-@keyframes sandDrift {
-  0%   { transform: translate3d(-5%, 0, 0); }
-  100% { transform: translate3d(8%, -10px, 0); }
-}
-
-// 星空:流星划过
-.hero__fx :deep(.fx-meteor__trail), .hero__fx :deep(.fx-meteor__head) { animation: meteor 4s linear infinite; }
-.hero__fx :deep(.fx-meteor__trail--2), .hero__fx :deep(.fx-meteor__head--2) { animation: meteor 6s linear infinite; animation-delay: -2.5s; }
-@keyframes meteor {
-  0%   { transform: translate3d(0, 0, 0); opacity: 0; }
-  10%  { opacity: 1; }
-  40%  { opacity: 1; }
-  100% { transform: translate3d(-260px, 110px, 0); opacity: 0; }
 }
 
 .hero__slide-overlay {
   position: absolute;
   inset: 0;
   z-index: 2;
-  // 左侧只留极轻的"可读区"暗角,主体保持原图色彩
+  // 跟下方 4 卡片图片色调一致:只保留左侧可读区暗角,整体保持原图色彩
   background:
     linear-gradient(90deg, rgba(15,23,42,.42) 0%, rgba(15,23,42,.18) 35%, rgba(15,23,42,0) 60%),
     linear-gradient(180deg, rgba(0,0,0,0) 60%, rgba(15,23,42,.18) 100%);
@@ -497,9 +505,9 @@ function onCountry(countryCode) {
 .hero__caption {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px; // caption 主段 + 城市名之间留一点呼吸
   margin: 0;
-  padding: 8px 14px;
+  padding: 8px 18px;
   background: rgba(255,255,255,.12);
   border: 1px solid rgba(255,255,255,.18);
   border-radius: 999px;
@@ -507,14 +515,18 @@ function onCountry(countryCode) {
   font-size: 13px;
   animation: captionIn .5s ease;
 }
-.hero__caption-tag {
-  font-weight: 700;
-  letter-spacing: 1.2px;
-  opacity: .85;
-  font-variant-numeric: tabular-nums;
-}
 .hero__caption-text {
   font-weight: 500;
+}
+.hero__caption-sep {
+  opacity: .55;
+  font-weight: 400;
+}
+.hero__caption-city {
+  font-weight: 400;
+  opacity: .85;
+  font-size: 12px;
+  letter-spacing: .2px;
 }
 @keyframes captionIn {
   from { opacity: 0; transform: translateY(8px); }
@@ -522,43 +534,18 @@ function onCountry(countryCode) {
 }
 
 /* 左右翻页箭头 */
-.hero__nav {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 3;
-  width: 44px;
-  height: 44px;
-  border: 0;
-  border-radius: 50%;
-  background: rgba(255,255,255,.18);
-  color: #fff;
-  font-size: 28px;
-  line-height: 1;
-  font-weight: 300;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(8px);
-  transition: background .2s ease, transform .2s ease;
-  opacity: 0;
-}
-.hero--slideshow:hover .hero__nav { opacity: 1; }
-.hero__nav:hover { background: rgba(255,255,255,.32); }
-.hero__nav--prev { left: 20px; }
-.hero__nav--next { right: 20px; }
-.hero__nav:active { transform: translateY(-50%) scale(.92); }
+/* W29: 左右翻页按钮已删除,纯自动轮播 */
 
-/* 底部进度条 + 点指示 */
+/* 底部进度条 + 点指示 — W29 纯视觉,不可点击 */
 .hero__dots {
   position: absolute;
   bottom: 24px;
   left: 64px;
   right: 64px;
   display: flex;
-  gap: 10px;
+  gap: 8px;
   z-index: 3;
+  pointer-events: none; // 兜底:整条不可点
 }
 .hero__dot {
   flex: 1;
@@ -566,7 +553,7 @@ function onCountry(countryCode) {
   border: 0;
   border-radius: 2px;
   background: rgba(255,255,255,.28);
-  cursor: pointer;
+  cursor: default; // 显式无指针
   padding: 0;
   position: relative;
   overflow: hidden;
@@ -607,13 +594,13 @@ function onCountry(countryCode) {
 
 .country-card {
   position: relative;
-  height: 360px;
+  height: 400px;
   border-radius: 18px;
   overflow: hidden;
   cursor: pointer;
   transition: transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s ease;
   box-shadow: 0 6px 18px rgba(15,23,42,.08);
-  background: #1f2937;
+  background: #f8fafc;
   isolation: isolate;
 }
 .country-card:hover {
@@ -629,6 +616,19 @@ function onCountry(countryCode) {
   position: absolute;
   inset: 0;
   z-index: 0;
+  isolation: isolate;  /* W27: confine mix-blend-mode to this stacking context */
+}
+.country-card__media::after {
+  /* W27: 统一 4 张国家图色调 — 用品牌蓝色叠加 + mix-blend-mode: color
+     color 模式只影响色相,保留原图亮度/对比度,让 4 张不同原图都染上同一种"冷蓝"调 */
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #1e3a8a 0%, #3B6EF5 100%);
+  mix-blend-mode: color;
+  opacity: .35;  /* W29: 从 .55 → .35，减少冷蓝压制，恢复地标原始饱和度 */
+  pointer-events: none;
+  z-index: 1;
 }
 .country-card__img {
   width: 100%;
@@ -636,6 +636,7 @@ function onCountry(countryCode) {
   object-fit: cover;
   display: block;
   transition: transform .6s cubic-bezier(.2,.8,.2,1);
+  filter: saturate(1.3) contrast(1.08);  /* W29: 从 saturate(.85) → 1.3, contrast(1.05) → 1.08, 配合 opacity 调整提鲜艳度 */
 }
 .country-card:hover .country-card__img {
   transform: scale(1.08);
@@ -653,10 +654,11 @@ function onCountry(countryCode) {
   position: absolute;
   inset: 0;
   background: linear-gradient(180deg,
-    rgba(0,0,0,.10) 0%,
-    rgba(0,0,0,.05) 40%,
-    rgba(0,0,0,.55) 100%);
-  z-index: 1;
+    rgba(0,0,0,.05) 0%,
+    rgba(0,0,0,0) 35%,
+    rgba(0,0,0,.30) 100%);
+  z-index: 2;  /* W27: 在色调叠加层上面,保持底部文字阴影可读 */
+  pointer-events: none;
 }
 
 .country-card__top {
@@ -696,9 +698,10 @@ function onCountry(countryCode) {
 .country-card__bottom {
   position: absolute;
   left: 0; right: 0; bottom: 0;
-  padding: 20px 20px 22px;
+  padding: 18px 20px 20px;
   z-index: 2;
   color: #fff;
+  background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,.35) 50%, rgba(0,0,0,.7) 100%);
 }
 .country-card__name {
   margin: 0 0 6px;
@@ -714,12 +717,81 @@ function onCountry(countryCode) {
   line-height: 1.4;
   text-shadow: 0 1px 4px rgba(0,0,0,.4);
 }
+/* W28 P1: SCHENGEN "Apply through this country" 提示 */
+.country-card__hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(59, 110, 245, .85);
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: .2px;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, .25);
+}
+.country-card__hint-icon {
+  font-size: 12px;
+  line-height: 1;
+}
+/* W28 Atlys-style: 3 列属性 TYPE / VALID / FEES */
+.country-card__attrs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 0 0 10px;
+  padding: 10px 0;
+  border-top: 1px solid rgba(255,255,255,.22);
+  border-bottom: 1px solid rgba(255,255,255,.22);
+}
+.country-card__attr {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.country-card__attr-label {
+  font-size: 10px;
+  letter-spacing: 1.1px;
+  font-weight: 700;
+  color: rgba(255,255,255,.75);
+  text-transform: uppercase;
+}
+.country-card__attr-val {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 4px rgba(0,0,0,.4);
+}
+/* W28 Atlys-style: 精准交付时间 */
+.country-card__eta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 10px;
+  font-size: 11.5px;
+  color: rgba(255,255,255,.95);
+  line-height: 1.4;
+  text-shadow: 0 1px 4px rgba(0,0,0,.4);
+}
+.country-card__eta-icon {
+  font-size: 13px;
+}
+.country-card__eta-text b {
+  font-weight: 700;
+  color: #fff;
+}
 .country-card__meta {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding-top: 12px;
-  border-top: 1px solid rgba(255,255,255,.25);
+  justify-content: flex-end;
+  padding-top: 4px;
 }
 .country-card__chip {
   font-size: 12px;
@@ -738,19 +810,52 @@ function onCountry(countryCode) {
   transform: translateX(4px);
 }
 
-/* ============== Features (Why us) ============== */
+/* ============== Features (Why us) — W28 重构 ============== */
 .features__grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
 }
-.feature__title { margin: 0; font-size: 15px; font-weight: 600; color: var(--ink-1); }
-.feature__desc { margin: 0; font-size: 13px; color: var(--ink-3); line-height: 1.6; }
+.feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 20px 20px;
+  background: #fff;
+  border: 1px solid #EEF2F7;
+  border-radius: 14px;
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+  height: 100%;
+}
+.feature:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, .08);
+  border-color: #DCE6F7;
+}
+.feature__icon {
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #F5F7FB 0%, #EEF2F7 100%);
+  /* 不同 feature 用不同色调,统一感由 background 给 */
+}
+.feature--pay-after    .feature__icon { background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%); }
+.feature--system-check .feature__icon { background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%); }
+.feature--templates    .feature__icon { background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%); }
+.feature--support-24h  .feature__icon { background: linear-gradient(135deg, #FFF7ED 0%, #FED7AA 100%); }
+.feature__icon svg { width: 36px; height: 36px; display: block; }
+.feature__body { min-width: 0; flex: 1; }
+.feature__title { margin: 0 0 4px; font-size: 15px; font-weight: 700; color: var(--ink-1); line-height: 1.3; }
+.feature__desc  { margin: 0; font-size: 12.5px; color: var(--ink-3); line-height: 1.55; }
 
 /* ============== 响应式 ============== */
 @media (max-width: 1080px) {
   .destinations__grid { grid-template-columns: repeat(2, 1fr); }
-  .country-card { height: 320px; }
+  .country-card { height: 380px; }
   .hero__copy { padding: 56px 48px; }
   .hero__title { font-size: 38px; }
   .hero__dots { left: 48px; right: 48px; }
@@ -759,7 +864,6 @@ function onCountry(countryCode) {
   .hero--slideshow { min-height: 380px; }
   .hero__copy { padding: 48px 32px; }
   .hero__title { font-size: 32px; }
-  .hero__nav { display: none; }
   .features__grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 600px) {
@@ -769,7 +873,7 @@ function onCountry(countryCode) {
   .hero__sub { font-size: 14px; }
   .hero__dots { left: 24px; right: 24px; bottom: 16px; }
   .destinations__grid { grid-template-columns: 1fr; }
-  .country-card { height: 280px; }
+  .country-card { height: 360px; }
   .features__grid { grid-template-columns: 1fr; }
 }
 </style>
