@@ -51,41 +51,6 @@ $bg-disabled: #F1F5F9;
     'Microsoft YaHei', 'Segoe UI', Roboto, sans-serif;
 }
 
-// ─── Dark mode tokens ──────────────────────────────────────────────────────────
-[data-theme="dark"] {
-  $ink-1-dark: #E2E8F0;
-  $ink-2-dark: #CBD5E1;
-  $ink-3-dark: #94A3B8;
-  $muted-dark: #64748B;
-  $border-dark: #1E293B;
-  $bg-dark: #0B1120;
-  $bg-alt-dark: #0F172A;
-  $bg-card-dark: #1E293B;
-  $bg-disabled-dark: #1E293B;
-  $primary-bg-dark: #1E2A4A;
-
-  --ink-1: #{$ink-1-dark};
-  --ink-2: #{$ink-2-dark};
-  --ink-3: #{$ink-3-dark};
-  --muted: #{$muted-dark};
-  --border: #{$border-dark};
-  --bg: #{$bg-dark};
-  --bg-alt: #{$bg-alt-dark};
-  --bg-card: #{$bg-card-dark};
-  --bg-disabled: #{$bg-disabled-dark};
-  --primary-bg: #{$primary-bg-dark};
-  --el-color-primary: #{$primary};
-  --el-color-success: #{$success};
-  --el-color-warning: #{$warning};
-  --el-color-danger: #{$danger};
-  --el-color-info: #{$info};
-
-  .app-header { background: var(--bg-card); }
-  .lang-switch { background: var(--bg-alt); border-color: var(--border); }
-  .el-input__wrapper { background-color: var(--bg-alt); }
-  .el-input__inner { color: var(--ink-1); }
-}
-
 // 覆盖 Element Plus 部分默认
 .el-button--primary {
   background: $primary;

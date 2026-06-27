@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 32" width="64" height="32" role="img" aria-label="Htex vintage H tex split">
+  <defs>
+    <linearGradient id="g2" x1="0" y1="0" x2="64" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3B6EF5"/>
+      <stop offset="1" stop-color="#6E59F0"/>
+    </linearGradient>
+  </defs>
+  <!-- 整体细长条 -->
+  <rect x="1" y="10" width="62" height="12" rx="6" fill="url(#g2)"/>
+  <!-- 内白边双线 -->
+  <rect x="2.5" y="11.5" width="59" height="9" rx="4.5" fill="none" stroke="#fff" stroke-width="0.5"/>
+  <rect x="3.5" y="12.5" width="57" height="7" rx="3.5" fill="none" stroke="#fff" stroke-width="0.4" opacity="0.7"/>
+  <!-- 中间撕齿孔 -->
+  <circle cx="32" cy="10" r="1.6" fill="#fff"/>
+  <circle cx="32" cy="22" r="1.6" fill="#fff"/>
+  <!-- 撕齿虚线 -->
+  <line x1="32" y1="13" x2="32" y2="19" stroke="#fff" stroke-width="0.5" stroke-dasharray="1,1" opacity="0.7"/>
+  <!-- 左侧 H(白色) -->
+  <g fill="#fff">
+    <rect x="9"  y="13"   width="1.8" height="6"  rx="0.3"/>
+    <rect x="14" y="13"   width="1.8" height="6"  rx="0.3"/>
+    <rect x="9"  y="14.5" width="6.8" height="1.8" rx="0.3"/>
+  </g>
+  <!-- 右侧 tex(白色) -->
+  <text x="46" y="17.5" font-size="6.5" font-weight="800" fill="#fff" text-anchor="middle" font-family="-apple-system, system-ui, sans-serif" letter-spacing="-0.2">tex</text>
+  <!-- 顶/底小装饰 -->
+  <line x1="3" y1="7" x2="61" y2="7" stroke="#3B6EF5" stroke-width="0.5" stroke-linecap="round"/>
+  <line x1="3" y1="25" x2="61" y2="25" stroke="#3B6EF5" stroke-width="0.5" stroke-linecap="round"/>
+</svg>

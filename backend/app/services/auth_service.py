@@ -1,13 +1,14 @@
-"""AuthService — register / login / sms-login / refresh.
+"""AuthService — register / login / reset-password / sms-login / refresh.
 
-Pure business logic. Knows nothing about FastAPI; the API layer
-translates exceptions to HTTP via the error-code registry.
+W26 product change: identifier is now email / username (not phone).
+Phone-based login is kept for legacy / admin use via the sms-login endpoint.
 """
 import hashlib
+import re
 from datetime import datetime, timezone
 from typing import Any, Mapping, Optional
 
-from sqlalchemy import and_, select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
@@ -40,6 +41,9 @@ def _hash_refresh_token(token: str) -> str:
 # Kept as a dict so the API layer doesn't have to import a dataclass.
 ClientInfo = Mapping[str, Optional[str]]
 
+# Detect "looks-like-email" so we can branch on email vs username in _get_user_by_account.
+_EMAIL_RE = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
+
 
 class AuthService:
     def __init__(self, db: AsyncSession) -> None:
@@ -56,6 +60,19 @@ class AuthService:
             select(User).where(
                 and_(User.phone == phone, User.phone_country == phone_country)
             )
+        )
+
+    async def _get_user_by_account(self, account: str) -> Optional[User]:
+        """Lookup by either email (case-insensitive) or username."""
+        account = (account or "").strip()
+        if not account:
+            return None
+        if _EMAIL_RE.match(account):
+            return await self.db.scalar(
+                select(User).where(User.email == account.lower())
+            )
+        return await self.db.scalar(
+            select(User).where(User.username == account)
         )
 
     async def _issue_token_pair(
@@ -87,6 +104,8 @@ class AuthService:
         return {
             "id": user.id,
             "uuid": user.uuid,
+            "username": user.username,
+            "email": user.email,
             "phone": user.phone,
             "phone_country": user.phone_country,
             "nickname": user.nickname,
@@ -125,39 +144,46 @@ class AuthService:
         await self.db.refresh(user)
 
     # ------------------------------------------------------------------ #
-    # register                                                           #
+    # register (W26: email + username + password)                        #
     # ------------------------------------------------------------------ #
     async def register(
         self,
         *,
-        phone: str,
-        phone_country: str,
+        username: str,
+        email: str,
         password: str,
-        sms_code_value: str,
         nickname: Optional[str],
         language_pref: Optional[str],
         info: ClientInfo,
     ) -> dict[str, Any]:
         validate_password_strength(password)
 
-        existing = await self._get_user_by_phone(phone, phone_country)
-        if existing is not None:
+        username_clean = username.strip()
+        email_clean = email.strip().lower()
+
+        # Uniqueness: email + username
+        existing_email = await self.db.scalar(
+            select(User).where(User.email == email_clean)
+        )
+        if existing_email is not None:
             raise BizException(
                 ErrorCode.USER_ALREADY_EXISTS,
-                message="Phone already registered",
+                message="Email already registered",
+            )
+        existing_username = await self.db.scalar(
+            select(User).where(User.username == username_clean)
+        )
+        if existing_username is not None:
+            raise BizException(
+                ErrorCode.USER_ALREADY_EXISTS,
+                message="Username already taken",
             )
 
-        # Verify SMS code (mock mode: accept any 6-digit)
-        sms_service = SmsService(self.db)
-        await sms_service.verify_code(
-            phone=phone, phone_country=phone_country, code=sms_code_value, purpose="register"
-        )
-
         user = User(
-            phone=phone,
-            phone_country=phone_country,
+            username=username_clean,
+            email=email_clean,
             password_hash=hash_password(password, self.settings),
-            nickname=nickname or f"user_{phone[-4:]}",
+            nickname=nickname or f"user_{username_clean[-4:]}",
             language_pref=language_pref or "zh-CN",
             status="active",
         )
@@ -180,27 +206,25 @@ class AuthService:
         return {**tokens, "user": self._to_user_dict(user)}
 
     # ------------------------------------------------------------------ #
-    # password login                                                     #
+    # password login (W26: account = email OR username)                  #
     # ------------------------------------------------------------------ #
     async def login(
         self,
         *,
-        phone: str,
-        phone_country: str,
+        account: str,
         password: str,
         info: ClientInfo,
     ) -> dict[str, Any]:
-        user = await self._get_user_by_phone(phone, phone_country)
+        user = await self._get_user_by_account(account)
         if user is None or user.password_hash is None:
-            # Generic message — do not leak whether the phone exists.
             raise BizException(
                 ErrorCode.AUTH_INVALID_CREDENTIALS,
-                message="Invalid phone or password",
+                message="Invalid account or password",
             )
         if not verify_password(password, user.password_hash, self.settings):
             raise BizException(
                 ErrorCode.AUTH_INVALID_CREDENTIALS,
-                message="Invalid phone or password",
+                message="Invalid account or password",
             )
         if user.status != "active":
             raise BizException(
@@ -223,7 +247,7 @@ class AuthService:
         return {**tokens, "user": self._to_user_dict(user)}
 
     # ------------------------------------------------------------------ #
-    # SMS login                                                          #
+    # SMS login (kept for legacy / admin tools; not exposed to UI)        #
     # ------------------------------------------------------------------ #
     async def sms_login(
         self,
@@ -245,11 +269,11 @@ class AuthService:
         user = await self._get_user_by_phone(phone, phone_country)
         if user is None:
             # SMS-only login: auto-register the user with no password.
-            # V2 spec doesn't mandate this, but the task says "测试模式
-            # 任意 6 位数字通过" — so we make it actually work end-to-end.
             user = User(
                 phone=phone,
                 phone_country=phone_country,
+                email=f"{phone}@htex.local",  # W26: every user must have an email
+                username=f"user_{phone[-4:]}",  # W26: every user must have a username
                 password_hash=None,
                 nickname=f"user_{phone[-4:]}",
                 language_pref="zh-CN",
@@ -336,29 +360,23 @@ class AuthService:
         return {**tokens, "user": self._to_user_dict(user)}
 
     # ------------------------------------------------------------------ #
-    # reset_password                                                      #
+    # reset_password (W26: by account, no SMS code)                       #
     # ------------------------------------------------------------------ #
     async def reset_password(
         self,
         *,
-        phone: str,
-        phone_country: str,
-        sms_code: str,
+        account: str,
         new_password: str,
         info: ClientInfo,
     ) -> dict[str, Any]:
-        """Verify SMS code (purpose=reset) then update password hash."""
+        """Reset by account (email or username). Caller (e.g. admin) is
+        responsible for verifying the user owns the account (e.g. via
+        a separately-issued email token, or admin override)."""
         validate_password_strength(new_password)
 
-        user = await self._get_user_by_phone(phone, phone_country)
+        user = await self._get_user_by_account(account)
         if user is None:
-            raise BizException(ErrorCode.USER_NOT_FOUND, message="Phone not registered")
-
-        # Verify SMS code (mock mode: accept any 6-digit)
-        sms_service = SmsService(self.db)
-        await sms_service.verify_code(
-            phone=phone, phone_country=phone_country, code=sms_code, purpose="reset"
-        )
+            raise BizException(ErrorCode.USER_NOT_FOUND, message="Account not registered")
 
         user.password_hash = hash_password(new_password, self.settings)
         await self._commit_with_audit(

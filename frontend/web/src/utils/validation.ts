@@ -24,10 +24,35 @@ export function validateEmergencyPhone(value: string): string {
   return ''
 }
 
-/** SMS / verification code: exactly 6 digits. */
-export function validateSmsCode(value: string): string {
-  if (!value) return 'errors.code_required'
-  if (!/^\d{6}$/.test(value.trim())) return 'errors.code_invalid'
+/** Account (login field): accept email or username, length 3-120. */
+export function validateAccount(value: string): string {
+  if (!value || !value.trim()) return 'errors.account_required'
+  const v = value.trim()
+  if (v.length < 3) return 'errors.account_too_short'
+  if (v.length > 120) return 'errors.account_too_long'
+  // 至少是 email 或 username 之一
+  const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
+  const isUsername = /^[A-Za-z0-9_.-]{3,32}$/.test(v)
+  if (!isEmail && !isUsername) return 'errors.account_invalid'
+  return ''
+}
+
+/** Username (register): 3-32 chars, [A-Za-z0-9_.-], must start with letter/digit. */
+export function validateUsername(value: string): string {
+  if (!value || !value.trim()) return 'errors.username_required'
+  const v = value.trim()
+  if (v.length < 3) return 'errors.username_too_short'
+  if (v.length > 32) return 'errors.username_too_long'
+  if (!/^[A-Za-z0-9][A-Za-z0-9_.-]{2,31}$/.test(v)) return 'errors.username_format'
+  return ''
+}
+
+/** Email (register): standard email format, max 120 chars. */
+export function validateEmail(value: string): string {
+  if (!value || !value.trim()) return 'errors.email_required'
+  const v = value.trim()
+  if (v.length > 120) return 'errors.email_too_long'
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return 'errors.email_format'
   return ''
 }
 

@@ -18,15 +18,18 @@
 
 ## 二、测试账户 (User 端)
 
-| 手机号 | 密码 | 用途 | 说明 |
+| Email(也可用 username) | 密码 | 用途 | 说明 |
 |---|---|---|---|
-| `138001380001` | `HtexDemo2026` | 主测试账号 | 全新用户,无订单 |
-| `138001380002` | `HtexDemo2026` | 有 1 个待提交订单 | 演示"待提交"状态流 |
-| `138001380003` | `HtexDemo2026` | 有完整申请 | 演示"审核中 / 通过"状态流 |
+| `demo138001380001@htex.app` (or `demo_user_138001380001`) | `123456` | 主测试账号 | 全新用户,无订单 |
+| `demo138001380002@htex.app` (or `demo_user_138001380002`) | `123456` | 有 1 个待提交订单 | 演示"待提交"状态流 |
+| `demo138001380003@htex.app` (or `demo_user_138001380003`) | `123456` | 有完整申请 | 演示"审核中 / 通过"状态流 |
 
-- **国家码**: `+86` (中国大陆)
-- **登录方式**: 手机号 + 密码(已注册账户)或 手机号 + 短信码(新号码,验证码在 dev 环境固定 6 位)
+- **登录方式**(W26 起改为 email/username): `POST /api/v2/auth/login` body `{"account":"<email or username>","password":"<pwd>"}`
+- **历史手机号登录已废弃** — 早期版本(TEST-ACCOUNTS v1)用的手机号 + `HtexDemo2026` 不再可用,seed script 2026-06-26 已迁移到 email/username + `123456`
 - **JWT 有效期**: 2 小时(刷新 token 7 天)
+
+> 重置 demo: `.venv/bin/python scripts/seed_demo_data.py --reset --user-count 3` — 重置后会自动给 demo phone users 补 email/username 字段(本文件反映这一行为)
+> 如果重置后仍登录失败,执行 `UPDATE users SET email=CONCAT('demo', phone, '@htex.app'), username=CONCAT('demo_user_', phone) WHERE phone IS NOT NULL AND email IS NULL;`
 
 ---
 

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 80" width="240" height="80" role="img" aria-label="Htex logo plane in e center, no ring">
+  <defs>
+    <style>
+      .htex-c {
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", "PingFang SC", "Inter", Arial, sans-serif;
+        font-weight: 900;
+        font-size: 64px;
+        letter-spacing: -2px;
+      }
+    </style>
+  </defs>
+
+  <text x="20" y="60" class="htex-c" fill="#000">Htex</text>
+
+  <!-- 飞机直接在 e 字符中央(无圆环,e 字符字形完整可见) -->
+  <g transform="translate(111, 37)">
+    <path d="M -5 -2.5 L 5 0 L -5 2.5 L -1 0 Z" fill="#000"/>
+    <line x1="-5" y1="-2.5" x2="-1" y2="0" stroke="#fff" stroke-width="0.5"/>
+    <line x1="-5" y1="2.5" x2="-1" y2="0" stroke="#fff" stroke-width="0.5"/>
+  </g>
+</svg>

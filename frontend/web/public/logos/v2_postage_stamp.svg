@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="Htex postage stamp">
+  <defs>
+    <linearGradient id="g2" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3B6EF5"/>
+      <stop offset="1" stop-color="#6E59F0"/>
+    </linearGradient>
+    <pattern id="perf2" x="0" y="0" width="4" height="4" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.2" fill="#fff"/>
+    </pattern>
+    <mask id="stampMask2">
+      <rect width="32" height="32" fill="black"/>
+      <rect x="3" y="3" width="26" height="26" rx="1" fill="white"/>
+    </mask>
+  </defs>
+  <!-- 锯齿邮票外形(用 mask + pattern 抠出半圆孔) -->
+  <rect x="0" y="0" width="32" height="32" fill="url(#perf2)" mask="url(#stampMask2)" opacity="0"/>
+  <!-- 上面那一行做锯齿边(简化:用圆角矩形 + 旋转的小方块) -->
+  <g>
+    <!-- 渐变主体 -->
+    <rect x="4" y="4" width="24" height="24" rx="1" fill="url(#g2)"/>
+    <!-- 内白边 -->
+    <rect x="6.5" y="6.5" width="19" height="19" rx="0.5" fill="none" stroke="#fff" stroke-width="0.7" stroke-dasharray="1.2,1.2"/>
+    <!-- H 字母 -->
+    <g fill="#fff">
+      <rect x="10"  y="11"   width="2.4" height="10" rx="0.5"/>
+      <rect x="19.6" y="11"  width="2.4" height="10" rx="0.5"/>
+      <rect x="10"  y="14.8" width="12"  height="2.4" rx="0.5"/>
+    </g>
+    <!-- 顶部小信息条 -->
+    <line x1="9" y1="9" x2="23" y2="9" stroke="#fff" stroke-width="0.6" stroke-linecap="round" opacity="0.6"/>
+  </g>
+  <!-- 锯齿外缘(在主体外画白色小半圆,模拟撕边) -->
+  <g fill="#fff">
+    <circle cx="4"  cy="4"  r="1.2"/>
+    <circle cx="10" cy="4"  r="1.2"/>
+    <circle cx="16" cy="4"  r="1.2"/>
+    <circle cx="22" cy="4"  r="1.2"/>
+    <circle cx="28" cy="4"  r="1.2"/>
+    <circle cx="4"  cy="10" r="1.2"/>
+    <circle cx="28" cy="10" r="1.2"/>
+    <circle cx="4"  cy="16" r="1.2"/>
+    <circle cx="28" cy="16" r="1.2"/>
+    <circle cx="4"  cy="22" r="1.2"/>
+    <circle cx="28" cy="22" r="1.2"/>
+    <circle cx="4"  cy="28" r="1.2"/>
+    <circle cx="10" cy="28" r="1.2"/>
+    <circle cx="16" cy="28" r="1.2"/>
+    <circle cx="22" cy="28" r="1.2"/>
+    <circle cx="28" cy="28" r="1.2"/>
+  </g>
+</svg>

@@ -1,16 +1,6 @@
 <template>
   <div class="diag-page">
-    <header class="app-header app-container">
-      <router-link to="/materials" class="app-header__brand">
-        <HtexLogo :size="28" />
-        <span>{{ t('common.app_name') }}</span>
-      </router-link>
-      <div class="app-header__right">
-        <LangSwitch />
-        <span v-if="auth.user" class="app-header__user">👋 {{ auth.user.nickname || auth.user.phone }}</span>
-      </div>
-    </header>
-
+    <AppHeader scope="materials-diagnose" />
     <main class="diag-shell">
       <h1 class="page-title">{{ t('diagnose.title', 'AI 拒签风险诊断') }}</h1>
       <p class="page-sub">{{ t('diagnose.subtitle', '系统根据你上传的材料 + 目标国签证政策,综合评估拒签风险并给出可操作的优化建议。') }}</p>
@@ -145,12 +135,12 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import HtexLogo from '@/components/HtexLogo.vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { listMaterials, diagnoseMaterials } from '@/api/materials'
 import AppButton from '@/components/AppButton.vue'
 import LangSwitch from '@/components/LangSwitch.vue'
+import AppHeader from '@/components/AppHeader.vue'
 
 const { t } = useI18n()
 const auth = useAuthStore()

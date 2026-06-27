@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Htex H|tex Animated</title>
+<style>
+  body { margin:0; padding:40px; background:#F8FAFC; font-family:-apple-system,sans-serif; color:#0F172A; }
+  h1 { font-size:24px; margin:0 0 8px; }
+  .sub { font-size:14px; color:#64748B; margin-bottom:32px; }
+  .grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:24px; max-width:1100px; }
+  .card { background:#fff; border:1px solid #E2E8F0; border-radius:16px; padding:28px 24px; }
+  .card-title { font-size:12px; font-weight:700; color:#64748B; text-transform:uppercase; letter-spacing:.04em; margin-bottom:18px; }
+  .demo-box { background:#F1F5F9; border-radius:12px; padding:32px 24px; display:flex; flex-direction:column; align-items:center; gap:18px; }
+  .demo-box .name { font-size:22px; font-weight:800; letter-spacing:-.01em; color:#0F172A; display:flex; align-items:center; gap:14px; }
+  .demo-box .small { font-size:11px; color:#94A3B8; font-family:ui-monospace,monospace; }
+  .dark { background:#0F172A; border-color:#1E293B; }
+  .dark .demo-box { background:#1E293B; }
+  .dark .demo-box .name { color:#F1F5F9; }
+  .dark .card-title { color:#94A3B8; }
+</style>
+</head>
+<body>
+<h1>Htex Logo · H | tex 票根 + 动效</h1>
+<div class="sub">参考 Google doodle 的"破出"动效,做撕开 / 飞机穿过 两种。SVG 内嵌 CSS @keyframes,可直接 embed Vue。</div>
+<div class="grid">
+
+  <div class="card">
+    <div class="card-title">animated v1 · 撕开 + 合上(H 滑左 / tex 滑右,撕齿孔透光)</div>
+    <div class="demo-box">
+      <div class="name">
+        <svg id="anim1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 32" width="64" height="32">
+          <defs>
+            <linearGradient id="g-a1" x1="0" y1="0" x2="64" y2="32" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#3B6EF5"/>
+              <stop offset="1" stop-color="#6E59F0"/>
+            </linearGradient>
+            <style>
+              #anim1 .h-side { transform-origin: 21px 16px; animation: a1-h 3.6s ease-in-out infinite; }
+              #anim1 .tex-side { transform-origin: 53.5px 16px; animation: a1-t 3.6s ease-in-out infinite; }
+              #anim1 .perforation { animation: a1-p 3.6s ease-in-out infinite; }
+              #anim1 .glow { animation: a1-g 3.6s ease-in-out infinite; }
+              @keyframes a1-h {
+                0%, 18% { transform: translateX(0); }
+                35%, 65% { transform: translateX(-3px); }
+                82%, 100% { transform: translateX(0); }
+              }
+              @keyframes a1-t {
+                0%, 18% { transform: translateX(0); }
+                35%, 65% { transform: translateX(3px); }
+                82%, 100% { transform: translateX(0); }
+              }
+              @keyframes a1-p {
+                0%, 18% { opacity: 1; }
+                35%, 65% { opacity: 0.35; }
+                82%, 100% { opacity: 1; }
+              }
+              @keyframes a1-g {
+                0%, 25% { opacity: 0; transform: scale(0.6); }
+                40%, 60% { opacity: 0.9; transform: scale(1.2); }
+                75%, 100% { opacity: 0; transform: scale(0.6); }
+              }
+            </style>
+          </defs>
+          <!-- H 区(深色) -->
+          <g class="h-side">
+            <rect x="1" y="6" width="40" height="20" rx="3" fill="url(#g-a1)"/>
+            <g fill="#fff">
+              <rect x="11" y="11"   width="3"   height="14" rx="0.6"/>
+              <rect x="24" y="11"   width="3"   height="14" rx="0.6"/>
+              <rect x="11" y="16.5" width="16"  height="3"   rx="0.6"/>
+            </g>
+            <path d="M 32 7.5 L 38 9.5 L 32 11.5 L 33 9.5 Z" fill="#fff" opacity="0.9"/>
+          </g>
+          <!-- 撕齿孔 + 虚线 -->
+          <g class="perforation">
+            <circle cx="42" cy="6" r="1.8" fill="#fff"/>
+            <circle cx="42" cy="26" r="1.8" fill="#fff"/>
+            <line x1="42" y1="10" x2="42" y2="22" stroke="#fff" stroke-width="0.6" stroke-dasharray="1.2,1.2"/>
+          </g>
+          <!-- 撕齿光晕(动效透出) -->
+          <circle class="glow" cx="42" cy="16" r="3" fill="#FFD66B" opacity="0"/>
+          <!-- tex 区(白底) -->
+          <g class="tex-side">
+            <rect x="44" y="6" width="19" height="20" rx="2.5" fill="#fff" stroke="#3B6EF5" stroke-width="0.8"/>
+            <text x="53.5" y="19" font-size="10" font-weight="800" fill="#3B6EF5" text-anchor="middle" font-family="-apple-system, system-ui, sans-serif" letter-spacing="-0.2">tex</text>
+            <line x1="46" y1="9" x2="61" y2="9" stroke="#3B6EF5" stroke-width="0.4" opacity="0.5"/>
+            <line x1="46" y1="23" x2="61" y2="23" stroke="#3B6EF5" stroke-width="0.4" opacity="0.5"/>
+          </g>
+        </svg>
+        Htex
+      </div>
+      <div class="small">撕齿光晕 + H/tex 错位,3.6s 循环</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">animated v2 · 纸飞机穿过(Google doodle 风:H→撕齿→tex)</div>
+    <div class="demo-box">
+      <div class="name">
+        <svg id="anim2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 32" width="64" height="32">
+          <defs>
+            <linearGradient id="g-a2" x1="0" y1="0" x2="64" y2="32" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#3B6EF5"/>
+              <stop offset="1" stop-color="#6E59F0"/>
+            </linearGradient>
+            <linearGradient id="trail" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#fff" stop-opacity="0"/>
+              <stop offset="1" stop-color="#fff" stop-opacity="0.7"/>
+            </linearGradient>
+            <style>
+              #anim2 .plane { animation: a2-fly 3.6s cubic-bezier(.45,.05,.7,.95) infinite; }
+              #anim2 .trail { animation: a2-trail 3.6s linear infinite; }
+              #anim2 .dest-marker { animation: a2-dest 3.6s ease-in-out infinite; }
+              @keyframes a2-fly {
+                0%   { transform: translate(-30px, 5px) rotate(-12deg) scale(0.4); opacity: 0; }
+                12%  { transform: translate(-20px, 3px) rotate(-8deg) scale(0.6);  opacity: 1; }
+                35%  { transform: translate(-6px, 0)  rotate(-2deg) scale(0.85); opacity: 1; }
+                50%  { transform: translate(0, -2px) rotate(2deg) scale(1);     opacity: 1; }
+                72%  { transform: translate(8px, -4px) rotate(8deg) scale(0.85); opacity: 1; }
+                88%  { transform: translate(18px, -8px) rotate(15deg) scale(0.6); opacity: 0.6; }
+                100% { transform: translate(30px, -14px) rotate(25deg) scale(0.4); opacity: 0; }
+              }
+              @keyframes a2-trail {
+                0%   { opacity: 0; }
+                30%  { opacity: 0.7; }
+                70%  { opacity: 0.7; }
+                100% { opacity: 0; }
+              }
+              @keyframes a2-dest {
+                0%, 30% { opacity: 0; transform: scale(0.5); }
+                55%, 75% { opacity: 1; transform: scale(1.1); }
+                90%, 100% { opacity: 0; transform: scale(0.5); }
+              }
+            </style>
+          </defs>
+          <!-- H 区(深色) -->
+          <rect x="1" y="6" width="40" height="20" rx="3" fill="url(#g-a2)"/>
+          <g fill="#fff">
+            <rect x="11" y="11"   width="3"   height="14" rx="0.6"/>
+            <rect x="24" y="11"   width="3"   height="14" rx="0.6"/>
+            <rect x="11" y="16.5" width="16"  height="3"   rx="0.6"/>
+          </g>
+          <!-- 撕齿 -->
+          <circle cx="42" cy="6" r="1.8" fill="#fff"/>
+          <circle cx="42" cy="26" r="1.8" fill="#fff"/>
+          <line x1="42" y1="10" x2="42" y2="22" stroke="#fff" stroke-width="0.6" stroke-dasharray="1.2,1.2"/>
+          <!-- tex 区(白底) -->
+          <rect x="44" y="6" width="19" height="20" rx="2.5" fill="#fff" stroke="#3B6EF5" stroke-width="0.8"/>
+          <text x="53.5" y="19" font-size="10" font-weight="800" fill="#3B6EF5" text-anchor="middle" font-family="-apple-system, system-ui, sans-serif" letter-spacing="-0.2">tex</text>
+          <!-- 飞机尾迹(拖在飞机后面) -->
+          <path class="trail" d="M 8 14 Q 25 14, 38 13" stroke="#3B6EF5" stroke-width="1.2" fill="none" stroke-linecap="round" opacity="0"/>
+          <!-- 纸飞机(穿过) -->
+          <g class="plane" style="transform-origin: 0 0;">
+            <path d="M 0 0 L 8 2.5 L 0 5 L 1.6 2.5 Z" fill="#FFD66B" stroke="#3B6EF5" stroke-width="0.6" stroke-linejoin="round"/>
+          </g>
+          <!-- 目标点(飞机到达 tex 时高亮) -->
+          <g class="dest-marker" style="transform-origin: 53.5px 16px;">
+            <circle cx="53.5" cy="16" r="4" fill="none" stroke="#FFD66B" stroke-width="1"/>
+            <circle cx="53.5" cy="16" r="1" fill="#FFD66B"/>
+          </g>
+        </svg>
+        Htex
+      </div>
+      <div class="small">纸飞机从 H 起飞 → 撕齿 → 抵达 tex,3.6s 循环</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">animated v3 · 旋转入场(H 旋入 → 撕齿 → tex 旋入,周期性重现)</div>
+    <div class="demo-box">
+      <div class="name">
+        <svg id="anim3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 32" width="64" height="32">
+          <defs>
+            <linearGradient id="g-a3" x1="0" y1="0" x2="64" y2="32" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#3B6EF5"/>
+              <stop offset="1" stop-color="#6E59F0"/>
+            </linearGradient>
+            <style>
+              #anim3 .h-side { transform-origin: 21px 16px; animation: a3-h 4s ease-in-out infinite; }
+              #anim3 .tex-side { transform-origin: 53.5px 16px; animation: a3-t 4s ease-in-out infinite; }
+              #anim3 .perforation { transform-origin: 42px 16px; animation: a3-p 4s ease-in-out infinite; }
+              @keyframes a3-h {
+                0%   { transform: rotate(-25deg) scale(0.3); opacity: 0; }
+                20%  { transform: rotate(0) scale(1); opacity: 1; }
+                75%  { transform: rotate(0) scale(1); opacity: 1; }
+                90%  { transform: rotate(15deg) scale(0.7); opacity: 0; }
+                100% { transform: rotate(-25deg) scale(0.3); opacity: 0; }
+              }
+              @keyframes a3-t {
+                0%, 25% { transform: rotate(25deg) scale(0.3); opacity: 0; }
+                45%  { transform: rotate(0) scale(1); opacity: 1; }
+                75%  { transform: rotate(0) scale(1); opacity: 1; }
+                90%  { transform: rotate(-15deg) scale(0.7); opacity: 0; }
+                100% { transform: rotate(25deg) scale(0.3); opacity: 0; }
+              }
+              @keyframes a3-p {
+                0%, 15% { transform: scale(0); opacity: 0; }
+                30%  { transform: scale(1); opacity: 1; }
+                80%  { transform: scale(1); opacity: 1; }
+                95%, 100% { transform: scale(0); opacity: 0; }
+              }
+            </style>
+          </defs>
+          <!-- H 区(深色) -->
+          <g class="h-side">
+            <rect x="1" y="6" width="40" height="20" rx="3" fill="url(#g-a3)"/>
+            <g fill="#fff">
+              <rect x="11" y="11"   width="3"   height="14" rx="0.6"/>
+              <rect x="24" y="11"   width="3"   height="14" rx="0.6"/>
+              <rect x="11" y="16.5" width="16"  height="3"   rx="0.6"/>
+            </g>
+            <path d="M 32 7.5 L 38 9.5 L 32 11.5 L 33 9.5 Z" fill="#fff" opacity="0.9"/>
+          </g>
+          <!-- 撕齿孔 + 虚线 -->
+          <g class="perforation">
+            <circle cx="42" cy="6" r="1.8" fill="#fff"/>
+            <circle cx="42" cy="26" r="1.8" fill="#fff"/>
+            <line x1="42" y1="10" x2="42" y2="22" stroke="#fff" stroke-width="0.6" stroke-dasharray="1.2,1.2"/>
+          </g>
+          <!-- tex 区(白底) -->
+          <g class="tex-side">
+            <rect x="44" y="6" width="19" height="20" rx="2.5" fill="#fff" stroke="#3B6EF5" stroke-width="0.8"/>
+            <text x="53.5" y="19" font-size="10" font-weight="800" fill="#3B6EF5" text-anchor="middle" font-family="-apple-system, system-ui, sans-serif" letter-spacing="-0.2">tex</text>
+          </g>
+        </svg>
+        Htex
+      </div>
+      <div class="small">H 旋入 → 撕齿展开 → tex 旋入,4s 循环</div>
+    </div>
+  </div>
+
+  <div class="card dark">
+    <div class="card-title">animated v4 · 渐入上色(H 渐显深色 → 撕齿 → tex 描边渐变)</div>
+    <div class="demo-box">
+      <div class="name">
+        <svg id="anim4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 32" width="64" height="32">
+          <defs>
+            <linearGradient id="g-a4" x1="0" y1="0" x2="64" y2="32" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#3B6EF5"/>
+              <stop offset="1" stop-color="#6E59F0"/>
+            </linearGradient>
+            <style>
+              #anim4 .h-side rect.bg { animation: a4-h 3.6s ease-in-out infinite; }
+              #anim4 .h-side g { animation: a4-hl 3.6s ease-in-out infinite; }
+              #anim4 .tex-side rect.bg { animation: a4-tb 3.6s ease-in-out infinite; }
+              #anim4 .tex-side text { animation: a4-tt 3.6s ease-in-out infinite; }
+              #anim4 .perforation circle, #anim4 .perforation line { animation: a4-p 3.6s ease-in-out infinite; }
+              @keyframes a4-h {
+                0%, 15% { fill: #E2E8F0; }
+                40%, 70% { fill: url(#g-a4); }
+                90%, 100% { fill: #E2E8F0; }
+              }
+              @keyframes a4-hl {
+                0%, 25% { opacity: 0; }
+                40%, 70% { opacity: 1; }
+                90%, 100% { opacity: 0; }
+              }
+              @keyframes a4-tb {
+                0%, 30% { stroke: #E2E8F0; fill: #F1F5F9; }
+                55%, 75% { stroke: #3B6EF5; fill: #fff; }
+                90%, 100% { stroke: #E2E8F0; fill: #F1F5F9; }
+              }
+              @keyframes a4-tt {
+                0%, 45% { fill: #CBD5E1; }
+                60%, 75% { fill: #3B6EF5; }
+                90%, 100% { fill: #CBD5E1; }
+              }
+              @keyframes a4-p {
+                0%, 30% { opacity: 0; }
+                50% { opacity: 1; }
+                90%, 100% { opacity: 0; }
+              }
+            </style>
+          </defs>
+          <!-- H 区 -->
+          <g class="h-side">
+            <rect class="bg" x="1" y="6" width="40" height="20" rx="3" fill="#E2E8F0"/>
+            <g fill="#fff">
+              <rect x="11" y="11"   width="3"   height="14" rx="0.6"/>
+              <rect x="24" y="11"   width="3"   height="14" rx="0.6"/>
+              <rect x="11" y="16.5" width="16"  height="3"   rx="0.6"/>
+            </g>
+            <path d="M 32 7.5 L 38 9.5 L 32 11.5 L 33 9.5 Z" fill="#fff" opacity="0.9"/>
+          </g>
+          <!-- 撕齿 -->
+          <g class="perforation">
+            <circle cx="42" cy="6" r="1.8" fill="#fff"/>
+            <circle cx="42" cy="26" r="1.8" fill="#fff"/>
+            <line x1="42" y1="10" x2="42" y2="22" stroke="#fff" stroke-width="0.6" stroke-dasharray="1.2,1.2"/>
+          </g>
+          <!-- tex 区 -->
+          <g class="tex-side">
+            <rect class="bg" x="44" y="6" width="19" height="20" rx="2.5" fill="#F1F5F9" stroke="#E2E8F0" stroke-width="0.8"/>
+            <text x="53.5" y="19" font-size="10" font-weight="800" fill="#CBD5E1" text-anchor="middle" font-family="-apple-system, system-ui, sans-serif" letter-spacing="-0.2">tex</text>
+          </g>
+        </svg>
+        Htex
+      </div>
+      <div class="small">灰底 → 渐入品牌色 → 灰底循环,3.6s</div>
+    </div>
+  </div>
+
+</div>
+</body></html>

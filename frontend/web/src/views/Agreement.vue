@@ -1,16 +1,7 @@
 <!-- Agreement.vue — W12 Story: 服务协议页 -->
 <template>
   <div class="agreement-page">
-    <header class="app-header app-container">
-      <router-link to="/home" class="app-header__brand">
-        <HtexLogo :size="28" />
-        <span>{{ t('common.app_name') }}</span>
-      </router-link>
-      <div class="app-header__right">
-        <LangSwitch />
-      </div>
-    </header>
-
+    <AppHeader scope="agreement" />
     <main class="app-container app-page agreement-shell">
       <div class="page-header">
         <h1 class="page-title">{{ t('agreement.page_title') }}</h1>
@@ -98,9 +89,9 @@
 // review checklist + 状态矩阵见 /Users/apple/Desktop/签证项目/docs/LEGAL_REVIEW_NOTES.md
 // review 通过后请删除本注释
 import { ref } from 'vue'
-import HtexLogo from '@/components/HtexLogo.vue'
 import { useI18n } from 'vue-i18n'
 import LangSwitch from '@/components/LangSwitch.vue'
+import AppHeader from '@/components/AppHeader.vue'
 
 const { t } = useI18n()
 const activeTab = ref('terms')

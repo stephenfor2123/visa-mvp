@@ -14,7 +14,7 @@
             :class="{ 'is-active': i === activeIdx }"
           >
             <video
-              v-if="s.image"
+              v-if="s.image && /\.(mp4|webm)$/i.test(s.image)"
               :src="s.image"
               :alt="t(s.captionKey)"
               class="hero__slide-video"
@@ -23,6 +23,14 @@
               muted
               playsinline
               preload="auto"
+              @error="onHeroImgError(i)"
+            />
+            <img
+              v-else-if="s.image"
+              :src="s.image"
+              :alt="t(s.captionKey)"
+              class="hero__slide-video hero__slide-img"
+              loading="eager"
               @error="onHeroImgError(i)"
             />
             <div class="hero__slide-overlay" />
@@ -38,6 +46,58 @@
             <span class="hero__caption-sep" aria-hidden="true">·</span>
             <span class="hero__caption-city">{{ t(slides[activeIdx].cityKey) }}</span>
           </p>
+          <!-- B4: trust chip 数据带 -->
+          <div class="hero__trust">
+            <span class="hero__trust-item">
+              <span class="hero__trust-num">12,847+</span>
+              <span class="hero__trust-label">{{ t('home.trust_stats.users', { n: '' }).replace(/\+\s*$/, '').replace(/\{n\}/, '') }}</span>
+            </span>
+            <span class="hero__trust-divider" aria-hidden="true">·</span>
+            <span class="hero__trust-item">
+              <span class="hero__trust-num">99.2%</span>
+              <span class="hero__trust-label">{{ t('home.trust_stats.on_time', { pct: '' }).replace(/\{pct\}/, '') }}</span>
+            </span>
+            <span class="hero__trust-divider" aria-hidden="true">·</span>
+            <span class="hero__trust-item">
+              <span class="hero__trust-num">4.9★</span>
+              <span class="hero__trust-label">{{ t('home.trust_stats.rating', { score: '' }).replace(/\{score\}/, '') }}</span>
+            </span>
+          </div>
+          <!-- I1: 首页 CTA — 4 个热门国家快捷入口 -->
+          <div class="hero__cta">
+            <AppButton
+              variant="primary"
+              size="md"
+              @click="onCountry('US')"
+              data-testid="hero-cta-us"
+            >
+              {{ t('home.cta.start_us') }}
+            </AppButton>
+            <AppButton
+              variant="ghost"
+              size="md"
+              @click="onCountry('GB')"
+              data-testid="hero-cta-gb"
+            >
+              {{ t('home.cta.start_gb') }}
+            </AppButton>
+            <AppButton
+              variant="ghost"
+              size="md"
+              @click="onCountry('SCHENGEN')"
+              data-testid="hero-cta-eu"
+            >
+              {{ t('home.cta.start_eu') }}
+            </AppButton>
+            <AppButton
+              variant="ghost"
+              size="md"
+              @click="onCountry('AU')"
+              data-testid="hero-cta-au"
+            >
+              {{ t('home.cta.start_au') }}
+            </AppButton>
+          </div>
         </div>
 
       </section>
@@ -97,9 +157,13 @@
                   <span class="country-card__attr-label">{{ t('home.card.valid') || 'VALID' }}</span>
                   <span class="country-card__attr-val">{{ c.valid_label }}</span>
                 </div>
-                <div class="country-card__attr">
+                <!-- B3: 价格透明化 — "FROM $X 起" 风格, Atlys 范 -->
+                <div class="country-card__attr country-card__attr--price">
                   <span class="country-card__attr-label">{{ t('home.card.fees') || 'FEES' }}</span>
-                  <span class="country-card__attr-val">\${{ c.fee_usd }}</span>
+                  <span class="country-card__attr-val">
+                    <span class="country-card__price-from">FROM</span>
+                    <span class="country-card__price-num">\${{ c.fee_usd }}</span>
+                  </span>
                 </div>
               </div>
               <!-- W28 Atlys-style: 精准交付时间 "Guaranteed Visa on DD MMM, HH:MM" -->
@@ -156,7 +220,13 @@ const auth = useAuthStore()
 
 // ============== Hero 真实动图轮播(atlys 风格) ==============
 // 10 段真实视频(轮船开/海浪动/云动/极光流动/风沙动),每 4.5s 自动切换
+// I6: mobile 端禁用视频自动轮播 (轮询 + 解码耗电 + 流量),
+// 只显示 slide 0 静态首屏。检测 600px 以下 viewport。
 const SLIDE_DURATION = 4500
+function isMobileViewport() {
+  if (typeof window === 'undefined') return false
+  return window.matchMedia && window.matchMedia('(max-width: 600px)').matches
+}
 
 const slides = [
   { image: '/hero/videos/t1_snow.mp4',          captionKey: 'home.hero.cap1',  cityKey: 'home.hero.city1' },
@@ -187,6 +257,8 @@ function next() { setActive((activeIdx.value + 1) % slides.length) }
 
 function startTimer() {
   stopTimer()
+  // I6: mobile 上不轮播 (流量 + 渲染开销) — 只显示 slide 0
+  if (isMobileViewport()) return
   timer = setInterval(next, SLIDE_DURATION)
 }
 function stopTimer() {
@@ -469,16 +541,20 @@ function onCountry(countryCode) {
   height: 100%;
   object-fit: cover;
   display: block;
+  // 温和提一档清晰度,不再用高 contrast/saturate 把视频细节切掉
+  // (海浪/雪山这种高亮素材再压容易把纹理吃掉变糊)
+  filter: contrast(1.08) saturate(1.18);
 }
 
 .hero__slide-overlay {
   position: absolute;
   inset: 0;
   z-index: 2;
-  // 跟下方 4 卡片图片色调一致:只保留左侧可读区暗角,整体保持原图色彩
+  // 只保留左侧 0-68% 暗角给文字撑底, 不再额外加全屏压暗 (避免整图清晰度掉一档)
+  // 海浪这种视频 0-50% 通常是水面/浪花, 比雪山稍暗, 暗角系数稍微回收避免太死
   background:
-    linear-gradient(90deg, rgba(15,23,42,.42) 0%, rgba(15,23,42,.18) 35%, rgba(15,23,42,0) 60%),
-    linear-gradient(180deg, rgba(0,0,0,0) 60%, rgba(15,23,42,.18) 100%);
+    linear-gradient(90deg, rgba(15,23,42,.72) 0%, rgba(15,23,42,.48) 25%, rgba(15,23,42,.20) 50%, rgba(15,23,42,0) 68%),
+    linear-gradient(180deg, rgba(0,0,0,0) 55%, rgba(15,23,42,.22) 100%);
 }
 
 .hero__copy {
@@ -493,7 +569,10 @@ function onCountry(countryCode) {
   margin: 0 0 14px;
   line-height: 1.15;
   letter-spacing: -.5px;
-  text-shadow: 0 2px 12px rgba(15,23,42,.55), 0 0 1px rgba(15,23,42,.4);
+  // 文字阴影保持稳定, 0-50% 暗角已经稳, 不再叠超深阴影让字周围"糊"
+  text-shadow:
+    0 4px 18px rgba(15,23,42,.7),
+    0 1px 3px rgba(15,23,42,.55);
 }
 .hero__sub {
   font-size: 16px;
@@ -508,11 +587,13 @@ function onCountry(countryCode) {
   gap: 8px; // caption 主段 + 城市名之间留一点呼吸
   margin: 0;
   padding: 8px 18px;
-  background: rgba(255,255,255,.12);
-  border: 1px solid rgba(255,255,255,.18);
+  // chip 背景稍微回收 (.54 → .46), 配合暗角提供足够可读性, 不再死黑
+  background: rgba(15,23,42,.46);
+  border: 1px solid rgba(255,255,255,.32);
   border-radius: 999px;
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(10px);
   font-size: 13px;
+  text-shadow: 0 1px 3px rgba(0,0,0,.45);
   animation: captionIn .5s ease;
 }
 .hero__caption-text {
@@ -528,6 +609,70 @@ function onCountry(countryCode) {
   font-size: 12px;
   letter-spacing: .2px;
 }
+
+/* B4: trust chip — 数据带,放在 hero 标题下方 */
+.hero__trust {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+  color: #fff;
+  font-size: 14px;
+  text-shadow: 0 1px 2px rgba(0,0,0,.35);
+}
+.hero__trust-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.hero__trust-num {
+  font-weight: 700;
+  font-size: 16px;
+  color: #FFD66B;
+  letter-spacing: .3px;
+}
+.hero__trust-label {
+  opacity: .92;
+}
+.hero__trust-divider {
+  opacity: .55;
+}
+
+/* I1: 首页 CTA — 4 个热门国家快捷入口 */
+.hero__cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 24px;
+}
+.hero__cta .app-btn {
+  /* override AppButton default: 让 ghost 在 dark hero 上清晰可见 */
+  --btn-bg: rgba(255,255,255,.12);
+  --btn-bg-hover: rgba(255,255,255,.22);
+  --btn-color: #fff;
+  --btn-border: rgba(255,255,255,.35);
+  backdrop-filter: blur(6px);
+}
+
+/* B3: 价格透明化 — FROM $X 风格 */
+.country-card__attr--price .country-card__attr-val {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+}
+.country-card__price-from {
+  font-size: 10px;
+  letter-spacing: .8px;
+  opacity: .75;
+  font-weight: 600;
+}
+.country-card__price-num {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
 @keyframes captionIn {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -626,7 +771,7 @@ function onCountry(countryCode) {
   inset: 0;
   background: linear-gradient(135deg, #1e3a8a 0%, #3B6EF5 100%);
   mix-blend-mode: color;
-  opacity: .35;  /* W29: 从 .55 → .35，减少冷蓝压制，恢复地标原始饱和度 */
+  opacity: 0;  /* W29: 0 = 不染冷蓝 (AI 生成的 jpg 本身已经是统一冷蓝调, 再叠会过重) */
   pointer-events: none;
   z-index: 1;
 }
@@ -636,7 +781,7 @@ function onCountry(countryCode) {
   object-fit: cover;
   display: block;
   transition: transform .6s cubic-bezier(.2,.8,.2,1);
-  filter: saturate(1.3) contrast(1.08);  /* W29: 从 saturate(.85) → 1.3, contrast(1.05) → 1.08, 配合 opacity 调整提鲜艳度 */
+  filter: saturate(1.5) contrast(1.1);  /* W29: 从 1.3 → 1.5, 1.08 → 1.1, 提鲜艳度 */
 }
 .country-card:hover .country-card__img {
   transform: scale(1.08);

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="Htex luggage tag">
+  <defs>
+    <linearGradient id="g3" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3B6EF5"/>
+      <stop offset="1" stop-color="#6E59F0"/>
+    </linearGradient>
+  </defs>
+  <!-- 顶部小圆孔(穿绳用) -->
+  <circle cx="16" cy="2" r="2.2" fill="none" stroke="#fff" stroke-width="1.2"/>
+  <!-- 孔与牌之间的连接颈 -->
+  <rect x="14" y="3.5" width="4" height="2.5" fill="#fff"/>
+  <!-- 行李牌主体(略宽圆角矩形) -->
+  <rect x="3" y="5.5" width="26" height="23" rx="3" fill="url(#g3)"/>
+  <!-- 内白边(虚线模拟皮面缝线) -->
+  <rect x="5.5" y="8" width="21" height="18" rx="2" fill="none" stroke="#fff" stroke-width="0.7" stroke-dasharray="1.4,1.4" opacity="0.85"/>
+  <!-- H 字母 -->
+  <g fill="#fff">
+    <rect x="9"   y="11.5" width="2.4" height="11" rx="0.5"/>
+    <rect x="20.6" y="11.5" width="2.4" height="11" rx="0.5"/>
+    <rect x="9"   y="15.5" width="14"  height="2.4" rx="0.5"/>
+  </g>
+  <!-- 右上小飞机(从牌上"飞"出来) -->
+  <path d="M 23 5 L 30 3 L 25 7.5 L 26 5.5 Z" fill="#fff"/>
+</svg>

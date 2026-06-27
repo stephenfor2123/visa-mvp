@@ -27,26 +27,26 @@ defineProps({
 <style scoped lang="scss">
 .app-card {
   background: #fff;
-  border: 1px solid var(--border, #E2E8F0);
+  border: 0;
   border-radius: 12px;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  box-shadow: none;
   overflow: hidden;
   transition: box-shadow .2s, transform .2s;
 }
 .app-card--hoverable:hover {
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, .08);
   transform: translateY(-1px);
 }
 .app-card--padded .app-card__body { padding: 18px 20px; }
 .app-card__header {
   padding: 14px 20px;
-  border-bottom: 1px solid var(--border, #E2E8F0);
+  border-bottom: 0;
 }
 .app-card__title { margin: 0; font-size: 16px; font-weight: 600; color: var(--ink-1, #0F172A); }
 .app-card__subtitle { margin: 4px 0 0; font-size: 13px; color: var(--ink-3, #64748B); }
 .app-card__footer {
   padding: 12px 20px;
-  border-top: 1px solid var(--border, #E2E8F0);
+  border-top: 0;
   background: var(--bg-alt, #F8FAFC);
 }
 </style>

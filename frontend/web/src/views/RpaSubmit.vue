@@ -7,16 +7,7 @@
 -->
 <template>
   <div class="rpa-submit-page">
-    <header class="app-header app-container">
-      <router-link to="/home" class="app-header__brand">
-        <HtexLogo :size="28" />
-        <span>{{ t('common.app_name') }}</span>
-      </router-link>
-      <div class="app-header__right">
-        <LangSwitch />
-      </div>
-    </header>
-
+    <AppHeader scope="rpa-submit" />
     <main class="app-container app-page rpa-submit-shell">
       <!-- 顶部状态卡 -->
       <section class="rpa-card" data-testid="rpa-submit-card">
@@ -105,13 +96,13 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
-import HtexLogo from '@/components/HtexLogo.vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import AppButton from '@/components/AppButton.vue'
 import LangSwitch from '@/components/LangSwitch.vue'
 import { useToast } from '@/composables/useToast'
 import { postRpaSubmit, getRpaStatus } from '@/api/rpa'
+import AppHeader from '@/components/AppHeader.vue'
 
 const { t } = useI18n()
 const route = useRoute()

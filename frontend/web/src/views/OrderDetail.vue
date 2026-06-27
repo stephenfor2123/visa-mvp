@@ -17,31 +17,7 @@
 -->
 <template>
   <div class="orderdetail-page">
-    <header class="app-header app-container">
-      <router-link to="/home" class="app-header__brand">
-        <HtexLogo :size="28" />
-        <span>{{ t('common.app_name') }}</span>
-      </router-link>
-      <div class="app-header__right">
-        <span v-if="wsState === 'connected'" class="ws-pill ws-pill--ok" data-testid="orderdetail-ws-ok">
-          🟢 {{ t('orderdetail.ws_connected') }}
-        </span>
-        <span v-else-if="wsState === 'connecting'" class="ws-pill ws-pill--pending" data-testid="orderdetail-ws-pending">
-          🟡 {{ t('orderdetail.ws_connecting') }}
-        </span>
-        <span v-else class="ws-pill ws-pill--fallback" data-testid="orderdetail-ws-fallback">
-          🔄 {{ t('orderdetail.polling_label') }} {{ countdownSec }}{{ t('orderdetail.polling_unit') }}
-        </span>
-        <LangSwitch />
-        <AppButton
-          ref="logoutBtnRef"
-          variant="outline"
-          size="sm"
-          data-testid="orderdetail-logout"
-        >{{ t('orderdetail.logout_btn') }}</AppButton>
-      </div>
-    </header>
-
+    <AppHeader scope="order-detail" />
     <main class="app-container app-page orderdetail-shell">
       <!-- Loading/Error -->
       <div v-if="loading && !order" class="state-block" data-testid="orderdetail-loading">
@@ -304,7 +280,6 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
-import HtexLogo from '@/components/HtexLogo.vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
 import AppButton from '@/components/AppButton.vue'
@@ -320,6 +295,7 @@ import {
 } from '@/api/orders'
 // A-W9-2: query order commission, detail page shows "Affiliate source: PARTNER001 (5% commission)"
 import { getCommission } from '@/api/affiliate'
+import AppHeader from '@/components/AppHeader.vue'
 
 const { t, te, locale } = useI18n()
 const router = useRouter()
@@ -590,13 +566,6 @@ function goBack() {
   }
 }
 
-function onLogout() {
-  auth.logout()
-  // Simple toast hint
-  try { toast.success(t('toast.logout_success')) } catch (_) {}
-  router.push('/login')
-}
-
 // Route change (orderNo change) reload
 watch(orderNo, (v, prev) => {
   if (v && v !== prev) {
@@ -609,7 +578,6 @@ watch(orderNo, (v, prev) => {
 // 8 AppButtons use ref to expose onTrigger, Vue @click bubbling no longer depends on AppButton internals
 // 6 persistent: logout / retry / cancel / pdf / reapply / back
 // 2 modal: cancelNo / cancelYes (v-if controlled, nextTick inject on open)
-const logoutBtnRef = ref(null)
 const retryBtnRef = ref(null)
 const cancelBtnRef = ref(null)
 const pdfBtnRef = ref(null)
@@ -630,8 +598,7 @@ watch(cancelModal, async (val) => {
 onMounted(async () => {
   auth.hydrate()
   await loadInitial()
-  // Inject 6 persistent AppButton click callbacks (W3 root-fix AppButton + setOnTrigger pattern)
-  if (logoutBtnRef.value) logoutBtnRef.value.setOnTrigger(onLogout)
+  // Inject 5 persistent AppButton click callbacks (W3 root-fix AppButton + setOnTrigger pattern)
   if (retryBtnRef.value) retryBtnRef.value.setOnTrigger(loadInitial)
   if (cancelBtnRef.value) cancelBtnRef.value.setOnTrigger(onCancel)
   if (pdfBtnRef.value) pdfBtnRef.value.setOnTrigger(onDownloadPdf)
@@ -652,9 +619,6 @@ onBeforeUnmount(() => {
   display: flex; align-items: center; justify-content: space-between;
   padding: 14px 24px; background: #fff; border-bottom: 1px solid var(--border, #E2E8F0);
 }
-.app-header__brand { display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--ink, #1A1D29); font-weight: 600; }
-.app-header__right { display: flex; align-items: center; gap: 12px; }
-
 .ws-pill {
   display: inline-flex; align-items: center;
   padding: 4px 10px;

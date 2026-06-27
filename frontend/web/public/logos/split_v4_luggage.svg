@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 32" width="64" height="32" role="img" aria-label="Htex luggage tag H tex split">
+  <defs>
+    <linearGradient id="g4" x1="0" y1="0" x2="64" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3B6EF5"/>
+      <stop offset="1" stop-color="#6E59F0"/>
+    </linearGradient>
+  </defs>
+  <!-- 左侧行李牌(深色) -->
+  <rect x="1" y="6" width="28" height="20" rx="3" fill="url(#g4)"/>
+  <!-- 行李牌内白边(虚线模拟皮面缝线) -->
+  <rect x="3.5" y="8.5" width="23" height="15" rx="2" fill="none" stroke="#fff" stroke-width="0.5" stroke-dasharray="1,1" opacity="0.7"/>
+  <!-- H 大字 -->
+  <g fill="#fff">
+    <rect x="7"  y="11"   width="2.6" height="11" rx="0.5"/>
+    <rect x="18" y="11"   width="2.6" height="11" rx="0.5"/>
+    <rect x="7"  y="15"   width="13.6" height="2.6" rx="0.5"/>
+  </g>
+  <!-- 飞机(右上) -->
+  <path d="M 22 4 L 30 5.5 L 23 8 L 24 6 Z" fill="#fff" opacity="0.9"/>
+  <!-- 连接条(撕齿区) -->
+  <line x1="32" y1="14" x2="32" y2="18" stroke="#3B6EF5" stroke-width="0.6" stroke-dasharray="0.8,0.8" opacity="0.8"/>
+  <!-- 右侧副牌(白底,tex) -->
+  <rect x="35" y="9" width="28" height="14" rx="2.5" fill="#fff" stroke="#3B6EF5" stroke-width="0.8"/>
+  <!-- 内白边 -->
+  <rect x="36.5" y="10.5" width="25" height="11" rx="1.8" fill="none" stroke="#3B6EF5" stroke-width="0.4" stroke-dasharray="1,1" opacity="0.6"/>
+  <!-- tex -->
+  <text x="49" y="20" font-size="9" font-weight="800" fill="#3B6EF5" text-anchor="middle" font-family="-apple-system, system-ui, sans-serif" letter-spacing="-0.2">tex</text>
+</svg>

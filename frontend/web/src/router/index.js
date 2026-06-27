@@ -51,6 +51,12 @@ const routes = [
     meta: { title: 'materials.scan_title', requiresAuth: true }
   },
   {
+    path: '/passport-review',
+    name: 'PassportReview',
+    component: () => import('@/views/PassportReview.vue'),
+    meta: { title: 'passport.review_title', requiresAuth: true }
+  },
+  {
     path: '/materials',
     name: 'Materials',
     component: () => import('@/views/Materials.vue'),
@@ -72,10 +78,11 @@ const routes = [
   },
   {
     // Story 1.2.1b: 申请表填写页 (OCR 预填 + 手动编辑 + 紧急联系人)
+    // W29: 免登录可访问,登录墙后移到 onSubmit 触发(详见 OrderNew.vue 顶部)
     path: '/orders/new',
     name: 'OrderNew',
     component: () => import('@/views/OrderNew.vue'),
-    meta: { title: 'orders.title', requiresAuth: true }
+    meta: { title: 'orders.title' }
   },
   {
     // Story 1.2.2a: 订单状态详情页 N4 — 5 态时间线 + WS + 30s polling 兜底
@@ -111,6 +118,34 @@ const routes = [
     name: 'RpaSubmit',
     component: () => import('@/views/RpaSubmit.vue'),
     meta: { title: 'rpa.page_title', requiresAuth: true }
+  },
+  {
+    // W31: 签证办理 — 选国家 → RAG 拉材料清单 → 上传/OCR → 跳 OrderNew
+    path: '/apply',
+    name: 'Apply',
+    component: () => import('@/views/Apply.vue'),
+    meta: { title: 'nav.mega.apply' }
+  },
+  {
+    // W31: 数据诊断 — 选国家 → 个人条件表单 → 签率综合判断
+    path: '/diagnose',
+    name: 'Diagnose',
+    component: () => import('@/views/Diagnose.vue'),
+    meta: { title: 'nav.mega.diagnose' }
+  },
+  {
+    // W31: 资源中心 — RAG FAQ + 政策查询 + 材料模板
+    path: '/resources',
+    name: 'Resources',
+    component: () => import('@/views/Resources.vue'),
+    meta: { title: 'nav.mega.resources' }
+  },
+  {
+    // W31: 联系我们 — 邮箱/电话/微信/工作时间(纯静态展示)
+    path: '/contact',
+    name: 'Contact',
+    component: () => import('@/views/ContactView.vue'),
+    meta: { title: 'nav.mega.contact' }
   },
   {
     // W14: RPA 状态查询页
@@ -172,10 +207,19 @@ router.beforeEach((to, from, next) => {
 router.afterEach((to) => {
   const i18nKey = to.meta?.title
   // W19-3: use i18n.global.t to translate (was showing raw key like "nav.home" before)
+  // W32: page-specific title when route declares one (e.g. "上传材料");
+  //      otherwise fall back to "Htex · {app_slogan}" so the brand+slogan
+  //      pattern is consistent across pages that don't set their own title.
   if (i18nKey) {
     document.title = `Htex · ${i18n.global.t(i18nKey)}`
   } else {
-    document.title = i18n.global.t('common.app_name') || 'Htex'
+    const slogan = (() => {
+      try {
+        const v = i18n.global.t('common.app_slogan')
+        return v && !v.startsWith('common.') ? v : null
+      } catch { return null }
+    })()
+    document.title = slogan ? `Htex · ${slogan}` : i18n.global.t('common.app_name') || 'Htex'
   }
 })
 

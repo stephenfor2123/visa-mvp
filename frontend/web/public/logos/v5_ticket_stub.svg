@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="Htex ticket stub">
+  <defs>
+    <linearGradient id="g5" x1="0" y1="0" x2="32" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3B6EF5"/>
+      <stop offset="1" stop-color="#6E59F0"/>
+    </linearGradient>
+  </defs>
+  <!-- 票根主区(深色长条) -->
+  <rect x="1" y="9" width="30" height="14" rx="2" fill="url(#g5)"/>
+  <!-- 撕齿孔 -->
+  <circle cx="11" cy="9"  r="1.5" fill="#fff"/>
+  <circle cx="11" cy="23" r="1.5" fill="#fff"/>
+  <!-- 撕齿虚线 -->
+  <line x1="11" y1="12" x2="11" y2="20" stroke="#fff" stroke-width="0.6" stroke-dasharray="1,1"/>
+  <!-- 左侧大 H -->
+  <g fill="#fff">
+    <rect x="3"  y="12"  width="1.8" height="8"  rx="0.4"/>
+    <rect x="7.2" y="12"  width="1.8" height="8"  rx="0.4"/>
+    <rect x="3"  y="14.5" width="6"  height="1.8" rx="0.4"/>
+  </g>
+  <!-- 右侧编号感(细线 + 小字 H) -->
+  <g fill="#fff">
+    <line x1="14" y1="13" x2="29" y2="13" stroke="#fff" stroke-width="0.5" opacity="0.6"/>
+    <line x1="14" y1="20" x2="29" y2="20" stroke="#fff" stroke-width="0.5" opacity="0.6"/>
+    <text x="21.5" y="18.5" font-size="6" font-weight="700" fill="#fff" text-anchor="middle" font-family="-apple-system, system-ui, sans-serif">Htex</text>
+  </g>
+</svg>

@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 80" width="240" height="80" role="img" aria-label="Htex logo with paper plane inside e, animated">
+  <defs>
+    <style>
+      .htex-text2 {
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", "PingFang SC", "Inter", Arial, sans-serif;
+        font-weight: 900;
+        font-size: 64px;
+        letter-spacing: -2px;
+      }
+      #final2 .plane-wrap {
+        transform-origin: 0 0;
+        animation: f2-orbit 4s linear infinite;
+      }
+      @keyframes f2-orbit {
+        0%   { transform: rotate(0deg)   translateX(8px) rotate(0deg); }
+        100% { transform: rotate(360deg) translateX(8px) rotate(-360deg); }
+      }
+    </style>
+  </defs>
+
+  <g id="final2">
+    <text x="20" y="60" class="htex-text2" fill="#000">Htex</text>
+    <g transform="translate(111, 40)">
+      <circle cx="0" cy="0" r="11" fill="#fff" stroke="#000" stroke-width="2.6"/>
+      <g class="plane-wrap">
+        <path d="M -4.5 -2 L 4.5 0 L -4.5 2 L -1 0 Z" fill="#000"/>
+        <line x1="-4.5" y1="-2" x2="-1" y2="0" stroke="#fff" stroke-width="0.6"/>
+        <line x1="-4.5" y1="2" x2="-1" y2="0" stroke="#fff" stroke-width="0.6"/>
+      </g>
+    </g>
+  </g>
+</svg>

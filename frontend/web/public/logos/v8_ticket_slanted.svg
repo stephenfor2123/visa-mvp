@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="Htex boarding pass slanted">
+  <defs>
+    <linearGradient id="g8" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3B6EF5"/>
+      <stop offset="1" stop-color="#6E59F0"/>
+    </linearGradient>
+  </defs>
+  <!-- 整体旋转 -8° -->
+  <g transform="rotate(-8 16 16)">
+    <!-- 票根主体(深色,圆角) -->
+    <rect x="1" y="8" width="30" height="16" rx="3" fill="url(#g8)"/>
+    <!-- 撕齿孔(中上、中下) -->
+    <circle cx="14" cy="8"  r="1.5" fill="#fff"/>
+    <circle cx="14" cy="24" r="1.5" fill="#fff"/>
+    <!-- 撕齿虚线 -->
+    <line x1="14" y1="11" x2="14" y2="21" stroke="#fff" stroke-width="0.6" stroke-dasharray="1,1"/>
+    <!-- 主区:左 H -->
+    <g fill="#fff">
+      <rect x="3.5" y="12"   width="1.8" height="8"  rx="0.4"/>
+      <rect x="8.3" y="12"   width="1.8" height="8"  rx="0.4"/>
+      <rect x="3.5" y="14.5" width="6.6" height="1.8" rx="0.4"/>
+    </g>
+    <!-- 主区:小飞机(在 H 旁) -->
+    <path d="M 6 18 L 11 20 L 6 22 L 7 20 Z" fill="#fff" opacity="0.9"/>
+    <!-- 副区:右侧 Htex -->
+    <text x="22" y="18" font-size="5.5" font-weight="800" fill="#fff" text-anchor="middle" font-family="-apple-system, system-ui, sans-serif" letter-spacing="0.4">Htex</text>
+    <!-- 副区:顶/底装饰线 -->
+    <line x1="16" y1="11" x2="29" y2="11" stroke="#fff" stroke-width="0.4" opacity="0.6"/>
+    <line x1="16" y1="22" x2="29" y2="22" stroke="#fff" stroke-width="0.4" opacity="0.6"/>
+  </g>
+</svg>

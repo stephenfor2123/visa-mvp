@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<style>body{margin:0;padding:20px;font-family:-apple-system,sans-serif}</style>
+</head><body>
+<svg width="400" height="100" xmlns="http://www.w3.org/2000/svg">
+  <text x="22" y="64" font-size="68" font-weight="900" letter-spacing="-2" fill="#000" id="t">Htex</text>
+</svg>
+<script>
+  const t = document.getElementById('t');
+  const sb = t.getStartPositionOfChar(2);
+  const eb = t.getEndPositionOfChar(2);
+  const ext = t.getExtentOfChar(2);
+  document.body.appendChild(document.createTextNode(JSON.stringify({
+    e_x_start: sb.x, e_x_end: eb.x, e_y: ext.y, e_h: ext.height,
+    e_cx: (sb.x + eb.x) / 2, e_cy: ext.y + ext.height / 2
+  }, null, 2)));
+</script>
+</body></html>

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="Htex passport">
+  <defs>
+    <linearGradient id="g4" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3B6EF5"/>
+      <stop offset="1" stop-color="#6E59F0"/>
+    </linearGradient>
+  </defs>
+  <!-- 护照封皮(立式矩形,圆角) -->
+  <rect x="6" y="2" width="20" height="28" rx="2" fill="url(#g4)"/>
+  <!-- 国徽占位圆(顶部居中) -->
+  <circle cx="16" cy="9" r="2.4" fill="none" stroke="#fff" stroke-width="0.9"/>
+  <!-- 国徽小星 -->
+  <circle cx="16" cy="9" r="0.5" fill="#fff"/>
+  <!-- H 大字母(护照正面) -->
+  <g fill="#fff">
+    <rect x="10"   y="14"   width="2.6" height="13" rx="0.5"/>
+    <rect x="19.4" y="14"   width="2.6" height="13" rx="0.5"/>
+    <rect x="10"   y="18.5" width="12"  height="2.6" rx="0.5"/>
+  </g>
+  <!-- 底部条形码感(三条线) -->
+  <g stroke="#fff" stroke-width="0.6" stroke-linecap="round" opacity="0.8">
+    <line x1="9"  y1="28" x2="11" y2="28"/>
+    <line x1="12" y1="28" x2="15" y2="28"/>
+    <line x1="16" y1="28" x2="18" y2="28"/>
+    <line x1="19" y1="28" x2="23" y2="28"/>
+  </g>
+</svg>

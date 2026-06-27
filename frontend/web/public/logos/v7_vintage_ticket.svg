@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="Htex vintage ticket">
+  <defs>
+    <linearGradient id="g7" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3B6EF5"/>
+      <stop offset="1" stop-color="#6E59F0"/>
+    </linearGradient>
+    <linearGradient id="g7-2" x1="0" y1="0" x2="0" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6E59F0"/>
+      <stop offset="1" stop-color="#3B6EF5"/>
+    </linearGradient>
+  </defs>
+  <!-- 票根主体(细长条,圆角两端) -->
+  <rect x="1" y="9" width="30" height="14" rx="7" fill="url(#g7)"/>
+  <!-- 内白边(双线边框,复古感) -->
+  <rect x="2.5" y="10.5" width="27" height="11" rx="5.5" fill="none" stroke="#fff" stroke-width="0.6"/>
+  <rect x="3.5" y="11.5" width="25" height="9" rx="4.5" fill="none" stroke="#fff" stroke-width="0.4" opacity="0.7"/>
+  <!-- 中央撕齿孔 -->
+  <circle cx="16" cy="9"  r="1.4" fill="#fff"/>
+  <circle cx="16" cy="23" r="1.4" fill="#fff"/>
+  <!-- 撕齿虚线 -->
+  <line x1="16" y1="12" x2="16" y2="20" stroke="#fff" stroke-width="0.5" stroke-dasharray="1,1" opacity="0.7"/>
+  <!-- 左侧 H -->
+  <g fill="#fff">
+    <rect x="5"  y="13"  width="1.6" height="6"  rx="0.3"/>
+    <rect x="8.4" y="13"  width="1.6" height="6"  rx="0.3"/>
+    <rect x="5"  y="14.8" width="5"  height="1.6" rx="0.3"/>
+  </g>
+  <!-- 右侧 Htex -->
+  <text x="23.5" y="17.5" font-size="5" font-weight="800" fill="#fff" text-anchor="middle" font-family="-apple-system, system-ui, sans-serif" letter-spacing="0.3">Htex</text>
+  <!-- 顶/底小装饰线 -->
+  <line x1="4" y1="6" x2="28" y2="6" stroke="#3B6EF5" stroke-width="0.6" stroke-linecap="round"/>
+  <line x1="4" y1="26" x2="28" y2="26" stroke="#3B6EF5" stroke-width="0.6" stroke-linecap="round"/>
+</svg>

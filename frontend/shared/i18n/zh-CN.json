@@ -23,6 +23,8 @@
     "retry": "重试",
     "close": "关闭",
     "confirm": "确认",
+    "country_group_national": "国别签证",
+    "country_group_schengen": "申根签证",
     "w2_coming_soon": "{feature} W2 接入",
     "auth_footer": "© 2026 Htex · 仅供演示",
     "network_error": "网络异常,请稍后重试",
@@ -46,11 +48,156 @@
       "profile": "我的资料",
       "materials": "申请材料"
     },
-    "schengen": "申根 26 国"
+    "schengen": "申根 26 国",
+    "mega": {
+      "apply": "办签证",
+      "apply_title": "从国家选择到材料提交,一站搞定",
+      "apply_desc": "RAG 智能识别该国签证所需材料清单,支持 OCR 自动提取证件信息。",
+      "apply_i1": "材料清单",
+      "apply_i1_d": "按国家显示完整所需材料",
+      "apply_i2": "OCR 智能识别",
+      "apply_i2_d": "上传证件自动提取关键信息",
+      "apply_i3": "上传材料",
+      "apply_i3_d": "护照/签证页/资金证明等",
+      "diagnose": "查通过率",
+      "diagnose_title": "签率预判,材料准备一次到位",
+      "diagnose_desc": "基于 RAG + 规则引擎,综合评估您的签证通过率。",
+      "diagnose_i1": "完整签率",
+      "diagnose_i1_d": "6 维度综合评分 + 等级",
+      "diagnose_i2": "收入评估",
+      "diagnose_i2_d": "不同收入档位的稳定性影响",
+      "diagnose_i3": "出行历史",
+      "diagnose_i3_d": "出行记录与签证历史加分",
+      "resources": "看政策",
+      "resources_title": "签证知识库,你想知道的都在这",
+      "resources_desc": "RAG 实时检索 4 条产品线: 欧洲 · 申根 · 美国 · 澳洲。",
+      "resources_i1": "签证百科",
+      "resources_i1_d": "4 条产品线政策 + 申请指南",
+      "resources_i2": "政策查询",
+      "resources_i2_d": "官网原文 + 实时更新",
+      "resources_i3": "材料模板",
+      "resources_i3_d": "在职证明/存款证明等模板",
+      "resources_i4": "常见问答",
+      "resources_i4_d": "拒签/面签/费用常见问题",
+      "contact": "联系我们",
+      "contact_title": "我们随时在线",
+      "contact_desc": "4 种联系方式,工作日 1 小时内回复",
+      "contact_i1": "邮件咨询",
+      "contact_i1_d": "详细问题 / 资料审核",
+      "contact_i2": "电话直拨",
+      "contact_i2_d": "紧急事项 / 加急",
+      "contact_i3": "微信客服",
+      "contact_i3_d": "日常沟通 / 实时响应",
+      "contact_i4": "WhatsApp",
+      "contact_i4_d": "跨境咨询 / 海外用户"
+    }
+  },
+  "apply": {
+    "title": "签证办理",
+    "sub": "选国家 → 看清单 → OCR 上传,3 步开始",
+    "step_country": "第 1 步:选择目的地国家",
+    "back": "返回选国家",
+    "checklist": "所需材料清单",
+    "loading": "正在检索材料清单...",
+    "fee": "签证费",
+    "processing": "审理时间",
+    "validity": "有效期 / 停留期",
+    "cat_identity": "身份证明",
+    "cat_financial": "财务证明",
+    "cat_work": "工作 / 在职",
+    "cat_travel": "行程 / 住宿",
+    "cat_insurance": "旅行保险",
+    "cat_form": "签证表格",
+    "cat_base": "其他材料",
+    "scan": "OCR 扫描",
+    "scan_tip": "点击查看 OCR 演示",
+    "scan_title": "OCR 智能识别演示",
+    "scan_desc": "使用 Htex OCR 自动识别{name}中的关键信息:",
+    "scan_passport": "护照号",
+    "scan_name": "姓名",
+    "scan_dob": "出生日期",
+    "scan_expiry": "有效期至",
+    "scan_hint": "OCR 演示数据。正式办理请到下一步上传真实证件。",
+    "scan_close": "我知道了",
+    "no_materials": "暂无材料清单数据,建议直接联系客服。",
+    "source": "数据来源",
+    "view_source": "查看原文",
+    "cta": "开始办理此签证",
+    "err_network": "网络异常,请稍后重试"
+  },
+  "diagnose": {
+    "title": "数据诊断",
+    "sub": "回答 6 个问题,告诉你签证通过率",
+    "step_country": "第 1 步:选择目的地国家",
+    "step_form": "第 2 步:个人情况",
+    "back": "返回选国家",
+    "restart": "重新诊断",
+    "marital": "婚姻状况",
+    "marital_single": "未婚",
+    "marital_married": "已婚",
+    "marital_divorced": "离异",
+    "marital_widowed": "丧偶",
+    "income": "月收入(人民币)",
+    "income_below_5k": "5k 以下",
+    "income_5k_15k": "5k - 15k",
+    "income_15k_30k": "15k - 30k",
+    "income_30k_100k": "30k - 100k",
+    "income_above_100k": "100k 以上",
+    "purpose": "出行目的",
+    "purpose_business": "商务",
+    "purpose_tourism": "旅游",
+    "purpose_family": "探亲",
+    "purpose_study": "留学",
+    "purpose_other": "其他",
+    "travel_history": "近 5 年国际旅行次数",
+    "travel_history_tip": "指跨国/出境旅行,免签和落地签都算;国内出行不计入",
+    "travel_none": "无",
+    "travel_1_3": "1-3 次",
+    "travel_4_10": "4-10 次",
+    "travel_above_10": "10+ 次",
+    "visa_history": "已办签证次数(累计,含已过期)",
+    "visa_history_tip": "按签证申请次数计,同一国家多次申请累加;拒签不计入",
+    "visa_none": "从未办过签证",
+    "visa_1_2": "1-2 次",
+    "visa_above_2": "3+ 次",
+    "employment": "目前身份 / 工作状态",
+    "employment_tip": "兼职工/合同工算在职;自由职业/个体户另选;应届待业、家庭主妇选待业",
+    "emp_employed": "在职(雇员/合同工)",
+    "emp_freelancer": "自由职业/个体经营",
+    "emp_student": "学生/在读",
+    "emp_retired": "退休",
+    "emp_unemployed": "待业/无固定工作",
+    "extras": "附加信息",
+    "age": "年龄",
+    "age_ph": "可选",
+    "solo_female": "单身女性独自旅行",
+    "submit": "查看签率",
+    "analyzing": "分析中...",
+    "factors": "评估明细",
+    "suggestions": "建议",
+    "level_high": "通过率高",
+    "level_medium": "通过率中等",
+    "level_low": "通过率较低",
+    "cta_apply": "根据此建议开始办理",
+    "err_network": "网络异常,请稍后重试"
+  },
+  "resources": {
+    "title": "资源中心",
+    "sub": "RAG 实时检索 4 条产品线: 欧洲 · 申根 · 美国 · 澳洲",
+    "search_ph": "试试问:美国签证需要哪些材料?",
+    "all_countries": "全部国家",
+    "popular": "热门问题",
+    "ask": "提问",
+    "searching": "搜索中...",
+    "answer": "答案",
+    "sources": "引用来源",
+    "no_answer": "未找到相关答案,请换个问法。",
+    "err_network": "网络异常,请稍后重试"
   },
   "login": {
     "title": "欢迎回来",
     "subtitle": "使用邮箱 / 用户名 + 密码登录",
+    "hint_needed": "登录后即可完成订单提交,你填的资料已自动保存",
     "account_label": "邮箱 / 用户名",
     "account_placeholder": "请输入邮箱或用户名",
     "pwd_label": "密码",
@@ -442,6 +589,9 @@
     "stay_days_auto": "自动计算",
     "stay_days_hint": "{next}: {days} 天"
   },
+  "ordernew": {
+    "draft_restored": "已恢复你上次未提交的申请"
+  },
   "orderdetail": {
     "page_title": "订单详情",
     "page_subtitle": "实时跟踪您的签证申请进度",
@@ -531,36 +681,91 @@
       "explore_cta": "查看 4 大目的地",
       "chip_meta": "3 天出签 · 全程透明",
       "cap1": "仰望星空,踏雪寻峰",
-      "cap2": "海天一线,签证无忧",
-      "cap3": "极光漫舞,北欧畅游",
-      "cap4": "穿越沙海,签证如风",
-      "cap5": "银河邂逅,签证即启程"
+      "cap2": "海天一线,潮汐共舞",
+      "cap3": "极光漫舞,天际无界",
+      "cap4": "沙海无垠,驼铃回响",
+      "cap5": "银河邂逅,夜色沉醉",
+      "cap6": "行摄山野,镜头讲故事",
+      "cap7": "山林云海,云端漫步",
+      "cap8": "万米高空,落日如金",
+      "cap9": "穿越多洛米蒂,云海生光",
+      "cap10": "蓝白梦境,落日熔金",
+      "city1": "瑞士 · 阿尔卑斯山",
+      "city2": "阿根廷 · 巴塔哥尼亚",
+      "city3": "印度尼西亚 · 巴厘岛",
+      "city4": "泰国 · 清迈",
+      "city5": "挪威 · 特罗姆瑟",
+      "city6": "阿联酋 · 迪拜",
+      "city7": "摩洛哥 · 撒哈拉",
+      "city8": "意大利 · 多洛米蒂",
+      "city9": "智利 · 阿塔卡马",
+      "city10": "希腊 · 圣托里尼"
     },
     "destinations": {
       "title": "4 大签证目的地",
       "subtitle": "覆盖全球最热门签证目的地,材料清单自动生成,最快 3 天出签"
     },
+    "card": {
+      "type": "类型",
+      "valid": "有效期",
+      "fees": "费用",
+      "guaranteed_on": "预计出签时间",
+      "type_evisa": "电子签",
+      "type_sticker": "贴纸签",
+      "type_visa": "签证",
+      "apply_through": "通过此国申请",
+      "visa_fee_from": "起"
+    },
     "features": {
       "title": "为什么选我们",
       "subtitle": "把繁琐的签证流程,变成 4 步搞定",
-      "materials": {
-        "title": "材料清单自动生成",
-        "desc": "根据目的地自动列出所需材料,避免漏交错交。"
+      "pay_after": {
+        "title": "出签后付服务费",
+        "desc": "通过才付款,通过率没信心不收钱。"
       },
-      "insurance": {
-        "title": "拒签险保障",
-        "desc": "若不幸被拒签,平台赔付 100% 服务费。"
+      "system_check": {
+        "title": "AI 智能预审",
+        "desc": "清单自动生成 + OCR 识别,一次过签率更高。"
       },
       "templates": {
-        "title": "模板库",
-        "desc": "在职证明、银行流水、邀请函等,模板一键套用。"
+        "title": "模板库一键套用",
+        "desc": "在职证明/流水/邀请函等 6+ 模板,30 秒填完。"
       },
-      "affiliate": {
-        "title": "推广计划",
-        "desc": "推荐好友办签,双方各得 ¥50 优惠券。"
+      "data_safety": {
+        "title": "数据安全无外漏",
+        "desc": "本地/传输/存储三重加密,出签即焚。"
       }
     },
     "toast_explore_pending": "国家列表将在下一版本接入"
+    },
+    "cta": {
+      "start_us": "立即办美国签证",
+      "start_gb": "立即办英国签证",
+      "start_eu": "立即办申根签证",
+      "start_au": "立即办澳洲签证",
+      "view_all": "查看全部 30 国",
+      "compare": "对比签证"
+    },
+    "trust_stats": {
+      "users": "已服务 {n}+ 用户",
+      "on_time": "准时出签 {pct}%",
+      "rating": "用户评分 {score}★",
+      "support": "7×24 中文客服"
+    }
+  },
+  "trust": {
+    "on_time": "准时出签保障",
+    "on_time_tip": "承诺准时出签,延误全额退款"
+  },
+  "cs": {
+    "open_search": "搜索国家",
+    "search_placeholder": "搜索国家名称或代码…",
+    "clear": "清空",
+    "close": "关闭",
+    "tab_all": "全部",
+    "tab_schengen": "申根",
+    "no_results": "没有匹配的国家。",
+    "coming_soon": "即将开放"
   },
   "profile": {
     "page_title": "个人中心",
@@ -818,5 +1023,18 @@
   "theme": {
     "light_mode": "切换浅色模式",
     "dark_mode": "切换深色模式"
+  },
+  "contact": {
+    "title": "联系我们",
+    "sub": "邮件咨询 1 小时内回复 · 工作日全天",
+    "email": "邮件",
+    "phone": "电话",
+    "wechat": "微信",
+    "whatsapp": "WhatsApp",
+    "hours": "工作时间",
+    "hours_days": "周一至周日",
+    "hours_time": "09:00 — 21:00 (北京时间)",
+    "copy": "复制",
+    "copied": "已复制"
   }
 }

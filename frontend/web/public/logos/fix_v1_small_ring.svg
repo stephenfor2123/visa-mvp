@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 80" width="240" height="80" role="img" aria-label="Htex logo small ring in e">
+  <defs>
+    <style>
+      .htex-a {
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", "PingFang SC", "Inter", Arial, sans-serif;
+        font-weight: 900;
+        font-size: 64px;
+        letter-spacing: -2px;
+      }
+    </style>
+  </defs>
+
+  <text x="20" y="60" class="htex-a" fill="#000">Htex</text>
+
+  <!-- 缩小圆环到 e 字符中央偏上(r=6),e 字符横线仍可见 -->
+  <g transform="translate(111, 35)">
+    <circle cx="0" cy="0" r="6.5" fill="#fff" stroke="#000" stroke-width="2"/>
+    <path d="M -3 -1.4 L 3 0 L -3 1.4 L -0.8 0 Z" fill="#000"/>
+  </g>
+</svg>

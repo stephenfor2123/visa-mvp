@@ -1,15 +1,6 @@
 <template>
   <div class="validate-page">
-    <header class="app-header app-container">
-      <router-link to="/home" class="app-header__brand">
-        <HtexLogo :size="28" />
-        <span>{{ t('common.app_name') }}</span>
-      </router-link>
-      <div class="app-header__right">
-        <LangSwitch />
-      </div>
-    </header>
-
+    <AppHeader scope="materials-validate" />
     <main class="app-container app-page validate-shell">
       <h1 class="page-title">{{ t('validation.page_title') }}</h1>
       <p class="page-sub">{{ t('validation.page_subtitle') }}</p>
@@ -160,13 +151,13 @@
 
 <script setup>
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
-import HtexLogo from '@/components/HtexLogo.vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import { validateMaterials } from '@/api/materials'
 import AppButton from '@/components/AppButton.vue'
 import LangSwitch from '@/components/LangSwitch.vue'
+import AppHeader from '@/components/AppHeader.vue'
 
 const { t, te } = useI18n()
 const router = useRouter()

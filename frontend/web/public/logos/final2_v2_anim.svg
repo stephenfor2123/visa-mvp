@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80" width="200" height="80" role="img" aria-label="Htex logo with thin path e and animated plane">
+  <defs>
+    <style>
+      .htex-htx2 {
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", "PingFang SC", "Inter", Arial, sans-serif;
+        font-weight: 900;
+        font-size: 60px;
+        letter-spacing: -2px;
+      }
+      #final2-anim .plane {
+        offset-path: path("M 113 38 L 97 38 A 8 15 0 1 1 102 50");
+        offset-rotate: auto;
+        animation: f2a-orbit 4s linear infinite;
+      }
+      @keyframes f2a-orbit {
+        0%   { offset-distance: 0%; }
+        100% { offset-distance: 100%; }
+      }
+    </style>
+    <mask id="e-mask-v2">
+      <rect width="200" height="80" fill="white"/>
+      <path d="M 102 50 L 113 38" stroke="black" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+    </mask>
+  </defs>
+
+  <g id="final2-anim">
+    <text x="18" y="58" class="htex-htx2" fill="#000">Ht</text>
+    <text x="148" y="58" class="htex-htx2" fill="#000">x</text>
+
+    <g stroke="#000" stroke-linecap="round" fill="none" mask="url(#e-mask-v2)">
+      <ellipse cx="105" cy="38" rx="8" ry="15" stroke-width="3.2"/>
+      <line x1="97" y1="38" x2="113" y2="38" stroke-width="3.2"/>
+    </g>
+
+    <g class="plane">
+      <path d="M -3.5 -1.6 L 3.5 0 L -3.5 1.6 L -0.8 0 Z" fill="#000"/>
+      <line x1="-3.5" y1="-1.6" x2="-0.8" y2="0" stroke="#fff" stroke-width="0.5"/>
+      <line x1="-3.5" y1="1.6" x2="-0.8" y2="0" stroke="#fff" stroke-width="0.5"/>
+    </g>
+  </g>
+</svg>

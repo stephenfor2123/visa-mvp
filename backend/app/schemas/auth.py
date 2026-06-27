@@ -1,4 +1,10 @@
-"""Auth endpoint DTOs (request/response) — V2 §4.1."""
+"""Auth endpoint DTOs (request/response) — V2 §4.1.
+
+W26 product change: identifier is now email / username, not phone.
+Phone-based schemas (SmsLoginRequest, SendCodeRequest) are kept for the
+sms-login endpoint that admin tools still use, but the main user-facing
+register / login / reset-password all use account (email or username).
+"""
 import re
 from datetime import datetime
 from typing import Optional
@@ -6,7 +12,24 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 # --------------------------------------------------------------------------- #
-# Phone validation (intentionally permissive — region-specific in production) #
+# Email / username / account validation                                      #
+# --------------------------------------------------------------------------- #
+_EMAIL_RE = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
+_USERNAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{2,31}$")
+
+
+def _validate_account(v: str) -> str:
+    """Account can be either an email or a username."""
+    cleaned = (v or "").strip()
+    if len(cleaned) < 3 or len(cleaned) > 120:
+        raise ValueError("account must be 3-120 characters")
+    if _EMAIL_RE.match(cleaned) or _USERNAME_RE.match(cleaned):
+        return cleaned
+    raise ValueError("account must be a valid email or username")
+
+
+# --------------------------------------------------------------------------- #
+# Phone validation (legacy — kept for sms-login endpoint)                    #
 # --------------------------------------------------------------------------- #
 _PHONE_RE = re.compile(r"^\d{6,15}$")
 
@@ -37,49 +60,46 @@ def _validate_phone_country(v: str) -> str:
 class RegisterRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    phone: str = Field(..., description="Phone number without country code")
-    phone_country: str = Field("+86", description="E.164 country prefix, e.g. '+86'")
+    username: str = Field(..., description="3-32 chars [A-Za-z0-9_.-], must start with letter/digit")
+    email: str = Field(..., description="User email (used for login + recovery)")
     password: str = Field(..., min_length=8, max_length=32, description="8-32 chars, letters + digits")
-    sms_code: str = Field(..., description="6-digit SMS code from /send-code")
     nickname: Optional[str] = Field(None, max_length=64)
     language_pref: Optional[str] = Field("zh-CN", max_length=8)
 
-    @field_validator("phone")
+    @field_validator("username")
     @classmethod
-    def _v_phone(cls, v: str) -> str:
-        return _validate_phone(v)
+    def _v_username(cls, v: str) -> str:
+        v = (v or "").strip()
+        if not _USERNAME_RE.match(v):
+            raise ValueError("username must be 3-32 chars [A-Za-z0-9_.-] and start with a letter or digit")
+        return v
 
-    @field_validator("phone_country")
+    @field_validator("email")
     @classmethod
-    def _v_country(cls, v: str) -> str:
-        return _validate_phone_country(v)
-
-    @field_validator("sms_code")
-    @classmethod
-    def _v_sms_code(cls, v: str) -> str:
-        if not re.fullmatch(r"\d{6}", v):
-            raise ValueError("sms_code must be exactly 6 digits")
+    def _v_email(cls, v: str) -> str:
+        v = (v or "").strip().lower()
+        if not _EMAIL_RE.match(v):
+            raise ValueError("invalid email format")
+        if len(v) > 120:
+            raise ValueError("email must be at most 120 characters")
         return v
 
 
 class LoginRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    phone: str
-    phone_country: str = "+86"
+    account: str = Field(..., description="Email or username")
     password: str = Field(..., min_length=1, max_length=128)
 
-    @field_validator("phone")
+    @field_validator("account")
     @classmethod
-    def _v_phone(cls, v: str) -> str:
-        return _validate_phone(v)
-
-    @field_validator("phone_country")
-    @classmethod
-    def _v_country(cls, v: str) -> str:
-        return _validate_phone_country(v)
+    def _v_account(cls, v: str) -> str:
+        return _validate_account(v)
 
 
+# --------------------------------------------------------------------------- #
+# Legacy phone-based DTOs (kept for sms-login / send-code / reset-password) #
+# --------------------------------------------------------------------------- #
 class SmsLoginRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -132,29 +152,20 @@ class SendCodeRequest(BaseModel):
 
 
 class ResetPasswordRequest(BaseModel):
+    """Reset by account (email / username) — no SMS code required.
+
+    W26 product change: simplified recovery flow. Admin can also trigger
+    a forced reset from the admin panel.
+    """
     model_config = ConfigDict(extra="forbid")
 
-    phone: str
-    phone_country: str = "+86"
-    sms_code: str = Field(..., description="6-digit SMS code from /send-code with purpose=reset")
+    account: str = Field(..., description="Email or username")
     new_password: str = Field(..., min_length=8, max_length=32)
 
-    @field_validator("phone")
+    @field_validator("account")
     @classmethod
-    def _v_phone(cls, v: str) -> str:
-        return _validate_phone(v)
-
-    @field_validator("phone_country")
-    @classmethod
-    def _v_country(cls, v: str) -> str:
-        return _validate_phone_country(v)
-
-    @field_validator("sms_code")
-    @classmethod
-    def _v_sms_code(cls, v: str) -> str:
-        if not re.fullmatch(r"\d{6}", v):
-            raise ValueError("sms_code must be exactly 6 digits")
-        return v
+    def _v_account(cls, v: str) -> str:
+        return _validate_account(v)
 
 
 class RefreshRequest(BaseModel):
@@ -171,8 +182,10 @@ class UserPublic(BaseModel):
 
     id: int
     uuid: str
-    phone: str
-    phone_country: str
+    username: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    phone_country: Optional[str] = None
     nickname: Optional[str]
     avatar_url: Optional[str]
     language_pref: str

@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 64" width="240" height="64" role="img" aria-label="Htex logo plane circle e">
+  <defs>
+    <style>
+      #simple3 .plane {
+        offset-path: path("M 144 22 A 15 15 0 1 1 143.99 22");
+        offset-rotate: auto;
+        animation: s3-orbit 4s linear infinite;
+      }
+      @keyframes s3-orbit {
+        0% { offset-distance: 0%; }
+        100% { offset-distance: 100%; }
+      }
+    </style>
+  </defs>
+
+  <g id="simple3">
+    <!-- H 字母(用粗体 path 风格的笔画) -->
+    <g stroke="#000" stroke-width="5" stroke-linecap="round" fill="none">
+      <!-- H 左竖 -->
+      <line x1="20" y1="14" x2="20" y2="54"/>
+      <!-- H 右竖 -->
+      <line x1="48" y1="14" x2="48" y2="54"/>
+      <!-- H 横 -->
+      <line x1="20" y1="34" x2="48" y2="34"/>
+      <!-- t 竖 -->
+      <line x1="80" y1="18" x2="80" y2="54"/>
+      <!-- t 横 -->
+      <line x1="70" y1="26" x2="90" y2="26"/>
+      <!-- x 斜线 1 -->
+      <line x1="172" y1="22" x2="206" y2="54"/>
+      <!-- x 斜线 2 -->
+      <line x1="206" y1="22" x2="172" y2="54"/>
+    </g>
+
+    <!-- e = 圆环 -->
+    <circle cx="129" cy="34" r="15" fill="none" stroke="#000" stroke-width="5" stroke-linecap="round"/>
+
+    <!-- 飞机(沿 e 圆环飞) -->
+    <g class="plane">
+      <path d="M -5 -2.5 L 5 0 L -5 2.5 L -2 0 Z" fill="#000"/>
+    </g>
+  </g>
+</svg>

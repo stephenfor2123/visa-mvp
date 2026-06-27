@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 80" width="240" height="80" role="img" aria-label="Htex logo plane above e">
+  <defs>
+    <style>
+      .htex-b {
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", "PingFang SC", "Inter", Arial, sans-serif;
+        font-weight: 900;
+        font-size: 64px;
+        letter-spacing: -2px;
+      }
+    </style>
+  </defs>
+
+  <text x="20" y="60" class="htex-b" fill="#000">Htex</text>
+
+  <!-- 飞机 + 圆环作为 e 字符上方重音(e 字符完整) -->
+  <g transform="translate(120, 16)">
+    <circle cx="0" cy="0" r="7" fill="#fff" stroke="#000" stroke-width="1.8"/>
+    <path d="M -3.2 -1.5 L 3.2 0 L -3.2 1.5 L -0.8 0 Z" fill="#000"/>
+  </g>
+</svg>

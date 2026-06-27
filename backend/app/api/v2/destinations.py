@@ -1,5 +1,6 @@
 """/api/v2/destinations — 国家列表(V2 范围 = 美国 V2 启用)"""
 import json
+from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 
 from fastapi import APIRouter, Depends, Query
@@ -24,8 +25,40 @@ class DestinationOut(BaseModel):
     visa_types: List[str]
     image_url: Optional[str]
     enabled: bool
+    # Atlys-style (W28): price / validity / processing time / precise ETA
+    visa_fee_usd: Optional[int] = None        # USD cents — display only
+    valid_days: Optional[int] = None          # visa validity in days
+    process_days: Optional[int] = None        # typical processing days
+    eta_iso: Optional[str] = None             # ISO-8601 UTC of "Guaranteed Visa on …"
 
     model_config = {"from_attributes": True}
+
+
+def _format_valid_label(days: int) -> str:
+    """Best-effort human label for visa validity."""
+    if days <= 0:
+        return ""
+    if days % 365 == 0:
+        years = days // 365
+        return f"{years} YEAR" + ("S" if years > 1 else "")
+    if days % 30 == 0:
+        months = days // 30
+        return f"{months} MONTH" + ("S" if months > 1 else "")
+    return f"{days} DAYS"
+
+
+def _compute_eta_iso(process_days: Optional[int]) -> Optional[str]:
+    """Compute precise ETA timestamp (UTC ISO-8601) used by 'Guaranteed Visa on …'.
+
+    - process_days=0  -> same day, 23:59 UTC
+    - process_days>0  -> +N days at 23:59 UTC (gives a concrete deadline)
+    - None            -> None (frontend hides the line)
+    """
+    if process_days is None:
+        return None
+    base = datetime.now(timezone.utc).replace(hour=23, minute=59, second=0, microsecond=0)
+    eta = base + timedelta(days=process_days)
+    return eta.isoformat().replace("+00:00", "Z")
 
 
 @router.get("", response_model=ApiResponse[List[DestinationOut]])
@@ -45,10 +78,21 @@ async def list_destinations(
 
     items = []
     for r in rows:
+        # country_name_i18n 既可能是 JSON {"zh-CN":"...","en":"..."} (新格式)
+        # 也可能是 legacy "美国 United States" 这种单字符串(老数据)
         try:
             name_map = json.loads(r.country_name_i18n)
+            if not isinstance(name_map, dict):
+                raise ValueError("not a dict")
         except Exception:
-            name_map = {"zh-CN": r.country_code}
+            # legacy 单字符串 — 启发式 split: 第一个空白之前是中文, 之后是英文
+            s = (r.country_name_i18n or "").strip()
+            name_map = {"zh-CN": s, "en": r.country_code}
+            if " " in s:
+                idx = s.find(" ")
+                zh, en = s[:idx], s[idx + 1:].strip()
+                if zh and en:
+                    name_map = {"zh-CN": zh, "en": en}
         if visa_type:
             try:
                 types = json.loads(r.visa_types)
@@ -63,6 +107,10 @@ async def list_destinations(
             visa_types=json.loads(r.visa_types) if r.visa_types else [],
             image_url=r.image_url,
             enabled=r.enabled,
+            visa_fee_usd=getattr(r, "visa_fee_usd", None),
+            valid_days=getattr(r, "valid_days", None),
+            process_days=getattr(r, "process_days", None),
+            eta_iso=_compute_eta_iso(getattr(r, "process_days", None)),
         ))
 
     return ApiResponse(code="1000", message="OK", data=items)

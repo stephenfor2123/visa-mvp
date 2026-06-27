@@ -1,5 +1,5 @@
 <template>
-  <div class="ordernew-page">
+  <div class="ordernew-page" :data-country-bg="countryCode || 'US'">
     <AppHeader scope="order-new" />
     <main class="app-container app-page ordernew-shell">
       <!-- Top country + progress -->
@@ -66,22 +66,17 @@
               <span class="wizard__sub">{{ step.subOverride || t(step.subKey) }}</span>
             </span>
           </button>
-          <!-- Zigzag connector between steps -->
+          <!-- Atlys-style connector: 1px line with center dot, no zigzag -->
           <div
             v-if="idx < wizardSteps.length - 1"
-            class="wizard__zip"
+            class="wizard__connector"
             :class="{
               'is-done': step.status === 'done' && wizardSteps[idx + 1].status !== 'pending',
               'is-active': step.status === 'active',
             }"
             aria-hidden="true"
           >
-            <svg viewBox="0 0 32 24" preserveAspectRatio="none">
-              <polygon
-                points="0,12 6,0 12,12 18,0 24,12 30,0 32,12 30,24 24,12 18,24 12,12 6,24 0,12"
-                fill="currentColor"
-              />
-            </svg>
+            <span class="wizard__connector-dot" />
           </div>
         </template>
       </nav>
@@ -826,7 +821,60 @@ const FALLBACK_DESTINATIONS = [
   { id: 9, country_code: 'NZ', country_name_key: 'country.nz', visa_types: ['tourism', 'student'], enabled: false }
 ]
 
+// W29: 登录回跳后从 localStorage 恢复游客填的 draft
+//  - 7 天 TTL,过期自动丢
+//  - 包含 destination_id / visa_type / material_ids / form 全部字段
+//  - 只在登录后 (auth.isLoggedIn=true) 调用,避免覆盖未登录用户当前在填的内容
+//  - silent=true 不弹 toast(登录后自动恢复,无需提示)
+function restoreDraftIfAny({ silent = false } = {}) {
+  try {
+    const raw = localStorage.getItem('ordernew_draft')
+    if (!raw) return false
+    const draft = JSON.parse(raw)
+    if (!draft || !draft.form) return false
+    // 7 天过期
+    if (Date.now() - (draft.savedAt || 0) > 7 * 24 * 3600 * 1000) {
+      localStorage.removeItem('ordernew_draft')
+      return false
+    }
+    // 合并(以 draft 为主,因为是用户最后填的)
+    if (draft.destination_id) form.destination_id = draft.destination_id
+    if (draft.visa_type) form.visa_type = draft.visa_type
+    if (Array.isArray(draft.material_ids)) materialIds.value = draft.material_ids
+    if (draft.countryCode && !countryCode.value) countryCode.value = draft.countryCode
+    Object.assign(form, draft.form)
+    if (!silent) toast.success(t('ordernew.draft_restored') || '已恢复未提交的申请')
+    return true
+  } catch (e) {
+    console.warn('[ordernew] restoreDraft failed:', e?.message)
+    return false
+  }
+}
+
 async function onSubmit() {
+  // W29: 登录墙后移 — 游客可填表,但点"提交订单"那一刻强制要求登录
+  if (!auth.isLoggedIn) {
+    // 保存当前 form 到 localStorage,登录后自动恢复
+    try {
+      localStorage.setItem('ordernew_draft', JSON.stringify({
+        destination_id: form.destination_id,
+        visa_type: form.visa_type,
+        material_ids: materialIds.value.filter(Boolean),
+        form: { ...form },
+        countryCode: countryCode.value,
+        savedAt: Date.now()
+      }))
+    } catch (e) { /* quota / privacy mode, ignore */ }
+    return router.push({
+      name: 'Login',
+      query: {
+        redirect: route.fullPath,
+        intent: 'submit_order',
+        // 提示文案
+        hint: 'login_needed'
+      }
+    })
+  }
   submitting.value = true
   try {
     const payload = {
@@ -863,6 +911,8 @@ async function onSubmit() {
         .catch((e) => { console.warn('[ordernew] attribute failed:', e?.message) })
     }
     toast.success(t('orders.submit_success'))
+    // W29: 提交成功后清掉 draft(避免下次误恢复)
+    try { localStorage.removeItem('ordernew_draft') } catch (e) {}
     setTimeout(() => {
       // W19: rpa submit needs country_code + visa_type + passport_data (align with backend Pydantic schema).
       // Look up country_code from the resolved destination.
@@ -929,6 +979,30 @@ onMounted(async () => {
   await loadAll()
   // First inject (retry/prev persistent, next/submit decide mount by isLastTab)
   injectBottomButtons()
+  // W29: 登录回跳后恢复游客填的 draft(7 天内有效,过期自动丢)
+  restoreDraftIfAny()
+  // W29: 已登录 + intent=submit_order → 自动续提(从 login 页直接 redirect 回来的场景)
+  if (auth.isLoggedIn && route.query?.intent === 'submit_order') {
+    router.replace({ path: route.path, query: {} }) // 清掉 query
+    await nextTick()
+    setTimeout(() => onSubmit(), 50)
+  }
+})
+
+// W29: 监听 auth 变化,登录后从 localStorage 恢复 form,然后自动续提
+watch(() => auth.isLoggedIn, async (loggedIn) => {
+  if (!loggedIn) return
+  // 1) 先恢复 form
+  const restored = restoreDraftIfAny({ silent: true })
+  if (!restored) return
+  // 2) 恢复成功 + 标记 intent=submit_order → 自动触发提交
+  if (route.query?.intent === 'submit_order') {
+    // 去掉 query,避免刷新重复触发
+    router.replace({ path: route.path, query: {} })
+    await nextTick()
+    // 等 watch 生效 + Vue 反应,再调 onSubmit
+    setTimeout(() => onSubmit(), 50)
+  }
 })
 
 // W6-7 robustness: next/submit is v-if mutex - ref remounts on isLastTab flip
@@ -945,7 +1019,34 @@ watch(isLastTab, async (val) => {
 </script>
 
 <style scoped lang="scss">
-.ordernew-page { min-height: 100vh; background: var(--bg-alt, #F8FAFC); }
+/* W28 P2: 按目的地国家自动切换柔色径向渐变背景(借鉴 atlys 申请页氛围)。
+   - 每个国家 2 个柔色锚点,左上 + 右下,背景固定在 body,内容半透明白卡浮在上面
+   - 默认是浅灰(--bg-alt),fallback 万无一失 */
+.ordernew-page {
+  min-height: 100vh;
+  background: var(--bg-alt, #F8FAFC);
+  background-image:
+    radial-gradient(ellipse 1200px 600px at 0% 0%, var(--bg-grad-a, transparent) 0%, transparent 60%),
+    radial-gradient(ellipse 900px 500px at 100% 100%, var(--bg-grad-b, transparent) 0%, transparent 65%),
+    var(--bg-base, #F8FAFC);
+  background-attachment: fixed, fixed, fixed;
+  background-repeat: no-repeat;
+  transition: background-image .4s ease;
+}
+.ordernew-page[data-country-bg="US"]       { --bg-grad-a: rgba(59, 110, 245, .14);  --bg-grad-b: rgba(239, 68, 68, .10); --bg-base: #F8FAFC; }
+.ordernew-page[data-country-bg="AU"]       { --bg-grad-a: rgba(245, 158, 11, .14);  --bg-grad-b: rgba(34, 197, 94, .10); --bg-base: #FFFBEB; }
+.ordernew-page[data-country-bg="GB"]       { --bg-grad-a: rgba(239, 68, 68, .10);   --bg-grad-b: rgba(59, 110, 245, .10); --bg-base: #F8FAFC; }
+.ordernew-page[data-country-bg="JP"]       { --bg-grad-a: rgba(244, 114, 182, .14); --bg-grad-b: rgba(59, 130, 246, .10); --bg-base: #FFF7F5; }
+.ordernew-page[data-country-bg="SCHENGEN"] { --bg-grad-a: rgba(59, 130, 246, .12);  --bg-grad-b: rgba(245, 158, 11, .10); --bg-base: #F8FAFC; }
+.ordernew-page[data-country-bg="FR"]       { --bg-grad-a: rgba(59, 130, 246, .12);  --bg-grad-b: rgba(244, 114, 182, .08); --bg-base: #F8FAFC; }
+.ordernew-page[data-country-bg="DE"]       { --bg-grad-a: rgba(245, 158, 11, .10);  --bg-grad-b: rgba(34, 197, 94, .08);  --bg-base: #FFFBEB; }
+.ordernew-page[data-country-bg="IT"]       { --bg-grad-a: rgba(34, 197, 94, .12);   --bg-grad-b: rgba(244, 114, 182, .10); --bg-base: #F0FDF4; }
+.ordernew-page[data-country-bg="ES"]       { --bg-grad-a: rgba(245, 158, 11, .12);  --bg-grad-b: rgba(239, 68, 68, .10);  --bg-base: #FFFBEB; }
+/* 默认所有其他申根国家用柔蓝紫渐变 */
+.ordernew-page[data-country-bg^="AT"],
+.ordernew-page[data-country-bg^="BE"],
+.ordernew-page[data-country-bg^="NL"],
+.ordernew-page[data-country-bg^="CH"] { --bg-grad-a: rgba(99, 102, 241, .12); --bg-grad-b: rgba(59, 130, 246, .08); --bg-base: #F8FAFC; }
 .app-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 14px 24px; background: #fff; border-bottom: 1px solid var(--border, #E2E8F0);
@@ -1147,24 +1248,39 @@ watch(isLastTab, async (val) => {
 .wizard__step.is-pending .wizard__title,
 .wizard__step.is-locked .wizard__title { color: #94A3B8; font-weight: 500; }
 
-/* zigzag connector (zip) */
-.wizard__zip {
-  flex-shrink: 0;
-  width: 28px;
-  align-self: stretch;
+/* atlys-style 1px line + dot connector (replaced W25 zigzag) */
+.wizard__connector {
+  flex: 1 1 auto;
+  min-width: 24px;
+  align-self: center;
   display: flex;
   align-items: center;
-  color: #E2E8F0;
-  transition: color .25s ease;
+  position: relative;
+  height: 2px;
+  background: #E2E8F0;
+  border-radius: 1px;
+  transition: background .25s ease;
 }
-.wizard__zip svg { width: 100%; height: 100%; display: block; }
-.wizard__zip.is-done { color: #16A34A; }
-.wizard__zip.is-active { color: #3B6EF5; }
+.wizard__connector.is-done { background: #16A34A; }
+.wizard__connector.is-active { background: #3B6EF5; }
+.wizard__connector-dot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #E2E8F0;
+  transform: translate(-50%, -50%);
+  transition: background .25s ease;
+}
+.wizard__connector.is-done .wizard__connector-dot { background: #16A34A; }
+.wizard__connector.is-active .wizard__connector-dot { background: #3B6EF5; }
 
 @media (max-width: 720px) {
   .wizard { flex-direction: column; }
-  .wizard__zip { width: 100%; height: 16px; }
-  .wizard__zip svg { transform: rotate(90deg); }
+  .wizard__connector { width: 2px; height: 24px; min-width: 2px; align-self: center; }
+  .wizard__connector-dot { left: 50%; top: 50%; }
 }
 
 // ============== Form Card ==============

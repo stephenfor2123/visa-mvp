@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { login as apiLogin, sendSmsCode as apiSendCode, smsLogin as apiSmsLogin, register as apiRegister } from '@/api/auth'
+import { login as apiLogin, register as apiRegister } from '@/api/auth'
 
 const STORAGE_KEY = 'visa.auth'
 
@@ -30,7 +30,7 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         user: user.value,
         accessToken: accessToken.value,
-        refreshToken: refreshToken.value
+        refreshToken: user.value
       }))
     } catch {}
   }
@@ -42,8 +42,8 @@ export const useAuthStore = defineStore('auth', () => {
     try { localStorage.removeItem(STORAGE_KEY) } catch {}
   }
 
-  async function loginByPassword({ phone, phoneCountry, password }) {
-    const data = await apiLogin({ phone, phoneCountry, password })
+  async function loginByPassword({ account, password }) {
+    const data = await apiLogin({ account, password })
     user.value = data.user
     accessToken.value = data.accessToken
     refreshToken.value = data.refreshToken
@@ -51,31 +51,15 @@ export const useAuthStore = defineStore('auth', () => {
     return data
   }
 
-  async function loginBySms({ phone, phoneCountry, code }) {
-    const data = await apiSmsLogin({ phone, phoneCountry, code })
-    user.value = data.user
-    accessToken.value = data.accessToken
-    refreshToken.value = data.refreshToken
-    persist()
-    return data
-  }
-
-  async function sendSmsCode({ phone, phoneCountry, purpose }) {
-    return apiSendCode({ phone, phoneCountry, purpose })
-  }
-
-  async function register({ phone, phoneCountry, password, smsCode, nickname, languagePref }) {
+  async function register({ username, email, password, nickname, languagePref }) {
     const data = await apiRegister({
-      phone,
-      phoneCountry,
+      username,
+      email,
       password,
-      smsCode,
       nickname,
       languagePref
     })
-    // Spec: 注册成功后跳 /login,不在此处自动登录。
-    // 不持久化 token,避免 router guard 把 /login 当作"已登录"再重定向回 /home。
-    // 真正登录由用户去 /login 页用密码完成。
+    // 注册成功后跳 /login,不在此处自动登录。
     return data
   }
 
@@ -90,8 +74,6 @@ export const useAuthStore = defineStore('auth', () => {
     isLoggedIn,
     hydrate,
     loginByPassword,
-    loginBySms,
-    sendSmsCode,
     register,
     logout
   }

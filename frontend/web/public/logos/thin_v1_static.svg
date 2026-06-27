@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 80" width="240" height="80" role="img" aria-label="Htex logo thin e with plane">
+  <defs>
+    <!-- 抠掉 e 椭圆右下方一段(标准 e 字符开口) -->
+    <mask id="e-mask">
+      <rect width="240" height="80" fill="white"/>
+      <path d="M 124 50 L 138 36" stroke="black" stroke-width="5" stroke-linecap="round" fill="none"/>
+    </mask>
+  </defs>
+
+  <g stroke="#000" stroke-linecap="round" fill="none">
+    <!-- H 字母 -->
+    <line x1="20" y1="14" x2="20" y2="52" stroke-width="4.5"/>
+    <line x1="46" y1="14" x2="46" y2="52" stroke-width="4.5"/>
+    <line x1="20" y1="33" x2="46" y2="33" stroke-width="4.5"/>
+    <!-- t 字母 -->
+    <line x1="68" y1="18" x2="68" y2="52" stroke-width="4.5"/>
+    <line x1="58" y1="26" x2="78" y2="26" stroke-width="4.5"/>
+    <!-- e 字母(完整椭圆 + 横线,右下用 mask 抠出开口) -->
+    <g mask="url(#e-mask)">
+      <ellipse cx="127" cy="36" rx="11" ry="16" stroke-width="3.5"/>
+      <line x1="116" y1="36" x2="138" y2="36" stroke-width="3.5"/>
+    </g>
+    <!-- x 字母 -->
+    <line x1="160" y1="22" x2="200" y2="52" stroke-width="4.5"/>
+    <line x1="200" y1="22" x2="160" y2="52" stroke-width="4.5"/>
+  </g>
+
+  <!-- 飞机停在 e 字符的右上(开口处,准备"飞") -->
+  <g transform="translate(132, 33)">
+    <path d="M -4 -2 L 4 0 L -4 2 L -1 0 Z" fill="#000"/>
+    <line x1="-4" y1="-2" x2="-1" y2="0" stroke="#fff" stroke-width="0.6"/>
+    <line x1="-4" y1="2" x2="-1" y2="0" stroke="#fff" stroke-width="0.6"/>
+  </g>
+</svg>

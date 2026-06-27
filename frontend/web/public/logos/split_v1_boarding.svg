@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 32" width="64" height="32" role="img" aria-label="Htex ticket H tex split">
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="64" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3B6EF5"/>
+      <stop offset="1" stop-color="#6E59F0"/>
+    </linearGradient>
+  </defs>
+  <!-- 主券(H 区,深色) -->
+  <rect x="1" y="6" width="40" height="20" rx="3" fill="url(#g1)"/>
+  <!-- 撕齿孔 -->
+  <circle cx="42" cy="6" r="1.8" fill="#fff"/>
+  <circle cx="42" cy="26" r="1.8" fill="#fff"/>
+  <!-- 撕齿虚线 -->
+  <line x1="42" y1="10" x2="42" y2="22" stroke="#fff" stroke-width="0.6" stroke-dasharray="1.2,1.2"/>
+  <!-- H 大字 -->
+  <g fill="#fff">
+    <rect x="11" y="11"   width="3"   height="14" rx="0.6"/>
+    <rect x="24" y="11"   width="3"   height="14" rx="0.6"/>
+    <rect x="11" y="16.5" width="16"  height="3"   rx="0.6"/>
+  </g>
+  <!-- 飞机在 H 旁 -->
+  <path d="M 32 7.5 L 38 9.5 L 32 11.5 L 33 9.5 Z" fill="#fff" opacity="0.9"/>
+  <!-- 副券(tex 区,浅色) -->
+  <rect x="44" y="6" width="19" height="20" rx="2.5" fill="#fff" stroke="#3B6EF5" stroke-width="0.8"/>
+  <!-- tex -->
+  <text x="53.5" y="19" font-size="10" font-weight="800" fill="#3B6EF5" text-anchor="middle" font-family="-apple-system, system-ui, sans-serif" letter-spacing="-0.2">tex</text>
+  <!-- 副券顶/底小线 -->
+  <line x1="46" y1="9" x2="61" y2="9" stroke="#3B6EF5" stroke-width="0.4" opacity="0.5"/>
+  <line x1="46" y1="23" x2="61" y2="23" stroke="#3B6EF5" stroke-width="0.4" opacity="0.5"/>
+</svg>

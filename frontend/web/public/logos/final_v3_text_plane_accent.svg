@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 80" width="240" height="80" role="img" aria-label="Htex logo paper plane above e">
+  <defs>
+    <style>
+      .htex-text3 {
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", "PingFang SC", "Inter", Arial, sans-serif;
+        font-weight: 900;
+        font-size: 64px;
+        letter-spacing: -2px;
+      }
+    </style>
+  </defs>
+
+  <text x="20" y="62" class="htex-text3" fill="#000">Htex</text>
+  <!-- 飞机作为重音符号放在 e 字符右上 -->
+  <g transform="translate(122, 18)">
+    <path d="M 0 0 L 16 4 L 2 10 L 4 6 Z" fill="#000"/>
+    <line x1="2" y1="10" x2="6" y2="14" stroke="#000" stroke-width="1" stroke-linecap="round"/>
+    <line x1="6" y1="14" x2="3" y2="16" stroke="#000" stroke-width="1" stroke-linecap="round"/>
+  </g>
+</svg>

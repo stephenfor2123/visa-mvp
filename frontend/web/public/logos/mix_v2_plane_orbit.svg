@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 32" width="96" height="32" role="img" aria-label="Htex logo with animated plane orbit e">
+  <defs>
+    <linearGradient id="sky-m2" x1="0" y1="0" x2="0" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFB088"/>
+      <stop offset="0.6" stop-color="#FF8E72"/>
+      <stop offset="1" stop-color="#7C6BE0"/>
+    </linearGradient>
+    <linearGradient id="leaf-m2" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+      <stop offset="0" stop-color="#34D399"/>
+      <stop offset="1" stop-color="#047857"/>
+    </linearGradient>
+    <!-- 飞机沿 e 圆环飞行的轨迹 path -->
+    <path id="orbit-path" d="M 50 10 A 6 6 0 1 1 50.2 20.2" fill="none"/>
+    <style>
+      #mix-anim .leaf-l { transform-origin: 7px 16px; animation: ml-leaf 4s ease-in-out infinite; }
+      #mix-anim .leaf-r { transform-origin: 19px 16px; animation: ml-leaf 4s ease-in-out infinite 0.5s; }
+      #mix-anim .coconut-l { transform-origin: 7px 15.5px; animation: ml-fall 4s cubic-bezier(.55,.05,.7,.4) infinite; }
+      #mix-anim .coconut-r { transform-origin: 19px 15.5px; animation: ml-fall 4s cubic-bezier(.55,.05,.7,.4) infinite 1.2s; }
+      #mix-anim .orbit-glow { animation: ml-glow 3s ease-in-out infinite; }
+      #mix-anim .plane {
+        offset-path: path("M 50 10 A 6 6 0 1 1 50.2 20.2 L 54 14 L 51.5 15.5 L 51 13 Z");
+        offset-rotate: auto;
+        animation: ml-plane 4s linear infinite;
+      }
+      @keyframes ml-leaf {
+        0%, 100% { transform: rotate(0deg); }
+        50% { transform: rotate(2deg); }
+      }
+      @keyframes ml-fall {
+        0%, 50% { transform: translateY(0) rotate(0); opacity: 1; }
+        60% { transform: translateY(8px) rotate(40deg); opacity: 1; }
+        70% { transform: translateY(8.5px) rotate(45deg); opacity: 1; }
+        80%, 100% { transform: translateY(0) rotate(0); opacity: 1; }
+      }
+      @keyframes ml-glow {
+        0%, 100% { opacity: 0.3; }
+        50% { opacity: 0.7; }
+      }
+      @keyframes ml-plane {
+        0% { offset-distance: 0%; }
+        100% { offset-distance: 100%; }
+      }
+    </style>
+  </defs>
+
+  <g id="mix-anim">
+    <!-- ============== 字母 H(两棵椰子树) ============== -->
+    <!-- 左椰子树 -->
+    <g>
+      <path d="M 7 26 Q 7.5 21, 7 16" stroke="#8B6F47" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+      <circle cx="9.4" cy="20" r="0.4" fill="#5C3E22"/>
+      <circle cx="8.6" cy="17" r="0.4" fill="#5C3E22"/>
+      <g class="coconut-l">
+        <circle cx="8.5" cy="15.5" r="0.8" fill="#5C3E22"/>
+        <circle cx="5.5" cy="15.5" r="0.8" fill="#5C3E22"/>
+      </g>
+      <g class="leaf-l">
+        <path d="M 7 16 Q 1 12, -1 14 Q 1 11, 7 15 Z" fill="url(#leaf-m2)"/>
+        <path d="M 7 16 Q 13 12, 15 14 Q 13 11, 7 15 Z" fill="url(#leaf-m2)"/>
+        <path d="M 7 16 Q 2 9, 0 4 Q 3 7, 7 15 Z" fill="url(#leaf-m2)" opacity="0.9"/>
+        <path d="M 7 16 Q 12 9, 14 4 Q 11 7, 7 15 Z" fill="url(#leaf-m2)" opacity="0.9"/>
+        <path d="M 7 16 Q 6 9, 6 3 Q 7.5 7, 7 15 Z" fill="url(#leaf-m2)"/>
+      </g>
+    </g>
+    <!-- 右椰子树 -->
+    <g>
+      <path d="M 19 26 Q 19.5 21, 19 16" stroke="#8B6F47" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+      <circle cx="21.4" cy="20" r="0.4" fill="#5C3E22"/>
+      <circle cx="20.6" cy="17" r="0.4" fill="#5C3E22"/>
+      <g class="coconut-r">
+        <circle cx="20.5" cy="15.5" r="0.8" fill="#5C3E22"/>
+        <circle cx="17.5" cy="15.5" r="0.8" fill="#5C3E22"/>
+      </g>
+      <g class="leaf-r">
+        <path d="M 19 16 Q 13 12, 11 14 Q 13 11, 19 15 Z" fill="url(#leaf-m2)"/>
+        <path d="M 19 16 Q 25 12, 27 14 Q 25 11, 19 15 Z" fill="url(#leaf-m2)"/>
+        <path d="M 19 16 Q 14 9, 12 4 Q 15 7, 19 15 Z" fill="url(#leaf-m2)" opacity="0.9"/>
+        <path d="M 19 16 Q 24 9, 26 4 Q 23 7, 19 15 Z" fill="url(#leaf-m2)" opacity="0.9"/>
+        <path d="M 19 16 Q 18 9, 18 3 Q 19.5 7, 19 15 Z" fill="url(#leaf-m2)"/>
+      </g>
+    </g>
+    <!-- H 横线 = 海平面 -->
+    <line x1="2" y1="26" x2="24" y2="26" stroke="#3B6EF5" stroke-width="0.5" stroke-linecap="round" opacity="0.4"/>
+
+    <!-- ============== 字母 t ============== -->
+    <line x1="30" y1="4" x2="30" y2="24" stroke="#3B6EF5" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="26" y1="9" x2="34" y2="9" stroke="#3B6EF5" stroke-width="1.5" stroke-linecap="round"/>
+
+    <!-- ============== 字母 e = 飞机绕圈轨迹(动效) ============== -->
+    <g transform="translate(46, 16)">
+      <!-- 圆环轨迹(虚线 = 航线) -->
+      <circle cx="0" cy="0" r="6" fill="none" stroke="#3B6EF5" stroke-width="0.6" stroke-dasharray="1.2,1" opacity="0.5"/>
+      <!-- 圆环主体(e 字) -->
+      <path d="M 4 -2.5 A 6 6 0 1 0 4.2 4.2" fill="none" stroke="#3B6EF5" stroke-width="1.6" stroke-linecap="round"/>
+      <!-- 圆环光晕 -->
+      <circle class="orbit-glow" cx="0" cy="0" r="6" fill="none" stroke="#FFD66B" stroke-width="0.6" opacity="0.3"/>
+      <!-- 飞机(沿 e 圆环轨迹飞行) -->
+      <g class="plane">
+        <path d="M -2 -1 L 2 0 L -2 1 L -1 0 Z" fill="#FFD66B" stroke="#3B6EF5" stroke-width="0.5" stroke-linejoin="round"/>
+      </g>
+    </g>
+
+    <!-- ============== 字母 x ============== -->
+    <line x1="62" y1="9" x2="74" y2="23" stroke="#3B6EF5" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="74" y1="9" x2="62" y2="23" stroke="#3B6EF5" stroke-width="1.5" stroke-linecap="round"/>
+  </g>
+</svg>

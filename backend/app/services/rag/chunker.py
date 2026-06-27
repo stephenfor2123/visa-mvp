@@ -1,7 +1,14 @@
 """RAG: text chunker — split long text into overlapping chunks.
 
-Sliding-window over sentences to keep chunks around 400-800 chars with
+Sliding-window over sentences to keep chunks around 800-1200 chars with
 80-char overlap, suitable for short-form visa FAQ retrieval.
+
+W32: chunk_size bumped 600 → 1000 — gov.uk / france-visas.gouv.fr pages
+typically have one big section per page (single 4000+ char page), so 600-char
+chunks were splitting a single Q&A into 4 sub-chunks, hurting retrieval.
+1000-char chunks keep each whole Q&A as one chunk; recall improves noticeably
+on single-section pages without hurting multi-section pages (chunker is
+sentence-aware, so it never breaks mid-sentence).
 """
 from __future__ import annotations
 
@@ -18,7 +25,7 @@ class Chunk:
     index: int
 
 
-def chunk_text(text: str, chunk_size: int = 600, overlap: int = 80) -> List[Chunk]:
+def chunk_text(text: str, chunk_size: int = 1000, overlap: int = 80) -> List[Chunk]:
     """Sliding-window sentence-aware chunker."""
     text = text.strip()
     if not text:

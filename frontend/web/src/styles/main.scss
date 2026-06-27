@@ -5,7 +5,7 @@ html, body, #app { height: 100%; margin: 0; padding: 0; }
 
 body {
   font-family: var(--font-family-base);
-  background: var(--bg-alt);
+  background: #fff;
   color: var(--ink-1);
   -webkit-font-smoothing: antialiased;
 }
@@ -56,7 +56,6 @@ a:hover { text-decoration: underline; }
   align-items: center;
   justify-content: space-between;
   padding: 14px 0;
-  border-bottom: 1px solid var(--border);
   background: #fff;
 }
 .app-header__brand {
@@ -79,3 +78,27 @@ a:hover { text-decoration: underline; }
   font-weight: 600;
 }
 .app-header__right { display: flex; align-items: center; gap: 12px; }
+.app-header__profile-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--border, #E2E8F0);
+  color: var(--ink-2, #334155);
+  text-decoration: none;
+  background: #fff;
+  transition: border-color .15s, color .15s, background .15s, box-shadow .15s;
+}
+.app-header__profile-link:hover {
+  border-color: var(--el-color-primary, #3B6EF5);
+  color: var(--el-color-primary, #3B6EF5);
+  background: rgba(59, 110, 245, .06);
+}
+.app-header__profile-link.router-link-active {
+  border-color: var(--el-color-primary, #3B6EF5);
+  color: var(--el-color-primary, #3B6EF5);
+  background: rgba(59, 110, 245, .08);
+}
+.app-header__profile-link svg { display: block; }

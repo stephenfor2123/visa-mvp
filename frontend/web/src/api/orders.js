@@ -581,7 +581,39 @@ export function clearMockOrders() {
 export async function listOrders({ page = 1, pageSize = 20 } = {}) {
   if (MOCK_MODE) {
     await delay()
-    return { items: [], total: 0, page, pageSize }
+    // W28 P2 #11: demo 数据用于展示状态时间线 UI
+    // 真实接口 /v2/orders 上线后此 fallback 自动失效
+    return {
+      items: [
+        {
+          order_no: 'V2-20260620-001024',
+          user_id: 'u_demo',
+          destination_id: 1,
+          country_code: 'US',
+          country_name: 'United States',
+          visa_type: 'tourism',
+          status: 'reviewing',
+          total_amount: 18500,
+          currency: 'USD',
+          eta_label: '01 Jul 2026, 23:59',
+          created_at: '2026-06-20T08:24:11Z',
+        },
+        {
+          order_no: 'V2-20260615-000988',
+          user_id: 'u_demo',
+          destination_id: 3,
+          country_code: 'GB',
+          country_name: 'United Kingdom',
+          visa_type: 'tourism',
+          status: 'approved',
+          total_amount: 12500,
+          currency: 'USD',
+          processed_at: '2026-06-18T15:32:00Z',
+          created_at: '2026-06-15T10:11:43Z',
+        },
+      ],
+      total: 2, page, pageSize,
+    }
   }
   const envelope = await http.get('/v2/orders', { params: { page, page_size: pageSize } })
   if (envelope.code !== '1000') {

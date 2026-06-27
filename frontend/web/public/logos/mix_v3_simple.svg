@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 32" width="96" height="32" role="img" aria-label="Htex logo block H and plane orbit e">
+  <defs>
+    <linearGradient id="g-m3" x1="0" y1="0" x2="0" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3B6EF5"/>
+      <stop offset="1" stop-color="#6E59F0"/>
+    </linearGradient>
+    <style>
+      #mix3 .plane {
+        offset-path: path("M 50 10 A 6 6 0 1 1 50.2 20.2 L 54 14 L 51.5 15.5 L 51 13 Z");
+        offset-rotate: auto;
+        animation: m3-plane 4s linear infinite;
+      }
+      @keyframes m3-plane {
+        0% { offset-distance: 0%; }
+        100% { offset-distance: 100%; }
+      }
+    </style>
+  </defs>
+
+  <g id="mix3">
+    <!-- ============== 字母 H(方块简洁版) ============== -->
+    <rect x="4" y="4" width="2.5" height="22" rx="0.6" fill="url(#g-m3)"/>
+    <rect x="18" y="4" width="2.5" height="22" rx="0.6" fill="url(#g-m3)"/>
+    <rect x="4" y="13.5" width="16.5" height="2.5" rx="0.6" fill="url(#g-m3)"/>
+    <!-- 飞机小角标 -->
+    <path d="M 18 1 L 24 3 L 19 5 L 20 3 Z" fill="url(#g-m3)"/>
+
+    <!-- ============== 字母 t ============== -->
+    <line x1="30" y1="4" x2="30" y2="24" stroke="#3B6EF5" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="26" y1="9" x2="34" y2="9" stroke="#3B6EF5" stroke-width="1.5" stroke-linecap="round"/>
+
+    <!-- ============== 字母 e = 飞机绕圈轨迹(动效) ============== -->
+    <g transform="translate(46, 16)">
+      <circle cx="0" cy="0" r="6" fill="none" stroke="#3B6EF5" stroke-width="0.6" stroke-dasharray="1.2,1" opacity="0.5"/>
+      <path d="M 4 -2.5 A 6 6 0 1 0 4.2 4.2" fill="none" stroke="#3B6EF5" stroke-width="1.6" stroke-linecap="round"/>
+      <g class="plane">
+        <path d="M -2 -1 L 2 0 L -2 1 L -1 0 Z" fill="#FFD66B" stroke="#3B6EF5" stroke-width="0.5" stroke-linejoin="round"/>
+      </g>
+    </g>
+
+    <!-- ============== 字母 x ============== -->
+    <line x1="62" y1="9" x2="74" y2="23" stroke="#3B6EF5" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="74" y1="9" x2="62" y2="23" stroke="#3B6EF5" stroke-width="1.5" stroke-linecap="round"/>
+  </g>
+</svg>

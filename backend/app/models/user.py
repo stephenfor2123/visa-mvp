@@ -1,8 +1,7 @@
 """User ORM model — V2 §4.1 / §4.1.4.
 
-Per V2 §4.1.5: phone + phone_country are the natural identifiers.
-We keep an autoincrement `id` as the stable primary key (FK target),
-and a public `uuid` for external APIs.
+W26 product change: account identifier is now email / username, not phone.
+phone + phone_country are kept as nullable for legacy data and MFA backup.
 """
 import uuid
 from datetime import datetime
@@ -27,9 +26,11 @@ class User(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     uuid: Mapped[str] = mapped_column(String(36), unique=True, index=True, default=_new_uuid)
 
-    # Identity
-    phone: Mapped[str] = mapped_column(String(32), index=True)
-    phone_country: Mapped[str] = mapped_column(String(8), default="+86")
+    # Identity — W26: account = email + username. phone/phone_country kept nullable for legacy.
+    email: Mapped[Optional[str]] = mapped_column(String(120), unique=True, index=True, nullable=True)
+    username: Mapped[Optional[str]] = mapped_column(String(32), unique=True, index=True, nullable=True)
+    phone: Mapped[Optional[str]] = mapped_column(String(32), index=True, nullable=True)
+    phone_country: Mapped[Optional[str]] = mapped_column(String(8), default="+86", nullable=True)
 
     # Credentials
     password_hash: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
@@ -66,4 +67,4 @@ class User(Base):
     )
 
     def __repr__(self) -> str:  # pragma: no cover - debug only
-        return f"<User id={self.id} phone={self.phone_country}{self.phone}>"
+        return f"<User id={self.id} email={self.email} username={self.username}>"

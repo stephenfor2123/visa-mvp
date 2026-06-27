@@ -1,43 +1,22 @@
 <template>
-  <span class="htex-logo" :style="{ width: size + 'px', height: size + 'px' }" aria-label="Htex">
+  <span class="htex-logo" :style="wrapStyle" aria-label="Htex">
     <svg
-      :width="size"
+      :width="width"
       :height="size"
-      viewBox="0 0 32 32"
+      :viewBox="`0 0 ${vbW} ${vbH}`"
       xmlns="http://www.w3.org/2000/svg"
       role="img"
       aria-hidden="true"
     >
-      <defs>
-        <linearGradient :id="gradId" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stop-color="#3B6EF5" />
-          <stop offset="1" stop-color="#6E59F0" />
-        </linearGradient>
-      </defs>
-
-      <!-- 渐变圆角方块底 -->
-      <rect width="32" height="32" rx="8" :fill="`url(#${gradId})`" />
-
-      <!-- 方形签证章(略 -4° 旋转,模拟盖章质感) -->
-      <g transform="rotate(-4 16 17)">
-        <rect
-          x="6.5" y="8" width="19" height="19" rx="2"
-          fill="none" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"
-        />
-      </g>
-
-      <!-- H 字母(也跟随印章旋转) -->
-      <g transform="rotate(-4 16 17)" fill="#fff">
-        <rect x="11"   y="12"   width="2.4" height="11" rx="0.5" />
-        <rect x="18.6" y="12"   width="2.4" height="11" rx="0.5" />
-        <rect x="11"   y="16.5" width="10"  height="2.4" rx="0.5" />
-      </g>
-
-      <!-- 纸飞机(印章上方,小一角,营造"已盖章+启程") -->
-      <path
-        d="M 22 3 L 29 5 L 22.8 7.4 L 24.4 5 Z"
-        fill="#fff"
-      />
+      <text
+        x="0"
+        :y="vbH * 0.78"
+        font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', 'PingFang SC', 'Inter', Arial, sans-serif"
+        :font-size="vbH * 0.78"
+        font-weight="900"
+        fill="#000"
+        :letter-spacing="vbH * -0.045"
+      >Htex</text>
     </svg>
   </span>
 </template>
@@ -47,10 +26,30 @@ import { computed } from 'vue'
 
 const props = defineProps({
   size: { type: [Number, String], default: 28 },
+  // 宽高比 — 默认 3:1 适配 Htex 文字比例
+  width: { type: [Number, String], default: null },
+  // 颜色 — 默认纯黑(用户拍板:简单黑色)
+  color: { type: String, default: '#000' },
 })
 
-// 每个实例独立 gradient id,避免 SVG defs 冲突
-const gradId = computed(() => `htex-grad-${Math.random().toString(36).slice(2, 9)}`)
+// viewBox 比例:宽 = 高 × 3
+const vbH = 32
+const vbW = vbH * 3
+
+// 文字尺寸 = 高的 78%(让 H t e x 视觉上居中)
+const fontSize = vbH * 0.78
+
+// 实际渲染宽度
+const width = computed(() => {
+  if (props.width !== null) return Number(props.width)
+  return Number(props.size) * 3
+})
+
+const wrapStyle = computed(() => ({
+  width: width.value + 'px',
+  height: Number(props.size) + 'px',
+  color: props.color,
+}))
 </script>
 
 <style scoped>

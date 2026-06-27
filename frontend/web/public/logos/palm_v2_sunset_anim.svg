@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 32" width="64" height="32" role="img" aria-label="Htex palm H sunset animated">
+  <defs>
+    <linearGradient id="sky2" x1="0" y1="0" x2="0" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFD6A5"/>
+      <stop offset="0.5" stop-color="#FFA07A"/>
+      <stop offset="1" stop-color="#7C6BE0"/>
+    </linearGradient>
+    <linearGradient id="leaf2" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+      <stop offset="0" stop-color="#34D399"/>
+      <stop offset="1" stop-color="#047857"/>
+    </linearGradient>
+    <style>
+      #palm-anim .sun { transform-origin: 33px 13px; animation: pa-sun 5s ease-in-out infinite; }
+      #palm-anim .leaf-l { transform-origin: 9px 16px; animation: pa-leaf 4s ease-in-out infinite; }
+      #palm-anim .leaf-r { transform-origin: 27px 16px; animation: pa-leaf 4s ease-in-out infinite 0.5s; }
+      #palm-anim .coconut-l { transform-origin: 9px 15.5px; animation: pa-fall-l 4s cubic-bezier(.55,.05,.7,.4) infinite; }
+      #palm-anim .coconut-r { transform-origin: 27px 15.5px; animation: pa-fall-r 4s cubic-bezier(.55,.05,.7,.4) infinite 1.2s; }
+      @keyframes pa-sun {
+        0%, 100% { transform: translateY(0) scale(1); opacity: 0.95; }
+        50% { transform: translateY(-1.5px) scale(1.1); opacity: 1; }
+      }
+      @keyframes pa-leaf {
+        0%, 100% { transform: rotate(0deg); }
+        50% { transform: rotate(2deg); }
+      }
+      @keyframes pa-fall-l {
+        0%, 50% { transform: translateY(0) rotate(0); opacity: 1; }
+        60% { transform: translateY(8px) rotate(40deg); opacity: 1; }
+        70% { transform: translateY(8.5px) rotate(45deg); opacity: 1; }
+        80%, 100% { transform: translateY(0) rotate(0); opacity: 1; }
+      }
+      @keyframes pa-fall-r {
+        0%, 50% { transform: translateY(0) rotate(0); opacity: 1; }
+        60% { transform: translateY(8px) rotate(-40deg); opacity: 1; }
+        70% { transform: translateY(8.5px) rotate(-45deg); opacity: 1; }
+        80%, 100% { transform: translateY(0) rotate(0); opacity: 1; }
+      }
+    </style>
+  </defs>
+
+  <g id="palm-anim">
+    <!-- H 票根主区(海岛黄昏) -->
+    <rect x="1" y="6" width="40" height="20" rx="3" fill="url(#sky2)"/>
+    <!-- 远山 -->
+    <path d="M 1 22 L 8 17 L 14 20 L 22 16 L 30 19 L 38 17 L 41 22 Z" fill="#5B4F8C" opacity="0.5"/>
+    <!-- 太阳(脉动) -->
+    <g class="sun">
+      <circle cx="33" cy="13" r="2.5" fill="#FFD66B"/>
+      <circle cx="33" cy="13" r="3.5" fill="none" stroke="#FFD66B" stroke-width="0.4" opacity="0.5"/>
+    </g>
+    <!-- 左椰子树 -->
+    <g>
+      <path d="M 9 26 Q 9.5 21, 9 16" stroke="#8B6F47" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+      <path d="M 9 26 Q 9.5 21, 9 16" stroke="#A0825A" stroke-width="0.5" stroke-linecap="round" fill="none" stroke-dasharray="0.5,0.8" opacity="0.6"/>
+      <circle cx="9.4" cy="20" r="0.5" fill="#5C3E22"/>
+      <circle cx="8.6" cy="17" r="0.4" fill="#5C3E22"/>
+      <g class="coconut-l">
+        <circle cx="10.5" cy="15.5" r="0.9" fill="#5C3E22"/>
+        <circle cx="7.5" cy="15.5" r="0.9" fill="#5C3E22"/>
+      </g>
+      <g class="leaf-l">
+        <path d="M 9 16 Q 3 12, 1 14 Q 3 11, 9 15 Z" fill="url(#leaf2)"/>
+        <path d="M 9 16 Q 15 12, 17 14 Q 15 11, 9 15 Z" fill="url(#leaf2)"/>
+        <path d="M 9 16 Q 4 9, 2 4 Q 5 7, 9 15 Z" fill="url(#leaf2)" opacity="0.9"/>
+        <path d="M 9 16 Q 14 9, 16 4 Q 13 7, 9 15 Z" fill="url(#leaf2)" opacity="0.9"/>
+        <path d="M 9 16 Q 8 9, 8 3 Q 9.5 7, 9 15 Z" fill="url(#leaf2)"/>
+      </g>
+    </g>
+    <!-- 右椰子树 -->
+    <g>
+      <path d="M 27 26 Q 27.5 21, 27 16" stroke="#8B6F47" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+      <path d="M 27 26 Q 27.5 21, 27 16" stroke="#A0825A" stroke-width="0.5" stroke-linecap="round" fill="none" stroke-dasharray="0.5,0.8" opacity="0.6"/>
+      <circle cx="27.4" cy="20" r="0.5" fill="#5C3E22"/>
+      <circle cx="26.6" cy="17" r="0.4" fill="#5C3E22"/>
+      <g class="coconut-r">
+        <circle cx="28.5" cy="15.5" r="0.9" fill="#5C3E22"/>
+        <circle cx="25.5" cy="15.5" r="0.9" fill="#5C3E22"/>
+      </g>
+      <g class="leaf-r">
+        <path d="M 27 16 Q 21 12, 19 14 Q 21 11, 27 15 Z" fill="url(#leaf2)"/>
+        <path d="M 27 16 Q 33 12, 35 14 Q 33 11, 27 15 Z" fill="url(#leaf2)"/>
+        <path d="M 27 16 Q 22 9, 20 4 Q 23 7, 27 15 Z" fill="url(#leaf2)" opacity="0.9"/>
+        <path d="M 27 16 Q 32 9, 34 4 Q 31 7, 27 15 Z" fill="url(#leaf2)" opacity="0.9"/>
+        <path d="M 27 16 Q 26 9, 26 3 Q 27.5 7, 27 15 Z" fill="url(#leaf2)"/>
+      </g>
+    </g>
+    <!-- 海平面 = H 横线 -->
+    <line x1="1" y1="26" x2="41" y2="26" stroke="#fff" stroke-width="0.4" opacity="0.4"/>
+    <!-- 撕齿 -->
+    <circle cx="42" cy="6" r="1.8" fill="#fff"/>
+    <circle cx="42" cy="26" r="1.8" fill="#fff"/>
+    <line x1="42" y1="10" x2="42" y2="22" stroke="#fff" stroke-width="0.6" stroke-dasharray="1.2,1.2"/>
+    <!-- tex 副券 -->
+    <rect x="44" y="6" width="19" height="20" rx="2.5" fill="#fff" stroke="#3B6EF5" stroke-width="0.8"/>
+    <circle cx="53.5" cy="10" r="0.8" fill="#3B6EF5" opacity="0.5"/>
+    <text x="53.5" y="19" font-size="9" font-weight="800" fill="#3B6EF5" text-anchor="middle" font-family="-apple-system, system-ui, sans-serif" letter-spacing="-0.2">tex</text>
+    <line x1="46" y1="22" x2="61" y2="22" stroke="#3B6EF5" stroke-width="0.4" opacity="0.5"/>
+    <circle cx="47" cy="23.5" r="0.6" fill="#5C3E22"/>
+    <circle cx="60" cy="23.5" r="0.6" fill="#5C3E22"/>
+  </g>
+</svg>

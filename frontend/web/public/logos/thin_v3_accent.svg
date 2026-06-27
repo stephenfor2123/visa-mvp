@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 80" width="240" height="80" role="img" aria-label="Htex logo with paper plane above thin e">
+  <g stroke="#000" stroke-linecap="round" fill="none">
+    <line x1="20" y1="14" x2="20" y2="52" stroke-width="4.5"/>
+    <line x1="46" y1="14" x2="46" y2="52" stroke-width="4.5"/>
+    <line x1="20" y1="32" x2="46" y2="32" stroke-width="4.5"/>
+    <line x1="68" y1="18" x2="68" y2="52" stroke-width="4.5"/>
+    <line x1="58" y1="26" x2="78" y2="26" stroke-width="4.5"/>
+    <path d="M 135 38 L 117 38 A 8 14 0 1 1 124 53" stroke-width="3.5"/>
+    <line x1="158" y1="22" x2="196" y2="52" stroke-width="4.5"/>
+    <line x1="196" y1="22" x2="158" y2="52" stroke-width="4.5"/>
+  </g>
+
+  <!-- 飞机作为 e 字符上方重音 -->
+  <g transform="translate(126, 16)">
+    <path d="M 0 0 L 12 3 L 1 6 L 3 4 Z" fill="#000"/>
+  </g>
+</svg>

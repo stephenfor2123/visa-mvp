@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Htex 简洁黑色版</title>
+<style>
+  body { margin:0; padding:40px; background:#F8FAFC; font-family:-apple-system,sans-serif; color:#0F172A; }
+  h1 { font-size:22px; margin:0 0 8px; }
+  .sub { font-size:13px; color:#64748B; margin-bottom:32px; }
+  .grid { display:grid; grid-template-columns:repeat(1, 1fr); gap:24px; max-width:900px; }
+  .card { background:#fff; border:1px solid #E2E8F0; border-radius:16px; padding:24px 28px; }
+  .card-title { font-size:11px; font-weight:700; color:#64748B; text-transform:uppercase; letter-spacing:.04em; margin-bottom:18px; }
+  .row { display:flex; align-items:flex-end; gap:20px; padding:18px 12px; background:#F8FAFC; border-radius:10px; margin-bottom:10px; flex-wrap:wrap; }
+  .row .lbl { font-size:10px; color:#94A3B8; font-family:ui-monospace,monospace; }
+  .row img { display:block; }
+  .dark { background:#0F172A; border-color:#1E293B; }
+  .dark .row { background:#1E293B; }
+  .dark .lbl { color:#64748B !important; }
+  .dark .card-title { color:#94A3B8; }
+</style></head>
+<body>
+<h1>Htex Logo · 纯黑 + e 飞机绕圈</h1>
+<div class="sub">极简:H 大写 / t / e = 圆环(飞机绕飞)/ x,纯黑,无品牌色,无椰子树。</div>
+
+<div class="grid">
+
+  <div class="card">
+    <div class="card-title">simple v1 · 几何笔画(H 用 3 笔画,t 2 笔画,e 圆环,x 2 笔画)</div>
+    <div class="row">
+      <img src="/logos/simple_v1_geometry.svg" width="80" height="24">
+      <div class="lbl">80px</div>
+      <img src="/logos/simple_v1_geometry.svg" width="120" height="36">
+      <div class="lbl">120px</div>
+      <img src="/logos/simple_v1_geometry.svg" width="200" height="60">
+      <div class="lbl">200px</div>
+      <img src="/logos/simple_v1_geometry.svg" width="300" height="90">
+      <div class="lbl">300px</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">simple v2 · Ht 文字 + e 圆环覆盖 + x 文字(用系统 sans-serif 字体)</div>
+    <div class="row">
+      <img src="/logos/simple_v2_text.svg" width="96" height="26">
+      <div class="lbl">96px</div>
+      <img src="/logos/simple_v2_text.svg" width="144" height="38">
+      <div class="lbl">144px</div>
+      <img src="/logos/simple_v2_text.svg" width="240" height="64">
+      <div class="lbl">240px</div>
+      <img src="/logos/simple_v2_text.svg" width="360" height="96">
+      <div class="lbl">360px</div>
+    </div>
+  </div>
+
+  <div class="card dark">
+    <div class="card-title">simple v3 · 全几何笔画(纯线条,深底白 logo 适配测试)</div>
+    <div class="row">
+      <img src="/logos/simple_v3_pure.svg" width="96" height="26" style="filter: invert(1)">
+      <div class="lbl" style="color:#64748B">96px</div>
+      <img src="/logos/simple_v3_pure.svg" width="144" height="38" style="filter: invert(1)">
+      <div class="lbl" style="color:#64748B">144px</div>
+      <img src="/logos/simple_v3_pure.svg" width="240" height="64" style="filter: invert(1)">
+      <div class="lbl" style="color:#64748B">240px</div>
+      <img src="/logos/simple_v3_pure.svg" width="360" height="96" style="filter: invert(1)">
+      <div class="lbl" style="color:#64748B">360px</div>
+    </div>
+  </div>
+
+</div>
+</body></html>

@@ -218,13 +218,39 @@ export async function setLocale(lang, { markUser = true, source = 'manual' } = {
   if (markUser) {
     try { localStorage.setItem(STORAGE_USER_LOCK, '1') } catch {}
   }
-  document.documentElement.lang = lang
+document.documentElement.lang = lang
   // Load locale messages first, then notify. If we emit before loadLocale
-  // resolves, the consumer's t() call returns the raw key (e.g. "common.lang_switched_by_ip")
+  // resolves, the consumer's t() returns the raw key (e.g. "common.lang_switched_by_ip")
   // because messages are still being fetched.
   await loadLocale(lang)
+  // Refresh tab title + PWA manifest title after messages are in
+  syncDocumentTitle(i18n)
   // Notify listeners (e.g. to show "已根据 IP 切换" hint)
   _emit('change', { locale: lang, source })
+}
+
+/**
+ * Update <title> to "Htex · {app_slogan}" for the current locale.
+ *
+ * Why this lives here, not in a component:
+ *  - title is global, not part of any view's render tree
+ *  - LangSwitch is the trigger, but title must update even when locale
+ *    changes via IP detection (no user interaction with LangSwitch)
+ *  - locale is single-source-of-truth in i18n, so this is the natural home
+ *
+ * Safe to call before messages finish loading — falls back to bare "Htex".
+ */
+export function syncDocumentTitle(i18nInstance) {
+  if (typeof document === 'undefined') return
+  const t = i18nInstance.global.t
+  const slogan = (() => {
+    try {
+      const v = t('common.app_slogan')
+      // t() returns the raw key if messages aren't loaded yet — guard.
+      return v && !v.startsWith('common.') ? v : null
+    } catch { return null }
+  })()
+  document.title = slogan ? `Htex · ${slogan}` : 'Htex'
 }
 
 // ----- simple event bus for locale changes -----

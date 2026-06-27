@@ -1,13 +1,17 @@
 """
 /api/v2/auth/* — register, login, sms-login, refresh, send-code, reset-password.
 
+W26 product change: register / login / reset-password now use
+account (email or username) + password. SMS-based endpoints are kept
+for legacy / admin tools but are no longer exposed in the user UI.
+
 6 endpoints (V2 §4.1):
-  - POST /api/v2/auth/register
-  - POST /api/v2/auth/login
-  - POST /api/v2/auth/sms-login
+  - POST /api/v2/auth/register            (email + username + password)
+  - POST /api/v2/auth/login               (account + password)
+  - POST /api/v2/auth/sms-login           (legacy / admin)
   - POST /api/v2/auth/refresh
-  - POST /api/v2/auth/send-code
-  - POST /api/v2/auth/reset-password
+  - POST /api/v2/auth/send-code           (legacy / admin)
+  - POST /api/v2/auth/reset-password      (account + new password, no SMS)
 """
 import time
 from typing import Annotated, Optional
@@ -59,7 +63,7 @@ def _client_info(
     "/register",
     response_model=ApiResponse[TokenPair],
     status_code=201,
-    summary="Register a new user with phone + SMS code + password",
+    summary="Register a new user with email + username + password",
 )
 @timed
 async def register(
@@ -73,10 +77,9 @@ async def register(
     service = AuthService(db)
     info = _client_info(request, user_agent, x_device_fp)
     result = await service.register(
-        phone=body.phone,
-        phone_country=body.phone_country,
+        username=body.username,
+        email=body.email,
         password=body.password,
-        sms_code_value=body.sms_code,
         nickname=body.nickname,
         language_pref=body.language_pref,
         info=info,
@@ -96,7 +99,7 @@ async def register(
 @router.post(
     "/login",
     response_model=ApiResponse[TokenPair],
-    summary="Phone + password login",
+    summary="Account (email or username) + password login",
 )
 @timed
 async def login(
@@ -113,8 +116,7 @@ async def login(
     }
     try:
         result = await service.login(
-            phone=body.phone,
-            phone_country=body.phone_country,
+            account=body.account,
             password=body.password,
             info=info,
         )
@@ -224,7 +226,7 @@ async def send_code(
 @router.post(
     "/reset-password",
     response_model=ApiResponse[dict],
-    summary="Reset password via SMS code (purpose=reset)",
+    summary="Reset password by account (email or username) — W26 no SMS",
 )
 @timed
 async def reset_password(
@@ -237,9 +239,7 @@ async def reset_password(
     service = AuthService(db)
     info = _client_info(request, user_agent, x_device_fp)
     await service.reset_password(
-        phone=body.phone,
-        phone_country=body.phone_country,
-        sms_code=body.sms_code,
+        account=body.account,
         new_password=body.new_password,
         info=info,
     )

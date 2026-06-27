@@ -1,20 +1,6 @@
 <template>
   <div class="profile-page">
-    <header class="app-header app-container">
-      <router-link to="/home" class="app-header__brand">
-        <HtexLogo :size="28" />
-        <span>{{ t('common.app_name') }}</span>
-      </router-link>
-      <nav class="app-header__nav">
-        <router-link to="/home">{{ t('nav.home') }}</router-link>
-        <router-link to="/profile">{{ t('nav.profile') }}</router-link>
-      </nav>
-      <div class="app-header__right">
-        <LangSwitch />
-        <AppButton variant="outline" size="sm" @click="onLogout">{{ t('nav.logout') }}</AppButton>
-      </div>
-    </header>
-
+    <AppHeader scope="profile" />
     <main class="app-container app-page">
       <h1 class="section-title">{{ t('profile.page_title') }}</h1>
       <p class="section-sub">{{ t('profile.wip_notice') }}</p>
@@ -43,7 +29,6 @@
 
 <script setup>
 import { computed } from 'vue'
-import HtexLogo from '@/components/HtexLogo.vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import AppCard from '@/components/AppCard.vue'
@@ -51,6 +36,7 @@ import AppButton from '@/components/AppButton.vue'
 import LangSwitch from '@/components/LangSwitch.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
+import AppHeader from '@/components/AppHeader.vue'
 
 const { t } = useI18n()
 const router = useRouter()
