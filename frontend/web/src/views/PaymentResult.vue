@@ -464,7 +464,7 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped lang="scss">
-.paymentresult-page { min-height: 100vh; background: var(--bg-alt, #F8FAFC); }
+.paymentresult-page { min-height: 100vh; background: #FFFFFF; }
 
 // ============== Header ==============
 .app-header {

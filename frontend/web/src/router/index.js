@@ -63,12 +63,13 @@ const routes = [
     meta: { title: 'nav.materials', requiresAuth: true }
   },
   {
-    // W36: 分大类材料收集向导 — Apply.vue 选完国家后先到这里，逐类强校验上传，
-    // 完成后带 material_ids 跳 OrderNew。
+    // W36: 分大类材料收集向导 — Apply.vue 选完国家后先到这里，逐类强校验上传。
+    // W47: 完成后表单内嵌在同一页（第 6 大类"签证表格"），登录墙在 onSubmitForm 触发。
+    // 游客可填表（与 OrderNew 一致），所以不要求登录。
     path: '/materials-wizard',
     name: 'MaterialWizard',
     component: () => import('@/views/MaterialWizard.vue'),
-    meta: { title: 'nav.materials', requiresAuth: true }
+    meta: { title: 'nav.materials' }
   },
   {
     // Story 1.1.2b: AI 校验结果页 N2 — 字段级校验 + 整改指引 + 重新拍摄
@@ -87,6 +88,8 @@ const routes = [
   {
     // Story 1.2.1b: 申请表填写页 (OCR 预填 + 手动编辑 + 紧急联系人)
     // W29: 免登录可访问,登录墙后移到 onSubmit 触发(详见 OrderNew.vue 顶部)
+    // W47: 同样的表单内容已经内嵌到 MaterialWizard 第 6 大类(签证表格),
+    // 旧 /orders/new 保留为直链入口(老 e2e / 外部链接兼容)
     path: '/orders/new',
     name: 'OrderNew',
     component: () => import('@/views/OrderNew.vue'),

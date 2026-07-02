@@ -248,7 +248,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
-.rpa-status-page { min-height: 100vh; background: var(--bg, #FAFBFC); }
+.rpa-status-page { min-height: 100vh; background: #FFFFFF; }
 
 .rpa-status-shell {
   max-width: 640px;

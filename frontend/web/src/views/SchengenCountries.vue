@@ -115,7 +115,8 @@ const rest21 = [
 const all26 = computed(() => [...top5, ...rest21])
 
 function onPick(c) {
-  router.push({ path: '/orders/new', query: { country: c.code, visa_type: 'tourism' } })
+  // W47: 选完国家 → 直接进 MaterialWizard,材料收集 + 表格填写在同一页完成
+  router.push({ name: 'MaterialWizard', query: { country: c.code, visa_type: 'tourism' } })
 }
 </script>
 

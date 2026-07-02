@@ -300,7 +300,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
-.rpa-submit-page { min-height: 100vh; background: var(--bg, #FAFBFC); }
+.rpa-submit-page { min-height: 100vh; background: #FFFFFF; }
 
 .rpa-submit-shell {
   display: flex;

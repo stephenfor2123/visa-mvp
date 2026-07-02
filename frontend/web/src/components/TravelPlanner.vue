@@ -8,10 +8,7 @@
       <div class="tp-row">
         <label class="tp-field">
           <span>{{ t('wizard.travel_origin_label') }}</span>
-          <input v-model="plan.origin" list="tp-origin-cities" :placeholder="t('wizard.travel_origin_ph')" class="tp-input" data-testid="tp-origin" />
-          <datalist id="tp-origin-cities">
-            <option v-for="c in ORIGIN_CITIES" :key="c" :value="c" />
-          </datalist>
+          <CityInput v-model="plan.origin" :placeholder="t('wizard.travel_origin_ph')" test-id="tp-origin" :country-code="countryCode" />
         </label>
         <label class="tp-field">
           <span>{{ t('wizard.travel_destination_label') }}</span>
@@ -39,11 +36,11 @@
       <div class="tp-row">
         <label class="tp-field">
           <span>{{ t('wizard.travel_return_origin_label') }}</span>
-          <input v-model="plan.returnOrigin" :placeholder="plan.destination || destinationName" class="tp-input" data-testid="tp-return-origin" />
+          <CityInput v-model="plan.returnOrigin" :placeholder="plan.destination || destinationName" test-id="tp-return-origin" :country-code="countryCode" />
         </label>
         <label class="tp-field">
           <span>{{ t('wizard.travel_return_destination_label') }}</span>
-          <input v-model="plan.returnDestination" :placeholder="plan.origin" class="tp-input" data-testid="tp-return-destination" />
+          <CityInput v-model="plan.returnDestination" :placeholder="plan.origin" test-id="tp-return-destination" :country-code="countryCode" />
         </label>
       </div>
       <div class="tp-row">
@@ -84,10 +81,26 @@
               <td class="tp-td-date">{{ formatDate(d.date) }}</td>
               <td>
                 <input v-model="d.city" :placeholder="t('wizard.travel_day_city_ph')" class="tp-input tp-cell-input" :data-testid="`tp-day-city-${i}`" @input="d.city_en = ''" />
-                <!-- W47b: 飞行日显示"上一个城市 →"，提示从哪起飞；
-                     位置放到输入框下方，跟"已填什么"的视觉层级更连贯 -->
-                <div v-if="d.transport === 'flight'" class="tp-city-from" :data-testid="`tp-day-city-from-${i}`">
-                  {{ t('wizard.travel_from_label') }}: {{ dayCityDisplayFn(i).split('→')[0] }}
+                <!-- W47c: 方向提示基于"行索引"显示（不再依赖 transport=flight）：
+                     - Day 1（行程起点）: "出发城市 →"（箭头指向当天）
+                     - 最后一天（返程日）: "→ 到达城市"（箭头从当天出发）
+                     - 中间飞行日: "上一站 →"（箭头指向当天）
+                     这样返程当天即使是步行/活动也能看到 → 到达城市，不会漏。
+                     数据源是 plan.origin / plan.returnDestination。 -->
+                <div
+                  v-if="i === 0 || i === plan.days.length - 1 || d.transport === 'flight'"
+                  class="tp-city-from"
+                  :data-testid="`tp-day-city-from-${i}`"
+                >
+                  <template v-if="i === 0">
+                    {{ plan.origin || '出发城市' }} →
+                  </template>
+                  <template v-else-if="i === plan.days.length - 1">
+                    → {{ plan.returnDestination || plan.origin || '返程目的地' }}
+                  </template>
+                  <template v-else>
+                    {{ dayCityDisplayFn(i).split('→')[0] }} →
+                  </template>
                 </div>
               </td>
               <td>
@@ -168,8 +181,10 @@ import { ElMessage } from 'element-plus'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import LocaleDateInput from '@/components/LocaleDateInput.vue'
+import CityInput from '@/components/CityInput.vue'
 
 const { t, locale } = useI18n()
+const isEnglishLocale = computed(() => locale.value === 'en')
 
 const props = defineProps({
   plan: { type: Object, required: true },
@@ -184,13 +199,23 @@ const props = defineProps({
   onSyncDestinationToDays: { type: Function, required: true }, // (oldDest, newDest) => void
 })
 
-const ORIGIN_CITIES = ['北京', '上海', '广州', '深圳', '成都', '杭州', '武汉', '西安']
-
 const generating = ref(false)
 const genError = ref('')
 const genIssues = ref([])
 const progress = ref(0)
 let progressTimer = null
+
+// W47c: 最后一天一律是飞机（返程日）—— 兜住所有数据来源（AI 生成 / 手填 / 历史数据 / 默认 walk）。
+// 用户如果手动改成别的交通方式，标记 _manual.transport=true，自愈逻辑尊重用户选择不再改回去。
+watch(() => props.plan.days.length, (n) => {
+  if (!n) return
+  const last = props.plan.days[n - 1]
+  if (!last) return
+  if (last.transport === 'flight') return // 已经是飞机，跳过
+  if (last._manual?.transport) return // 用户手动改过，尊重
+  last.transport = 'flight'
+  // 标记成"非手填"（系统兜底），避免用户后续看到后以为是 AI 填的
+}, { immediate: true })
 
 // 出发/返回日期一变就重建逐日行程（保留已有城市/交通/住宿/景点，按日期对齐）
 watch(() => [props.plan.departDate, props.plan.returnDate], () => {

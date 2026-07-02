@@ -100,7 +100,7 @@ const activeTab = ref('terms')
 <style scoped>
 .agreement-page {
   min-height: 100vh;
-  background: var(--bg-page, #f5f7fa);
+  background: #FFFFFF;
 }
 .agreement-shell {
   padding-top: 24px;

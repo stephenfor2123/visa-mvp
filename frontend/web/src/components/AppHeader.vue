@@ -1,5 +1,5 @@
 <template>
-  <header class="app-header app-container">
+  <header ref="headerEl" class="app-header app-container">
     <router-link to="/home" class="app-header__brand">
       <HtexLogo :size="28" />
     </router-link>
@@ -33,140 +33,47 @@
             <path d="M2 4.5 L6 8.5 L10 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </button>
-        <div
-          v-show="openMega === m.id"
-          class="mega-menu__panel"
-          role="menu"
-          :data-testid="`${props.scope}-mega-${m.id}-panel`"
-        >
-          <div class="mega-menu__intro">
-            <h3 class="mega-menu__title">{{ t(m.titleKey) }}</h3>
-            <p class="mega-menu__desc">{{ t(m.descKey) }}</p>
-          </div>
-          <div class="mega-menu__grid">
-            <router-link
-              v-for="(item, i) in m.items"
-              :key="i"
-              :to="item.to"
-              class="mega-menu__item"
-              role="menuitem"
-              :data-testid="`${props.scope}-mega-${m.id}-item-${i}`"
-              @click="closeMega"
-            >
-              <div class="mega-menu__icon" :class="`mega-menu__icon--${item.tone}`" v-html="item.icon" />
-              <div class="mega-menu__item-body">
-                <div class="mega-menu__item-name">{{ t(item.nameKey) }}</div>
-                <div class="mega-menu__item-desc">{{ t(item.descKey) }}</div>
-              </div>
-            </router-link>
-          </div>
-        </div>
-      </div>
-      <!-- 我的申请 - 下拉子菜单(仅登录后显示) -->
-      <div
-        v-if="auth.isLoggedIn"
-        ref="ordersMenuRef"
-        class="orders-menu"
-        :class="{ 'is-open': ordersMenuOpen }"
-      >
-        <button
-          type="button"
-          class="orders-menu__trigger"
-          :aria-expanded="ordersMenuOpen"
-          aria-haspopup="menu"
-          :aria-label="t('nav.orders')"
-          :data-testid="`${props.scope}-orders-trigger`"
-          @click="toggleOrdersMenu"
-          @keydown.esc="closeOrdersMenu"
-        >
-          <span>{{ t('nav.orders') }}</span>
-          <svg
-            class="orders-menu__chevron"
-            :class="{ 'is-open': ordersMenuOpen }"
-            width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true"
-          >
-            <path d="M2 4.5 L6 8.5 L10 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
-        <div
-          v-show="ordersMenuOpen"
-          class="orders-menu__panel"
-          role="menu"
-          :data-testid="`${props.scope}-orders-panel`"
-        >
-          <!-- W41: 顶部申请人列表（纯姓名，无跳转） -->
-          <div
-            v-if="applicantsLoading"
-            class="orders-menu__empty"
-            :data-testid="`${props.scope}-orders-applicants-loading`"
-          >
-            <span>{{ t('nav.orders_menu.applicants_loading') || '加载中…' }}</span>
-          </div>
-          <div
-            v-else-if="applicants.length === 0"
-            class="orders-menu__empty"
-            :data-testid="`${props.scope}-orders-applicants-empty`"
-          >
-            <span>{{ t('nav.orders_menu.applicants_empty') || '暂无申请人' }}</span>
-          </div>
-          <div
-            v-else
-            class="orders-menu__applicants"
-            :data-testid="`${props.scope}-orders-applicants`"
-          >
-            <div
-              v-for="a in applicants"
-              :key="a.id"
-              class="orders-menu__applicant"
-              role="presentation"
-              :data-testid="`${props.scope}-orders-applicant-${a.id}`"
-            >
-              {{ a.name }}
-            </div>
-          </div>
-
-          <div class="orders-menu__divider" role="separator" />
-
-          <router-link
-            to="/orders"
-            class="orders-menu__item"
-            role="menuitem"
-            :data-testid="`${props.scope}-orders-all`"
-            @click="closeOrdersMenu"
-          >
-            <svg class="orders-menu__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M3 6h18M3 12h18M3 18h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-            </svg>
-            <span>{{ t('nav.orders_menu.all') }}</span>
-          </router-link>
-          <router-link
-            to="/orders/new"
-            class="orders-menu__item"
-            role="menuitem"
-            :data-testid="`${props.scope}-orders-new`"
-            @click="closeOrdersMenu"
-          >
-            <svg class="orders-menu__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-            </svg>
-            <span>{{ t('nav.orders_menu.new_order') }}</span>
-          </router-link>
-          <router-link
-            to="/profile"
-            class="orders-menu__item"
-            role="menuitem"
-            :data-testid="`${props.scope}-orders-profile`"
-            @click="closeOrdersMenu"
-          >
-            <svg class="orders-menu__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"/>
-              <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-            </svg>
-            <span>{{ t('nav.orders_menu.profile') }}</span>
-          </router-link>
-        </div>
       </div>
     </nav>
+
+    <!-- W47c: panel 用 Teleport 渲染到 body，避免污染 .app-header 的 flex 布局。
+         原来把 panel 放到 .app-header 直接子元素，会被 flex 计入 item 数（即使 absolute 也会影响宽度计算），
+         导致 home / apply 页面 header 看起来"差不多但有微小差异"。Teleport 到 body 后彻底脱流。
+         用 inline style 实时同步 header 的 left/right（panel 视觉上仍跟着 header 左右边界走）。 -->
+    <Teleport to="body">
+      <div
+        v-for="m in megaMenus"
+        v-show="openMega === m.id"
+        :key="`panel-${m.id}`"
+        class="mega-menu__panel mega-menu__panel--teleported"
+        role="menu"
+        :data-testid="`${props.scope}-mega-${m.id}-panel`"
+        :style="panelStyle"
+        @mouseenter="onPanelEnter(m.id)"
+      >
+      <div class="mega-menu__intro">
+        <h3 class="mega-menu__title">{{ t(m.titleKey) }}</h3>
+        <p class="mega-menu__desc">{{ t(m.descKey) }}</p>
+      </div>
+      <div class="mega-menu__grid">
+        <router-link
+          v-for="(item, i) in m.items"
+          :key="i"
+          :to="item.to"
+          class="mega-menu__item"
+          role="menuitem"
+          :data-testid="`${props.scope}-mega-${m.id}-item-${i}`"
+          @click="closeMega"
+        >
+          <div class="mega-menu__icon" :class="`mega-menu__icon--${item.tone}`" v-html="item.icon" />
+          <div class="mega-menu__item-body">
+            <div class="mega-menu__item-name">{{ t(item.nameKey) }}</div>
+            <div class="mega-menu__item-desc">{{ t(item.descKey) }}</div>
+          </div>
+        </router-link>
+      </div>
+    </div>
+    </Teleport>
     <div class="app-header__right">
       <!-- W28 P2: 全屏国家搜索弹窗 trigger -->
       <button
@@ -208,34 +115,134 @@
         <span class="trust-badge__text">{{ t('trust.on_time') }}</span>
       </div>
       <LangSwitch />
-      <router-link
-        to="/profile"
-        class="app-header__profile-link"
-        :title="t('nav.profile')"
-        :aria-label="t('nav.profile')"
+      <!-- W47: 人物头像下拉菜单(整合"我的申请" + profile + 退出登录) -->
+      <div
+        v-if="auth.isLoggedIn"
+        ref="userMenuRef"
+        class="user-menu"
+        :class="{ 'is-open': userMenuOpen }"
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"/>
-          <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-        </svg>
-      </router-link>
+        <button
+          type="button"
+          class="user-menu__trigger"
+          :aria-expanded="userMenuOpen"
+          aria-haspopup="menu"
+          :aria-label="t('nav.profile')"
+          :data-testid="`${props.scope}-user-trigger`"
+          @click="toggleUserMenu"
+          @keydown.esc="closeUserMenu"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          <svg class="user-menu__chevron" :class="{ 'is-open': userMenuOpen }" width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+            <path d="M2 4.5 L6 8.5 L10 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div
+          v-show="userMenuOpen"
+          class="user-menu__panel"
+          role="menu"
+          :data-testid="`${props.scope}-user-panel`"
+        >
+          <!-- 顶部申请人列表(继承自原 orders-menu,W41) -->
+          <div
+            v-if="applicantsLoading"
+            class="user-menu__empty"
+            :data-testid="`${props.scope}-user-applicants-loading`"
+          >
+            <span>{{ t('nav.orders_menu.applicants_loading') || '加载中…' }}</span>
+          </div>
+          <div
+            v-else-if="applicants.length === 0"
+            class="user-menu__empty"
+            :data-testid="`${props.scope}-user-applicants-empty`"
+          >
+            <span>{{ t('nav.orders_menu.applicants_empty') || '暂无申请人' }}</span>
+          </div>
+          <div
+            v-else
+            class="user-menu__applicants"
+            :data-testid="`${props.scope}-user-applicants`"
+          >
+            <div
+              v-for="a in applicants"
+              :key="a.id"
+              class="user-menu__applicant"
+              role="presentation"
+              :data-testid="`${props.scope}-user-applicant-${a.id}`"
+            >
+              {{ a.name }}
+            </div>
+          </div>
+
+          <div class="user-menu__divider" role="separator" />
+
+          <!-- 我的申请 子菜单 -->
+          <router-link
+            to="/orders"
+            class="user-menu__item"
+            role="menuitem"
+            :data-testid="`${props.scope}-user-orders-all`"
+            @click="closeUserMenu"
+          >
+            <svg class="user-menu__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M3 6h18M3 12h18M3 18h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            <span>{{ t('nav.orders_menu.all') }}</span>
+          </router-link>
+          <router-link
+            to="/destinations"
+            class="user-menu__item"
+            role="menuitem"
+            :data-testid="`${props.scope}-user-orders-new`"
+            @click="closeUserMenu"
+          >
+            <svg class="user-menu__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            <span>{{ t('nav.orders_menu.new_order') }}</span>
+          </router-link>
+
+          <div class="user-menu__divider" role="separator" />
+
+          <router-link
+            to="/profile"
+            class="user-menu__item"
+            role="menuitem"
+            :data-testid="`${props.scope}-user-profile`"
+            @click="closeUserMenu"
+          >
+            <svg class="user-menu__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            <span>{{ t('nav.profile') }}</span>
+          </router-link>
+          <button
+            type="button"
+            class="user-menu__item user-menu__item--danger"
+            role="menuitem"
+            :data-testid="`${props.scope}-user-logout`"
+            @click="onLogout"
+          >
+            <svg class="user-menu__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M14 4h-7a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M16 8l4 4-4 4M20 12H9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>{{ t('nav.logout') }}</span>
+          </button>
+        </div>
+      </div>
       <AppButton
-        v-if="!auth.isLoggedIn"
+        v-else
         variant="primary"
         size="sm"
         :data-testid="loginTestId"
         @click="onLogin"
       >
         {{ t('nav.login') }}
-      </AppButton>
-      <AppButton
-        v-else
-        variant="outline"
-        size="sm"
-        :data-testid="logoutTestId"
-        @click="onLogout"
-      >
-        {{ t('nav.logout') }}
       </AppButton>
     </div>
   </header>
@@ -268,9 +275,9 @@ const router = useRouter()
 const auth = useAuthStore()
 const toast = useToast()
 
-// ============== 我的申请 下拉子菜单 ==============
-const ordersMenuOpen = ref(false)
-const ordersMenuRef = ref(null)
+// ============== 用户菜单(W47:整合"我的申请" + profile + 退出登录) ==============
+const userMenuOpen = ref(false)
+const userMenuRef = ref(null)
 
 // W41: 申请人列表（按姓名+护照号去重,后端聚合 user 的所有订单）
 const applicants = ref([])
@@ -298,23 +305,23 @@ watch(() => auth.isLoggedIn, (v) => {
   else applicants.value = []
 }, { immediate: true })
 
-function toggleOrdersMenu() {
-  ordersMenuOpen.value = !ordersMenuOpen.value
+function toggleUserMenu() {
+  userMenuOpen.value = !userMenuOpen.value
   // 打开时如果从未拉过,触发一次（兜底登录态变化时 immediate 没跑的边界情况）
-  if (ordersMenuOpen.value && auth.isLoggedIn && applicants.value.length === 0 && !applicantsLoading.value) {
+  if (userMenuOpen.value && auth.isLoggedIn && applicants.value.length === 0 && !applicantsLoading.value) {
     fetchApplicants()
   }
 }
-function closeOrdersMenu() {
-  ordersMenuOpen.value = false
+function closeUserMenu() {
+  userMenuOpen.value = false
 }
 function onDocClick(e) {
-  if (!ordersMenuOpen.value) return
-  const root = ordersMenuRef.value
-  if (root && !root.contains(e.target)) closeOrdersMenu()
+  if (!userMenuOpen.value) return
+  const root = userMenuRef.value
+  if (root && !root.contains(e.target)) closeUserMenu()
 }
 function onDocKey(e) {
-  if (e.key === 'Escape' && ordersMenuOpen.value) closeOrdersMenu()
+  if (e.key === 'Escape' && userMenuOpen.value) closeUserMenu()
 }
 
 // Re-hydrate from localStorage in case the parent view didn't (e.g. when this
@@ -351,6 +358,33 @@ function onLogout() {
 const searchModalOpen = ref(false)
 function openSearchModal() { searchModalOpen.value = true }
 function closeSearchModal() { searchModalOpen.value = false }
+
+// ============== W47c: Teleport panel 跟随 header 位置 ==============
+const headerEl = ref(null)
+const scrollTick = ref(0)
+const panelStyle = computed(() => {
+  // scrollTick 让 scroll/resize 触发重算
+  void scrollTick.value
+  if (!headerEl.value) return {}
+  const rect = headerEl.value.getBoundingClientRect()
+  const headerBottom = rect.bottom + 8
+  return {
+    left: `${rect.left}px`,
+    right: `${window.innerWidth - rect.right}px`,
+    top: `${headerBottom}px`,
+  }
+})
+function syncPanelOnScroll() {
+  scrollTick.value++
+}
+onMounted(() => {
+  window.addEventListener('scroll', syncPanelOnScroll, { passive: true })
+  window.addEventListener('resize', syncPanelOnScroll)
+})
+onBeforeUnmount(() => {
+  window.removeEventListener('scroll', syncPanelOnScroll)
+  window.removeEventListener('resize', syncPanelOnScroll)
+})
 
 // ============== W31: 3 个产品级 mega menu (deel.com 风格) ==============
 // 1. 签证办理 — 选国家 → RAG 拉材料清单 → 上传/OCR → 跳 OrderNew
@@ -431,14 +465,30 @@ function closeMega() {
 }
 function onMegaHover(id) {
   // desktop 上 hover 展开, 离开后保留 click 状态 — 用 setTimeout 延迟 close 防止 jitter
+  cancelMegaLeave()  // 鼠标重新进入 trigger 也取消待关闭 timer
+  openMega.value = id
+}
+function onPanelEnter(id) {
+  // 鼠标进入 panel — 取消即将关闭的 timer + 确保 openMega 是这个 panel
+  cancelMegaLeave()
   openMega.value = id
 }
 let _leaveTimer = null
 function onMegaHoverLeave(id) {
   if (_leaveTimer) clearTimeout(_leaveTimer)
+  // W47c: 鼠标从 trigger 移到 panel 中间会经过 8px gap 触发 mouseleave,
+  // 350ms 给用户足够时间跨过去; 同时 panel 的 mouseenter 会 cancel 这个 timer
+  // (避免进入 panel 后面板还被关掉)。
   _leaveTimer = setTimeout(() => {
     if (openMega.value === id) closeMega()
-  }, 180)
+  }, 350)
+}
+function cancelMegaLeave() {
+  // W47c: panel mouseenter 调用 — 取消即将关闭面板的延迟 timer
+  if (_leaveTimer) {
+    clearTimeout(_leaveTimer)
+    _leaveTimer = null
+  }
 }
 function onMegaDocClick(e) {
   if (!openMega.value) return
@@ -463,7 +513,7 @@ function onMegaDocKey(e) {
   padding: 14px 0;
   background: #fff;
   gap: 24px;
-  position: relative;
+  position: relative;  // W47c: 给 mega-menu__panel 提供绝对定位的锚点
 }
 
 // ============== W31: Mega menu (deel.com 风格) ==============
@@ -491,8 +541,12 @@ function onMegaDocKey(e) {
   }
   &__panel {
     position: absolute;
+    // W47c: 跨整条导航条宽度（deel.com 风格 mega menu），
+    // 而不只是比 trigger 宽一点 — 让 panel 视觉上"长在导航条下面"，
+    // 而不是脱节的浮层。
     top: calc(100% + 8px);
-    left: -16px;
+    left: 0;
+    right: 0;
     min-width: 480px;
     background: #fff;
     border: 1px solid #e2e8f0;
@@ -501,6 +555,17 @@ function onMegaDocKey(e) {
     padding: 20px 22px;
     z-index: 50;
     animation: megaIn .18s ease-out;
+    // W47c: Teleport 到 body 后用 JS 算坐标（见 onMegaHover 中计算）。
+    // 默认占位 — 真实定位由 .mega-menu__panel--teleported 覆盖
+  }
+  // W47c: Teleport 到 body 的 panel 用 fixed 定位，JS 计算 left/right/top
+  &__panel--teleported {
+    position: fixed;
+    z-index: 1000;
+    // 默认值，JS 会动态更新
+    top: 60px;
+    left: 0;
+    right: 0;
   }
   &__intro {
     margin-bottom: 14px;
@@ -610,44 +675,42 @@ function onMegaDocKey(e) {
   font-weight: 600;
 }
 
-/* ============== 我的申请 下拉子菜单 ============== */
-.orders-menu {
+/* ============== W47: 用户菜单(整合"我的申请" + profile + 退出登录) ============== */
+.user-menu {
   position: relative;
 }
-.orders-menu__trigger {
+.user-menu__trigger {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 4px;
+  justify-content: center;
+  gap: 4px;
+  width: 34px;
+  height: 34px;
+  padding: 0;
   background: transparent;
-  border: 0;
+  border: 1px solid transparent;
   color: var(--ink-2, #334155);
-  font: inherit;
-  font-size: 14px;
   cursor: pointer;
-  border-radius: 6px;
-  transition: color .15s, background .15s;
+  border-radius: 50%;
+  transition: color .15s, background .15s, border-color .15s;
 }
-.orders-menu__trigger:hover,
-.orders-menu.is-open .orders-menu__trigger {
+.user-menu__trigger:hover,
+.user-menu.is-open .user-menu__trigger {
   color: var(--el-color-primary, #3B6EF5);
-  background: rgba(59, 110, 245, .06);
+  background: rgba(59, 110, 245, .08);
+  border-color: rgba(59, 110, 245, .2);
 }
-.orders-menu__trigger:focus-visible {
+.user-menu__trigger:focus-visible {
   outline: 2px solid var(--el-color-primary, #3B6EF5);
   outline-offset: 2px;
 }
-.orders-menu__chevron {
-  display: block;
-  transition: transform .2s ease;
+.user-menu__chevron {
+  display: none;  /* trigger 是圆形按钮,不带 chevron 视觉更干净 */
 }
-.orders-menu__chevron.is-open {
-  transform: rotate(180deg);
-}
-.orders-menu__panel {
+.user-menu__panel {
   position: absolute;
   top: calc(100% + 10px);
-  left: 0;
+  right: 0;     /* trigger 在右侧,panel 从右对齐 */
   min-width: 220px;
   padding: 6px;
   background: #fff;
@@ -655,59 +718,74 @@ function onMegaDocKey(e) {
   border-radius: 12px;
   box-shadow: 0 12px 32px rgba(15, 23, 42, .14), 0 2px 6px rgba(15, 23, 42, .06);
   z-index: 1000;
-  animation: ordersMenuIn .18s ease-out;
+  animation: userMenuIn .18s ease-out;
 }
-@keyframes ordersMenuIn {
+@keyframes userMenuIn {
   from { opacity: 0; transform: translateY(-4px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.orders-menu__item {
+.user-menu__item {
   display: flex;
   align-items: center;
   gap: 10px;
+  width: 100%;
   padding: 9px 12px;
+  border: 0;
+  background: transparent;
   border-radius: 8px;
   color: var(--ink-1, #0F172A);
   text-decoration: none;
   font-size: 14px;
+  font-family: inherit;
+  text-align: left;
   transition: background .15s, color .15s;
   cursor: pointer;
 }
-.orders-menu__item:hover {
+.user-menu__item:hover {
   background: rgba(59, 110, 245, .08);
   color: var(--el-color-primary, #3B6EF5);
 }
-.orders-menu__item.router-link-active {
+.user-menu__item.router-link-active {
   background: rgba(59, 110, 245, .12);
   color: var(--el-color-primary, #3B6EF5);
   font-weight: 600;
 }
-.orders-menu__item:focus-visible {
+.user-menu__item:focus-visible {
   outline: 2px solid var(--el-color-primary, #3B6EF5);
   outline-offset: -2px;
 }
-.orders-menu__icon {
+.user-menu__item--danger {
+  color: #DC2626;
+}
+.user-menu__item--danger:hover {
+  background: rgba(220, 38, 38, .08);
+  color: #B91C1C;
+}
+.user-menu__item--danger .user-menu__icon {
+  color: #DC2626;
+}
+.user-menu__icon {
   flex: 0 0 16px;
   color: var(--ink-3, #64748B);
   transition: color .15s;
 }
-.orders-menu__item:hover .orders-menu__icon,
-.orders-menu__item.router-link-active .orders-menu__icon {
+.user-menu__item:hover .user-menu__icon,
+.user-menu__item.router-link-active .user-menu__icon {
   color: var(--el-color-primary, #3B6EF5);
 }
-.orders-menu__divider {
+.user-menu__divider {
   height: 1px;
   margin: 6px 4px;
   background: var(--border, #E2E8F0);
 }
 
 /* W41: 申请人列表（顶部,纯姓名展示,无跳转/无 hover 反馈） */
-.orders-menu__applicants {
+.user-menu__applicants {
   display: flex;
   flex-direction: column;
   padding: 4px 0;
 }
-.orders-menu__applicant {
+.user-menu__applicant {
   font-size: 13px;
   color: var(--ink-2, #334155);
   padding: 6px 12px;
@@ -717,7 +795,7 @@ function onMegaDocKey(e) {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.orders-menu__empty {
+.user-menu__empty {
   font-size: 12px;
   color: var(--ink-3, #64748B);
   padding: 8px 12px;
@@ -730,29 +808,7 @@ function onMegaDocKey(e) {
   gap: 12px;
 }
 
-.app-header__profile-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  border: 1px solid var(--border, #E2E8F0);
-  color: var(--ink-2, #334155);
-  text-decoration: none;
-  background: #fff;
-  transition: border-color .15s, color .15s, background .15s, box-shadow .15s;
-}
-.app-header__profile-link:hover {
-  border-color: var(--el-color-primary, #3B6EF5);
-  color: var(--el-color-primary, #3B6EF5);
-  background: rgba(59, 110, 245, .06);
-}
-.app-header__profile-link.router-link-active {
-  border-color: var(--el-color-primary, #3B6EF5);
-  color: var(--el-color-primary, #3B6EF5);
-  background: rgba(59, 110, 245, .08);
-}
+/* W47: 删了 .app-header__profile-link 旧样式 — 人物头像已挪到 user-menu__trigger 内 */
 .app-header__profile-link svg { display: block; }
 
 /* ============== Search trigger (W28 P2) ============== */
