@@ -113,7 +113,6 @@ const toast = useToast()
 const taskId = ref('')
 const status = ref('SUBMITTING')    // SUBMITTING | WAITING | DONE | FAILED
 const phase = ref('accessing')      // accessing | filling | submitting | done | error
-const progress = ref(0)
 const stepLabelKey = ref('rpa.step_accessing')
 const errorMessage = ref('')
 const submitting = ref(false)
@@ -156,7 +155,13 @@ async function pollStatus() {
     const data = await getRpaStatus(taskId.value)
     status.value = data.status
     phase.value = data.phase
-    progress.value = data.progress
+    // W45 fix: the backend's `progress` field is a 0..1 float that doesn't
+    // always align with the textual phase (eg. fake-progress animation can
+    // leave progress=0.7 while phase is still 'accessing' / step 1/3).
+    // Derive the bar fill from the phase index instead so the percentage
+    // can never disagree with the visible step number: 1/3 ≤ 33%, 2/3 ≤ 66%,
+    // 3/3 = 100%. Within each step we still display the backend's
+    // fractional progress for some motion, but cap it to that step's max.
     stepLabelKey.value = data.step_label_key
 
     if (data.status === 'DONE') {
@@ -199,6 +204,22 @@ const stepIndex = computed(() => {
   return 0
 })
 
+// W45 fix: derive the progress-bar fill from the step index so the visible
+// percentage can never contradict the textual step ("Step 1/3" / "Step 2/3" /
+// "Step 3/3"). Bounds:
+//   - step 0 (1/3) → 0..33%
+//   - step 1 (2/3) → 34..66%
+//   - step 2 (3/3) → 67..99% (until the backend flips to DONE → 100%)
+// The cap is 99 on the last step so the user keeps seeing motion until the
+// "完成" toast and the step dots both switch to green.
+const STEP_MAX = [33, 66, 99]
+const progress = computed(() => {
+  if (phase.value === 'done') return 100
+  if (phase.value === 'error') return 0
+  const idx = stepIndex.value
+  return STEP_MAX[idx] ?? 0
+})
+
 const mainTitle = computed(() => {
   if (phase.value === 'done')  return t('rpa.title_done')
   if (phase.value === 'error') return t('rpa.title_error')
@@ -216,7 +237,9 @@ async function doSubmit() {
   if (submitting.value) return
   submitting.value = true
   phase.value = 'accessing'
-  progress.value = 0
+  // `progress` is now a computed derived from `phase` — setting it is a
+  // no-op (Vue warns on writable-computed assignment) so we just rely on
+  // the phase change to drive the bar to 0..33%.
   errorMessage.value = ''
   stepLabelKey.value = 'rpa.step_accessing'
 

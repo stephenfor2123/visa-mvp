@@ -47,6 +47,50 @@ def _format_valid_label(days: int) -> str:
     return f"{days} DAYS"
 
 
+# W45 fix: hard-coded ISO 3166-1 alpha-2 → English short name fallback.
+# Used when the DB's country_name_i18n is missing a locale (e.g. seed_schengen_26
+# wrote a plain "Austria" string for the 'en' slot only — English works, but
+# asking for lang=zh-CN/id-ID/vi-VN used to fall back to the country code "AT",
+# which is ugly on the card title). Keep this table small (≤ 30 entries for the
+# V2 destinations); once we re-seed, the i18n column will be the source of truth.
+_COUNTRY_NAME_EN_FALLBACK = {
+    "US": "United States",
+    "AU": "Australia",
+    "GB": "United Kingdom",
+    "JP": "Japan",
+    "CA": "Canada",
+    "SG": "Singapore",
+    "NZ": "New Zealand",
+    "DE": "Germany",
+    "FR": "France",
+    "AT": "Austria",
+    "BE": "Belgium",
+    "HR": "Croatia",
+    "CZ": "Czechia",
+    "DK": "Denmark",
+    "EE": "Estonia",
+    "FI": "Finland",
+    "GR": "Greece",
+    "HU": "Hungary",
+    "IS": "Iceland",
+    "IT": "Italy",
+    "LV": "Latvia",
+    "LI": "Liechtenstein",
+    "LT": "Lithuania",
+    "LU": "Luxembourg",
+    "MT": "Malta",
+    "NL": "Netherlands",
+    "NO": "Norway",
+    "PL": "Poland",
+    "PT": "Portugal",
+    "SK": "Slovakia",
+    "SI": "Slovenia",
+    "ES": "Spain",
+    "SE": "Sweden",
+    "SCHENGEN": "Schengen (any of 26 members)",
+}
+
+
 def _compute_eta_iso(process_days: Optional[int]) -> Optional[str]:
     """Compute precise ETA timestamp (UTC ISO-8601) used by 'Guaranteed Visa on …'.
 
@@ -87,12 +131,27 @@ async def list_destinations(
         except Exception:
             # legacy 单字符串 — 启发式 split: 第一个空白之前是中文, 之后是英文
             s = (r.country_name_i18n or "").strip()
-            name_map = {"zh-CN": s, "en": r.country_code}
+            name_map = {"zh-CN": s, "en": s or r.country_code}
             if " " in s:
                 idx = s.find(" ")
                 zh, en = s[:idx], s[idx + 1:].strip()
                 if zh and en:
                     name_map = {"zh-CN": zh, "en": en}
+        # W45 fix: 1) never return the raw country code (e.g. "AT"/"US") as a
+        # human-readable country name on the destination card — the DB column
+        # might be missing the requested locale (legacy seed_schengen_26 wrote
+        # only English), and the legacy fallback above would otherwise hand back
+        # the alpha-2 code. Use the hard-coded EN fallback for en-US, and mirror
+        # the same string for any missing locale (acceptable for an MVP — the
+        # fallback lives in code, not data, so we can replace it with proper
+        # translations without a re-seed).
+        # 2) when even the EN slot is missing, fall back to the EN table.
+        en_default = name_map.get("en") or _COUNTRY_NAME_EN_FALLBACK.get(
+            r.country_code, r.country_code
+        )
+        name_map.setdefault("en", en_default)
+        # 3) ensure any requested locale gets *some* non-code string.
+        name_map.setdefault(lang, en_default)
         if visa_type:
             try:
                 types = json.loads(r.visa_types)
@@ -103,7 +162,7 @@ async def list_destinations(
         items.append(DestinationOut(
             id=r.id,
             country_code=r.country_code,
-            country_name=name_map.get(lang, name_map.get("en", r.country_code)),
+            country_name=name_map.get(lang) or name_map.get("en") or _COUNTRY_NAME_EN_FALLBACK.get(r.country_code, r.country_code),
             visa_types=json.loads(r.visa_types) if r.visa_types else [],
             image_url=r.image_url,
             enabled=r.enabled,

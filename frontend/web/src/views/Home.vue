@@ -13,10 +13,11 @@
             class="hero__slide"
             :class="{ 'is-active': i === activeIdx }"
           >
+            <!-- video 优先,失败 fallback 到同名 jpg;再失败显示深色兜底 -->
             <video
-              v-if="s.image && /\.(mp4|webm)$/i.test(s.image)"
+              v-if="s.image && /\.(mp4|webm)$/i.test(s.image) && !failedHero.has(i)"
               :src="s.image"
-              :alt="t(s.captionKey)"
+              :alt="`${t(s.captionKey)} · ${t(s.cityKey)}`"
               class="hero__slide-video"
               autoplay
               loop
@@ -26,13 +27,14 @@
               @error="onHeroImgError(i)"
             />
             <img
-              v-else-if="s.image"
-              :src="s.image"
-              :alt="t(s.captionKey)"
+              v-else-if="(failedHero.has(i) && s.fallback) || (s.image && !/\.(mp4|webm)$/i.test(s.image))"
+              :src="failedHero.has(i) ? s.fallback : s.image"
+              :alt="`${t(s.captionKey)} · ${t(s.cityKey)}`"
               class="hero__slide-video hero__slide-img"
               loading="eager"
               @error="onHeroImgError(i)"
             />
+            <div v-else class="hero__slide-fallback" aria-hidden="true" />
             <div class="hero__slide-overlay" />
           </div>
         </div>
@@ -50,53 +52,18 @@
           <div class="hero__trust">
             <span class="hero__trust-item">
               <span class="hero__trust-num">12,847+</span>
-              <span class="hero__trust-label">{{ t('home.trust_stats.users', { n: '' }).replace(/\+\s*$/, '').replace(/\{n\}/, '') }}</span>
+              <span class="hero__trust-label">{{ t('home.trust_stats.users') }}</span>
             </span>
             <span class="hero__trust-divider" aria-hidden="true">·</span>
             <span class="hero__trust-item">
               <span class="hero__trust-num">99.2%</span>
-              <span class="hero__trust-label">{{ t('home.trust_stats.on_time', { pct: '' }).replace(/\{pct\}/, '') }}</span>
+              <span class="hero__trust-label">{{ t('home.trust_stats.on_time') }}</span>
             </span>
             <span class="hero__trust-divider" aria-hidden="true">·</span>
             <span class="hero__trust-item">
               <span class="hero__trust-num">4.9★</span>
-              <span class="hero__trust-label">{{ t('home.trust_stats.rating', { score: '' }).replace(/\{score\}/, '') }}</span>
+              <span class="hero__trust-label">{{ t('home.trust_stats.rating') }}</span>
             </span>
-          </div>
-          <!-- I1: 首页 CTA — 4 个热门国家快捷入口 -->
-          <div class="hero__cta">
-            <AppButton
-              variant="primary"
-              size="md"
-              @click="onCountry('US')"
-              data-testid="hero-cta-us"
-            >
-              {{ t('home.cta.start_us') }}
-            </AppButton>
-            <AppButton
-              variant="ghost"
-              size="md"
-              @click="onCountry('GB')"
-              data-testid="hero-cta-gb"
-            >
-              {{ t('home.cta.start_gb') }}
-            </AppButton>
-            <AppButton
-              variant="ghost"
-              size="md"
-              @click="onCountry('SCHENGEN')"
-              data-testid="hero-cta-eu"
-            >
-              {{ t('home.cta.start_eu') }}
-            </AppButton>
-            <AppButton
-              variant="ghost"
-              size="md"
-              @click="onCountry('AU')"
-              data-testid="hero-cta-au"
-            >
-              {{ t('home.cta.start_au') }}
-            </AppButton>
           </div>
         </div>
 
@@ -219,7 +186,8 @@ const router = useRouter()
 const auth = useAuthStore()
 
 // ============== Hero 真实动图轮播(atlys 风格) ==============
-// 10 段真实视频(轮船开/海浪动/云动/极光流动/风沙动),每 4.5s 自动切换
+// 10 段真实视频(雪山/海岛/极光/沙漠/星空/云海),每 4.5s 自动切换
+// 视频加载失败时 fallback 到同名 .jpg 静态图
 // I6: mobile 端禁用视频自动轮播 (轮询 + 解码耗电 + 流量),
 // 只显示 slide 0 静态首屏。检测 600px 以下 viewport。
 const SLIDE_DURATION = 4500
@@ -228,17 +196,23 @@ function isMobileViewport() {
   return window.matchMedia && window.matchMedia('(max-width: 600px)').matches
 }
 
+// 10 张幻灯片:每条先 mp4 视频,失败 fallback 到同名 .jpg
 const slides = [
-  { image: '/hero/videos/t1_snow.mp4',          captionKey: 'home.hero.cap1',  cityKey: 'home.hero.city1' },
-  { image: '/hero/videos/t1_hiker.mp4',         captionKey: 'home.hero.cap6',  cityKey: 'home.hero.city2' },
-  { image: '/hero/videos/t2_island.mp4',        captionKey: 'home.hero.cap2',  cityKey: 'home.hero.city3' },
-  { image: '/hero/videos/t2_backpack_city.mp4', captionKey: 'home.hero.cap7',  cityKey: 'home.hero.city4' },
-  { image: '/hero/videos/t3_aurora.mp4',        captionKey: 'home.hero.cap3',  cityKey: 'home.hero.city5' },
-  { image: '/hero/videos/t3_plane_sunset.mp4',  captionKey: 'home.hero.cap8',  cityKey: 'home.hero.city6' },
-  { image: '/hero/videos/t4_desert.mp4',        captionKey: 'home.hero.cap4',  cityKey: 'home.hero.city7' },
-  { image: '/hero/videos/t4_dolomites.mp4',     captionKey: 'home.hero.cap9',  cityKey: 'home.hero.city8' },
-  { image: '/hero/videos/t5_stars.mp4',         captionKey: 'home.hero.cap5',  cityKey: 'home.hero.city9' },
-  { image: '/hero/videos/t5_window_clouds.mp4', captionKey: 'home.hero.cap10', cityKey: 'home.hero.city10' },
+  // t1 — 雪山 / 山野主题
+  { image: '/hero/videos/t1_snow.mp4',          fallback: '/hero/t1_snow.jpg',          captionKey: 'home.hero.cap1',  cityKey: 'home.hero.city1' },
+  { image: '/hero/videos/t1_hiker.mp4',         fallback: '/hero/t1_hiker.jpg',         captionKey: 'home.hero.cap6',  cityKey: 'home.hero.city2' },
+  // t2 — 海岛 / 城市主题
+  { image: '/hero/videos/t2_island.mp4',        fallback: '/hero/t2_island.jpg',        captionKey: 'home.hero.cap2',  cityKey: 'home.hero.city3' },
+  { image: '/hero/videos/t2_backpack_city.mp4', fallback: '/hero/t2_backpack_city.jpg', captionKey: 'home.hero.cap7',  cityKey: 'home.hero.city4' },
+  // t3 — 极光 / 天空主题
+  { image: '/hero/videos/t3_aurora.mp4',        fallback: '/hero/t3_aurora.jpg',        captionKey: 'home.hero.cap3',  cityKey: 'home.hero.city5' },
+  { image: '/hero/videos/t3_plane_sunset.mp4',  fallback: '/hero/t3_plane_sunset.jpg',  captionKey: 'home.hero.cap8',  cityKey: 'home.hero.city6' },
+  // t4 — 沙漠 / 山系主题
+  { image: '/hero/videos/t4_desert.mp4',        fallback: '/hero/t4_desert.jpg',        captionKey: 'home.hero.cap4',  cityKey: 'home.hero.city7' },
+  { image: '/hero/videos/t4_dolomites.mp4',     fallback: '/hero/t4_dolomites.jpg',     captionKey: 'home.hero.cap9',  cityKey: 'home.hero.city8' },
+  // t5 — 星空 / 云海主题
+  { image: '/hero/videos/t5_stars.mp4',         fallback: '/hero/t5_stars.jpg',         captionKey: 'home.hero.cap5',  cityKey: 'home.hero.city9' },
+  { image: '/hero/videos/t5_window_clouds.mp4', fallback: '/hero/t5_window_clouds.jpg', captionKey: 'home.hero.cap10', cityKey: 'home.hero.city10' },
 ]
 const activeIdx = ref(0)
 let timer = null
@@ -555,6 +529,14 @@ function onCountry(countryCode) {
   background:
     linear-gradient(90deg, rgba(15,23,42,.72) 0%, rgba(15,23,42,.48) 25%, rgba(15,23,42,.20) 50%, rgba(15,23,42,0) 68%),
     linear-gradient(180deg, rgba(0,0,0,0) 55%, rgba(15,23,42,.22) 100%);
+}
+
+// 视频+jpg 都失败时的兜底底色,避免留白
+.hero__slide-fallback {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(135deg, #1e3a8a 0%, #312e81 100%);
 }
 
 .hero__copy {

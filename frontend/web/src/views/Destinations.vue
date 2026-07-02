@@ -37,7 +37,7 @@
             <div class="dest-card__name">{{ d.country_name }}</div>
             <div class="dest-card__types">
               <span v-for="type in d.visa_types" :key="type" class="tag" :class="`tag--${type}`">
-                {{ type === 'tourism' ? t('dest.tourism') : t('dest.student') }}
+                {{ visaTypeLabel(type) }}
               </span>
             </div>
             <div v-if="!d.enabled" class="dest-card__lock">🔒 {{ t('dest.coming_soon') }}</div>
@@ -101,6 +101,17 @@ function flagEmoji(cc) {
   return String.fromCodePoint(...codePoints)
 }
 
+// W45 fix: visa type label maps to its own i18n key; fall back to raw type
+// (uppercase) if the locale doesn't ship a translation for an uncommon type.
+function visaTypeLabel(type) {
+  const key = `dest.${type}`
+  const label = t(key)
+  // t() returns the raw key when messages aren't loaded or when missing;
+  // compare against the dotted form so we don't show "dest.work" as a label.
+  if (label && label !== key) return label
+  return String(type).toUpperCase()
+}
+
 async function load() {
   loading.value = true
   error.value = ''
@@ -115,7 +126,9 @@ async function load() {
 }
 
 function onApply(d) {
-  router.push({ name: 'Materials', query: { country: d.country_code, type: 'tourism' } })
+  // W38 fix: 老的 'Materials' 页是废弃原型（假上传、没有多语言接入），
+  // 真正接入后端的流程是材料收集向导 MaterialWizard。
+  router.push({ name: 'MaterialWizard', query: { country: d.country_code, visa_type: 'tourism' } })
 }
 
 onMounted(() => {
