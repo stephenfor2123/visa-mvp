@@ -34,70 +34,70 @@ _REQUIRED: Dict[str, Dict[str, List[Dict[str, Any]]]] = {
     "US": {
         # US tourist/business B1/B2
         "default": [
-            {"key": "us.passport",   "types": ["passport"],   "reason": "需要有效期 ≥6 个月的护照"},
-            {"key": "us.ds160",      "types": ["form"],       "reason": "需要 DS-160 确认页"},
-            {"key": "us.photo",      "types": ["photo"],      "reason": "需要 51×51mm 白底照片"},
-            {"key": "us.financial",  "types": ["other", "bank"], "reason": "建议提供银行流水 / 资产证明"},
-            {"key": "us.itinerary",  "types": ["other", "flight", "hotel"], "reason": "建议提供行程单 / 邀请函"},
+            {"key": "us.passport",   "types": ["passport"],   "reason": "需要有效期 ≥6 个月的护照", "reason_key": "diagnose.reason_us_passport"},
+            {"key": "us.ds160",      "types": ["form"],       "reason": "需要 DS-160 确认页",      "reason_key": "diagnose.reason_form_ds160"},
+            {"key": "us.photo",      "types": ["photo"],      "reason": "需要 51×51mm 白底照片",   "reason_key": "diagnose.reason_us_photo"},
+            {"key": "us.financial",  "types": ["other", "bank"], "reason": "建议提供银行流水 / 资产证明", "reason_key": "diagnose.reason_financial_bank"},
+            {"key": "us.itinerary",  "types": ["other", "flight", "hotel"], "reason": "建议提供行程单 / 邀请函", "reason_key": "diagnose.reason_itinerary"},
         ],
         "student": [
-            {"key": "us.passport",   "types": ["passport"],   "reason": "需要护照"},
-            {"key": "us.ds160",      "types": ["form"],       "reason": "需要 DS-160 确认页"},
-            {"key": "us.i20",        "types": ["form"],       "reason": "需要 I-20 表 (学校签发)"},
-            {"key": "us.sevis",      "types": ["other"],      "reason": "需要 SEVIS 缴费凭证"},
-            {"key": "us.photo",      "types": ["photo"],      "reason": "需要 51×51mm 白底照片"},
-            {"key": "us.financial",  "types": ["other", "bank"], "reason": "需要财力证明"},
+            {"key": "us.passport",   "types": ["passport"],   "reason": "需要护照",               "reason_key": "diagnose.reason_passport_basic"},
+            {"key": "us.ds160",      "types": ["form"],       "reason": "需要 DS-160 确认页",      "reason_key": "diagnose.reason_form_ds160"},
+            {"key": "us.i20",        "types": ["form"],       "reason": "需要 I-20 表 (学校签发)", "reason_key": "diagnose.reason_us_i20"},
+            {"key": "us.sevis",      "types": ["other"],      "reason": "需要 SEVIS 缴费凭证",     "reason_key": "diagnose.reason_us_sevis"},
+            {"key": "us.photo",      "types": ["photo"],      "reason": "需要 51×51mm 白底照片",   "reason_key": "diagnose.reason_us_photo"},
+            {"key": "us.financial",  "types": ["other", "bank"], "reason": "需要财力证明",         "reason_key": "diagnose.reason_financial_required"},
         ],
     },
     "VN": {
         "default": [
-            {"key": "vn.passport",   "types": ["passport"],   "reason": "需要有效期 ≥6 个月的护照"},
-            {"key": "vn.photo",      "types": ["photo"],      "reason": "需要 2 寸白底照片"},
-            {"key": "vn.form",       "types": ["form"],       "reason": "需要签证申请表 (NA1)"},
+            {"key": "vn.passport",   "types": ["passport"],   "reason": "需要有效期 ≥6 个月的护照", "reason_key": "diagnose.reason_passport_6m"},
+            {"key": "vn.photo",      "types": ["photo"],      "reason": "需要 2 寸白底照片",         "reason_key": "diagnose.reason_vn_photo"},
+            {"key": "vn.form",       "types": ["form"],       "reason": "需要签证申请表 (NA1)",      "reason_key": "diagnose.reason_vn_form"},
         ],
     },
     "ID": {
         "default": [
-            {"key": "id.passport",   "types": ["passport"],   "reason": "需要有效期 ≥6 个月的护照"},
-            {"key": "id.photo",      "types": ["photo"],      "reason": "需要红底或白底 2 寸照片"},
+            {"key": "id.passport",   "types": ["passport"],   "reason": "需要有效期 ≥6 个月的护照", "reason_key": "diagnose.reason_passport_6m"},
+            {"key": "id.photo",      "types": ["photo"],      "reason": "需要红底或白底 2 寸照片",   "reason_key": "diagnose.reason_id_photo"},
         ],
     },
     "TH": {
         "default": [
-            {"key": "th.passport",   "types": ["passport"],   "reason": "需要有效期 ≥6 个月的护照"},
-            {"key": "th.photo",      "types": ["photo"],      "reason": "需要 2 寸白底照片"},
-            {"key": "th.financial",  "types": ["other", "bank"], "reason": "建议提供财力证明"},
+            {"key": "th.passport",   "types": ["passport"],   "reason": "需要有效期 ≥6 个月的护照", "reason_key": "diagnose.reason_passport_6m"},
+            {"key": "th.photo",      "types": ["photo"],      "reason": "需要 2 寸白底照片",         "reason_key": "diagnose.reason_th_photo"},
+            {"key": "th.financial",  "types": ["other", "bank"], "reason": "建议提供财力证明",       "reason_key": "diagnose.reason_financial_suggested"},
         ],
     },
     "JP": {
         "default": [
-            {"key": "jp.passport",   "types": ["passport"],   "reason": "需要有效期 ≥6 个月的护照"},
-            {"key": "jp.photo",      "types": ["photo"],      "reason": "需要 4.5×4.5cm 白底照片"},
-            {"key": "jp.form",       "types": ["form"],       "reason": "需要签证申请表"},
-            {"key": "jp.itinerary",  "types": ["other", "flight", "hotel"], "reason": "需要行程单"},
-            {"key": "jp.financial",  "types": ["other", "bank"], "reason": "需要银行流水"},
+            {"key": "jp.passport",   "types": ["passport"],   "reason": "需要有效期 ≥6 个月的护照", "reason_key": "diagnose.reason_passport_6m"},
+            {"key": "jp.photo",      "types": ["photo"],      "reason": "需要 4.5×4.5cm 白底照片",   "reason_key": "diagnose.reason_jp_photo"},
+            {"key": "jp.form",       "types": ["form"],       "reason": "需要签证申请表",           "reason_key": "diagnose.reason_form_required"},
+            {"key": "jp.itinerary",  "types": ["other", "flight", "hotel"], "reason": "需要行程单",     "reason_key": "diagnose.reason_itinerary_required"},
+            {"key": "jp.financial",  "types": ["other", "bank"], "reason": "需要银行流水",           "reason_key": "diagnose.reason_financial_bank"},
         ],
     },
     "KR": {
         "default": [
-            {"key": "kr.passport",   "types": ["passport"],   "reason": "需要有效期 ≥6 个月的护照"},
-            {"key": "kr.photo",      "types": ["photo"],      "reason": "需要白底 3.5×4.5cm 照片"},
-            {"key": "kr.form",       "types": ["form"],       "reason": "需要签证申请表"},
+            {"key": "kr.passport",   "types": ["passport"],   "reason": "需要有效期 ≥6 个月的护照", "reason_key": "diagnose.reason_passport_6m"},
+            {"key": "kr.photo",      "types": ["photo"],      "reason": "需要白底 3.5×4.5cm 照片",  "reason_key": "diagnose.reason_kr_photo"},
+            {"key": "kr.form",       "types": ["form"],       "reason": "需要签证申请表",           "reason_key": "diagnose.reason_form_required"},
         ],
     },
     "SG": {
         "default": [
-            {"key": "sg.passport",   "types": ["passport"],   "reason": "需要有效期 ≥6 个月的护照"},
-            {"key": "sg.photo",      "types": ["photo"],      "reason": "需要白底照片"},
-            {"key": "sg.form",       "types": ["form"],       "reason": "需要申请表 (V14A / V39A)"},
+            {"key": "sg.passport",   "types": ["passport"],   "reason": "需要有效期 ≥6 个月的护照", "reason_key": "diagnose.reason_passport_6m"},
+            {"key": "sg.photo",      "types": ["photo"],      "reason": "需要白底照片",             "reason_key": "diagnose.reason_sg_photo"},
+            {"key": "sg.form",       "types": ["form"],       "reason": "需要申请表 (V14A / V39A)", "reason_key": "diagnose.reason_sg_form"},
         ],
     },
     "GB": {
         "default": [
-            {"key": "gb.passport",   "types": ["passport"],   "reason": "需要有效期 ≥6 个月的护照"},
-            {"key": "gb.photo",      "types": ["photo"],      "reason": "需要 35×45mm 白底照片"},
-            {"key": "gb.form",       "types": ["form"],       "reason": "需要在线申请表"},
-            {"key": "gb.financial",  "types": ["other", "bank"], "reason": "需要财力证明"},
+            {"key": "gb.passport",   "types": ["passport"],   "reason": "需要有效期 ≥6 个月的护照", "reason_key": "diagnose.reason_passport_6m"},
+            {"key": "gb.photo",      "types": ["photo"],      "reason": "需要 35×45mm 白底照片",     "reason_key": "diagnose.reason_gb_photo"},
+            {"key": "gb.form",       "types": ["form"],       "reason": "需要在线申请表",           "reason_key": "diagnose.reason_form_required"},
+            {"key": "gb.financial",  "types": ["other", "bank"], "reason": "需要财力证明",           "reason_key": "diagnose.reason_financial_required"},
         ],
     },
 }
@@ -126,6 +126,11 @@ class DiagnoseIssue:
     # W39: raw values behind the zh-CN title/detail strings above, so a
     # frontend can re-render the message in the user's own locale via its
     # own i18n keyed by `code` instead of showing this server's zh-CN text.
+    # W46: also include i18n keys + structured params so the frontend can
+    # look up `title_key` / `detail_key` / `fix_key` and render via vue-i18n.
+    title_key: Optional[str] = None
+    detail_key: Optional[str] = None
+    fix_key: Optional[str] = None
     params: Optional[dict] = None
 
 
@@ -185,12 +190,29 @@ class VisaDiagnoser:
         present_types = {m.get("material_type") for m in materials}
         for req in required:
             if not any(t in present_types for t in req["types"]):
+                # W46: build i18n-friendly params. The frontend will look up
+                # `diagnose.missing_required_title` / `diagnose.missing_required_fix`
+                # and use `country`/`visa`/`types` for interpolation. We also
+                # include `reason_key` so the `detail` (a per-country rule
+                # reason) can be re-rendered via i18n.
                 issues.append(DiagnoseIssue(
                     code=req["key"],
                     severity="warning",
                     title=f"缺少{_country_name(country_code)}{_visa_label(visa_type)}申请必备材料",
+                    title_key="diagnose.missing_required_title",
                     detail=req["reason"],
+                    detail_key=req.get("reason_key"),
                     fix_suggestion=f"请补充: {', '.join(_type_label(t) for t in req['types'])}",
+                    fix_key="diagnose.missing_required_fix",
+                    params={
+                        "country": country_code,
+                        "visa": visa_type or "",
+                        "types": ", ".join(_type_label(t) for t in req["types"]),
+                        # stash the material type tokens so en/id/vi can rebuild
+                        # the fix label from `diagnose.type_<token>` keys instead of
+                        # the hardcoded Chinese comma-list
+                        "type_tokens": list(req["types"]),
+                    },
                 ))
 
         # 2. Field-level checks (one per material)
@@ -225,8 +247,11 @@ class VisaDiagnoser:
                             code="passport.not_detected",
                             severity="error",
                             title="未识别到护照信息",
+                            title_key="diagnose.passport_not_detected_title",
                             detail="OCR 没有从这张图片里识别出任何护照特征（页眉、MRZ 码等），签证官会要求补交或直接拒签。",
+                            detail_key="diagnose.passport_not_detected_detail",
                             fix_suggestion="请确认上传的是清晰、完整的护照资料页,不是户口本、照片或其他证件。",
+                            fix_key="diagnose.passport_not_detected_fix",
                             related_material_id=mid,
                         ))
                     else:
@@ -234,8 +259,11 @@ class VisaDiagnoser:
                             code="passport.expiry_missing",
                             severity="error",
                             title="护照有效期字段缺失",
+                            title_key="diagnose.passport_expiry_missing_title",
                             detail="OCR 未识别到护照有效期,签证官会要求补交或直接拒签。",
+                            detail_key="diagnose.passport_expiry_missing_detail",
                             fix_suggestion="请上传清晰的护照首页扫描件,或手动填写有效期字段。",
+                            fix_key="diagnose.passport_expiry_missing_fix",
                             related_material_id=mid,
                         ))
                 else:
@@ -245,8 +273,11 @@ class VisaDiagnoser:
                             code="passport.expiry_short",
                             severity="critical",
                             title=f"护照有效期不足 {self.PASSPORT_MIN_VALIDITY_MONTHS} 个月",
+                            title_key="diagnose.passport_expiry_short_title",
                             detail=f"有效期 {expiry},剩余约 {months_left} 个月,大多数国家要求 ≥6 个月。",
+                            detail_key="diagnose.passport_expiry_short_detail",
                             fix_suggestion="出发前必须续期护照,否则会被直接拒签。",
+                            fix_key="diagnose.passport_expiry_short_fix",
                             related_material_id=mid,
                             params={"min_months": self.PASSPORT_MIN_VALIDITY_MONTHS, "expiry": expiry, "months_left": months_left},
                         ))
@@ -263,8 +294,11 @@ class VisaDiagnoser:
                         code="passport.no_suspicious",
                         severity="warning",
                         title="护照号格式异常",
+                        title_key="diagnose.passport_no_suspicious_title",
                         detail=f"识别到的护照号 {pno!r} 不符合常见格式 (1 字母 + 7-8 位数字)。",
+                        detail_key="diagnose.passport_no_suspicious_detail",
                         fix_suggestion="请确认上传的是护照资料页 (非签证页或封底)。",
+                        fix_key="diagnose.passport_no_suspicious_fix",
                         related_material_id=mid,
                         params={"passport_no": pno},
                     ))
@@ -282,8 +316,11 @@ class VisaDiagnoser:
                         code="photo.bg_uncertain",
                         severity="info",
                         title="建议确认照片背景色",
+                        title_key="diagnose.photo_bg_uncertain_title",
                         detail="多数国家签证要求白底照片,部分东南亚国家接受蓝底。",
+                        detail_key="diagnose.photo_bg_uncertain_detail",
                         fix_suggestion="如目标国家是美国/英国/日本/韩国,必须是白底。",
+                        fix_key="diagnose.photo_bg_uncertain_fix",
                         related_material_id=mid,
                     ))
 
@@ -293,8 +330,11 @@ class VisaDiagnoser:
                     code=f"ocr.failed.{mtype}",
                     severity="warning",
                     title=f"{_type_label(mtype)} 识别失败",
+                    title_key="diagnose.ocr_failed_title",
                     detail="OCR 未能提取字段,签证官在审阅时会消耗更多时间,可能被退回要求重传。",
+                    detail_key="diagnose.ocr_failed_detail",
                     fix_suggestion="请重新上传清晰的扫描件,或检查文件是否损坏。",
+                    fix_key="diagnose.ocr_failed_fix",
                     related_material_id=mid,
                     params={"material_type": mtype},
                 ))
@@ -308,8 +348,11 @@ class VisaDiagnoser:
                     code="fields.travel_date_missing",
                     severity="warning",
                     title="缺少出行日期",
+                    title_key="diagnose.travel_date_missing_title",
                     detail="没有出行日期,无法校验护照有效期是否够用。",
+                    detail_key="diagnose.travel_date_missing_detail",
                     fix_suggestion="请在表单中填写预计出行日期。",
+                    fix_key="diagnose.travel_date_missing_fix",
                 ))
             else:
                 positives.append(f"已填写出行日期 {travel_date}")
@@ -318,8 +361,11 @@ class VisaDiagnoser:
                     code="fields.purpose_missing",
                     severity="info",
                     title="缺少出行目的",
+                    title_key="diagnose.purpose_missing_title",
                     detail="出行目的影响材料清单 (商务签需要邀请函,旅游签需要行程单)。",
+                    detail_key="diagnose.purpose_missing_detail",
                     fix_suggestion="请简要说明: 旅游 / 商务 / 探亲 / 留学。",
+                    fix_key="diagnose.purpose_missing_fix",
                 ))
             rule_count += 2
 
@@ -364,8 +410,8 @@ class VisaDiagnoser:
         if not bucket:
             # unknown country — fall back to a generic minimal checklist
             return [
-                {"key": "generic.passport", "types": ["passport"], "reason": "需要有效期 ≥6 个月的护照"},
-                {"key": "generic.photo",    "types": ["photo"],    "reason": "需要符合规格的签证照片"},
+                {"key": "generic.passport", "types": ["passport"], "reason": "需要有效期 ≥6 个月的护照", "reason_key": "diagnose.reason_passport_6m"},
+                {"key": "generic.photo",    "types": ["photo"],    "reason": "需要符合规格的签证照片",     "reason_key": "diagnose.reason_photo_basic"},
             ]
         if visa_type and visa_type in bucket:
             return bucket[visa_type]
