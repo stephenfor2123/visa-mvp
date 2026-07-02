@@ -94,6 +94,39 @@
           role="menu"
           :data-testid="`${props.scope}-orders-panel`"
         >
+          <!-- W41: 顶部申请人列表（纯姓名，无跳转） -->
+          <div
+            v-if="applicantsLoading"
+            class="orders-menu__empty"
+            :data-testid="`${props.scope}-orders-applicants-loading`"
+          >
+            <span>{{ t('nav.orders_menu.applicants_loading') || '加载中…' }}</span>
+          </div>
+          <div
+            v-else-if="applicants.length === 0"
+            class="orders-menu__empty"
+            :data-testid="`${props.scope}-orders-applicants-empty`"
+          >
+            <span>{{ t('nav.orders_menu.applicants_empty') || '暂无申请人' }}</span>
+          </div>
+          <div
+            v-else
+            class="orders-menu__applicants"
+            :data-testid="`${props.scope}-orders-applicants`"
+          >
+            <div
+              v-for="a in applicants"
+              :key="a.id"
+              class="orders-menu__applicant"
+              role="presentation"
+              :data-testid="`${props.scope}-orders-applicant-${a.id}`"
+            >
+              {{ a.name }}
+            </div>
+          </div>
+
+          <div class="orders-menu__divider" role="separator" />
+
           <router-link
             to="/orders"
             class="orders-menu__item"
@@ -118,7 +151,6 @@
             </svg>
             <span>{{ t('nav.orders_menu.new_order') }}</span>
           </router-link>
-          <div class="orders-menu__divider" role="separator" />
           <router-link
             to="/profile"
             class="orders-menu__item"
@@ -131,19 +163,6 @@
               <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
             </svg>
             <span>{{ t('nav.orders_menu.profile') }}</span>
-          </router-link>
-          <router-link
-            to="/materials"
-            class="orders-menu__item"
-            role="menuitem"
-            :data-testid="`${props.scope}-orders-materials`"
-            @click="closeOrdersMenu"
-          >
-            <svg class="orders-menu__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M5 4h11l3 3v13H5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-              <path d="M9 10h8M9 14h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-            </svg>
-            <span>{{ t('nav.orders_menu.materials') }}</span>
           </router-link>
         </div>
       </div>
@@ -163,23 +182,28 @@
           <path d="M20 20 L16.5 16.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
       </button>
-      <!-- W28: On Time Guaranteed 蓝色盾牌徽章(借鉴 atlys 信任徽章) -->
+      <!-- W28: Privacy First 蓝色锁徽章(强调不直接接触用户证件) -->
       <div
         class="trust-badge"
         :title="t('trust.on_time_tip')"
         :data-testid="`${props.scope}-trust-badge`"
       >
-        <svg class="trust-badge__shield" viewBox="0 0 24 28" width="18" height="22" aria-hidden="true">
+        <svg class="trust-badge__shield" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
           <defs>
-            <linearGradient id="trust-shield-grad" x1="0" y1="0" x2="0" y2="1">
+            <linearGradient id="trust-lock-grad" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%"  stop-color="#3B6EF5"/>
               <stop offset="100%" stop-color="#2553D6"/>
             </linearGradient>
           </defs>
-          <path d="M12 1 L22 5 V13 C22 19.5 17.5 24.5 12 27 C6.5 24.5 2 19.5 2 13 V5 Z"
-                fill="url(#trust-shield-grad)" stroke="#1E40AF" stroke-width=".6"/>
-          <path d="M7.5 14 L11 17.5 L17 11.5" fill="none" stroke="#fff" stroke-width="2.4"
-                stroke-linecap="round" stroke-linejoin="round"/>
+          <!-- 锁体 -->
+          <rect x="5" y="11" width="14" height="10" rx="2"
+                fill="url(#trust-lock-grad)" stroke="#1E40AF" stroke-width=".6"/>
+          <!-- 锁梁 -->
+          <path d="M8 11 V7.5 C8 5 9.8 3 12 3 C14.2 3 16 5 16 7.5 V11"
+                fill="none" stroke="#1E40AF" stroke-width="2" stroke-linecap="round"/>
+          <!-- 锁芯高光 -->
+          <circle cx="12" cy="15.5" r="1.4" fill="#fff"/>
+          <rect x="11.4" y="16" width="1.2" height="3" fill="#fff"/>
         </svg>
         <span class="trust-badge__text">{{ t('trust.on_time') }}</span>
       </div>
@@ -219,7 +243,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
+import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import HtexLogo from '@/components/HtexLogo.vue'
@@ -228,6 +252,7 @@ import AppButton from '@/components/AppButton.vue'
 import CountrySearchModal from '@/components/CountrySearchModal.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
+import { listMyApplicants } from '@/api/applicants'
 
 const props = defineProps({
   /**
@@ -247,8 +272,38 @@ const toast = useToast()
 const ordersMenuOpen = ref(false)
 const ordersMenuRef = ref(null)
 
+// W41: 申请人列表（按姓名+护照号去重,后端聚合 user 的所有订单）
+const applicants = ref([])
+const applicantsLoading = ref(false)
+
+async function fetchApplicants() {
+  if (!auth.isLoggedIn) {
+    applicants.value = []
+    return
+  }
+  applicantsLoading.value = true
+  try {
+    applicants.value = await listMyApplicants()
+  } catch (_) {
+    // 静默失败：菜单头部留空,不影响底部 3 个工具入口
+    applicants.value = []
+  } finally {
+    applicantsLoading.value = false
+  }
+}
+
+// 登录态变化时重新拉;菜单首次打开时也拉一次（懒加载）
+watch(() => auth.isLoggedIn, (v) => {
+  if (v) fetchApplicants()
+  else applicants.value = []
+}, { immediate: true })
+
 function toggleOrdersMenu() {
   ordersMenuOpen.value = !ordersMenuOpen.value
+  // 打开时如果从未拉过,触发一次（兜底登录态变化时 immediate 没跑的边界情况）
+  if (ordersMenuOpen.value && auth.isLoggedIn && applicants.value.length === 0 && !applicantsLoading.value) {
+    fetchApplicants()
+  }
 }
 function closeOrdersMenu() {
   ordersMenuOpen.value = false
@@ -646,6 +701,29 @@ function onMegaDocKey(e) {
   background: var(--border, #E2E8F0);
 }
 
+/* W41: 申请人列表（顶部,纯姓名展示,无跳转/无 hover 反馈） */
+.orders-menu__applicants {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 0;
+}
+.orders-menu__applicant {
+  font-size: 13px;
+  color: var(--ink-2, #334155);
+  padding: 6px 12px;
+  cursor: default;        /* 明确不是可点击 */
+  user-select: text;      /* 允许复制名字 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.orders-menu__empty {
+  font-size: 12px;
+  color: var(--ink-3, #64748B);
+  padding: 8px 12px;
+  font-style: italic;
+}
+
 .app-header__right {
   display: flex;
   align-items: center;
@@ -734,7 +812,7 @@ function onMegaDocKey(e) {
 }
 @media (max-width: 768px) {
   .trust-badge { padding: 5px 8px; }
-  .trust-badge__text { display: none; }  /* 小屏只显示盾牌 icon,省空间 */
+  .trust-badge__text { display: none; }  /* 小屏只显示锁 icon,省空间 */
 }
 @media (max-width: 480px) {
   .trust-badge { display: none; }  /* 超小屏整组隐藏 */

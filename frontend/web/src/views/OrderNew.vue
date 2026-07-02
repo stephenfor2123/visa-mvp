@@ -20,6 +20,17 @@
           </div>
         </div>
         <div class="hero__right">
+          <!-- W41: 一键导入按钮 — 选完国家后,如果申请人列表非空才显示 -->
+          <button
+            v-if="canShowOneClickImport"
+            type="button"
+            class="hero__import"
+            :title="t('orders.one_click_import_tip') || '一键导入已有申请人资料'"
+            data-testid="ordernew-one-click-import"
+            @click="openApplicantPicker"
+          >
+            ⚡ {{ t('orders.one_click_import') || '一键导入' }}
+          </button>
           <button
             class="hero__back"
             @click="goBackMaterials"
@@ -312,6 +323,27 @@
                 data-testid="ordernew-stay-days"
               />
             </div>
+
+            <div class="form-cell">
+              <AppInput
+                v-model="form.flight_no"
+                :label="t('orders.field_flight_no')"
+                data-testid="ordernew-flight-no"
+              />
+            </div>
+
+            <div class="form-cell">
+              <AppInput
+                v-model="form.hotel_name"
+                :label="t('orders.field_hotel_name')"
+                data-testid="ordernew-hotel-name"
+              />
+            </div>
+          </div>
+
+          <div v-if="itineraryText" class="itinerary-preview" data-testid="ordernew-itinerary-preview">
+            <div class="itinerary-preview__title">{{ t('orders.itinerary_generated_title') }}</div>
+            <pre class="itinerary-preview__text">{{ itineraryText }}</pre>
           </div>
         </section>
 
@@ -386,6 +418,66 @@
         </footer>
       </template>
     </main>
+
+    <!-- W41: 一键导入 — 选申请人弹窗 -->
+    <div
+      v-if="applicantPickerOpen"
+      class="applicant-picker-mask"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="applicant-picker-title"
+      data-testid="ordernew-applicant-picker"
+      @click.self="closeApplicantPicker"
+    >
+      <div class="applicant-picker" role="document">
+        <header class="applicant-picker__head">
+          <h3 id="applicant-picker-title" class="applicant-picker__title">
+            {{ t('orders.one_click_import_title') || '选择申请人' }}
+          </h3>
+          <button
+            type="button"
+            class="applicant-picker__close"
+            :aria-label="t('common.close') || '关闭'"
+            data-testid="ordernew-applicant-picker-close"
+            @click="closeApplicantPicker"
+          >×</button>
+        </header>
+        <div class="applicant-picker__body">
+          <p class="applicant-picker__hint">
+            {{ t('orders.one_click_import_hint') || '导入后会预填姓名/护照号,其他字段继续在表单填写。' }}
+          </p>
+          <div
+            v-if="applicantsForImport.length === 0"
+            class="applicant-picker__empty"
+            data-testid="ordernew-applicant-picker-empty"
+          >
+            {{ t('orders.one_click_import_empty') || '暂无可导入的申请人' }}
+          </div>
+          <div
+            v-else
+            class="applicant-picker__list"
+            data-testid="ordernew-applicant-picker-list"
+          >
+            <button
+              v-for="a in applicantsForImport"
+              :key="a.id"
+              type="button"
+              class="applicant-picker__item"
+              :data-testid="`ordernew-applicant-picker-item-${a.id}`"
+              @click="importApplicant(a)"
+            >
+              <span class="applicant-picker__name">{{ a.name }}</span>
+              <span v-if="a.passport_no" class="applicant-picker__passport">
+                {{ a.passport_no }}
+              </span>
+              <span class="applicant-picker__count">
+                {{ t('orders.applicant_used_count', { n: a.order_count }) || `已办 ${a.order_count} 次` }}
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -403,6 +495,7 @@ import {
   extractApplicantDraft,
   createOrder
 } from '@/api/orders'
+import { listMyApplicants } from '@/api/applicants'
 import { listDestinations } from '@/api/destinations'
 // A-W9-2: affiliate wrapper - affiliate link auto-fill + submit-time attribute
 import { trackClick, attributeOrder, loadPendingClick, savePendingClick } from '@/api/affiliate'
@@ -537,6 +630,8 @@ const form = reactive({
   arrival_date: '',
   departure_date: '',
   stay_days: 7,
+  flight_no: '',
+  hotel_name: '',
   emergency_name: '',
   emergency_phone: '',
   emergency_relation: '',
@@ -556,6 +651,8 @@ const ocrMarked = reactive({
   nationality: false, passport_no: false, passport_expiry: false
 })
 const prefillPercent = ref(0)
+// W36: 材料向导(MaterialWizard)里生成的行程单文本 — 只读展示，供签证官/申请人核对
+const itineraryText = ref('')
 
 // ============== A-W9-2: affiliate source ==============
 // click_id (from affiliate link /?aff=AFF001&click=cid_xxx or LS) - bind attribute on order submit
@@ -791,6 +888,20 @@ async function loadAll() {
         ocrMarked[k] = true
       }
     }
+    // W36: 材料向导（MaterialWizard 行程住宿大类）生成的机票/酒店/行程单数据，
+    // 存在 localStorage('visa.wizard.travelPlan') 里，这里带过来自动填充。
+    try {
+      const raw = localStorage.getItem('visa.wizard.travelPlan')
+      const plan = raw ? JSON.parse(raw) : null
+      if (plan) {
+        if (plan.arrival_date) form.arrival_date = plan.arrival_date
+        if (plan.departure_date) form.departure_date = plan.departure_date
+        if (plan.flight_no) form.flight_no = plan.flight_no
+        if (plan.hotel_name) form.hotel_name = plan.hotel_name
+        if (plan.itinerary_text) itineraryText.value = plan.itinerary_text
+      }
+    } catch { /* best-effort */ }
+
     // Default travel dates: today + 30 / today + 37 / 7 days (give user a starting point)
     if (!form.arrival_date) {
       const a = new Date(); a.setDate(a.getDate() + 30)
@@ -892,6 +1003,9 @@ async function onSubmit() {
         arrival_date: form.arrival_date,
         departure_date: form.departure_date,
         stay_days: Number(form.stay_days),
+        flight_no: form.flight_no.trim(),
+        hotel_name: form.hotel_name.trim(),
+        itinerary_text: itineraryText.value,
         emergency_contact: {
           name: form.emergency_name.trim(),
           phone: form.emergency_phone.trim(),
@@ -952,8 +1066,69 @@ async function onSubmit() {
 }
 
 function goBackMaterials() {
-  router.push({ name: 'Materials', query: route.query })
+  // W43 fix: 'Materials' 是废弃的旧原型页（假上传、没多语言），真正接了后端的
+  // 材料收集流程是 MaterialWizard——不然从这个"填表"页点"返回材料"会跳到另一套
+  // 完全不同、不联通的 UI。
+  router.push({ name: 'MaterialWizard', query: route.query })
 }
+
+// ============== W41: 一键导入申请人 ==============
+// 选完国家(form.destination_id 变化)后,如果后端 /my/applicants 返回 ≥1 条,显示"一键导入"按钮
+// 弹窗选完 → 把 surname / given_name / passport_no 预填到 form 表单(其他字段用户继续填)
+const applicantsForImport = ref([])
+const applicantPickerOpen = ref(false)
+
+const canShowOneClickImport = computed(() => {
+  // 必须登录 + 已有国家 + 申请人列表非空(没拉过数据时也是空,不会误显)
+  return auth.isLoggedIn && !!form.destination_id && applicantsForImport.value.length > 0
+})
+
+async function fetchApplicantsForImport() {
+  if (!auth.isLoggedIn) {
+    applicantsForImport.value = []
+    return
+  }
+  try {
+    applicantsForImport.value = await listMyApplicants()
+  } catch (_) {
+    applicantsForImport.value = []
+  }
+}
+
+function openApplicantPicker() {
+  applicantPickerOpen.value = true
+}
+function closeApplicantPicker() {
+  applicantPickerOpen.value = false
+}
+
+// 从后端聚合的 applicant 信息只能拿到 surname / given_name / passport_no / order_count
+// (后端 /my/applicants 不返回 dob / sex / nationality — 那是隐私)
+function importApplicant(a) {
+  // 仅预填这 3 个字段,其他让用户继续在表单填,不会跳过任何必填校验
+  form.surname = a.name.split(' ')[0] || a.name   // 西式 "Smith John" → "Smith"
+  form.given_name = a.name.split(' ').slice(1).join(' ') || ''  // "Smith John" → "John"
+  // 中文名拼接: "张三" → surname="张" given_name="三"; fallback: 全给 surname
+  if (!form.given_name && a.name.length >= 2) {
+    form.surname = a.name.slice(0, 1)
+    form.given_name = a.name.slice(1)
+  }
+  if (a.passport_no) form.passport_no = a.passport_no.toUpperCase()
+  // 标记这些字段是"导入"来的 — 视觉上轻微提示
+  ocrMarked.surname = true
+  ocrMarked.given_name = true
+  ocrMarked.passport_no = true
+  applicantPickerOpen.value = false
+  toast.success(t('orders.one_click_import_done') || '已导入,继续填写其他字段')
+  // 自动跳到 basic tab,让用户立刻看到预填效果
+  activeTab.value = 'basic'
+}
+
+// 监听 destination_id 变化 → 重新拉申请人列表(国家切换后老数据可能不适用)
+// 注意:onMounted 时 loadAll() 已经设置过一次 destination_id,所以这个 watcher 会自然触发首次拉取
+watch(() => form.destination_id, () => {
+  fetchApplicantsForImport()
+})
 
 // ============== W3 P0 root-fix: ref + onTrigger pattern ==============
 // 4 AppButtons use ref to expose onTrigger, Vue @click bubbling no longer depends on AppButton internals
@@ -1019,34 +1194,13 @@ watch(isLastTab, async (val) => {
 </script>
 
 <style scoped lang="scss">
-/* W28 P2: 按目的地国家自动切换柔色径向渐变背景(借鉴 atlys 申请页氛围)。
-   - 每个国家 2 个柔色锚点,左上 + 右下,背景固定在 body,内容半透明白卡浮在上面
-   - 默认是浅灰(--bg-alt),fallback 万无一失 */
+/* W44: 背景统一成纯白，跟 app-header / app-container 保持一致（之前每个国家
+   一套柔色径向渐变，跟材料收集向导 MaterialWizard 的纯白背景对不上，同一条
+   申请流程里从向导跳到这一页会有明显的"变色"割裂感）。 */
 .ordernew-page {
   min-height: 100vh;
-  background: var(--bg-alt, #F8FAFC);
-  background-image:
-    radial-gradient(ellipse 1200px 600px at 0% 0%, var(--bg-grad-a, transparent) 0%, transparent 60%),
-    radial-gradient(ellipse 900px 500px at 100% 100%, var(--bg-grad-b, transparent) 0%, transparent 65%),
-    var(--bg-base, #F8FAFC);
-  background-attachment: fixed, fixed, fixed;
-  background-repeat: no-repeat;
-  transition: background-image .4s ease;
+  background: #fff;
 }
-.ordernew-page[data-country-bg="US"]       { --bg-grad-a: rgba(59, 110, 245, .14);  --bg-grad-b: rgba(239, 68, 68, .10); --bg-base: #F8FAFC; }
-.ordernew-page[data-country-bg="AU"]       { --bg-grad-a: rgba(245, 158, 11, .14);  --bg-grad-b: rgba(34, 197, 94, .10); --bg-base: #FFFBEB; }
-.ordernew-page[data-country-bg="GB"]       { --bg-grad-a: rgba(239, 68, 68, .10);   --bg-grad-b: rgba(59, 110, 245, .10); --bg-base: #F8FAFC; }
-.ordernew-page[data-country-bg="JP"]       { --bg-grad-a: rgba(244, 114, 182, .14); --bg-grad-b: rgba(59, 130, 246, .10); --bg-base: #FFF7F5; }
-.ordernew-page[data-country-bg="SCHENGEN"] { --bg-grad-a: rgba(59, 130, 246, .12);  --bg-grad-b: rgba(245, 158, 11, .10); --bg-base: #F8FAFC; }
-.ordernew-page[data-country-bg="FR"]       { --bg-grad-a: rgba(59, 130, 246, .12);  --bg-grad-b: rgba(244, 114, 182, .08); --bg-base: #F8FAFC; }
-.ordernew-page[data-country-bg="DE"]       { --bg-grad-a: rgba(245, 158, 11, .10);  --bg-grad-b: rgba(34, 197, 94, .08);  --bg-base: #FFFBEB; }
-.ordernew-page[data-country-bg="IT"]       { --bg-grad-a: rgba(34, 197, 94, .12);   --bg-grad-b: rgba(244, 114, 182, .10); --bg-base: #F0FDF4; }
-.ordernew-page[data-country-bg="ES"]       { --bg-grad-a: rgba(245, 158, 11, .12);  --bg-grad-b: rgba(239, 68, 68, .10);  --bg-base: #FFFBEB; }
-/* 默认所有其他申根国家用柔蓝紫渐变 */
-.ordernew-page[data-country-bg^="AT"],
-.ordernew-page[data-country-bg^="BE"],
-.ordernew-page[data-country-bg^="NL"],
-.ordernew-page[data-country-bg^="CH"] { --bg-grad-a: rgba(99, 102, 241, .12); --bg-grad-b: rgba(59, 130, 246, .08); --bg-base: #F8FAFC; }
 .app-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 14px 24px; background: #fff; border-bottom: 1px solid var(--border, #E2E8F0);
@@ -1080,12 +1234,153 @@ watch(isLastTab, async (val) => {
   flex-shrink: 0;
 }
 .hero__back:hover { background: #F8FAFC; }
+// W41: 一键导入按钮 (蓝色 primary,放在 hero__back 左边)
+.hero__import {
+  background: linear-gradient(135deg, #EFF4FF 0%, #DBE6FE 100%);
+  border: 1px solid #BFD3FE;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1E40AF;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+}
+.hero__import:hover {
+  background: linear-gradient(135deg, #DBE6FE 0%, #C7D6FE 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(30, 64, 175, .16);
+}
+.hero__import:focus-visible {
+  outline: 2px solid var(--el-color-primary, #3B6EF5);
+  outline-offset: 2px;
+}
 
 @media (max-width: 600px) {
   .hero { gap: 10px; }
   .hero__flag { font-size: 28px; }
   .hero__title { font-size: 18px; }
   .hero__back { padding: 6px 10px; font-size: 12px; }
+  .hero__import { padding: 6px 10px; font-size: 12px; }
+}
+
+// ============== W41: 申请人选择弹窗 ==============
+.applicant-picker-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, .45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: applicantPickerIn .15s ease-out;
+}
+@keyframes applicantPickerIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.applicant-picker {
+  width: min(440px, calc(100vw - 32px));
+  max-height: calc(100vh - 64px);
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, .24);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.applicant-picker__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border, #E2E8F0);
+}
+.applicant-picker__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-1, #0F172A);
+  margin: 0;
+}
+.applicant-picker__close {
+  background: transparent;
+  border: 0;
+  font-size: 22px;
+  line-height: 1;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  color: var(--ink-3, #64748B);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.applicant-picker__close:hover { background: #F1F5F9; color: var(--ink-1, #0F172A); }
+.applicant-picker__body {
+  padding: 14px 18px 18px;
+  overflow-y: auto;
+}
+.applicant-picker__hint {
+  font-size: 12px;
+  color: var(--ink-3, #64748B);
+  margin: 0 0 12px;
+  line-height: 1.5;
+}
+.applicant-picker__empty {
+  padding: 24px 12px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-3, #64748B);
+  font-style: italic;
+}
+.applicant-picker__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.applicant-picker__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #F8FAFC;
+  border: 1px solid var(--border, #E2E8F0);
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  transition: background .15s, border-color .15s, transform .1s;
+}
+.applicant-picker__item:hover {
+  background: #EFF4FF;
+  border-color: #BFD3FE;
+}
+.applicant-picker__item:active { transform: scale(.99); }
+.applicant-picker__item:focus-visible {
+  outline: 2px solid var(--el-color-primary, #3B6EF5);
+  outline-offset: 2px;
+}
+.applicant-picker__name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-1, #0F172A);
+  flex: 1;
+}
+.applicant-picker__passport {
+  font-size: 12px;
+  color: var(--ink-2, #334155);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.applicant-picker__count {
+  font-size: 11px;
+  color: var(--ink-3, #64748B);
+  padding: 2px 8px;
+  background: #fff;
+  border-radius: 999px;
+  border: 1px solid var(--border, #E2E8F0);
 }
 
 // ============== Tabs ==============
@@ -1298,6 +1593,16 @@ watch(isLastTab, async (val) => {
   &::before {
     content: ''; width: 3px; height: 16px; background: #3B6EF5; border-radius: 2px;
   }
+}
+
+.itinerary-preview {
+  margin-top: 18px; border: 1px dashed #cbd5e1; border-radius: 12px;
+  padding: 14px 16px; background: #f8fafc;
+}
+.itinerary-preview__title { font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 8px; }
+.itinerary-preview__text {
+  font-family: 'SF Mono', Menlo, monospace; font-size: 12.5px; color: #0f172a;
+  white-space: pre-wrap; margin: 0; line-height: 1.6;
 }
 
 .form-grid {
