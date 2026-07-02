@@ -11,6 +11,7 @@ frontend/ios/pubspec.lock
 
 # Web node_modules
 frontend/web/node_modules/
+.vite/
 
 # Miniprogram node_modules
 frontend/miniprogram/node_modules/
