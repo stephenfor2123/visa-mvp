@@ -214,6 +214,3 @@ def default_password() -> str:
     return "abc12345"
 
 
-@pytest.fixture()
-def default_sms_code() -> str:
-    return "123456"

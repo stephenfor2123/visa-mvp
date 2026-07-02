@@ -33,6 +33,10 @@ def _new_uuid() -> str:
 # Material lifecycle: ocr_status: pending / processing / done / failed
 OCR_STATUSES = ("pending", "processing", "done", "failed")
 # Material types per V2 §4.3.2 — passport / id_card / household / enrollment / photo / form / other
+# W36: added bank / employment / hotel / flight / insurance — the material
+# wizard's financial / work / travel / insurance categories. Frontend
+# (api/materials.js getMaterialTypeOptions) already listed bank/flight/hotel
+# as options before the backend accepted them; this closes that gap.
 MATERIAL_TYPES = (
     "passport",
     "id_card",
@@ -40,6 +44,11 @@ MATERIAL_TYPES = (
     "enrollment",
     "photo",
     "form",
+    "bank",
+    "employment",
+    "hotel",
+    "flight",
+    "insurance",
     "other",
 )
 

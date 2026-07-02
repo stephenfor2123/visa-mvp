@@ -40,9 +40,14 @@ def _new_uuid() -> str:
 # --------------------------------------------------------------------------- #
 # Order status machine (V2 §4.2.4)                                            #
 # --------------------------------------------------------------------------- #
-# created → submitted → reviewing → approved/rejected → closed
-# abnormal / failed are terminal-exception states
-# Cancel transitions created -> closed (per task spec: cancel only on `created`)
+# Lifecycle:
+#   created → submitted → reviewing → approved | rejected → closed
+#   abnormal / failed are terminal-exception states (set by system / scheduler)
+# Cancel is a user-only transition (created → closed) per W3-3 enforcement.
+# Admin overrides may move the order to any state in VALID_TRANSITIONS, but
+# the same validator is shared between user endpoints (cancel/submit) and
+# the admin override (`admin_service.update_order_status`) so the audit
+# trail and the OrderStatusHistory rows stay consistent.
 ORDER_STATUSES: tuple[str, ...] = (
     "created",
     "submitted",
@@ -62,8 +67,64 @@ CANCELLABLE_STATUSES: frozenset[str] = frozenset({"created"})
 # Active statuses used in idx_orders_status (V2 §4.2.2 partial index intent)
 ACTIVE_STATUSES: tuple[str, ...] = ("created", "submitted", "reviewing")
 
+# Terminal states — no outbound transitions allowed.
+TERMINAL_STATUSES: frozenset[str] = frozenset({"closed", "abnormal", "failed"})
+
+# --------------------------------------------------------------------------- #
+# VALID_TRANSITIONS (W34 — single source of truth)                            #
+# --------------------------------------------------------------------------- #
+# The map is read by `is_valid_transition()` everywhere a status flip is
+# attempted (user cancel / submit, admin override, scheduler poll). Adding a
+# new state means editing this dict + the ORDER_STATUSES tuple — both
+# kept in one place so the state machine stays coherent.
+#
+# Diagram:
+#   created   → submitted, closed
+#   submitted → reviewing, closed, abnormal, failed
+#   reviewing → approved, rejected, closed, abnormal, failed
+#   approved  → closed
+#   rejected  → closed
+#   closed    → (terminal)
+#   abnormal  → (terminal, system-only)
+#   failed    → (terminal, system-only)
+VALID_TRANSITIONS: dict[str, frozenset[str]] = {
+    "created":   frozenset({"submitted", "closed"}),
+    "submitted": frozenset({"reviewing", "closed", "abnormal", "failed"}),
+    "reviewing": frozenset({"approved", "rejected", "closed", "abnormal", "failed"}),
+    "approved":  frozenset({"closed"}),
+    "rejected":  frozenset({"closed"}),
+    "closed":    frozenset(),
+    "abnormal":  frozenset(),
+    "failed":    frozenset(),
+}
+
+
+def is_valid_transition(from_status: str, to_status: str) -> bool:
+    """True if `from_status → to_status` is allowed by the state machine.
+
+    Same-state "transitions" (e.g. reviewing → reviewing) are rejected —
+    we want callers to use an explicit "no-op" path if they really mean it,
+    so audit logs only ever represent actual changes.
+    """
+    if from_status not in VALID_TRANSITIONS:
+        return False
+    if to_status not in ORDER_STATUSES:
+        return False
+    return to_status in VALID_TRANSITIONS[from_status]
+
+
+def next_statuses(from_status: str) -> frozenset[str]:
+    """Return the set of statuses reachable from `from_status`.
+
+    Convenience for the admin UI to render only the buttons that will
+    actually be accepted by the server. Returns an empty frozenset for
+    terminal states.
+    """
+    return VALID_TRANSITIONS.get(from_status, frozenset())
+
+
 # Source values for order_status_history.source
-STATUS_SOURCES: tuple[str, ...] = ("user", "scheduler", "rpa", "system")
+STATUS_SOURCES: tuple[str, ...] = ("user", "scheduler", "rpa", "system", "admin")
 
 # Message channels for order_messages
 MESSAGE_CHANNELS: tuple[str, ...] = ("inapp", "push", "email", "sms")

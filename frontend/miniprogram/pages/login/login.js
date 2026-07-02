@@ -194,6 +194,23 @@ Page({
     }
   },
 
+  async onWechatLogin() {
+    if (this.data.submitting) return
+    this.setData({ submitting: true })
+    try {
+      const result = await api.wechatLogin()
+      saveSession(result)
+      wx.showToast({ title: app.globalData.i18n.t('toast.login_success'), icon: 'success' })
+      setTimeout(() => {
+        wx.switchTab({ url: '/pages/profile/profile' })
+      }, 600)
+    } catch (e) {
+      wx.showToast({ title: e.message || app.globalData.i18n.t('toast.login_fail'), icon: 'none' })
+    } finally {
+      this.setData({ submitting: false })
+    }
+  },
+
   onUnload() {
     if (this._timer) clearInterval(this._timer)
   }

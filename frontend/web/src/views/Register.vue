@@ -84,6 +84,11 @@
           <span>{{ t('register.have_account') }}</span>
           <a href="#" @click.prevent="goLogin">{{ t('register.go_login') }}</a>
         </div>
+
+        <template v-if="googleEnabled">
+          <div class="auth-divider"><span>{{ t('common.or') || '或' }}</span></div>
+          <div ref="googleBtnRef" class="google-btn-wrap"></div>
+        </template>
       </AppCard>
 
       <footer class="auth-footer">{{ t('common.auth_footer') }}</footer>
@@ -92,7 +97,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onUnmounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import AppCard from '@/components/AppCard.vue'
@@ -108,10 +113,16 @@ import {
 } from '@/utils/validation'
 import AppHeader from '@/components/AppHeader.vue'
 
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
+
 const { t } = useI18n()
 const router = useRouter()
 const auth = useAuthStore()
 const toast = useToast()
+
+const googleEnabled = !!GOOGLE_CLIENT_ID
+const googleBtnRef = ref(null)
+const googleLoading = ref(false)
 
 const username = ref('')
 const email = ref('')
@@ -181,6 +192,53 @@ function onOpenPrivacy() {
 function goLogin() {
   router.push('/login')
 }
+
+async function handleGoogleCredential(response) {
+  googleLoading.value = true
+  try {
+    await auth.loginWithGoogle(response.credential)
+    toast.success(t('toast.register_success'))
+    router.push('/destinations')
+  } catch (e) {
+    toast.error(e?.message || t('toast.login_fail'))
+  } finally {
+    googleLoading.value = false
+  }
+}
+
+function initGoogleAuth() {
+  if (!window.google) return
+  window.google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: handleGoogleCredential,
+    auto_select: false,
+  })
+  if (googleBtnRef.value) {
+    window.google.accounts.id.renderButton(googleBtnRef.value, {
+      type: 'standard',
+      shape: 'rectangular',
+      theme: 'outline',
+      text: 'signup_with',
+      size: 'large',
+      width: '340',
+    })
+  }
+}
+
+onMounted(() => {
+  if (googleEnabled) {
+    if (window.google) {
+      initGoogleAuth()
+    } else {
+      const script = document.createElement('script')
+      script.src = 'https://accounts.google.com/gsi/client'
+      script.async = true
+      script.defer = true
+      script.onload = initGoogleAuth
+      document.head.appendChild(script)
+    }
+  }
+})
 
 onUnmounted(() => {})
 </script>
@@ -263,5 +321,24 @@ onUnmounted(() => {})
   margin-top: 32px;
   font-size: 12px;
   color: var(--muted);
+}
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0 16px;
+  color: var(--ink-4, #bbb);
+  font-size: 12px;
+  &::before, &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border, #e5e7eb);
+  }
+}
+.google-btn-wrap {
+  display: flex;
+  justify-content: center;
+  min-height: 40px;
 }
 </style>

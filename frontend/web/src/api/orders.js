@@ -38,16 +38,32 @@ function genOrderNo() {
   return `V2-${ymd}-${seq}`
 }
 
+// W36: 材料向导上传时,OCR 抽取的字段存在 localStorage('visa.wizard.ocrCache',
+// materialId -> fields),因为后端 Material.ocr_result 目前从不会被异步写回
+// (上传时写 ocr_status='pending' 之后没有任何任务/接口会更新它)。这里读出来
+// 兜底合并到 material.ocr_result,让下面的 extractApplicantDraft 能拿到数据。
+function _wizardOcrCache() {
+  try {
+    return JSON.parse(localStorage.getItem('visa.wizard.ocrCache') || '{}')
+  } catch {
+    return {}
+  }
+}
+
 // ============== 公共:按 ID 列表拉取 materials 详情 ==============
 // 用于 OCR 预填:合并 passport 等材料的 ocr_result 字段
 export async function fetchMaterialsForForm(materialIds = []) {
   if (!Array.isArray(materialIds) || materialIds.length === 0) return []
   try {
     // list 接口在 B 1.1.1a 之前是空,直接逐个 getMaterial
+    const cache = _wizardOcrCache()
     const results = []
     for (const id of materialIds) {
       try {
         const m = await getMaterial(id)
+        if (!m.ocr_result && cache[m.id ?? m.material_id ?? id]) {
+          m.ocr_result = cache[m.id ?? m.material_id ?? id]
+        }
         results.push(m)
       } catch (_) {
         // 单个失败不影响其他
@@ -255,7 +271,7 @@ export async function getOrder(orderNo, { etag } = {}) {
     const resp = await http.get(`/v2/orders/${orderNo}`, {
       headers,
       __silent: true,  // 详情页 304/404 不弹 toast
-      validateStatus: (s) => s === 200 || s === 304
+      validateStatus: (s) => s === 200
     })
     if (resp?.code && resp.code !== '1000') {
       const e = new Error(resp.message || 'get order failed')

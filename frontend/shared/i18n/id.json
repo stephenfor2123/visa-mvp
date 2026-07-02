@@ -51,7 +51,14 @@
       "profile": "Profil Saya",
       "materials": "Dokumen Aplikasi",
       "applicants_loading": "Memuat…",
-      "applicants_empty": "Belum ada申请人"
+      "applicants_empty": "Belum ada申请人",
+      "one_click_import": "Impor Cepat",
+      "one_click_import_tip": "Pilih申请人 dari riwayat pesanan untuk mengisi otomatis nama & paspor",
+      "one_click_import_title": "Pilih申请人",
+      "one_click_import_hint": "Nama dan nomor paspor akan terisi otomatis; lengkapi kolom lain di bawah.",
+      "one_click_import_empty": "Tidak ada申请人 untuk diimpor",
+      "one_click_import_done": "Berhasil diimpor — lengkapi kolom lainnya",
+      "applicant_used_count": "Digunakan {n} kali"
     },
     "schengen": "Schengen 26 negara",
     "mega": {
@@ -817,21 +824,21 @@
     "features": {
       "title": "Mengapa memilih kami",
       "subtitle": "Buat proses visa yang rumit menjadi 4 langkah mudah",
-      "pay_after": {
-        "title": "Bayar Setelah Disetujui",
-        "desc": "Bayar saat visa lolos — kami hanya menang kalau Anda menang."
-      },
-      "system_check": {
-        "title": "Pra-Pemeriksaan AI",
-        "desc": "Daftar otomatis + OCR — persetujuan pertama lebih tinggi."
+      "data_safety": {
+        "title": "Data Tetap Lokal",
+        "desc": "Data sensitif disimpan di perangkat Anda — tidak pernah diunggah ke cloud."
       },
       "templates": {
-        "title": "Template Sekali Klik",
-        "desc": "6+ template surat kerja, rekening, undangan — selesai 30 detik."
+        "title": "Template Cerdas",
+        "desc": "Buat rencana perjalanan dalam 1 menit — tanpa repot format."
       },
-      "data_safety": {
-        "title": "Data Tidak Bocor",
-        "desc": "Enkripsi lokal + transmisi + penyimpanan. Dihapus setelah disetujui."
+      "smart_check": {
+        "title": "Pemeriksaan Cerdas",
+        "desc": "Tak perlu khawatir salah ketik — kami periksa setiap baris untuk Anda."
+      },
+      "pay_after": {
+        "title": "Bayar Saat Disetujui",
+        "desc": "Kami hanya mengenakan biaya saat visa disetujui — refund penuh jika tidak."
       }
     },
     "toast_explore_pending": "Daftar negara akan datang di rilis berikutnya",
@@ -1161,7 +1168,12 @@
     "travel_origin_ph": "cth: Beijing",
     "travel_destination_label": "Tujuan",
     "travel_depart_label": "Tanggal Keberangkatan",
+    "travel_depart_date_ph": "Pilih tanggal keberangkatan (YYYY-MM-DD)",
+    "travel_from_label": "Dari",
+    "travel_day": "Day",
     "travel_return_label": "Tanggal Kepulangan",
+    "travel_return_date_ph": "Pilih tanggal kepulangan (YYYY-MM-DD)",
+    "date_clear_aria": "Hapus tanggal",
     "travel_recommend_label": "Penerbangan referensi (klik untuk memilih, atau isi manual)",
     "travel_flight_out_label": "No. Penerbangan Berangkat",
     "travel_flight_out_ph": "cth: CA981",

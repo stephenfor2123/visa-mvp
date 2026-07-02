@@ -588,7 +588,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get forgotPageSubtitle =>
-      'Nhập số điện thoại, chúng tôi sẽ gửi mã đặt lại';
+      'Nhập tài khoản và đặt mật khẩu mới để đặt lại ngay.';
 
   @override
   String get forgotPhoneLabel => 'Số điện thoại';
@@ -852,4 +852,505 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get ordernewSubmitting => 'Đang gửi...';
+
+  @override
+  String get applyTitle => 'Xin Visa';
+
+  @override
+  String get applySub => '4 bước để có visa';
+
+  @override
+  String get applyStepCountry => 'Chọn điểm đến';
+
+  @override
+  String get applyStepChecklist => 'Danh sách hồ sơ';
+
+  @override
+  String get applyStepTrip => 'Thông tin chuyến đi';
+
+  @override
+  String get applyStepConfirm => 'Xác nhận';
+
+  @override
+  String get applyFeeLabel => 'Fee';
+
+  @override
+  String get applyProcessingLabel => 'Processing';
+
+  @override
+  String get applyValidityLabel => 'Validity';
+
+  @override
+  String get applyVisaType => 'Visa Type';
+
+  @override
+  String get applyVisaTourism => 'Du lịch';
+
+  @override
+  String get applyVisaBusiness => 'Công tác';
+
+  @override
+  String get applyVisaStudent => 'Du học';
+
+  @override
+  String get applyVisaFamily => 'Thăm thân';
+
+  @override
+  String get applyVisaOther => 'Khác';
+
+  @override
+  String get applyDepartDate => 'Departure Date';
+
+  @override
+  String get applyReturnDate => 'Return Date';
+
+  @override
+  String get applyDepartCity => 'Departure City';
+
+  @override
+  String get applyDepartCityPh => 'vd: Hà Nội';
+
+  @override
+  String get applyEmergencyContact => 'Emergency Contact';
+
+  @override
+  String get applyEmergencyPh => 'vd: An +84 912xxxx';
+
+  @override
+  String get applyPurpose => 'Trip Purpose';
+
+  @override
+  String get applyPurposePh => 'Mô tả mục đích';
+
+  @override
+  String get applyBack => '← Back';
+
+  @override
+  String get applyNextMaterials => 'Tiếp: Điền form';
+
+  @override
+  String get applyNextConfirm => 'Tiếp: Xác nhận';
+
+  @override
+  String get applyPickDate => 'Pick a date';
+
+  @override
+  String get applyConfirmSubmit => 'Xác nhận & Gửi';
+
+  @override
+  String get applySubmitting => 'Đang gửi…';
+
+  @override
+  String get applyRequired => 'req';
+
+  @override
+  String get diagnoseTitle => 'Đánh giá trước';
+
+  @override
+  String get diagnoseSub => 'Kiểm tra cơ hội được duyệt trước';
+
+  @override
+  String get diagnoseStepForm => 'Cho chúng tôi biết về bạn';
+
+  @override
+  String get diagnoseResult => 'Kết quả của bạn';
+
+  @override
+  String get diagnoseFactors => 'Yếu tố';
+
+  @override
+  String get diagnoseSuggestions => 'Gợi ý';
+
+  @override
+  String get diagnoseCtaApply => 'Xin nước này →';
+
+  @override
+  String get diagnoseRestart => 'Đánh giá lại';
+
+  @override
+  String get diagnoseLevelHigh => 'High chance';
+
+  @override
+  String get diagnoseLevelMedium => 'Medium';
+
+  @override
+  String get diagnoseLevelLow => 'Low chance';
+
+  @override
+  String get diagnoseMarital => 'Marital Status';
+
+  @override
+  String get diagnoseMaritalSingle => 'Độc thân';
+
+  @override
+  String get diagnoseMaritalMarried => 'Đã kết hôn';
+
+  @override
+  String get diagnoseMaritalDivorced => 'Ly hôn';
+
+  @override
+  String get diagnoseMaritalWidowed => 'Góa';
+
+  @override
+  String get diagnoseIncome => 'Monthly Income (CNY)';
+
+  @override
+  String get diagnoseIncomeBelow5k => '<5k';
+
+  @override
+  String get diagnoseIncome5k15k => '5k-15k';
+
+  @override
+  String get diagnoseIncome15k30k => '15k-30k';
+
+  @override
+  String get diagnoseIncome30k100k => '30k-100k';
+
+  @override
+  String get diagnoseIncomeAbove100k => '>100k';
+
+  @override
+  String get diagnosePurpose => 'Travel Purpose';
+
+  @override
+  String get diagnosePurposeBusiness => 'Công tác';
+
+  @override
+  String get diagnosePurposeTourism => 'Du lịch';
+
+  @override
+  String get diagnosePurposeFamily => 'Thăm thân';
+
+  @override
+  String get diagnosePurposeStudy => 'Du học';
+
+  @override
+  String get diagnosePurposeOther => 'Khác';
+
+  @override
+  String get diagnoseTravelHistory => 'Travel History (5y)';
+
+  @override
+  String get diagnoseTravelNone => 'Không';
+
+  @override
+  String get diagnoseTravel1to3 => '1-3';
+
+  @override
+  String get diagnoseTravel4to10 => '4-10';
+
+  @override
+  String get diagnoseTravelAbove10 => '10+';
+
+  @override
+  String get diagnoseVisaHistory => 'Visa History';
+
+  @override
+  String get diagnoseVisaNone => 'Không';
+
+  @override
+  String get diagnoseVisa1to2 => '1-2';
+
+  @override
+  String get diagnoseVisaAbove2 => '2+';
+
+  @override
+  String get diagnoseEmployment => 'Employment';
+
+  @override
+  String get diagnoseEmpEmployed => 'Đi làm';
+
+  @override
+  String get diagnoseEmpFreelancer => 'Tự do';
+
+  @override
+  String get diagnoseEmpStudent => 'Sinh viên';
+
+  @override
+  String get diagnoseEmpRetired => 'Đã nghỉ hưu';
+
+  @override
+  String get diagnoseEmpUnemployed => 'Thất nghiệp';
+
+  @override
+  String get diagnoseAge => 'Age (optional)';
+
+  @override
+  String get diagnoseAgePh => 'e.g. 30';
+
+  @override
+  String get diagnoseSoloFemale => 'Solo female traveler';
+
+  @override
+  String get diagnoseSubmit => 'Xem kết quả';
+
+  @override
+  String get diagnoseSubmitting => 'Đang đánh giá…';
+
+  @override
+  String get diagnoseReselect => '← Chọn lại nước';
+
+  @override
+  String get diagnoseStart => 'Bắt đầu đánh giá';
+
+  @override
+  String get resourcesTitle => 'Hỏi đáp visa';
+
+  @override
+  String get resourcesSub => 'AI trả lời từ nguồn chính thức';
+
+  @override
+  String get resourcesHint => 'vd: phí visa Mỹ';
+
+  @override
+  String get resourcesEmpty => 'Bắt đầu hỏi';
+
+  @override
+  String get resourcesFollowup => 'Hỏi tiếp';
+
+  @override
+  String get resourcesSources => 'Nguồn';
+
+  @override
+  String get resourcesRelevance => 'Liên quan';
+
+  @override
+  String get contactTitle => 'Liên hệ';
+
+  @override
+  String get contactSub => 'Trả lời trong giờ làm việc (UTC+8, 9-18h)';
+
+  @override
+  String get contactEmail => 'Email';
+
+  @override
+  String get contactEmailAddr => 'support@htex.app';
+
+  @override
+  String get contactEmailSub => 'Reply within 24 hours';
+
+  @override
+  String get contactChat => 'Chat trực tiếp';
+
+  @override
+  String get contactChatSub => 'Real-time on weekdays';
+
+  @override
+  String get contactBug => 'Báo lỗi';
+
+  @override
+  String get contactBugSub => 'Engineers see directly';
+
+  @override
+  String get contactBiz => 'Kinh doanh';
+
+  @override
+  String get contactBizAddr => 'biz@htex.app';
+
+  @override
+  String get contactBizSub => 'Affiliate / Travel agencies';
+
+  @override
+  String get contactTip =>
+      'Khẩn cấp: liên hệ đại sứ quán địa phương. Htex không thay thế kênh chính thức.';
+
+  @override
+  String get passportUploadTitle => 'Tải lên hộ chiếu';
+
+  @override
+  String get passportUploadSub => 'Chụp ảnh hộ chiếu rõ nét';
+
+  @override
+  String get passportUploadTip =>
+      'Đảm bảo trang thông tin ngay ngắn và đủ sáng';
+
+  @override
+  String get passportGallery => 'Thư viện';
+
+  @override
+  String get passportCamera => 'Máy ảnh';
+
+  @override
+  String get passportRecognize => 'Nhận dạng';
+
+  @override
+  String get passportRecognizing => 'Đang nhận dạng…';
+
+  @override
+  String get passportReviewTitle => 'Xác nhận thông tin hộ chiếu';
+
+  @override
+  String get passportReviewDetected => '✓ Đã nhận dạng là hộ chiếu';
+
+  @override
+  String get passportReviewWarn => '⚠️ Không phải hộ chiếu';
+
+  @override
+  String get passportReviewConfirm => 'Xác nhận & Tiếp';
+
+  @override
+  String get passportReviewRetake => 'Chụp lại';
+
+  @override
+  String get passportReviewPassportNo => 'Passport No.';
+
+  @override
+  String get passportReviewSurname => 'Surname';
+
+  @override
+  String get passportReviewGivenName => 'Given Name';
+
+  @override
+  String get passportReviewSex => 'Sex (M / F)';
+
+  @override
+  String get passportReviewNationality => 'Nationality';
+
+  @override
+  String get passportReviewDob => 'Date of Birth (YYYY-MM-DD)';
+
+  @override
+  String get passportReviewExpiry => 'Expiry (YYYY-MM-DD)';
+
+  @override
+  String get loginAccountTab => 'Tài khoản';
+
+  @override
+  String get loginSmsTab => 'SMS';
+
+  @override
+  String get loginAccountLabel => 'Email hoặc tên đăng nhập';
+
+  @override
+  String get loginAccountPh => 'user@example.com hoặc username';
+
+  @override
+  String get registerUsernameLabel => 'Tên đăng nhập';
+
+  @override
+  String get registerUsernamePh => '3-32 ký tự, bắt đầu chữ/số';
+
+  @override
+  String get registerUsernameHint =>
+      '3-32 chars [A-Za-z0-9_.-], letter/digit start';
+
+  @override
+  String get registerEmailLabel => 'Email';
+
+  @override
+  String get registerEmailPh => 'user@example.com';
+
+  @override
+  String get registerNicknameLabel => 'Biệt danh (tùy chọn)';
+
+  @override
+  String get registerNicknamePh => 'Chúng tôi nên gọi bạn là gì?';
+
+  @override
+  String get registerEmailInvalid => 'Email không đúng định dạng';
+
+  @override
+  String get registerUsernameInvalid => 'Tên đăng nhập không hợp lệ';
+
+  @override
+  String get homeSloganZh => 'Khả năng vô tận, luôn bên bạn';
+
+  @override
+  String get homeCtaDiagnose => 'Kiểm tra cơ hội';
+
+  @override
+  String get homeCtaAsk => 'Hỏi chính sách';
+
+  @override
+  String get homeTrust => '100k+ người dùng · 99% được duyệt';
+
+  @override
+  String get homeFeatureUploadTitle => 'Tải hộ chiếu';
+
+  @override
+  String get homeFeatureUploadSub => 'Tự động OCR';
+
+  @override
+  String get homeFeatureDiagnoseTitle => 'Đánh giá trước';
+
+  @override
+  String get homeFeatureDiagnoseSub => 'Điểm rủi ro';
+
+  @override
+  String get homeFeatureResourcesTitle => 'Hỏi đáp chính sách';
+
+  @override
+  String get homeFeatureResourcesSub => 'RAG 4 nguồn';
+
+  @override
+  String get homeFeatureContactTitle => 'Liên hệ';
+
+  @override
+  String get homeFeatureContactSub => 'Ngày làm việc 9-18h';
+
+  @override
+  String get homeHotVisa => 'Điểm đến phổ biến';
+
+  @override
+  String get homeViewAll => 'Xem tất cả →';
+
+  @override
+  String get homeSectionFeatures => 'Bạn có thể làm gì với Htex';
+
+  @override
+  String get homeFooterUpload => 'Tải lên';
+
+  @override
+  String get homeFooterDiagnose => 'Đánh giá';
+
+  @override
+  String get homeFooterQa => 'Hỏi đáp';
+
+  @override
+  String get homeFooterContact => 'Hỗ trợ';
+
+  @override
+  String get homeHeroCityPrefix => 'Vô vàn khả năng, bên bạn';
+
+  @override
+  String get homeFromPrice => 'TỪ';
+
+  @override
+  String get homeApplyNow => 'Xin ngay';
+
+  @override
+  String get homeFooterCopyright => 'Htex · Wherever you go, life is infinite';
+
+  @override
+  String get destinationsTitle => 'Chọn điểm đến';
+
+  @override
+  String get destinationsHero => 'Popular Visas';
+
+  @override
+  String get destinationsSchengen => 'Schengen 26';
+
+  @override
+  String get destinationsExpand => 'Mở rộng';
+
+  @override
+  String get destinationsCollapse => 'Thu gọn';
+
+  @override
+  String get destinationsValid => 'HIỆU LỰC';
+
+  @override
+  String get destinationsApply => 'Xin visa';
+
+  @override
+  String get destinationsSearch => 'Tìm quốc gia';
+
+  @override
+  String get selfieStart => 'Chụp selfie';
+
+  @override
+  String get selfieRetake => 'Chụp lại';
+
+  @override
+  String get selfieHint => 'Nhấn bên dưới để bắt đầu';
 }

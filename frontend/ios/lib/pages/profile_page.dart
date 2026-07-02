@@ -17,7 +17,7 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  Map<String, dynamic>? _user;
+  AuthUser? _user;
   bool _isLoggedIn = false;
   String _registerTime = '-';
   String _initial = '?';
@@ -93,21 +93,7 @@ class _ProfilePageState extends State<ProfilePage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: Row(
-          children: [
-            Container(
-              width: 28, height: 28,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [Color(0xFF3B6EF5), Color(0xFF6E59F0)]),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              alignment: Alignment.center,
-              child: const Text('V', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-            ),
-            const SizedBox(width: 8),
-            Text(l.commonAppName, style: const TextStyle(color: Color(0xFF1A1A2E), fontWeight: FontWeight.w600, fontSize: 16)),
-          ],
-        ),
+        title: Text('htex', style: const TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.w800, fontSize: 20, letterSpacing: -0.4)),
       ),
       body: SafeArea(
         child: _isLoggedIn ? _buildLoggedIn(l) : _buildLoggedOut(l),

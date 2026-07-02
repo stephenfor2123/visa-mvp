@@ -82,6 +82,10 @@ class ErrorCode(str, Enum):
     # 7xxx — 第三方
     SMS_GATEWAY_DOWN = "7001"
 
+    # 8xxx — LLM (W40)
+    LLM_NOT_CONFIGURED = "8001"
+    LLM_UPSTREAM_ERROR = "8002"
+
 
 # HTTP status mapping (defaults; can be overridden when raising)
 _ERROR_HTTP_STATUS: dict[ErrorCode, int] = {
@@ -136,6 +140,8 @@ _ERROR_HTTP_STATUS: dict[ErrorCode, int] = {
     ErrorCode.VOICE_RECOGNIZE_FAILED: status.HTTP_422_UNPROCESSABLE_ENTITY,
     ErrorCode.VOICE_TIMEOUT: status.HTTP_504_GATEWAY_TIMEOUT,
     ErrorCode.SMS_GATEWAY_DOWN: status.HTTP_502_BAD_GATEWAY,
+    ErrorCode.LLM_NOT_CONFIGURED: status.HTTP_503_SERVICE_UNAVAILABLE,
+    ErrorCode.LLM_UPSTREAM_ERROR: status.HTTP_502_BAD_GATEWAY,
 }
 
 

@@ -65,6 +65,11 @@
           <span>{{ t('login.no_account') }}</span>
           <a href="#" @click.prevent="goSignup" :aria-label="t('login.go_signup')">{{ t('login.go_signup') }}</a>
         </div>
+
+        <template v-if="googleEnabled">
+          <div class="auth-divider"><span>{{ t('common.or') || '或' }}</span></div>
+          <div ref="googleBtnRef" class="google-btn-wrap"></div>
+        </template>
       </AppCard>
 
       <footer class="auth-footer">{{ t('common.auth_footer') }}</footer>
@@ -84,6 +89,8 @@ import { useToast } from '@/composables/useToast'
 import { validateAccount, validatePassword } from '@/utils/validation'
 import AppHeader from '@/components/AppHeader.vue'
 
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
+
 const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
@@ -96,6 +103,10 @@ const remember = ref(true)
 
 const submitting = ref(false)
 const errors = reactive({ account: '', password: '' })
+
+const googleEnabled = !!GOOGLE_CLIENT_ID
+const googleBtnRef = ref(null)
+const googleLoading = ref(false)
 
 const pwdStrengthHint = computed(() => {
   const v = password.value
@@ -137,13 +148,56 @@ function goSignup() {
   router.push('/register')
 }
 
+async function handleGoogleCredential(response) {
+  googleLoading.value = true
+  try {
+    await auth.loginWithGoogle(response.credential)
+    toast.success(t('toast.login_success'))
+    const redirect = route.query.redirect || '/destinations'
+    router.push(redirect)
+  } catch (e) {
+    toast.error(e?.message || t('toast.login_fail'))
+  } finally {
+    googleLoading.value = false
+  }
+}
+
+function initGoogleAuth() {
+  if (!window.google) return
+  window.google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: handleGoogleCredential,
+    auto_select: false,
+  })
+  if (googleBtnRef.value) {
+    window.google.accounts.id.renderButton(googleBtnRef.value, {
+      type: 'standard',
+      shape: 'rectangular',
+      theme: 'outline',
+      text: 'signin_with',
+      size: 'large',
+      width: '340',
+    })
+  }
+}
+
 onMounted(() => {
   auth.hydrate()
-  // Test mode: pre-fill demo account for screenshots
-  // 用真实 seed 出的账号(参见 backend/scripts/seed_demo_data.py + TEST-ACCOUNTS.md)
   if (route.query.demo !== undefined) {
     account.value = 'demo138001380001@htex.app'
     password.value = '123456'
+  }
+  if (googleEnabled) {
+    if (window.google) {
+      initGoogleAuth()
+    } else {
+      const script = document.createElement('script')
+      script.src = 'https://accounts.google.com/gsi/client'
+      script.async = true
+      script.defer = true
+      script.onload = initGoogleAuth
+      document.head.appendChild(script)
+    }
   }
 })
 </script>
@@ -233,5 +287,24 @@ onMounted(() => {
   margin-top: 32px;
   font-size: 12px;
   color: var(--muted);
+}
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0 16px;
+  color: var(--ink-4, #bbb);
+  font-size: 12px;
+  &::before, &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border, #e5e7eb);
+  }
+}
+.google-btn-wrap {
+  display: flex;
+  justify-content: center;
+  min-height: 40px;
 }
 </style>

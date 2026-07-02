@@ -1,7 +1,11 @@
 """OrderService — V2 §4.2 (Order Service).
 
 Responsibilities:
-  - Generate a globally unique `V2-YYYYMMDD-NNNNNN` order number
+  - Generate a globally unique `V2-YYYYMMDD-XXXXXXXX` order number
+    (uuid4 short hex suffix — 32-bit space gives 1-in-4B collision odds,
+     so race-free under any realistic concurrent load; the previous
+     count-then-insert counter could lose orders under 10+ concurrent
+     creates per the same date prefix).
   - Create orders with material-association and initial state-machine log
   - List orders (paginated, scoped to current user, optional status filter)
   - Fetch order detail (with status history + messages + material refs)
@@ -14,8 +18,9 @@ State machine per V2 §4.2.4:
   abnormal / failed are exception states (not entered from these endpoints)
 
 Concurrency:
-  - order_no is generated in a transaction with a row-count check so a
-    same-day collision (different seconds, same date counter) is impossible.
+  - order_no suffix uses uuid4 short hex (8 chars, 32-bit uniqueness)
+    instead of a per-day sequence counter, eliminating read-then-insert
+    races under concurrent order creation.
   - All status transitions write a row to `order_status_history` atomically
     with the order's own UPDATE.
 """
@@ -814,26 +819,22 @@ class OrderService:
     # Order number generation                                             #
     # ------------------------------------------------------------------ #
     async def _generate_order_no(self) -> str:
-        """Generate `V2-YYYYMMDD-NNNNNN` that's globally unique.
+        """Generate `V2-YYYYMMDD-XXXXXXXX` that's globally unique.
 
-        Strategy:
-          1. Count existing orders whose order_no starts with the same date
-             prefix — that's today's "next sequence" number.
-          2. Pad to 6 digits, format, then INSERT and let the UNIQUE index
-             catch any race (extremely unlikely on SQLite, but defensive).
-          3. If the race somehow fires, retry up to 3 times.
+        Suffix is 8 hex chars from uuid4 (32-bit uniqueness space → ~1 in
+        4 billion collision odds per attempt). Probe DB for existence and
+        retry on collision; 5 attempts × 32-bit space = effectively zero
+        conflict probability under realistic load.
+
+        The previous per-day count-then-insert strategy had a read-write
+        race: 15 concurrent creates all read the same count=N, all picked
+        candidate=N+1, then 14 of them crashed with `concurrent order_no
+        conflict` at flush time. Switched to uuid suffix to eliminate the
+        race entirely.
         """
         today_prefix = "V2-" + datetime.now(timezone.utc).strftime("%Y%m%d") + "-"
-        for attempt in range(3):
-            count_today = (
-                await self.db.scalar(
-                    select(func.count(Order.id)).where(
-                        Order.order_no.like(f"{today_prefix}%")
-                    )
-                )
-            ) or 0
-            candidate = f"{today_prefix}{int(count_today) + 1:06d}"
-            # Probe existence
+        for attempt in range(5):
+            candidate = f"{today_prefix}{uuid.uuid4().hex[:8].upper()}"
             exists = await self.db.scalar(
                 select(Order.id).where(Order.order_no == candidate).limit(1)
             )

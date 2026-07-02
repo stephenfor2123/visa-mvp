@@ -1,7 +1,6 @@
 """User ORM model — V2 §4.1 / §4.1.4.
 
-W26 product change: account identifier is now email / username, not phone.
-phone + phone_country are kept as nullable for legacy data and MFA backup.
+Account identifier: email or username. Phone number is not stored.
 """
 import uuid
 from datetime import datetime
@@ -26,11 +25,13 @@ class User(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     uuid: Mapped[str] = mapped_column(String(36), unique=True, index=True, default=_new_uuid)
 
-    # Identity — W26: account = email + username. phone/phone_country kept nullable for legacy.
+    # Identity: account = email or username
     email: Mapped[Optional[str]] = mapped_column(String(120), unique=True, index=True, nullable=True)
     username: Mapped[Optional[str]] = mapped_column(String(32), unique=True, index=True, nullable=True)
-    phone: Mapped[Optional[str]] = mapped_column(String(32), index=True, nullable=True)
-    phone_country: Mapped[Optional[str]] = mapped_column(String(8), default="+86", nullable=True)
+
+    # OAuth identifiers (nullable — password users have none)
+    google_sub: Mapped[Optional[str]] = mapped_column(String(128), nullable=True, unique=True, index=True)
+    wechat_openid: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, unique=True, index=True)
 
     # Credentials
     password_hash: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
@@ -43,12 +44,10 @@ class User(Base):
     # Status — V2 lifecycle: active / pending_destroy / destroyed / disabled
     status: Mapped[str] = mapped_column(String(16), default="active", index=True)
 
-    # MFA — V2 §4.1 MFA
+    # MFA — TOTP only
     mfa_enabled: Mapped[bool] = mapped_column(default=False, index=True)
-    mfa_type: Mapped[Optional[str]] = mapped_column(String(16), nullable=True)  # "totp" | "sms"
+    mfa_type: Mapped[Optional[str]] = mapped_column(String(16), nullable=True)  # "totp"
     mfa_secret: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)  # encrypted TOTP secret
-    mfa_phone: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)  # backup SMS phone
-    mfa_phone_country: Mapped[Optional[str]] = mapped_column(String(8), nullable=True)
 
     # Misc
     last_login_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)

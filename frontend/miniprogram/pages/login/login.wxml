@@ -111,6 +111,22 @@
       <text>{{t('login.no_account')}}</text>
       <text class="link" bindtap="goSignup">{{t('login.go_signup')}}</text>
     </view>
+
+    <!-- 微信一键登录 -->
+    <view class="auth-divider">
+      <view class="divider-line"></view>
+      <text class="divider-text">或</text>
+      <view class="divider-line"></view>
+    </view>
+    <button
+      class="wechat-login-btn"
+      bindtap="onWechatLogin"
+      loading="{{submitting}}"
+      hover-class="wechat-login-btn-hover"
+    >
+      <text class="wechat-icon">微信</text>
+      <text>微信一键登录</text>
+    </button>
   </view>
 
   <view class="auth-footer">© 2026 {{t('common.app_name')}} · V2 W6b demo · 仅供演示</view>

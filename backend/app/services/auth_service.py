@@ -1,8 +1,4 @@
-"""AuthService — register / login / reset-password / sms-login / refresh.
-
-W26 product change: identifier is now email / username (not phone).
-Phone-based login is kept for legacy / admin use via the sms-login endpoint.
-"""
+"""AuthService — register / login / reset-password / refresh / OAuth."""
 import hashlib
 import re
 from datetime import datetime, timezone
@@ -26,7 +22,6 @@ from app.core.security import (
 from app.models.user import User
 from app.models.user_session import UserSession
 from app.services.audit import record_audit
-from app.services.sms_service import SmsService
 
 
 _log = get_logger()
@@ -53,15 +48,6 @@ class AuthService:
     # ------------------------------------------------------------------ #
     # Helpers                                                            #
     # ------------------------------------------------------------------ #
-    async def _get_user_by_phone(
-        self, phone: str, phone_country: str
-    ) -> Optional[User]:
-        return await self.db.scalar(
-            select(User).where(
-                and_(User.phone == phone, User.phone_country == phone_country)
-            )
-        )
-
     async def _get_user_by_account(self, account: str) -> Optional[User]:
         """Lookup by either email (case-insensitive) or username."""
         account = (account or "").strip()
@@ -106,8 +92,6 @@ class AuthService:
             "uuid": user.uuid,
             "username": user.username,
             "email": user.email,
-            "phone": user.phone,
-            "phone_country": user.phone_country,
             "nickname": user.nickname,
             "avatar_url": user.avatar_url,
             "language_pref": user.language_pref,
@@ -247,62 +231,6 @@ class AuthService:
         return {**tokens, "user": self._to_user_dict(user)}
 
     # ------------------------------------------------------------------ #
-    # SMS login (kept for legacy / admin tools; not exposed to UI)        #
-    # ------------------------------------------------------------------ #
-    async def sms_login(
-        self,
-        *,
-        phone: str,
-        phone_country: str,
-        sms_code_value: str,
-        info: ClientInfo,
-    ) -> dict[str, Any]:
-        # Verify the code
-        sms_service = SmsService(self.db)
-        await sms_service.verify_code(
-            phone=phone,
-            phone_country=phone_country,
-            code=sms_code_value,
-            purpose="login",
-        )
-
-        user = await self._get_user_by_phone(phone, phone_country)
-        if user is None:
-            # SMS-only login: auto-register the user with no password.
-            user = User(
-                phone=phone,
-                phone_country=phone_country,
-                email=f"{phone}@htex.local",  # W26: every user must have an email
-                username=f"user_{phone[-4:]}",  # W26: every user must have a username
-                password_hash=None,
-                nickname=f"user_{phone[-4:]}",
-                language_pref="zh-CN",
-                status="active",
-            )
-            self.db.add(user)
-            await self.db.flush()
-
-        if user.status != "active":
-            raise BizException(
-                ErrorCode.ACCOUNT_DISABLED, message="Account is not active"
-            )
-
-        tokens = await self._issue_token_pair(user, info)
-        user.last_login_at = datetime.now(timezone.utc).replace(tzinfo=None)
-        user.last_login_ip = info.get("ip") if info else None
-
-        await self._commit_with_audit(
-            user=user,
-            action="user.sms_login",
-            info=info,
-        )
-        _log.info(
-            "user.sms_login",
-            extra={"user_id": user.id, "event_type": "user.sms_login", "status": "success"},
-        )
-        return {**tokens, "user": self._to_user_dict(user)}
-
-    # ------------------------------------------------------------------ #
     # Refresh                                                            #
     # ------------------------------------------------------------------ #
     async def refresh(
@@ -357,6 +285,127 @@ class AuthService:
             "user.refresh",
             extra={"user_id": user.id, "event_type": "user.refresh", "status": "success"},
         )
+        return {**tokens, "user": self._to_user_dict(user)}
+
+    # ------------------------------------------------------------------ #
+    # Google OAuth login / auto-register                                 #
+    # ------------------------------------------------------------------ #
+    async def google_auth(self, id_token_str: str, info: ClientInfo) -> dict[str, Any]:
+        """Verify Google ID token and issue JWT pair. Auto-registers on first use."""
+        if not self.settings.google_client_id:
+            raise BizException(ErrorCode.SERVER_ERROR, message="Google login not configured")
+
+        try:
+            from google.oauth2 import id_token as _gid
+            from google.auth.transport.requests import Request as _GReq
+            idinfo = _gid.verify_oauth2_token(id_token_str, _GReq(), self.settings.google_client_id)
+        except Exception as exc:
+            raise BizException(
+                ErrorCode.AUTH_INVALID_CREDENTIALS, message="Invalid Google token"
+            ) from exc
+
+        google_sub: str = idinfo["sub"]
+        email: str = (idinfo.get("email") or "").lower().strip()
+        name: str = idinfo.get("name", "")
+        avatar: str = idinfo.get("picture", "")
+
+        user: Optional[User] = await self.db.scalar(
+            select(User).where(User.google_sub == google_sub)
+        )
+        if user is None and email:
+            user = await self.db.scalar(select(User).where(User.email == email))
+
+        if user is None:
+            base_username = f"g_{google_sub[-8:]}"
+            username = base_username
+            if await self.db.scalar(select(User).where(User.username == username)) is not None:
+                username = f"g_{google_sub[-12:]}"
+            user = User(
+                google_sub=google_sub,
+                email=email or None,
+                username=username,
+                password_hash=None,
+                nickname=name or username,
+                avatar_url=avatar or None,
+                language_pref="zh-CN",
+                status="active",
+            )
+            self.db.add(user)
+            await self.db.flush()
+        else:
+            if not user.google_sub:
+                user.google_sub = google_sub
+            if avatar and not user.avatar_url:
+                user.avatar_url = avatar
+
+        if user.status != "active":
+            raise BizException(ErrorCode.ACCOUNT_DISABLED, message="Account is not active")
+
+        tokens = await self._issue_token_pair(user, info)
+        user.last_login_at = datetime.now(timezone.utc).replace(tzinfo=None)
+        user.last_login_ip = info.get("ip") if info else None
+        await self._commit_with_audit(user=user, action="user.google_auth", info=info)
+        _log.info("user.google_auth", extra={"user_id": user.id, "event_type": "user.google_auth", "status": "success"})
+        return {**tokens, "user": self._to_user_dict(user)}
+
+    # ------------------------------------------------------------------ #
+    # WeChat miniprogram login / auto-register                           #
+    # ------------------------------------------------------------------ #
+    async def wechat_auth(self, code: str, info: ClientInfo) -> dict[str, Any]:
+        """Exchange wx.login() code for openid, issue JWT pair. Auto-registers on first use."""
+        if not self.settings.wechat_appid or not self.settings.wechat_appsecret:
+            raise BizException(ErrorCode.SERVER_ERROR, message="WeChat login not configured")
+
+        import httpx
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(
+                "https://api.weixin.qq.com/sns/jscode2session",
+                params={
+                    "appid": self.settings.wechat_appid,
+                    "secret": self.settings.wechat_appsecret,
+                    "js_code": code,
+                    "grant_type": "authorization_code",
+                },
+            )
+        data: dict = resp.json()
+        if data.get("errcode") and data["errcode"] != 0:
+            raise BizException(
+                ErrorCode.AUTH_INVALID_CREDENTIALS,
+                message=f"WeChat auth failed: {data.get('errmsg', 'unknown')}",
+            )
+
+        openid: str = data.get("openid", "")
+        if not openid:
+            raise BizException(ErrorCode.AUTH_INVALID_CREDENTIALS, message="WeChat openid missing")
+
+        user: Optional[User] = await self.db.scalar(
+            select(User).where(User.wechat_openid == openid)
+        )
+        if user is None:
+            suffix = openid[-8:]
+            username = f"wx_{suffix}"
+            if await self.db.scalar(select(User).where(User.username == username)) is not None:
+                username = f"wx_{openid[-12:]}"
+            user = User(
+                wechat_openid=openid,
+                email=f"wx_{suffix}@htex.local",
+                username=username,
+                password_hash=None,
+                nickname=f"微信用户_{suffix}",
+                language_pref="zh-CN",
+                status="active",
+            )
+            self.db.add(user)
+            await self.db.flush()
+
+        if user.status != "active":
+            raise BizException(ErrorCode.ACCOUNT_DISABLED, message="Account is not active")
+
+        tokens = await self._issue_token_pair(user, info)
+        user.last_login_at = datetime.now(timezone.utc).replace(tzinfo=None)
+        user.last_login_ip = info.get("ip") if info else None
+        await self._commit_with_audit(user=user, action="user.wechat_auth", info=info)
+        _log.info("user.wechat_auth", extra={"user_id": user.id, "event_type": "user.wechat_auth", "status": "success"})
         return {**tokens, "user": self._to_user_dict(user)}
 
     # ------------------------------------------------------------------ #

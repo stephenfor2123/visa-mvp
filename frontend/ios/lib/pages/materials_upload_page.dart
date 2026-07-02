@@ -10,7 +10,8 @@ import '../main.dart';
 
 class MaterialsUploadPage extends StatefulWidget {
   final String? orderNo;
-  const MaterialsUploadPage({super.key, this.orderNo});
+  MaterialsUploadPage({super.key, String? orderNo})
+      : orderNo = orderNo ?? Uri.base.queryParameters['order_no'];
 
   @override
   State<MaterialsUploadPage> createState() => _MaterialsUploadPageState();

@@ -111,23 +111,20 @@ class TestAdminAuthenticated:
                 ))
                 await s.commit()
 
-        # Register a user
-        phone = f"13899{int(time.time() * 1000) % 1000000:06d}"
-        r = await client.post(
-            "/api/v2/auth/send-code",
-            json={"phone": phone, "phone_country": "+86", "purpose": "register"},
-        )
-        sms = r.json()["data"]["code"]
-        r = await client.post(
+        # Register a user via email/password
+        import random as _random
+        uid = _random.randint(10000000, 99999999)
+        email = f"testuser{uid}@test.local"
+        uname = f"u{uid}"
+        await client.post(
             "/api/v2/auth/register",
-            json={
-                "phone": phone,
-                "phone_country": "+86",
-                "password": "abc12345",
-                "sms_code": sms,
-                "language_pref": "zh-CN",
-            },
+            json={"username": uname, "email": email, "password": "Test1234"},
         )
+        r = await client.post(
+            "/api/v2/auth/login",
+            json={"account": email, "password": "Test1234"},
+        )
+        assert r.status_code == 200, f"login failed: {r.text}"
         user_token = r.json()["data"]["access_token"]
         # Upload a tiny material
         import io as _io
@@ -356,10 +353,10 @@ class TestAdminAuthenticated:
 
     async def test_soft_delete_user_happy(self, client):
         """Register a user, then soft-delete via admin."""
-        # Register user via C-user flow
+        # Register user via email/password
         await client.post(
-            "/api/v2/auth/sms-login",
-            json={"phone": "13999990001", "phone_country": "+86", "sms_code": "123456"},
+            "/api/v2/auth/register",
+            json={"username": "u13999990001", "email": "13999990001@test.local", "password": "Test1234"},
         )
         # Login as admin
         token = await self._admin_token(client)

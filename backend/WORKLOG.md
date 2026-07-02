@@ -1353,3 +1353,57 @@ Total: 42/42 PASS
   - 错误 wire code: 2003/2004/2005 与 4xxx 业务码段不冲突, 不挤占 OCR/订单 4xxx 段位
 
 ## W14-5 voice input DONE
+
+---
+
+# W36-W45 材料收集向导 + LLM 行程单 (Claude session, 2026-07-01 ~ 2026-07-02)
+
+一个长会话，把材料收集从"单页展示"重做成分类强校验向导，并接了真实 LLM 行程单生成。按主题归档，不完全按时间顺序。
+
+## W36 — Material.ocr_result 从未被写入的架构缺口
+- [2026-07-01] ✓ `app/models/material.py` — `MATERIAL_TYPES` 加 `bank`/`employment`/`hotel`/`flight`/`insurance` 5 个新类型
+- [2026-07-01] ✓ `app/api/v2/materials.py` — 新增 `POST /materials/{id}/ocr`：对已存储文件跑 OCR，把 `extract_passport_fields()` 结果**摊平**（不是 `{fields:{...}}` 嵌套）写回 `Material.ocr_result`，因为 `extractApplicantDraft()`（前端 orders.js）按摊平结构读。这是全库唯一真正持久化 `ocr_result` 的地方
+- [2026-07-01] ✓ `app/services/visa_diagnoser.py` — `_REQUIRED` 完整性规则加 bank/flight/hotel 作为 other 的可选替代；财力/行程材料类型校验不再误报缺失
+- [2026-07-01] ✓ `tests/unit/test_visa_diagnoser.py`（新建）+ `tests/integration/test_materials.py` 追加 — 锁定新类型识别
+
+## W38 — 签证清单材料解析 bug（括号内逗号误切分）
+- [2026-07-02] ✓ `app/api/v2/rag.py` — `_parse_materials_from_text()` 原来 `re.split` 按逗号切分材料条目时不认括号嵌套，把"旅行医疗保险 (覆盖申根区, 保额 ≥3万欧元, 涵盖整个行程)"这类括号里带逗号的条目从中间切断，产出孤立碎片。改成手写括号深度感知的 `_split_respecting_parens()`，深度 >0 时跳过分隔符
+- [2026-07-02] ✓ 顺带修 `_MATERIAL_KEYWORDS` 分类顺序 — "insurance" 挪到 "travel" 前面（保险条目文案常含"行程"字样，会被误分类到 travel）
+- [2026-07-02] ✓ `app/services/rag/refresh.py` — 美国 CURATED_CONTENT 源文案漏了个空格，导致两条材料被错误粘连成一条
+- [2026-07-02] ✓ `tests/rag/test_rag_pipeline.py` 追加 5 个测试锁定括号切分 + 全量 curated content 括号配对校验
+
+## W39 — 护照有效期字段永远读不到（shape 不一致）
+- [2026-07-02] ✓ `app/services/visa_diagnoser.py` — 字段级校验读 `ocr.get("fields", {})`（嵌套结构），但 W36 唯一的持久化点写的是摊平结构，导致 `ocr_fields` 永远是空字典，每张护照不管有没有识别到有效期都报"缺失"。改成直接读摊平字段
+- [2026-07-02] ✓ `DiagnoseIssue` 加 `params` 字段（`app/schemas/material.py` + `visa_diagnoser.py` 的 dataclass）— 把拼 title/detail 用到的原始数值（`min_months`/`expiry`/`months_left`/`passport_no`/`material_type`）一起传出去，方便前端按自己的语言重新渲染文案，而不是直接显示后端拼好的中文
+- [2026-07-02] ✓ `tests/unit/test_visa_diagnoser.py` 追加 3 个测试
+
+## W40 — LLM 行程单生成（MiniMax 接入）
+- [2026-07-02] ✓ `app/core/config.py` — 加 `minimax_api_key` / `minimax_api_base` / `minimax_model` 三个 Settings 字段，key 存 `.env`（gitignored）
+- [2026-07-02] ✓ `app/services/llm/minimax_client.py`（新建）— `MiniMaxClient.chat()`，POST `{base}/text/chatcompletion_v2`；MiniMax 用 HTTP 200 + body 里 `base_resp.status_code` 表示业务错误（不是 HTTP 状态码），必须读 body 才能判断成功/失败
+- [2026-07-02] ✓ `app/services/llm/itinerary_generator.py`（新建）— 组 prompt + 解析 LLM 返回的 JSON 数组（容错 markdown 代码块包裹），只填空白字段，非空字段原样透传（不覆盖用户已填内容）
+- [2026-07-02] ✓ `app/api/v2/itinerary.py`（新建）+ 注册路由 `POST /api/v2/itinerary/generate`
+- [2026-07-02] ✓ `app/core/errors.py` — 加 8xxx 段位：`LLM_NOT_CONFIGURED`(8001,503) / `LLM_UPSTREAM_ERROR`(8002,502)
+- [2026-07-02] ⚠️ 踩坑：`get_logger(__name__)` 报错 —— 本项目 `get_logger()` 不接收参数（跟标准库 logging 习惯不一样），改成 `get_logger()`
+- [2026-07-02] ⚠️ 超时踩坑：MiniMax 实测响应 3-16 秒，前端全局 axios 超时是 15s，会出现"后端其实成功了但前端已经放弃"的假超时。`MiniMaxClient.chat()` 超时 30s→45s，前端这个接口单独给 50s（`api/materials.js` 里 `{timeout: 50000}`）
+- [2026-07-02] ✓ `tests/unit/test_itinerary_generator.py`（新建）— mock 掉 MiniMax，不依赖真实 API/余额
+
+## W41/W42 — 行程单模型升级：逐日字段 + 航班上下文 + 开口程
+- [2026-07-02] ✓ `itinerary_generator.py` 从"只补 attraction"扩展成"补 transport/hotel/attraction 三个字段"
+- [2026-07-02] ✓ flight context 从"隐式用第一行/最后一行猜哪天是抵达/离开日"改成**按日期显式匹配**（`day.date == depart_date` / `day.date == return_date`），不再依赖表格行位置，prompt 里明确要求"match by DATE not position"
+- [2026-07-02] ✓ 回程独立可编辑：`FlightContext` 加 `return_origin`/`return_destination`，不再假设回程必然是"目的地飞回出发地"（开口程：去巴黎、罗马飞回上海这种）
+- [2026-07-02] ✓ `tests/unit/test_itinerary_generator.py` 追加 `TestBuildFlightContext`（日期匹配 + 开口程不假设反向路线 + 向后兼容默认值）共 9 个测试
+
+## W45 — OCR 识别失败 vs 识别到但缺字段，报错文案区分
+- [2026-07-02] ✓ `visa_diagnoser.py` — `ocr_fields.get("is_passport_doc") is False`（OCR 压根没从图里认出任何护照特征，比如空白图/非护照文件）时用新 code `passport.not_detected`，跟"识别到护照但读不出有效期"（`passport.expiry_missing`）分开，避免用户困惑"明明传的是护照怎么报缺失"
+- [2026-07-02] ✓ `tests/unit/test_visa_diagnoser.py` 追加 3 个测试
+
+## 已知问题（未修，故意跳过）
+- ⚠️ `pytest tests/ -m "not slow"` 全量跑会清空 dev SQLite 的 `visa_destinations`/`rag_source`/`rag_chunk`/`users` 表，根因疑似 `payment_provider.py` 的 fire-and-forget task 跨 pytest-asyncio 各 test 的 event loop 泄漏，未继续深挖（见项目根目录 `KNOWN_ISSUES.md`）。日常开发用范围测试（`tests/unit/` / `tests/rag/` / 单个 integration 文件），不要跑全量套件
+
+## 测试结果汇总（本轮新增/受影响）
+```
+tests/unit/test_visa_diagnoser.py        11 passed
+tests/unit/test_itinerary_generator.py   18 passed
+tests/rag/test_rag_pipeline.py           49 passed
+tests/integration/test_materials.py      25 passed
+```

@@ -58,22 +58,20 @@ class Settings(BaseSettings):
     password_min_length: int = 8
     password_max_length: int = 32
 
-    # --- SMS ---
-    # mock / twilio / aliyun — see app.services.sms
-    sms_channel: Literal["mock", "twilio", "aliyun"] = "mock"
-    sms_code_ttl_seconds: int = 300            # 5min
-    sms_cooldown_seconds: int = 60             # V2 §9.4: 1次/60s
-    sms_daily_limit: int = 10                  # V2 §9.4: 10次/日
-    sms_log_dir: str = str(BACKEND_ROOT / "logs")
-    mock_sms_webhook_url: Optional[str] = None    # optional local callback
-
     # --- Rate limit (V2 §9.4) ---
     rate_limit_per_ip_per_min: int = 100       # global
-    rate_limit_slow_api_per_ip_per_min: int = 60  # /send-code etc
+    rate_limit_slow_api_per_ip_per_min: int = 60
 
     # --- Celery / Redis ---
     celery_broker_url: str = "redis://localhost:6379/0"
     celery_result_backend: str = "redis://localhost:6379/1"
+
+    # --- RAG auto-refresh (signature policy update) ---
+    # Off by default: refresh hits real government websites, so opt-in via
+    # env var (RAG_AUTO_REFRESH_ENABLED=1) before enabling in an environment
+    # with outbound network access to avoid surprise traffic in dev/test.
+    rag_auto_refresh_enabled: bool = False
+    rag_auto_refresh_interval_hours: int = 24 * 7  # weekly
 
     # --- File / material service (V2 §4.3) ---
     material_storage_root: str = str(BACKEND_ROOT / "data" / "materials")
@@ -100,6 +98,11 @@ class Settings(BaseSettings):
     # admin_password (legacy) is deprecated; remove after migration.
     admin_password_secret: str = ""
     admin_password: str = "CHANGE_ME_IN_PROD"
+
+    # --- OAuth providers ---
+    google_client_id: str = ""      # set GOOGLE_CLIENT_ID in .env
+    wechat_appid: str = ""          # set WECHAT_APPID in .env
+    wechat_appsecret: str = ""      # set WECHAT_APPSECRET in .env
 
     # --- CORS (V2 §9 security) ---
     # Comma-separated list of allowed frontend origins.
@@ -144,6 +147,13 @@ class Settings(BaseSettings):
     # an affiliate partner's connected account. If blank, payout() raises
     # NotImplementedError (no fake transfer).
     stripe_payout_account_id: str = ""
+
+    # --- LLM (W40 — itinerary auto-generation via MiniMax) ---
+    # SECURITY: secret. Never log, never commit a real key — .env is
+    # gitignored, local-dev only.
+    minimax_api_key: str = ""
+    minimax_api_base: str = "https://api.minimaxi.com/v1"
+    minimax_model: str = "MiniMax-Text-01"
 
 
 @lru_cache(maxsize=1)

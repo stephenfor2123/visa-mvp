@@ -13,6 +13,7 @@
 // 当前 W2: 后端 B 1.1.1a 还在跑,默认走 mock 让 UI 截图能跑通;真后端上线后无需改前端。
 
 import http from './http'
+import { useAuthStore } from '@/stores/auth'
 
 const MOCK_MODE = import.meta.env.VITE_MOCK !== 'false' // 默认 mock
 
@@ -21,6 +22,17 @@ const MAX_BYTES = 10 * 1024 * 1024
 
 function delay(ms = 280) {
   return new Promise((r) => setTimeout(r, ms))
+}
+
+function getAuthToken() {
+  try {
+    const raw = localStorage.getItem('visa.auth')
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      return parsed.accessToken || null
+    }
+  } catch (_) {}
+  return null
 }
 
 function mockId() {
@@ -140,7 +152,7 @@ function splitIntoChunks(file) {
  * Upload a single chunk via XMLHttpRequest (enables real upload.onprogress).
  * Returns a promise that resolves with the JSON response body.
  */
-function uploadChunkXhr(chunk, uploadId, materialType, orderNo, authToken) {
+function uploadChunkXhr(chunk, uploadId, materialType, orderNo, authToken, onChunkProgress) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest()
     xhr.open('POST', '/api/v2/materials/upload/chunk')
@@ -158,11 +170,10 @@ function uploadChunkXhr(chunk, uploadId, materialType, orderNo, authToken) {
     xhr.setRequestHeader('X-File-Size', String(chunk.end - chunk.start))
 
     xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable) {
+      if (e.lengthComputable && typeof onChunkProgress === 'function') {
         const fraction = e.loaded / e.total
-        // overall = (chunk_index + fraction) / total_chunks
         const overall = ((chunk.index + fraction) / chunk.total) * 100
-        resolve({ _progressSignal: overall })
+        onChunkProgress(overall)
       }
     }
 
@@ -270,39 +281,64 @@ export async function uploadMaterialWithProgress(file, materialType = 'passport'
   }
 
   // Small file: single XHR with upload.onprogress
+  const form = new FormData()
+  form.append('file', file)
+  form.append('material_type', materialType)
+  if (orderNo) form.append('order_no', orderNo)
+
+  const { status, text } = await _xhrPostMultipartWithRefresh(
+    '/api/v2/materials/upload', form, onProgress
+  )
+  if (status < 200 || status >= 300) {
+    throw new Error(`upload failed: ${status}`)
+  }
+  let env
+  try {
+    env = JSON.parse(text)
+  } catch {
+    return { _raw: text }
+  }
+  if (env?.code && env.code !== '1000') {
+    throw new Error(env.message || 'upload failed')
+  }
+  // W36 fix: real upload response wraps the material under `data.material`
+  // (same UploadResponse envelope as uploadMaterial()/_uploadChunked()) —
+  // this path was resolving with the whole envelope, leaving callers reading
+  // `.id`/`.material_id` with undefined.
+  return env?.data?.material || env?.data || env
+}
+
+// W37: 走原生 XHR 的上传（为了拿 upload.onprogress 真实进度）完全绕开了
+// http.js 里的 axios 拦截器，所以 access token 过期时不会自动 refresh——
+// 之前上传大概率会 401 失败，用户会被莫名其妙地弹"登录已过期"。这里补一次
+// "401 → 刷新 → 重放同一个 form" 的重试，跟 http.js 的行为对齐。
+async function _xhrPostMultipart(url, form, onProgress) {
+  const authToken = getAuthToken()
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest()
-    xhr.open('POST', '/api/v2/materials/upload')
-
-    const form = new FormData()
-    form.append('file', file)
-    form.append('material_type', materialType)
-    if (orderNo) form.append('order_no', orderNo)
-
+    xhr.open('POST', url)
+    if (authToken) xhr.setRequestHeader('Authorization', `Bearer ${authToken}`)
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable) {
         onProgress && onProgress(Math.round((e.loaded / e.total) * 100))
       }
     }
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        try {
-          const env = JSON.parse(xhr.responseText)
-          if (env?.code && env.code !== '1000') {
-            reject(new Error(env.message || 'upload failed'))
-          } else {
-            resolve(env?.data || env)
-          }
-        } catch {
-          resolve({ _raw: xhr.responseText })
-        }
-      } else {
-        reject(new Error(`upload failed: ${xhr.status}`))
-      }
-    }
+    xhr.onload = () => resolve({ status: xhr.status, text: xhr.responseText })
     xhr.onerror = () => reject(new Error('upload network error'))
     xhr.send(form)
   })
+}
+
+async function _xhrPostMultipartWithRefresh(url, form, onProgress) {
+  let result = await _xhrPostMultipart(url, form, onProgress)
+  if (result.status === 401) {
+    const auth = useAuthStore()
+    const refreshed = await auth.refreshAccessToken()
+    if (refreshed) {
+      result = await _xhrPostMultipart(url, form, onProgress)
+    }
+  }
+  return result
 }
 
 /**
@@ -315,17 +351,13 @@ export async function uploadMaterialWithProgress(file, materialType = 'passport'
 async function _uploadChunked(file, materialType, orderNo, onProgress) {
   const chunks = splitIntoChunks(file)
   const uploadId = 'up_' + Math.random().toString(36).slice(2, 14)
+  const authToken = getAuthToken()
 
   for (const chunk of chunks) {
     try {
-      const result = await uploadChunkXhr(chunk, uploadId, materialType, orderNo, null)
-      // result may contain _progressSignal if progress fired before resolution
-      if (result && typeof result === 'object') {
-        const sig = result._progressSignal
-        if (typeof sig === 'number') {
-          onProgress && onProgress(Math.round(sig))
-        }
-      }
+      await uploadChunkXhr(chunk, uploadId, materialType, orderNo, authToken, (overall) => {
+        onProgress && onProgress(Math.round(overall))
+      })
       // Update progress after chunk completes (covers cases where onprogress didn't fire)
       const chunkFraction = (chunk.index + 1) / chunk.total
       onProgress && onProgress(Math.round(chunkFraction * 100))
@@ -642,4 +674,43 @@ export async function diagnoseMaterials(args) {
     throw new Error(env.message || 'diagnose failed')
   }
   return env?.data || env
+}
+
+// W40/W41: LLM 补全行程单里空白的 transport/hotel/attraction 字段
+// （city 永远是用户自己填的，不自动生成）；flight 是航班上下文，帮 LLM 判断
+// 第一天/最后一天的交通方式。
+export async function generateItineraryAttractions({ countryName, lang, days, flight }) {
+  if (MOCK_MODE) {
+    await delay(600)
+    return {
+      days: days.map((d, i) => ({
+        ...d,
+        transport: d.transport || (i === 0 || i === days.length - 1 ? 'flight' : 'walk'),
+        hotel: d.hotel || `Hotel ${d.city || countryName || ''}`.trim(),
+        attraction: d.attraction || `${d.city || countryName || ''} · 自由行`.trim(),
+      })),
+    }
+  }
+  try {
+    // W40 fix: MiniMax 实测响应经常要 10-16 秒（天数越多越慢），比 http.js 里
+    // 15s 的全局默认超时还慢，所以单独给这个接口更长的超时（要比后端
+    // MiniMaxClient 自己的 45s 超时更长，让后端的超时先触发、报出干净的错误，
+    // 而不是前端先放弃、白白扔掉一个其实会成功的请求）。
+    const env = await http.post('/v2/itinerary/generate', {
+      country_name: countryName || '',
+      lang: lang || 'zh-CN',
+      days,
+      flight: flight || null,
+    }, { timeout: 50000 })
+    if (env?.code && env.code !== '1000') {
+      throw new Error(env.message || 'itinerary generate failed')
+    }
+    return env?.data || env
+  } catch (e) {
+    // http.js 的拦截器 reject 的是原始 axios error，message 是通用的 HTTP 状态文案，
+    // 真正的后端错误信息（比如 "MiniMax error 1008: insufficient balance"）在
+    // response.data.message 里，这里取出来重新抛，调用方才能拿到有意义的文案。
+    const backendMsg = e?.response?.data?.message
+    throw new Error(backendMsg || e?.message || 'itinerary generate failed')
+  }
 }

@@ -579,7 +579,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get forgotPageTitle => '找回密码';
 
   @override
-  String get forgotPageSubtitle => '输入手机号，我们发送重置验证码';
+  String get forgotPageSubtitle => '输入你的账号并设置新密码，立即重置。';
 
   @override
   String get forgotPhoneLabel => '手机号';
@@ -843,4 +843,502 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get ordernewSubmitting => '提交中...';
+
+  @override
+  String get applyTitle => '申请签证';
+
+  @override
+  String get applySub => '4 步搞定签证申请';
+
+  @override
+  String get applyStepCountry => '选择目的地';
+
+  @override
+  String get applyStepChecklist => '材料清单';
+
+  @override
+  String get applyStepTrip => '出行信息';
+
+  @override
+  String get applyStepConfirm => '确认申请';
+
+  @override
+  String get applyFeeLabel => '费用';
+
+  @override
+  String get applyProcessingLabel => '处理时间';
+
+  @override
+  String get applyValidityLabel => '有效期';
+
+  @override
+  String get applyVisaType => '签证类型';
+
+  @override
+  String get applyVisaTourism => '旅游';
+
+  @override
+  String get applyVisaBusiness => '商务';
+
+  @override
+  String get applyVisaStudent => '留学';
+
+  @override
+  String get applyVisaFamily => '探亲';
+
+  @override
+  String get applyVisaOther => '其他';
+
+  @override
+  String get applyDepartDate => '出发日期';
+
+  @override
+  String get applyReturnDate => '返回日期';
+
+  @override
+  String get applyDepartCity => '出发城市';
+
+  @override
+  String get applyDepartCityPh => '如:上海';
+
+  @override
+  String get applyEmergencyContact => '紧急联系人';
+
+  @override
+  String get applyEmergencyPh => '如:张三 +86 138xxxx';
+
+  @override
+  String get applyPurpose => '出行目的';
+
+  @override
+  String get applyPurposePh => '简要说明出行目的';
+
+  @override
+  String get applyBack => '← 上一步';
+
+  @override
+  String get applyNextMaterials => '下一步:填表';
+
+  @override
+  String get applyNextConfirm => '下一步:确认';
+
+  @override
+  String get applyPickDate => '选择日期';
+
+  @override
+  String get applyConfirmSubmit => '确认提交';
+
+  @override
+  String get applySubmitting => '提交中…';
+
+  @override
+  String get applyRequired => '必';
+
+  @override
+  String get diagnoseTitle => '通过率预评估';
+
+  @override
+  String get diagnoseSub => '先了解通过率,再决定要不要正式申请';
+
+  @override
+  String get diagnoseStepForm => '填写基本信息';
+
+  @override
+  String get diagnoseResult => '评估结果';
+
+  @override
+  String get diagnoseFactors => '影响因素';
+
+  @override
+  String get diagnoseSuggestions => '改进建议';
+
+  @override
+  String get diagnoseCtaApply => '继续申请这个国家 →';
+
+  @override
+  String get diagnoseRestart => '重新评估';
+
+  @override
+  String get diagnoseLevelHigh => '通过率高';
+
+  @override
+  String get diagnoseLevelMedium => '中等';
+
+  @override
+  String get diagnoseLevelLow => '通过率低';
+
+  @override
+  String get diagnoseMarital => '婚姻状况';
+
+  @override
+  String get diagnoseMaritalSingle => '未婚';
+
+  @override
+  String get diagnoseMaritalMarried => '已婚';
+
+  @override
+  String get diagnoseMaritalDivorced => '离异';
+
+  @override
+  String get diagnoseMaritalWidowed => '丧偶';
+
+  @override
+  String get diagnoseIncome => '月收入 (人民币)';
+
+  @override
+  String get diagnoseIncomeBelow5k => '<5k';
+
+  @override
+  String get diagnoseIncome5k15k => '5k-15k';
+
+  @override
+  String get diagnoseIncome15k30k => '15k-30k';
+
+  @override
+  String get diagnoseIncome30k100k => '30k-100k';
+
+  @override
+  String get diagnoseIncomeAbove100k => '>100k';
+
+  @override
+  String get diagnosePurpose => '出行目的';
+
+  @override
+  String get diagnosePurposeBusiness => '商务';
+
+  @override
+  String get diagnosePurposeTourism => '旅游';
+
+  @override
+  String get diagnosePurposeFamily => '探亲';
+
+  @override
+  String get diagnosePurposeStudy => '留学';
+
+  @override
+  String get diagnosePurposeOther => '其他';
+
+  @override
+  String get diagnoseTravelHistory => '过去 5 年出行记录';
+
+  @override
+  String get diagnoseTravelNone => '无';
+
+  @override
+  String get diagnoseTravel1to3 => '1-3 次';
+
+  @override
+  String get diagnoseTravel4to10 => '4-10 次';
+
+  @override
+  String get diagnoseTravelAbove10 => '10+ 次';
+
+  @override
+  String get diagnoseVisaHistory => '签证历史';
+
+  @override
+  String get diagnoseVisaNone => '无';
+
+  @override
+  String get diagnoseVisa1to2 => '1-2 次';
+
+  @override
+  String get diagnoseVisaAbove2 => '2+ 次';
+
+  @override
+  String get diagnoseEmployment => '在职状态';
+
+  @override
+  String get diagnoseEmpEmployed => '在职';
+
+  @override
+  String get diagnoseEmpFreelancer => '自由职业';
+
+  @override
+  String get diagnoseEmpStudent => '学生';
+
+  @override
+  String get diagnoseEmpRetired => '退休';
+
+  @override
+  String get diagnoseEmpUnemployed => '待业';
+
+  @override
+  String get diagnoseAge => '年龄 (选填)';
+
+  @override
+  String get diagnoseAgePh => '如:30';
+
+  @override
+  String get diagnoseSoloFemale => '是否单身女性独自旅行';
+
+  @override
+  String get diagnoseSubmit => '查看评估结果';
+
+  @override
+  String get diagnoseSubmitting => '评估中…';
+
+  @override
+  String get diagnoseReselect => '← 重新选国家';
+
+  @override
+  String get diagnoseStart => '开始评估';
+
+  @override
+  String get resourcesTitle => '签证政策问答';
+
+  @override
+  String get resourcesSub => 'AI 会从 4 国官方资料里找答案';
+
+  @override
+  String get resourcesHint => '例如:美国签证费用是多少';
+
+  @override
+  String get resourcesEmpty => '开始提问吧';
+
+  @override
+  String get resourcesFollowup => '追问';
+
+  @override
+  String get resourcesSources => '来源';
+
+  @override
+  String get resourcesRelevance => '相关度';
+
+  @override
+  String get contactTitle => '联系我们';
+
+  @override
+  String get contactSub => '工作日 9:00-18:00 (UTC+8) 小时内回复';
+
+  @override
+  String get contactEmail => '邮箱';
+
+  @override
+  String get contactEmailAddr => 'support@htex.app';
+
+  @override
+  String get contactEmailSub => '所有问题 24 小时内回复';
+
+  @override
+  String get contactChat => '在线客服';
+
+  @override
+  String get contactChatSub => '工作日实时回复';
+
+  @override
+  String get contactBug => 'Bug 反馈';
+
+  @override
+  String get contactBugSub => '工程师直接收到';
+
+  @override
+  String get contactBiz => '商务合作';
+
+  @override
+  String get contactBizAddr => 'biz@htex.app';
+
+  @override
+  String get contactBizSub => 'Affiliate / 旅行社';
+
+  @override
+  String get contactTip => '紧急情况请直接联系所在国的大使馆或领事馆。Htex 不能代替官方渠道。';
+
+  @override
+  String get passportUploadTitle => '上传护照';
+
+  @override
+  String get passportUploadSub => '拍一张清晰的护照照片';
+
+  @override
+  String get passportUploadTip => '确保信息页(照片页)四边对齐,光线充足';
+
+  @override
+  String get passportGallery => '相册';
+
+  @override
+  String get passportCamera => '拍照';
+
+  @override
+  String get passportRecognize => '识别护照信息';
+
+  @override
+  String get passportRecognizing => '识别中…';
+
+  @override
+  String get passportReviewTitle => '确认护照信息';
+
+  @override
+  String get passportReviewDetected => '✓ 已识别为护照';
+
+  @override
+  String get passportReviewWarn => '⚠️ 未识别为护照';
+
+  @override
+  String get passportReviewConfirm => '确认,下一步';
+
+  @override
+  String get passportReviewRetake => '重拍';
+
+  @override
+  String get passportReviewPassportNo => '护照号';
+
+  @override
+  String get passportReviewSurname => '姓 (Surname)';
+
+  @override
+  String get passportReviewGivenName => '名 (Given Name)';
+
+  @override
+  String get passportReviewSex => '性别 (M / F)';
+
+  @override
+  String get passportReviewNationality => '国籍';
+
+  @override
+  String get passportReviewDob => '出生日期 (YYYY-MM-DD)';
+
+  @override
+  String get passportReviewExpiry => '有效期至 (YYYY-MM-DD)';
+
+  @override
+  String get loginAccountTab => '账号登录';
+
+  @override
+  String get loginSmsTab => '手机验证';
+
+  @override
+  String get loginAccountLabel => '邮箱或用户名';
+
+  @override
+  String get loginAccountPh => 'user@example.com 或 username';
+
+  @override
+  String get registerUsernameLabel => '用户名';
+
+  @override
+  String get registerUsernamePh => '3-32 字符,字母数字开头';
+
+  @override
+  String get registerUsernameHint => '3-32 字符,字母数字开头,可含 _.-';
+
+  @override
+  String get registerEmailLabel => '邮箱';
+
+  @override
+  String get registerEmailPh => 'user@example.com';
+
+  @override
+  String get registerNicknameLabel => '昵称 (选填)';
+
+  @override
+  String get registerNicknamePh => '想让别人叫你什么';
+
+  @override
+  String get registerEmailInvalid => '邮箱格式不正确';
+
+  @override
+  String get registerUsernameInvalid => '用户名格式不正确';
+
+  @override
+  String get homeSloganZh => '无限可能,随行而至';
+
+  @override
+  String get homeCtaDiagnose => '查通过率';
+
+  @override
+  String get homeCtaAsk => '问政策';
+
+  @override
+  String get homeTrust => '10 万+ 用户 · 99% 通过率';
+
+  @override
+  String get homeFeatureUploadTitle => '上传护照';
+
+  @override
+  String get homeFeatureUploadSub => 'OCR 自动识别';
+
+  @override
+  String get homeFeatureDiagnoseTitle => '通过率评估';
+
+  @override
+  String get homeFeatureDiagnoseSub => '拒签风险评分';
+
+  @override
+  String get homeFeatureResourcesTitle => '政策问答';
+
+  @override
+  String get homeFeatureResourcesSub => 'RAG 4 国官方资料';
+
+  @override
+  String get homeFeatureContactTitle => '联系我们';
+
+  @override
+  String get homeFeatureContactSub => '工作日 9-18h';
+
+  @override
+  String get homeHotVisa => '热门签证目的地';
+
+  @override
+  String get homeViewAll => '查看全部 →';
+
+  @override
+  String get homeSectionFeatures => '你能用 Htex 做什么';
+
+  @override
+  String get homeFooterUpload => '上传';
+
+  @override
+  String get homeFooterDiagnose => '评估';
+
+  @override
+  String get homeFooterQa => '问答';
+
+  @override
+  String get homeFooterContact => '客服';
+
+  @override
+  String get homeHeroCityPrefix => '无限可能,随行而至';
+
+  @override
+  String get homeFromPrice => 'FROM';
+
+  @override
+  String get homeApplyNow => '立即申请';
+
+  @override
+  String get homeFooterCopyright => 'Htex · Wherever you go, life is infinite';
+
+  @override
+  String get destinationsTitle => '选择目的地';
+
+  @override
+  String get destinationsHero => '热门签证';
+
+  @override
+  String get destinationsSchengen => '申根 26 国';
+
+  @override
+  String get destinationsExpand => '展开';
+
+  @override
+  String get destinationsCollapse => '收起';
+
+  @override
+  String get destinationsValid => 'VALID';
+
+  @override
+  String get destinationsApply => '办签证';
+
+  @override
+  String get destinationsSearch => '搜索国家名或代码';
+
+  @override
+  String get selfieStart => '开始自拍';
+
+  @override
+  String get selfieRetake => '重拍';
+
+  @override
+  String get selfieHint => '点击下方按钮开始自拍';
 }

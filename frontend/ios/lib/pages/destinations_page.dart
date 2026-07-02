@@ -1,12 +1,14 @@
-// Destinations page — W13 Flutter iOS port of miniprogram/pages/destinations/.
+// Destinations page — W32 port: hero 5 国封面 + 26 国 schengen grid.
 //
-// Shows all available visa destinations in a scrollable grid.
-// Mock data: static country list (API integration in V2.1).
-// Each card shows flag + country name + visa type chips + Apply button.
+// Sections:
+//   - Search bar → CountrySearchModal
+//   - Hero 5 国 (US / AU / GB / Schengen / JP) 大图卡片
+//   - Schengen 26 国 grid (展开/收起)
 
 import 'package:flutter/material.dart';
-import '../l10n/generated/app_localizations.dart';
-import '../main.dart';
+import '../services/destinations_service.dart';
+import '../widgets/country_search_modal.dart';
+import 'apply_page.dart';
 
 class DestinationsPage extends StatefulWidget {
   const DestinationsPage({super.key});
@@ -16,226 +18,188 @@ class DestinationsPage extends StatefulWidget {
 }
 
 class _DestinationsPageState extends State<DestinationsPage> {
-  bool _loading = false;
-  String? _error;
+  List<Destination> _all = const [];
+  List<Destination> _hero = const [];
+  List<Destination> _schengen = const [];
+  bool _schengenExpanded = false;
+  bool _loading = true;
 
-  static final List<Map<String, dynamic>> _destinations = [
-    {'code': 'TH', 'name': 'Thailand', 'nameZh': '泰国', 'nameId': 'Thailand', 'nameVi': 'Thái Lan', 'types': ['旅游签', '学生签'], 'enabled': true},
-    {'code': 'VN', 'name': 'Vietnam', 'nameZh': '越南', 'nameId': 'Vietnam', 'nameVi': 'Việt Nam', 'types': ['旅游签'], 'enabled': true},
-    {'code': 'ID', 'name': 'Indonesia', 'nameZh': '印度尼西亚', 'nameId': 'Indonesia', 'nameVi': 'Indonesia', 'types': ['旅游签'], 'enabled': true},
-    {'code': 'PH', 'name': 'Philippines', 'nameZh': '菲律宾', 'nameId': 'Filipina', 'nameVi': 'Philippines', 'types': ['旅游签'], 'enabled': true},
-    {'code': 'MY', 'name': 'Malaysia', 'nameZh': '马来西亚', 'nameId': 'Malaysia', 'nameVi': 'Malaysia', 'types': ['旅游签', '学生签'], 'enabled': true},
-    {'code': 'SG', 'name': 'Singapore', 'nameZh': '新加坡', 'nameId': 'Singapura', 'nameVi': 'Singapore', 'types': ['旅游签'], 'enabled': true},
-    {'code': 'JP', 'name': 'Japan', 'nameZh': '日本', 'nameId': 'Jepang', 'nameVi': 'Nhật Bản', 'types': ['旅游签', '学生签'], 'enabled': false},
-    {'code': 'KR', 'name': 'South Korea', 'nameZh': '韩国', 'nameId': 'Korea Selatan', 'nameVi': 'Hàn Quốc', 'types': ['旅游签'], 'enabled': false},
-    {'code': 'AU', 'name': 'Australia', 'nameZh': '澳大利亚', 'nameId': 'Australia', 'nameVi': 'Úc', 'types': ['旅游签', '学生签'], 'enabled': false},
-    {'code': 'GB', 'name': 'United Kingdom', 'nameZh': '英国', 'nameId': 'Inggris', 'nameVi': 'Anh', 'types': ['旅游签', '学生签'], 'enabled': false},
-    {'code': 'DE', 'name': 'Germany', 'nameZh': '德国', 'nameId': 'Jerman', 'nameVi': 'Đức', 'types': ['旅游签', '申根签'], 'enabled': false},
-    {'code': 'FR', 'name': 'France', 'nameZh': '法国', 'nameId': 'Prancis', 'nameVi': 'Pháp', 'types': ['旅游签', '申根签'], 'enabled': false},
-  ];
+  final _destSvc = DestinationsService();
 
-  String _countryName(Map<String, dynamic> d) {
-    final l = AppLocalizations.of(context)!;
-    final code = l.localeName;
-    if (code.startsWith('zh')) return d['nameZh'] as String;
-    if (code == 'id') return d['nameId'] as String;
-    if (code == 'vi') return d['nameVi'] as String;
-    return d['name'] as String;
+  @override
+  void initState() {
+    super.initState();
+    _load();
   }
 
-  String _flag(String code) {
-    if (code.isEmpty) return '🌐';
-    return code.toUpperCase().split('').map((c) => String.fromCharCode(0x1f1e6 + c.codeUnitAt(0) - 65)).join();
-  }
-
-  void _onApply(Map<String, dynamic> dest) {
-    if (!(dest['enabled'] as bool)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context)!.destComingSoon),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
+  Future<void> _load() async {
+    try {
+      final list = await _destSvc.list(lang: 'zh-CN');
+      final hero = list.where((d) => const {'US', 'AU', 'GB', 'SCHENGEN', 'JP'}.contains(d.countryCode)).toList();
+      final schengen = list.where((d) => !const {'US', 'AU', 'GB', 'JP'}.contains(d.countryCode)).toList();
+      setState(() {
+        _all = list;
+        _hero = hero.isEmpty ? DestinationsService.fallback() : hero;
+        _schengen = schengen;
+        _loading = false;
+      });
+    } catch (_) {
+      setState(() {
+        _all = DestinationsService.fallback();
+        _hero = DestinationsService.fallback();
+        _schengen = const [];
+        _loading = false;
+      });
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${_countryName(dest)} — ${AppLocalizations.of(context)!.destApplyNow}'),
-        backgroundColor: const Color(0xFF3B6EF5),
-      ),
-    );
+  }
+
+  void _openApply(Destination d) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => ApplyPage(initialCountryCode: d.countryCode)));
+  }
+
+  void _openSearch() {
+    CountrySearchModal.show(context, countries: _all, onSelect: _openApply);
   }
 
   @override
   Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
-
+    if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
     return Scaffold(
       backgroundColor: const Color(0xFFFAFBFC),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: Row(
-          children: [
-            Container(
-              width: 28, height: 28,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [Color(0xFF3B6EF5), Color(0xFF6E59F0)]),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              alignment: Alignment.center,
-              child: const Text('V', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-            ),
-            const SizedBox(width: 8),
-            Text(l.commonAppName, style: const TextStyle(color: Color(0xFF1A1A2E), fontWeight: FontWeight.w600, fontSize: 16)),
-          ],
-        ),
+        title: const Text('选择目的地', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF0F172A))),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.language, color: Color(0xFF6B7280)),
-            onPressed: () => _showLanguageSheet(context),
-          ),
+          IconButton(icon: const Icon(Icons.search), onPressed: _openSearch),
         ],
       ),
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(l.destTitle, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF1A1A2E))),
-                  const SizedBox(height: 4),
-                  Text(l.destSubtitle, style: const TextStyle(fontSize: 14, color: Color(0xFF6B7280))),
-                ],
-              ),
-            ),
-            Expanded(
-              child: GridView.builder(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 0.88,
-                ),
-                itemCount: _destinations.length,
-                itemBuilder: (ctx, i) {
-                  final d = _destinations[i];
-                  final enabled = d['enabled'] as bool;
-                  final types = (d['types'] as List).cast<String>();
-                  return _DestinationCard(
-                    flag: _flag(d['code'] as String),
-                    name: _countryName(d),
-                    types: types,
-                    enabled: enabled,
-                    l: l,
-                    onApply: () => _onApply(d),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showLanguageSheet(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    showModalBottomSheet(
-      context: context,
-      builder: (_) => Column(
-        mainAxisSize: MainAxisSize.min,
+      body: ListView(
+        padding: const EdgeInsets.all(16),
         children: [
-          ListTile(title: Text(l.languageZh), onTap: () { Navigator.pop(context); _setLocale(context, const Locale('zh')); }),
-          ListTile(title: Text(l.languageEn), onTap: () { Navigator.pop(context); _setLocale(context, const Locale('en')); }),
-          ListTile(title: Text(l.languageId), onTap: () { Navigator.pop(context); _setLocale(context, const Locale('id')); }),
-          ListTile(title: Text(l.languageVi), onTap: () { Navigator.pop(context); _setLocale(context, const Locale('vi')); }),
-          const SizedBox(height: 16),
+          // Hero 5 国封面
+          ..._hero.map((d) => _heroCoverCard(d)),
+          const SizedBox(height: 24),
+          // Schengen 26 国
+          if (_schengen.isNotEmpty) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(children: [
+                  const Text('🇪🇺', style: TextStyle(fontSize: 18)),
+                  const SizedBox(width: 6),
+                  Text('申根 26 国 (${_schengen.length})', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF0F172A))),
+                ]),
+                TextButton(
+                  onPressed: () => setState(() => _schengenExpanded = !_schengenExpanded),
+                  child: Text(_schengenExpanded ? '收起' : '展开'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (_schengenExpanded) _schengenGrid(_schengen)
+            else _schengenPreview(_schengen.take(6).toList()),
+          ],
         ],
       ),
     );
   }
 
-  void _setLocale(BuildContext context, Locale locale) {
-    // Trigger locale change by navigating home with new locale
-    Navigator.pushNamedAndRemoveUntil(context, AppRoutes.home, (r) => false);
-  }
-}
-
-class _DestinationCard extends StatelessWidget {
-  final String flag;
-  final String name;
-  final List<String> types;
-  final bool enabled;
-  final AppLocalizations l;
-  final VoidCallback onApply;
-
-  const _DestinationCard({
-    required this.flag, required this.name, required this.types,
-    required this.enabled, required this.l, required this.onApply,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _heroCoverCard(Destination d) {
     return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8, offset: const Offset(0, 2))],
-        border: enabled ? null : Border.all(color: Colors.grey.shade300),
+        // W33: avoid LinearGradient on Flutter web canvas — solid color instead
+        color: const Color(0xFFEFF6FF),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
-      child: Opacity(
-        opacity: enabled ? 1.0 : 0.55,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(flag, style: const TextStyle(fontSize: 36)),
-              const SizedBox(height: 8),
-              Text(name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF1A1A2E)), maxLines: 1, overflow: TextOverflow.ellipsis),
-              const SizedBox(height: 6),
-              Expanded(
-                child: Wrap(
-                  spacing: 4,
-                  runSpacing: 4,
-                  children: types.map((t) => Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEEF2FF),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(t, style: const TextStyle(fontSize: 11, color: Color(0xFF3B6EF5))),
-                  )).toList(),
-                ),
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: enabled ? onApply : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: enabled ? const Color(0xFF3B6EF5) : Colors.grey.shade300,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                  ),
-                  child: Text(
-                    enabled ? l.destApplyNow : l.destComingSoon,
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ),
-            ],
+      child: Row(
+        children: [
+          Text(_flagOf(d.countryCode), style: const TextStyle(fontSize: 36)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(d.countryName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF0F172A))),
+                const SizedBox(height: 4),
+                Row(children: [
+                  if (d.feeLabel.isNotEmpty) Text('FROM ${d.feeLabel}', style: const TextStyle(fontSize: 13, color: Color(0xFF3B6EF5), fontWeight: FontWeight.w700)),
+                  if (d.feeLabel.isNotEmpty && d.validityLabel.isNotEmpty) const Text(' · ', style: TextStyle(color: Color(0xFF94A3B8))),
+                  if (d.validityLabel.isNotEmpty) Text('VALID ${d.validityLabel}', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                ]),
+              ],
+            ),
           ),
-        ),
+          ElevatedButton(
+            onPressed: () => _openApply(d),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3B6EF5), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
+            child: const Text('办签证', style: TextStyle(fontSize: 12)),
+          ),
+        ],
       ),
     );
+  }
+
+  Widget _schengenPreview(List<Destination> preview) {
+    return Wrap(
+      spacing: 8, runSpacing: 8,
+      children: preview.map((d) => InkWell(
+        onTap: () => _openApply(d),
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(color: Colors.white, border: Border.all(color: const Color(0xFFE2E8F0)), borderRadius: BorderRadius.circular(10)),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Text(_flagOf(d.countryCode), style: const TextStyle(fontSize: 16)),
+            const SizedBox(width: 4),
+            Text(d.countryCode, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+          ]),
+        ),
+      )).toList(),
+    );
+  }
+
+  Widget _schengenGrid(List<Destination> all) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, crossAxisSpacing: 8, mainAxisSpacing: 8),
+      itemCount: all.length,
+      itemBuilder: (_, i) {
+        final d = all[i];
+        return InkWell(
+          onTap: () => _openApply(d),
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(color: Colors.white, border: Border.all(color: const Color(0xFFE2E8F0)), borderRadius: BorderRadius.circular(10)),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(_flagOf(d.countryCode), style: const TextStyle(fontSize: 28)),
+                const SizedBox(height: 4),
+                Text(d.countryCode, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  String _flagOf(String cc) {
+    const flags = {
+      'US': '🇺🇸', 'JP': '🇯🇵', 'KR': '🇰🇷', 'SG': '🇸🇬', 'GB': '🇬🇧', 'FR': '🇫🇷',
+      'ID': '🇮🇩', 'VN': '🇻🇳', 'TH': '🇹🇭', 'DE': '🇩🇪', 'AU': '🇦🇺', 'CA': '🇨🇦',
+      'NZ': '🇳🇿', 'SCHENGEN': '🇪🇺',
+      'AT': '🇦🇹', 'BE': '🇧🇪', 'HR': '🇭🇷', 'CZ': '🇨🇿', 'DK': '🇩🇰', 'EE': '🇪🇪',
+      'FI': '🇫🇮', 'GR': '🇬🇷', 'HU': '🇭🇺', 'IS': '🇮🇸', 'IT': '🇮🇹', 'LV': '🇱🇻',
+      'LI': '🇱🇮', 'LT': '🇱🇹', 'LU': '🇱🇺', 'MT': '🇲🇹', 'NL': '🇳🇱', 'NO': '🇳🇴',
+      'PL': '🇵🇱', 'PT': '🇵🇹', 'SK': '🇸🇰', 'SI': '🇸🇮', 'ES': '🇪🇸', 'SE': '🇸🇪',
+    };
+    return flags[cc] ?? '🌐';
   }
 }

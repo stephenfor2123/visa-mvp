@@ -41,9 +41,17 @@ def _bearer(token: str) -> dict[str, str]:
 
 
 async def _register(client, phone: str) -> str:
+    """Register or reuse account keyed by phone → returns access token."""
+    uname = f"u{phone}"
+    email = f"{phone}@test.local"
+    pwd = "Test1234"
+    await client.post(
+        "/api/v2/auth/register",
+        json={"username": uname, "email": email, "password": pwd},
+    )
     r = await client.post(
-        "/api/v2/auth/sms-login",
-        json={"phone": phone, "phone_country": "+86", "sms_code": "123456"},
+        "/api/v2/auth/login",
+        json={"account": email, "password": pwd},
     )
     assert r.status_code == 200, r.text
     return r.json()["data"]["access_token"]
@@ -250,9 +258,9 @@ class TestRPAConfigGet:
         assert "mock_mode" in data
         assert "rate_limits" in data
         assert "countries" in data
-        # W22 fix: countries 是 {country: bool enabled} 不是 dict-of-dicts
-        assert data["countries"].get("Indonesia") is True
-        assert data["countries"].get("Vietnam") is True
+        # countries uses ISO 3166-1 alpha-2 codes as keys
+        assert data["countries"].get("ID") is True
+        assert data["countries"].get("VN") is True
 
 
 # ----------------------------------------------------------------- #

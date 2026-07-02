@@ -31,8 +31,8 @@
         <h2>{{ t('diagnose.pick_materials', '选择要诊断的材料') }} <span class="diag-mat-count">{{ selectedIds.length }}/{{ materials.length }}</span></h2>
         <div v-if="loadingMats" class="state-loading">⏳ {{ t('common.loading') }}</div>
         <div v-else-if="materials.length === 0" class="diag-empty">
-          <p>{{ t('diagnose.no_materials', '你还没有上传任何材料,先去 /materials 上传吧。') }}</p>
-          <router-link to="/materials" class="diag-cta">{{ t('diagnose.go_upload', '去上传材料') }}</router-link>
+          <p>{{ t('diagnose.no_materials', '你还没有上传任何材料,先去材料收集向导上传吧。') }}</p>
+          <router-link :to="{ name: 'MaterialWizard', query: { country: countryCode, visa_type: visaType || 'tourism' } }" class="diag-cta">{{ t('diagnose.go_upload', '去上传材料') }}</router-link>
         </div>
         <div v-else class="diag-mat-list">
           <label

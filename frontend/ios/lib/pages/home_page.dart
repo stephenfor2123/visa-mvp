@@ -1,369 +1,531 @@
-// Home page — port of frontend/web/src/views/Home.vue to Flutter (W8-1).
+// Home page — W33 Atlys-style port of frontend/web/src/views/Home.vue.
 //
-// Layout mirrors the web home page on a mobile canvas:
-// - AppBar with brand mark (V) + app name + nav actions (Home/Profile/Login)
-// - Hero section: gradient background, slogan, subtitle, two CTAs, country chip grid
-// - Features section: 4 feature cards (材料清单/拒签险/模板库/Affiliate)
+// W33 update: 2-column compact country tiles + 10-photo hero slideshow.
 //
-// Country chips here are static (no destination API on W8-1 yet) — the W2
-// destinations list will replace this list with real data.
+// Key design points (Atlys-inspired):
+//   - White background (not blue gradient)
+//   - 2-column grid of compact country tiles: flag + name + FROM $X + chips
+//   - 10-photo hero slideshow (matches PC web端) auto-rotates 6s
+//   - Atlys "FROM $X" pricing transparency pattern
+//   - White nav + clean type, mobile scroll-friendly
 
+import 'dart:async';
 import 'package:flutter/material.dart';
-
 import '../l10n/generated/app_localizations.dart';
-import '../main.dart';
+import '../services/destinations_service.dart';
+import 'apply_page.dart';
+import 'diagnose_page.dart';
+import 'resources_page.dart';
+import 'contact_page.dart';
+import 'passport_upload_page.dart';
+import 'destinations_page.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
-  // 4 country chips shown in the hero — W2 will source from /api/v2/destinations.
-  static const List<Map<String, String>> _heroCountries = [
-    {'code': 'TH', 'flag': '🇹🇭', 'name': 'Thailand'},
-    {'code': 'VN', 'flag': '🇻🇳', 'name': 'Vietnam'},
-    {'code': 'ID', 'flag': '🇮🇩', 'name': 'Indonesia'},
-    {'code': 'PH', 'flag': '🇵🇭', 'name': 'Philippines'},
-    {'code': 'MY', 'flag': '🇲🇾', 'name': 'Malaysia'},
-    {'code': 'SG', 'flag': '🇸🇬', 'name': 'Singapore'},
-  ];
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  List<Destination> _heroCountries = DestinationsService.fallback();
+  List<Destination> _allCountries = DestinationsService.fallback();
+  bool _loading = false;
+
+  final _destSvc = DestinationsService();
+
+  @override
+  void initState() {
+    super.initState();
+    _refresh();
+  }
+
+  Future<void> _refresh() async {
+    final lang = _activeLang();
+    try {
+      // W34: pass active locale so destination names come back translated
+      // (e.g. zh → 美国, en → United States, id → Amerika Serikat).
+      final list = await _destSvc.list(lang: lang);
+      if (!mounted) return;
+      final grouped = _destSvc.groupByVisaType(list);
+      setState(() {
+        _heroCountries = (grouped['national'] ?? []).isNotEmpty
+            ? grouped['national']!
+            : DestinationsService.fallback(lang: lang);
+        _allCountries = list.isNotEmpty ? list : DestinationsService.fallback(lang: lang);
+      });
+    } catch (_) {
+      // keep fallback (in active locale)
+      if (!mounted) return;
+      setState(() {
+        final fb = DestinationsService.fallback(lang: lang);
+        _heroCountries = fb;
+        _allCountries = fb;
+      });
+    }
+  }
+
+  String _flagOf(String cc) {
+    const flags = {'US': '🇺🇸', 'GB': '🇬🇧', 'AU': '🇦🇺', 'SCHENGEN': '🇪🇺', 'JP': '🇯🇵', 'KR': '🇰🇷', 'SG': '🇸🇬', 'FR': '🇫🇷'};
+    return flags[cc] ?? '🌐';
+  }
+
+  // W33 country landmark photo asset (matches web端 Home.vue countryImage map).
+  // Falls back to US landmark if the country isn't in the list.
+  String _photoOf(String cc) {
+    const map = {
+      'US': 'assets/countries/us_liberty.jpg',
+      'AU': 'assets/countries/au_sydney.jpg',
+      'GB': 'assets/countries/gb_bigben.jpg',
+      'SCHENGEN': 'assets/countries/schengen_eiffel.jpg',
+    };
+    return map[cc] ?? 'assets/countries/us_liberty.jpg';
+  }
+
+  // W34: short locale code (en / zh / id / vi) for API + fallback lookups.
+  String _activeLang() {
+    final l = AppLocalizations.of(context);
+    final code = l?.localeName ?? 'zh';
+    return code.split(RegExp('[-_]')).first.toLowerCase();
+  }
+
+  void _openApply(String? cc) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => ApplyPage(initialCountryCode: cc)));
+  }
+
+  void _openDiagnose() => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const DiagnosePage()));
+  void _openResources() => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ResourcesPage()));
+  void _openContact() => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ContactPage()));
+  void _openPassport() => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PassportUploadPage()));
+  void _openAllDestinations() => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const DestinationsPage()));
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFBFC),
+      backgroundColor: Colors.white,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildHeader(context, l, theme),
-              const SizedBox(height: 16),
+        bottom: false,
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            _buildHeader(context),
+            const SizedBox(height: 8),
+            _buildHeroBanner(context),
+            const SizedBox(height: 20),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(l.homeHotVisa,
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF0F172A))),
+                  TextButton(
+                    onPressed: _openAllDestinations,
+                    style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 0), tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                    child: Text(l.homeViewAll, style: const TextStyle(fontSize: 12, color: Color(0xFF3B6EF5), fontWeight: FontWeight.w600)),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            if (_loading)
+              const Padding(padding: EdgeInsets.all(40), child: Center(child: CircularProgressIndicator()))
+            else
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _buildHero(context, l, theme),
+                child: GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                    childAspectRatio: 0.72,
+                  ),
+                  itemCount: _heroCountries.length,
+                  itemBuilder: (_, i) => _buildCountryTile(_heroCountries[i]),
+                ),
               ),
-              const SizedBox(height: 28),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _buildFeatures(context, l, theme),
-              ),
-              const SizedBox(height: 24),
-              _buildFooter(l, theme),
-            ],
-          ),
+            const SizedBox(height: 20),
+            _buildFeatures(context),
+            const SizedBox(height: 24),
+            _buildFooter(l),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context, AppLocalizations l, ThemeData theme) {
+  // ── Top nav ──────────────────────────────────────────────────────────────
+
+  Widget _buildHeader(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       color: Colors.white,
       child: Row(
         children: [
-          // Brand mark — matches web V mark
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF3B6EF5), Color(0xFF6E59F0)],
-              ),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            alignment: Alignment.center,
-            child: const Text(
-              'V',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-                fontSize: 18,
-              ),
+          const Text(
+            'htex',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF0F172A),
+              letterSpacing: -0.4,
             ),
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              l.appName,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () => _goHome(context),
-            child: Text(
-              l.navHome,
-              style: TextStyle(
-                color: theme.colorScheme.primary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () => _goLogin(context),
-            child: Text(l.navLogin),
-          ),
+          const Spacer(),
+          IconButton(icon: const Icon(Icons.search, color: Color(0xFF64748B)), onPressed: _openAllDestinations),
+          IconButton(icon: const Icon(Icons.person_outline, color: Color(0xFF64748B)), onPressed: () => Navigator.of(context).pushNamed('/login')),
         ],
       ),
     );
   }
 
-  Widget _buildHero(BuildContext context, AppLocalizations l, ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 28, 20, 28),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF3B6EF5), Color(0xFF6E59F0)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x403B6EF5),
-            blurRadius: 20,
-            offset: Offset(0, 8),
+  // ── Hero banner: 10-photo travel slideshow (matches web端 5173) ──────────
+
+  // 10 张真实运动场景(雪山/海岛/极光/沙漠/星空/云海),每 6s 自动轮播。
+  // Flutter Web build (8765) 不支持 mp4 自动循环,使用同名 jpg 静态图 +
+  // AnimatedSwitcher 淡入淡出达到"动起来"的效果;真实 iOS App 端后续可
+  // 换成 video_player 走 mp4。
+  // t1 — 雪山 / 山野
+  // t2 — 海岛 / 城市
+  // t3 — 极光 / 天空
+  // t4 — 沙漠 / 山系
+  // t5 — 星空 / 云海
+  static const List<String> _heroSlides = [
+    'assets/hero/t1_snow.jpg',
+    'assets/hero/t1_hiker.jpg',
+    'assets/hero/t2_island.jpg',
+    'assets/hero/t2_backpack_city.jpg',
+    'assets/hero/t3_aurora.jpg',
+    'assets/hero/t3_plane_sunset.jpg',
+    'assets/hero/t4_desert.jpg',
+    'assets/hero/t4_dolomites.jpg',
+    'assets/hero/t5_stars.jpg',
+    'assets/hero/t5_window_clouds.jpg',
+  ];
+
+  Widget _buildHeroBanner(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: SizedBox(
+          height: 190,
+          child: _HeroSlideshow(
+            slides: _heroSlides,
+            localePrefix: l?.homeHeroCityPrefix ?? '无限可能,随行而至',
+            onDiagnose: _openDiagnose,
+            onResources: _openResources,
           ),
-        ],
+        ),
       ),
+    );
+  }
+
+  // ── 2-col compact country tile ──────────────────────────────────────────
+
+  Widget _buildCountryTile(Destination d) {
+    final l = AppLocalizations.of(context);
+    final fromLabel = l?.homeFromPrice ?? 'FROM';
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => _openApply(d.countryCode),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // ── Full-bleed country photo ──
+            Image.asset(
+              _photoOf(d.countryCode),
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(
+                color: const Color(0xFF1E3A8A),
+                alignment: Alignment.center,
+                child: Text(_flagOf(d.countryCode), style: const TextStyle(fontSize: 36)),
+              ),
+            ),
+            // ── Bottom dark gradient (text legibility) ──
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0x00000000),
+                    Color(0x00000000),
+                    Color(0x66000000),
+                    Color(0xCC000000),
+                  ],
+                  stops: [0.0, 0.45, 0.75, 1.0],
+                ),
+              ),
+            ),
+            // ── Bottom: centered name + FROM $X + chips ──
+            Positioned(
+              left: 10, right: 10, bottom: 12,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    d.countryName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      shadows: _textShadow,
+                    ),
+                  ),
+                  if (d.feeLabel.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Text(fromLabel, style: const TextStyle(fontSize: 9, color: Color(0xCCFFFFFF), fontWeight: FontWeight.w700, letterSpacing: 1.1, shadows: _textShadow)),
+                        const SizedBox(width: 4),
+                        Text(d.feeLabel, style: const TextStyle(fontSize: 17, color: Color(0xFFFBBF24), fontWeight: FontWeight.w800, shadows: _textShadow)),
+                      ],
+                    ),
+                  ],
+                  if (d.validityLabel.isNotEmpty || d.processLabel.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 4,
+                      runSpacing: 4,
+                      children: [
+                        if (d.validityLabel.isNotEmpty)
+                          _miniChipOverlay(d.validityLabel, const Color(0xFF10B981)),
+                        if (d.processLabel.isNotEmpty)
+                          _miniChipOverlay(d.processLabel, const Color(0xFFF59E0B)),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // On-image chip: white-tinted background, full color text.
+  Widget _miniChipOverlay(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(color: Colors.white.withOpacity(0.92), borderRadius: BorderRadius.circular(4)),
+      child: Text(text, style: TextStyle(fontSize: 9, color: color, fontWeight: FontWeight.w800, letterSpacing: 0.3)),
+    );
+  }
+
+  Widget _miniChip(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(4)),
+      child: Text(text, style: TextStyle(fontSize: 9, color: color, fontWeight: FontWeight.w700, letterSpacing: 0.3)),
+    );
+  }
+
+  // ── Features ──────────────────────────────────────────────────────────────
+
+  Widget _buildFeatures(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            l.homeSlogan,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 28,
-              fontWeight: FontWeight.w700,
-              height: 1.2,
-            ),
-          ),
+          Text(l.homeSectionFeatures, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF0F172A))),
+          const SizedBox(height: 12),
+          Row(children: [
+            Expanded(child: _featureTile(Icons.upload_file_outlined, l.homeFeatureUploadTitle, l.homeFeatureUploadSub, const Color(0xFF3B6EF5), _openPassport)),
+            const SizedBox(width: 10),
+            Expanded(child: _featureTile(Icons.fact_check_outlined, l.homeFeatureDiagnoseTitle, l.homeFeatureDiagnoseSub, const Color(0xFF10B981), _openDiagnose)),
+          ]),
           const SizedBox(height: 10),
-          Text(
-            l.homeSubtitle,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-              height: 1.5,
-            ),
+          Row(children: [
+            Expanded(child: _featureTile(Icons.menu_book_outlined, l.homeFeatureResourcesTitle, l.homeFeatureResourcesSub, const Color(0xFFF59E0B), _openResources)),
+            const SizedBox(width: 10),
+            Expanded(child: _featureTile(Icons.support_agent_outlined, l.homeFeatureContactTitle, l.homeFeatureContactSub, const Color(0xFFEF4444), _openContact)),
+          ]),
+        ],
+      ),
+    );
+  }
+
+  Widget _featureTile(IconData icon, String title, String sub, Color color, VoidCallback onTap) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            borderRadius: BorderRadius.circular(12),
           ),
-          const SizedBox(height: 20),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              FilledButton(
-                onPressed: () => _goLogin(context),
-                style: FilledButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: const Color(0xFF3B6EF5),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                ),
-                child: Text(
-                  l.homeCtaLogin,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
+              Container(
+                width: 36, height: 36,
+                decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                child: Icon(icon, color: color, size: 20),
               ),
-              OutlinedButton(
-                onPressed: () => _goMaterials(context),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: const BorderSide(color: Color(0x99FFFFFF)),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                ),
-                child: Text(l.homeCtaExplore),
-              ),
+              const SizedBox(height: 10),
+              Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF0F172A))),
+              const SizedBox(height: 2),
+              Text(sub, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
             ],
           ),
-          const SizedBox(height: 22),
-          GridView.count(
-            crossAxisCount: 3,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 8,
-            crossAxisSpacing: 8,
-            childAspectRatio: 1.4,
-            children: _heroCountries
-                .map((c) => _buildCountryChip(c['flag']!, c['name']!))
-                .toList(),
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildCountryChip(String flag, String name) {
+  Widget _buildFooter(AppLocalizations? l) {
     return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: const Color(0x26FFFFFF),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0x33FFFFFF), width: 0.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(flag, style: const TextStyle(fontSize: 22)),
-          Text(
-            name,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+      color: const Color(0xFFFAFBFC),
+      child: Column(children: [
+        Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+          _footerBtn(Icons.upload_file, l?.homeFooterUpload ?? '上传', _openPassport),
+          _footerBtn(Icons.fact_check, l?.homeFooterDiagnose ?? '评估', _openDiagnose),
+          _footerBtn(Icons.menu_book, l?.homeFooterQa ?? '问答', _openResources),
+          _footerBtn(Icons.support_agent, l?.homeFooterContact ?? '客服', _openContact),
+        ]),
+        const SizedBox(height: 16),
+        Text(l?.homeFooterCopyright ?? 'Htex · Wherever you go, life is infinite',
+            style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
+      ]),
+    );
+  }
+
+  Widget _footerBtn(IconData icon, String label, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      child: Column(children: [
+        Icon(icon, size: 22, color: const Color(0xFF64748B)),
+        const SizedBox(height: 4),
+        Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+      ]),
+    );
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+// _HeroSlideshow — auto-rotating carousel of product-aligned destinations.
+// 5 verified destination photos (US/AU/GB/Schengen/FR). 6s cycle with crossfade.
+// Matches web端 Home.vue slides[].city keys removed in W35 (i18n cleanup).
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _HeroSlideshow extends StatefulWidget {
+  final List<String> slides;
+  final String localePrefix;
+  final VoidCallback onDiagnose;
+  final VoidCallback onResources;
+  const _HeroSlideshow({
+    required this.slides,
+    required this.localePrefix,
+    required this.onDiagnose,
+    required this.onResources,
+  });
+
+  @override
+  State<_HeroSlideshow> createState() => _HeroSlideshowState();
+}
+
+class _HeroSlideshowState extends State<_HeroSlideshow> {
+  int _idx = 0;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 6), (_) {
+      if (!mounted) return;
+      setState(() => _idx = (_idx + 1) % widget.slides.length);
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final img = widget.slides[_idx];
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 600),
+          child: Image.asset(
+            img,
+            key: ValueKey(_idx),
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Container(color: const Color(0xFF1E3A8A)),
+          ),
+        ),
+        Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.transparent, Colors.black.withOpacity(0.55)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFeatures(BuildContext context, AppLocalizations l, ThemeData theme) {
-    final features = [
-      _FeatureItem(
-        icon: Icons.fact_check_outlined,
-        title: l.homeFeature1Title,
-        desc: l.homeFeature1Desc,
-        color: const Color(0xFF3B6EF5),
-      ),
-      _FeatureItem(
-        icon: Icons.shield_outlined,
-        title: l.homeFeature2Title,
-        desc: l.homeFeature2Desc,
-        color: const Color(0xFFDC2626),
-      ),
-      _FeatureItem(
-        icon: Icons.description_outlined,
-        title: l.homeFeature3Title,
-        desc: l.homeFeature3Desc,
-        color: const Color(0xFF6E59F0),
-      ),
-      _FeatureItem(
-        icon: Icons.card_giftcard_outlined,
-        title: l.homeFeature4Title,
-        desc: l.homeFeature4Desc,
-        color: const Color(0xFF16A34A),
-      ),
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          l.homeFeatureTitle,
-          style: theme.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w700,
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Spacer(),
+              Text('Wherever you go,', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w700, color: Colors.white, height: 1.25, shadows: _textShadow)),
+              Text('life is infinite', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w700, color: Color(0xFFFBBF24), fontStyle: FontStyle.italic, height: 1.25, shadows: _textShadow)),
+              const SizedBox(height: 2),
+              Text(widget.localePrefix, style: TextStyle(fontSize: 10.5, color: Colors.white.withOpacity(0.95), shadows: _textShadow)),
+            ],
           ),
         ),
-        const SizedBox(height: 4),
-        Text(
-          l.homeFeatureSubtitle,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
+        Positioned(
+          left: 0, right: 0, bottom: 4,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(widget.slides.length, (i) {
+              final active = i == _idx;
+              return Container(
+                width: active ? 14 : 6,
+                height: 4,
+                margin: const EdgeInsets.symmetric(horizontal: 2),
+                decoration: BoxDecoration(
+                  color: active ? Colors.white : Colors.white.withOpacity(0.55),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              );
+            }),
           ),
-        ),
-        const SizedBox(height: 16),
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: 0.95,
-          children: features.map((f) => _buildFeatureCard(f, theme)).toList(),
         ),
       ],
     );
   }
-
-  Widget _buildFeatureCard(_FeatureItem f, ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: f.color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(f.icon, color: f.color, size: 20),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            f.title,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF0F172A),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Expanded(
-            child: Text(
-              f.desc,
-              style: const TextStyle(
-                fontSize: 12,
-                color: Color(0xFF64748B),
-                height: 1.5,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFooter(AppLocalizations l, ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Center(
-        child: Text(
-          '© 2026 ${l.appName} · W8 demo',
-          style: const TextStyle(
-            fontSize: 11,
-            color: Color(0xFF9CA3AF),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // Navigation helpers — use the named route table in main.dart so back-stack
-  // and deep-link semantics stay consistent with the URL map.
-  void _goHome(BuildContext context) {
-    Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.home, (route) => false);
-  }
-
-  void _goLogin(BuildContext context) {
-    Navigator.of(context).pushNamed(AppRoutes.login);
-  }
-
-  void _goMaterials(BuildContext context) {
-    Navigator.of(context).pushNamed(AppRoutes.materials);
-  }
 }
 
-class _FeatureItem {
-  final IconData icon;
-  final String title;
-  final String desc;
-  final Color color;
-  const _FeatureItem({
-    required this.icon,
-    required this.title,
-    required this.desc,
-    required this.color,
-  });
-}
+const _textShadow = <Shadow>[
+  Shadow(color: Color(0x88000000), blurRadius: 6, offset: Offset(0, 1)),
+];

@@ -127,10 +127,10 @@ class TestAdminRpaConfig:
         result = svc.get_rpa_config()
         assert isinstance(result, dict)
 
-    def test_update_rpa_config_returns_dict(self):
-        """Updating RPA config returns merged config (no DB needed)."""
-        svc = AdminService(db=None)
-        result = svc.update_rpa_config({"mock_mode": False})
+    async def test_update_rpa_config_returns_dict(self, tmp_db):
+        """Updating RPA config returns merged config."""
+        svc = AdminService(db=tmp_db)
+        result = await svc.update_rpa_config({"mock_mode": False})
         assert isinstance(result, dict)
         assert result.get("mock_mode") is False
 

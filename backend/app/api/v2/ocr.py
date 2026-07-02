@@ -39,6 +39,8 @@ class OCRResultOut(BaseModel):
     lang: str
     preprocessed: bool = False  # W31: whether ImagePreprocessor ran
     preprocess_warnings: List[str] = []
+    is_blurry: bool = False  # 清晰度: image failed the blur-variance check
+    is_complete: bool = True  # 完整度: detected document quad touches frame edge → False
 
 
 # --------------------------------------------------------------------------- #
@@ -145,6 +147,8 @@ async def recognize(
         content = pp_result.image_bytes
         preprocessed = True
     preprocess_warnings = list(pp_result.warnings or [])
+    is_blurry = pp_result.is_blurry
+    is_complete = pp_result.is_complete
 
     # ── Decode image (Pillow → BGR) ──
     try:
@@ -184,6 +188,8 @@ async def recognize(
                 lang=lang,
                 preprocessed=preprocessed,
                 preprocess_warnings=preprocess_warnings,
+                is_blurry=is_blurry,
+                is_complete=is_complete,
             ),
         )
 
@@ -212,6 +218,8 @@ async def recognize(
         lang=lang,
         preprocessed=preprocessed,
         preprocess_warnings=preprocess_warnings,
+        is_blurry=is_blurry,
+        is_complete=is_complete,
     )
 
     _log.info(

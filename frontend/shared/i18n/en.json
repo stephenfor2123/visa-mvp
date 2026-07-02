@@ -51,7 +51,14 @@
       "profile": "My Profile",
       "materials": "Application Materials",
       "applicants_loading": "Loading…",
-      "applicants_empty": "No applicants yet"
+      "applicants_empty": "No applicants yet",
+      "one_click_import": "Quick Import",
+      "one_click_import_tip": "Pick an applicant from your order history to pre-fill name & passport",
+      "one_click_import_title": "Select applicant",
+      "one_click_import_hint": "Name and passport number will be pre-filled; complete the remaining fields below.",
+      "one_click_import_empty": "No applicants to import",
+      "one_click_import_done": "Imported — please complete the remaining fields",
+      "applicant_used_count": "Used {n} times"
     },
     "schengen": "Schengen 26 countries",
     "mega": {
@@ -1055,21 +1062,21 @@
     "features": {
       "title": "Why choose us",
       "subtitle": "Make the complex visa process simple in 4 steps",
-      "pay_after": {
-        "title": "Pay After Approval",
-        "desc": "Pay nothing until your visa is approved — we only win when you do."
-      },
-      "system_check": {
-        "title": "AI Smart Pre-Check",
-        "desc": "Auto-generated checklist + OCR — higher first-pass approval."
+      "data_safety": {
+        "title": "Data Stays Local",
+        "desc": "Sensitive data is stored on your device — never uploaded to the cloud."
       },
       "templates": {
-        "title": "One-Click Templates",
-        "desc": "6+ templates for employment letter, statements, invitations — done in 30s."
+        "title": "Smart Templates",
+        "desc": "Generate your itinerary in 1 minute — no more struggling with formatting."
       },
-      "data_safety": {
-        "title": "Data Stays Private",
-        "desc": "Local + transit + storage encryption. Purged after approval."
+      "smart_check": {
+        "title": "AI Smart Check",
+        "desc": "No more typos or missing fields — we review every line for you."
+      },
+      "pay_after": {
+        "title": "Pay on Approval",
+        "desc": "We only charge when your visa is approved — full refund if it isn't."
       }
     },
     "toast_explore_pending": "Country list coming in next release",
@@ -1399,7 +1406,12 @@
     "travel_origin_ph": "e.g. Beijing",
     "travel_destination_label": "Destination",
     "travel_depart_label": "Departure Date",
+    "travel_depart_date_ph": "Pick your departure date (YYYY-MM-DD)",
+    "travel_from_label": "From",
+    "travel_day": "Day",
     "travel_return_label": "Return Date",
+    "travel_return_date_ph": "Pick your return date (YYYY-MM-DD)",
+    "date_clear_aria": "Clear date",
     "travel_recommend_label": "Reference flights (click to select, or enter manually)",
     "travel_flight_out_label": "Outbound Flight No.",
     "travel_flight_out_ph": "e.g. CA981",

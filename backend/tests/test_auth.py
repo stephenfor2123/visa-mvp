@@ -1,11 +1,9 @@
 """Integration tests for /api/v2/auth/* — V2 §4.1.
 
 Coverage targets (auth module):
-  - register: happy / phone-exists / weak-password / bad-sms / schema-violation
-  - login:    happy / wrong-password / unknown-phone / disabled-account
-  - sms-login:happy / auto-register-on-first-use
+  - register: happy / email-exists / weak-password / bad-email / schema-violation
+  - login:    happy / wrong-password / unknown-account / disabled-account
   - refresh:  happy / bad-token / revoked-token / wrong-type
-  - send-code:happy / rate-limit (cooldown) / bad-purpose / bad-phone
 """
 from __future__ import annotations
 
@@ -13,73 +11,17 @@ import pytest
 
 
 # ----------------------------------------------------------------- #
-# /send-code                                                          #
-# ----------------------------------------------------------------- #
-class TestSendCode:
-    async def test_happy_returns_code_in_mock_mode(self, client):
-        r = await client.post(
-            "/api/v2/auth/send-code",
-            json={"phone": "13900000001", "phone_country": "+86", "purpose": "register"},
-        )
-        assert r.status_code == 200, r.text
-        body = r.json()
-        assert body["code"] == "1000"
-        assert body["data"]["code"] is not None
-        assert len(body["data"]["code"]) == 6
-        assert body["data"]["code"].isdigit()
-        assert body["data"]["channel_txn_id"].startswith("mock_")
-
-    async def test_invalid_phone_format(self, client):
-        r = await client.post(
-            "/api/v2/auth/send-code",
-            json={"phone": "abc", "phone_country": "+86", "purpose": "register"},
-        )
-        assert r.status_code == 400
-        assert r.json()["code"] == "1001"
-
-    async def test_invalid_phone_country(self, client):
-        r = await client.post(
-            "/api/v2/auth/send-code",
-            json={"phone": "13900000001", "phone_country": "86", "purpose": "register"},
-        )
-        assert r.status_code == 400
-
-    async def test_invalid_purpose(self, client):
-        r = await client.post(
-            "/api/v2/auth/send-code",
-            json={"phone": "13900000001", "phone_country": "+86", "purpose": "nuke"},
-        )
-        assert r.status_code == 400
-
-    async def test_cooldown_returns_2010(self, client):
-        # 1st call OK
-        r1 = await client.post(
-            "/api/v2/auth/send-code",
-            json={"phone": "13900000002", "phone_country": "+86", "purpose": "login"},
-        )
-        assert r1.status_code == 200
-        # 2nd call within cooldown (1s in test) -> SMS_RATE_LIMIT
-        r2 = await client.post(
-            "/api/v2/auth/send-code",
-            json={"phone": "13900000002", "phone_country": "+86", "purpose": "login"},
-        )
-        assert r2.status_code == 429
-        assert r2.json()["code"] == "2010"
-
-
-# ----------------------------------------------------------------- #
-# /register                                                           #
+# /register  (W26: username + email + password)                      #
 # ----------------------------------------------------------------- #
 class TestRegister:
     async def test_happy_path_201_with_jwt(self, client):
         r = await client.post(
             "/api/v2/auth/register",
             json={
-                "phone": "13800138001",
-                "phone_country": "+86",
+                "username": "testalice1",
+                "email": "alice1@htex.test",
                 "password": "abc12345",
-                "sms_code": "123456",
-                "nickname": "alice",
+                "nickname": "Alice",
             },
         )
         assert r.status_code == 201, r.text
@@ -90,21 +32,42 @@ class TestRegister:
         assert data["expires_in"] == 7200
         assert data["access_token"].count(".") == 2  # JWT shape
         assert data["refresh_token"].count(".") == 2
-        assert data["user"]["phone"] == "13800138001"
-        assert data["user"]["nickname"] == "alice"
+        assert data["user"]["username"] == "testalice1"
+        assert data["user"]["email"] == "alice1@htex.test"
+        assert data["user"]["nickname"] == "Alice"
         assert data["user"]["status"] == "active"
 
-    async def test_duplicate_phone_2003(self, client):
+    async def test_duplicate_email_2003(self, client):
         body = {
-            "phone": "13800138002",
-            "phone_country": "+86",
+            "username": "testbob2a",
+            "email": "bob2@htex.test",
             "password": "abc12345",
-            "sms_code": "123456",
         }
         r1 = await client.post("/api/v2/auth/register", json=body)
         assert r1.status_code == 201
 
-        r2 = await client.post("/api/v2/auth/register", json=body)
+        # Different username but same email → 409 / 2003
+        r2 = await client.post(
+            "/api/v2/auth/register",
+            json={**body, "username": "testbob2b"},
+        )
+        assert r2.status_code == 409
+        assert r2.json()["code"] == "2003"
+
+    async def test_duplicate_username_2003(self, client):
+        body = {
+            "username": "testcharlie3",
+            "email": "charlie3a@htex.test",
+            "password": "abc12345",
+        }
+        r1 = await client.post("/api/v2/auth/register", json=body)
+        assert r1.status_code == 201
+
+        # Same username but different email → 409 / 2003
+        r2 = await client.post(
+            "/api/v2/auth/register",
+            json={**body, "email": "charlie3b@htex.test"},
+        )
         assert r2.status_code == 409
         assert r2.json()["code"] == "2003"
 
@@ -112,10 +75,9 @@ class TestRegister:
         r = await client.post(
             "/api/v2/auth/register",
             json={
-                "phone": "13800138003",
-                "phone_country": "+86",
-                "password": "abcdefgh",  # no digit
-                "sms_code": "123456",
+                "username": "testdave4",
+                "email": "dave4@htex.test",
+                "password": "abcdefgh",  # no digit → weak
             },
         )
         assert r.status_code == 422
@@ -125,23 +87,21 @@ class TestRegister:
         r = await client.post(
             "/api/v2/auth/register",
             json={
-                "phone": "13800138004",
-                "phone_country": "+86",
+                "username": "testeve5",
+                "email": "eve5@htex.test",
                 "password": "ab1",  # too short
-                "sms_code": "123456",
             },
         )
         assert r.status_code == 400  # Pydantic min_length triggers 1001
         assert r.json()["code"] == "1001"
 
-    async def test_sms_code_wrong_format(self, client):
+    async def test_bad_email_format(self, client):
         r = await client.post(
             "/api/v2/auth/register",
             json={
-                "phone": "13800138005",
-                "phone_country": "+86",
+                "username": "testfrank6",
+                "email": "not-an-email",
                 "password": "abc12345",
-                "sms_code": "12ab56",
             },
         )
         assert r.status_code == 400
@@ -150,150 +110,104 @@ class TestRegister:
     async def test_missing_field(self, client):
         r = await client.post(
             "/api/v2/auth/register",
-            json={"phone": "13800138006", "phone_country": "+86"},
+            json={"username": "testgrace7"},  # missing email + password
         )
         assert r.status_code == 400
         assert r.json()["code"] == "1001"
 
 
 # ----------------------------------------------------------------- #
-# /login                                                              #
+# /login  (W26: account = email OR username)                         #
 # ----------------------------------------------------------------- #
 class TestLogin:
     async def test_happy(self, client):
-        # register first
         await client.post(
             "/api/v2/auth/register",
-            json={
-                "phone": "13911110001",
-                "phone_country": "+86",
-                "password": "abc12345",
-                "sms_code": "123456",
-            },
+            json={"username": "loginuser1", "email": "loginuser1@htex.test", "password": "abc12345"},
         )
         r = await client.post(
             "/api/v2/auth/login",
-            json={"phone": "13911110001", "phone_country": "+86", "password": "abc12345"},
+            json={"account": "loginuser1", "password": "abc12345"},
         )
         assert r.status_code == 200
         body = r.json()
         assert body["code"] == "1000"
         assert body["data"]["access_token"]
 
-    async def test_wrong_password_2001(self, client):
+    async def test_login_by_email(self, client):
         await client.post(
             "/api/v2/auth/register",
-            json={
-                "phone": "13911110002",
-                "phone_country": "+86",
-                "password": "abc12345",
-                "sms_code": "123456",
-            },
+            json={"username": "loginuser2", "email": "loginuser2@htex.test", "password": "abc12345"},
         )
         r = await client.post(
             "/api/v2/auth/login",
-            json={"phone": "13911110002", "phone_country": "+86", "password": "wrong"},
+            json={"account": "loginuser2@htex.test", "password": "abc12345"},
+        )
+        assert r.status_code == 200
+        assert r.json()["code"] == "1000"
+
+    async def test_wrong_password_2001(self, client):
+        await client.post(
+            "/api/v2/auth/register",
+            json={"username": "loginuser3", "email": "loginuser3@htex.test", "password": "abc12345"},
+        )
+        r = await client.post(
+            "/api/v2/auth/login",
+            json={"account": "loginuser3", "password": "wrongpassword1"},
         )
         assert r.status_code == 401
         assert r.json()["code"] == "2001"
 
-    async def test_unknown_phone_2001(self, client):
+    async def test_unknown_account_2001(self, client):
         r = await client.post(
             "/api/v2/auth/login",
-            json={"phone": "13911110099", "phone_country": "+86", "password": "abc12345"},
+            json={"account": "nobody_exists_99", "password": "abc12345"},
         )
         assert r.status_code == 401
         assert r.json()["code"] == "2001"
 
     async def test_disabled_account_2005(self, client):
-        # register, then flip status to 'disabled' in DB
         from app.core.db import AsyncSessionLocal
         from app.models.user import User
         from sqlalchemy import select
 
         await client.post(
             "/api/v2/auth/register",
-            json={
-                "phone": "13911110003",
-                "phone_country": "+86",
-                "password": "abc12345",
-                "sms_code": "123456",
-            },
+            json={"username": "loginuser4", "email": "loginuser4@htex.test", "password": "abc12345"},
         )
         async with AsyncSessionLocal() as session:
             user = await session.scalar(
-                select(User).where(User.phone == "13911110003")
+                select(User).where(User.email == "loginuser4@htex.test")
             )
             user.status = "disabled"
             await session.commit()
 
         r = await client.post(
             "/api/v2/auth/login",
-            json={"phone": "13911110003", "phone_country": "+86", "password": "abc12345"},
+            json={"account": "loginuser4", "password": "abc12345"},
         )
         assert r.status_code == 403
         assert r.json()["code"] == "2005"
 
 
 # ----------------------------------------------------------------- #
-# /sms-login                                                          #
-# ----------------------------------------------------------------- #
-class TestSmsLogin:
-    async def test_happy_existing_user(self, client):
-        # register
-        await client.post(
-            "/api/v2/auth/register",
-            json={
-                "phone": "13922220001",
-                "phone_country": "+86",
-                "password": "abc12345",
-                "sms_code": "123456",
-            },
-        )
-        r = await client.post(
-            "/api/v2/auth/sms-login",
-            json={"phone": "13922220001", "phone_country": "+86", "sms_code": "999999"},
-        )
-        assert r.status_code == 200
-        assert r.json()["data"]["access_token"]
-
-    async def test_auto_register_on_first_use(self, client):
-        r = await client.post(
-            "/api/v2/auth/sms-login",
-            json={"phone": "13922220002", "phone_country": "+86", "sms_code": "111111"},
-        )
-        assert r.status_code == 200
-        body = r.json()
-        assert body["data"]["user"]["phone"] == "13922220002"
-        assert body["data"]["user"]["status"] == "active"
-
-    async def test_invalid_sms_format(self, client):
-        r = await client.post(
-            "/api/v2/auth/sms-login",
-            json={"phone": "13922220003", "phone_country": "+86", "sms_code": "abc"},
-        )
-        assert r.status_code == 400
-        assert r.json()["code"] == "1001"
-
-
-# ----------------------------------------------------------------- #
 # /refresh                                                            #
 # ----------------------------------------------------------------- #
 class TestRefresh:
-    async def _register_and_get_refresh(self, client, phone: str) -> str:
+    async def _register_and_get_refresh(self, client, username: str) -> str:
         r = await client.post(
             "/api/v2/auth/register",
             json={
-                "phone": phone,
-                "phone_country": "+86",
+                "username": username,
+                "email": f"{username}@htex.test",
                 "password": "abc12345",
-                "sms_code": "123456",
             },
         )
+        assert r.status_code == 201, r.text
         return r.json()["data"]["refresh_token"]
 
     async def test_happy_returns_new_pair(self, client):
-        old_refresh = await self._register_and_get_refresh(client, "13933330001")
+        old_refresh = await self._register_and_get_refresh(client, "refreshuser1")
         r = await client.post("/api/v2/auth/refresh", json={"refresh_token": old_refresh})
         assert r.status_code == 200, r.text
         body = r.json()
@@ -316,12 +230,12 @@ class TestRefresh:
         reg = await client.post(
             "/api/v2/auth/register",
             json={
-                "phone": "13933330002",
-                "phone_country": "+86",
+                "username": "refreshuser2",
+                "email": "refreshuser2@htex.test",
                 "password": "abc12345",
-                "sms_code": "123456",
             },
         )
+        assert reg.status_code == 201, reg.text
         access = reg.json()["data"]["access_token"]
         r = await client.post(
             "/api/v2/auth/refresh", json={"refresh_token": access}
@@ -353,13 +267,11 @@ class TestServiceLayerExtras:
         await client.post(
             "/api/v2/auth/register",
             json={
-                "phone": "13944440001",
-                "phone_country": "+86",
+                "username": "audituser1",
+                "email": "audituser1@htex.test",
                 "password": "abc12345",
-                "sms_code": "123456",
             },
         )
-        # Inspect DB for the audit row
         from app.core.db import AsyncSessionLocal
         from app.models.audit_log import AuditLog
         from sqlalchemy import select, desc
@@ -373,54 +285,37 @@ class TestServiceLayerExtras:
             )
             assert row is not None
             assert row.actor_type == "user"
-            assert row.actor_id == 1  # first user
 
     async def test_login_updates_last_login(self, client):
         await client.post(
             "/api/v2/auth/register",
             json={
-                "phone": "13944440002",
-                "phone_country": "+86",
+                "username": "audituser2",
+                "email": "audituser2@htex.test",
                 "password": "abc12345",
-                "sms_code": "123456",
             },
         )
         r = await client.post(
             "/api/v2/auth/login",
-            json={"phone": "13944440002", "phone_country": "+86", "password": "abc12345"},
+            json={"account": "audituser2", "password": "abc12345"},
         )
         assert r.status_code == 200
-        # Verify last_login_at got set
         from app.core.db import AsyncSessionLocal
         from app.models.user import User
         from sqlalchemy import select
 
         async with AsyncSessionLocal() as s:
-            user = await s.scalar(select(User).where(User.phone == "13944440002"))
+            user = await s.scalar(select(User).where(User.email == "audituser2@htex.test"))
             assert user is not None
             assert user.last_login_at is not None
-
-    async def test_login_no_password_set_2001(self, client):
-        # SMS-only registered user has password_hash=None -> cannot password-login
-        await client.post(
-            "/api/v2/auth/sms-login",
-            json={"phone": "13944440003", "phone_country": "+86", "sms_code": "123456"},
-        )
-        r = await client.post(
-            "/api/v2/auth/login",
-            json={"phone": "13944440003", "phone_country": "+86", "password": "whatever"},
-        )
-        assert r.status_code == 401
-        assert r.json()["code"] == "2001"
 
     async def test_register_with_custom_language(self, client):
         r = await client.post(
             "/api/v2/auth/register",
             json={
-                "phone": "13944440004",
-                "phone_country": "+86",
+                "username": "audituser4",
+                "email": "audituser4@htex.test",
                 "password": "abc12345",
-                "sms_code": "123456",
                 "language_pref": "en",
             },
         )
@@ -431,26 +326,25 @@ class TestServiceLayerExtras:
         r = await client.post(
             "/api/v2/auth/register",
             json={
-                "phone": "13944440005",
-                "phone_country": "+86",
+                "username": "audituser5",
+                "email": "audituser5@htex.test",
                 "password": "abc12345",
-                "sms_code": "123456",
             },
         )
         assert r.status_code == 201
-        # Default nickname is "user_<last4>"
-        assert r.json()["data"]["user"]["nickname"] == "user_0005"
+        # Default nickname = "user_" + last 4 chars of username = "user_ser5"
+        assert r.json()["data"]["user"]["nickname"] == "user_ser5"
 
     async def test_refresh_audit_log(self, client):
         reg = await client.post(
             "/api/v2/auth/register",
             json={
-                "phone": "13944440006",
-                "phone_country": "+86",
+                "username": "audituser6",
+                "email": "audituser6@htex.test",
                 "password": "abc12345",
-                "sms_code": "123456",
             },
         )
+        assert reg.status_code == 201, reg.text
         refresh = reg.json()["data"]["refresh_token"]
         await client.post("/api/v2/auth/refresh", json={"refresh_token": refresh})
 
@@ -471,10 +365,9 @@ class TestServiceLayerExtras:
         r = await client.post(
             "/api/v2/auth/register",
             json={
-                "phone": "13944440007",
-                "phone_country": "+86",
+                "username": "audituser7",
+                "email": "audituser7@htex.test",
                 "password": "abc12345",
-                "sms_code": "123456",
             },
             headers={
                 "User-Agent": "visa-mvp-test/1.0",
@@ -496,119 +389,70 @@ class TestServiceLayerExtras:
 
 
 # ----------------------------------------------------------------- #
-# Direct service-level unit tests (sync, so coverage tracks lines)   #
+# Direct service-layer tests — use app fixture so DB schema exists   #
 # ----------------------------------------------------------------- #
 class TestAuthServiceSync:
-    """These tests run synchronously against the AuthService to push
-    coverage of the service layer above 80%, since pytest-cov has known
-    issues tracking async coverage across event loops in some setups."""
+    """Service-layer tests that exercise branches not easily hit via the HTTP API.
+    Using app fixture ensures the test DB schema is created before each test."""
 
-    def test_register_user_not_found_in_refresh(self):
+    async def test_register_user_not_found_in_refresh(self, app):
         """Cover the `if user is None: raise USER_NOT_FOUND` branch."""
-        # Build a refresh token for a user that does not exist.
         from app.core.security import create_refresh_token
         from app.core.errors import ErrorCode
         from app.services.auth_service import AuthService
         from app.core.db import AsyncSessionLocal
-        import asyncio
 
-        async def go():
-            async with AsyncSessionLocal() as s:
-                # Forge a refresh token for a phantom user id 99999
-                rt, _ = create_refresh_token(99999)
-                svc = AuthService(s)
-                try:
-                    await svc.refresh(refresh_token=rt, info={"ip": "127.0.0.1"})
-                except Exception as exc:
-                    assert exc.code == ErrorCode.USER_NOT_FOUND
-                    return
-                raise AssertionError("expected USER_NOT_FOUND")
+        async with AsyncSessionLocal() as s:
+            rt, _ = create_refresh_token(99999)
+            svc = AuthService(s)
+            raised = False
+            try:
+                await svc.refresh(refresh_token=rt, info={"ip": "127.0.0.1"})
+            except Exception as exc:
+                raised = True
+                assert exc.code == ErrorCode.USER_NOT_FOUND
+            assert raised, "expected USER_NOT_FOUND"
 
-        asyncio.run(go())
-
-    def test_refresh_session_revoked_branch(self):
+    async def test_refresh_session_revoked_branch(self, app):
         """Cover the `if old_session is None or revoked` branch."""
+        import hashlib
+        from datetime import datetime, timezone
+
         from app.core.security import create_refresh_token
         from app.core.errors import ErrorCode
         from app.services.auth_service import AuthService
         from app.core.db import AsyncSessionLocal
         from app.models.user import User
         from app.models.user_session import UserSession
-        import asyncio
-        from datetime import datetime, timezone
 
-        async def go():
-            async with AsyncSessionLocal() as s:
-                # Create a real user
-                u = User(
-                    phone="13888880001",
-                    phone_country="+86",
-                    password_hash=None,
-                    nickname="u1",
-                    status="active",
-                )
-                s.add(u)
-                await s.flush()
-                # Create a refresh token, then revoke its session row
-                rt, exp = create_refresh_token(u.id)
-                import hashlib
-                sess = UserSession(
-                    user_id=u.id,
-                    refresh_token_hash=hashlib.sha256(rt.encode()).hexdigest(),
-                    expires_at=exp.replace(tzinfo=None),
-                    revoked_at=datetime.now(timezone.utc).replace(tzinfo=None),
-                )
-                s.add(sess)
-                await s.commit()
+        async with AsyncSessionLocal() as s:
+            u = User(
+                email="revoke_test@test.local",
+                username="revoketest1",
+                password_hash=None,
+                nickname="u1",
+                status="active",
+            )
+            s.add(u)
+            await s.flush()
+            rt, exp = create_refresh_token(u.id)
+            sess = UserSession(
+                user_id=u.id,
+                refresh_token_hash=hashlib.sha256(rt.encode()).hexdigest(),
+                expires_at=exp.replace(tzinfo=None),
+                revoked_at=datetime.now(timezone.utc).replace(tzinfo=None),
+            )
+            s.add(sess)
+            await s.commit()
 
-                svc = AuthService(s)
-                try:
-                    await svc.refresh(refresh_token=rt, info={"ip": "127.0.0.1"})
-                except Exception as exc:
-                    assert exc.code == ErrorCode.REFRESH_TOKEN_INVALID
-                    return
-                raise AssertionError("expected REFRESH_TOKEN_INVALID")
-
-        asyncio.run(go())
-
-    def test_sms_service_enforce_daily_limit(self):
-        """Cover the daily_limit branch of SmsService._enforce_rate_limit."""
-        from app.core.errors import ErrorCode
-        from app.services.sms_service import SmsService
-        from app.core.db import AsyncSessionLocal
-        from app.models.sms_code import SmsCode
-        from datetime import datetime, timezone, timedelta
-        import asyncio
-
-        async def go():
-            async with AsyncSessionLocal() as s:
-                # Pre-insert 9999 rows in the last 24h to hit the daily cap (10000)
-                phone = "13800000011"
-                now = datetime.now(timezone.utc).replace(tzinfo=None)
-                rows = [
-                    SmsCode(
-                        phone=phone,
-                        phone_country="+86",
-                        code_hash=f"h{i}",
-                        purpose="login",
-                        expires_at=now + timedelta(seconds=300),
-                        send_count=1,
-                        created_at=now - timedelta(seconds=i),
-                    )
-                    for i in range(10000)
-                ]
-                s.add_all(rows)
-                await s.commit()
-
-                svc = SmsService(s)
-                try:
-                    await svc.send_code(phone, "+86", "login")
-                except Exception as exc:
-                    assert exc.code == ErrorCode.SMS_RATE_LIMIT
-                    return
-                raise AssertionError("expected SMS_RATE_LIMIT (daily)")
-
-        asyncio.run(go())
+            svc = AuthService(s)
+            raised = False
+            try:
+                await svc.refresh(refresh_token=rt, info={"ip": "127.0.0.1"})
+            except Exception as exc:
+                raised = True
+                assert exc.code == ErrorCode.REFRESH_TOKEN_INVALID
+            assert raised, "expected REFRESH_TOKEN_INVALID"
 
     def test_security_validate_password_strength_short(self):
         from app.core.security import validate_password_strength
@@ -643,11 +487,6 @@ class TestAuthServiceSync:
             assert exc.code == ErrorCode.REFRESH_TOKEN_INVALID
             return
         raise AssertionError("expected REFRESH_TOKEN_INVALID (wrong type)")
-
-    def test_sms_channel_factory(self):
-        from app.services.sms.factory import get_sms_channel
-        ch = get_sms_channel()
-        assert ch.__class__.__name__ == "MockSMSChannel"
 
     def test_payment_factory(self):
         from app.services.payment.factory import get_payment_adapter

@@ -86,7 +86,47 @@ export async function refresh(refreshToken) {
     await delay()
     return { accessToken: 'mock.access.' + Date.now(), refreshToken }
   }
-  return http.post('/v2/auth/refresh', { refreshToken })
+  // W37 fix: backend RefreshRequest expects snake_case `refresh_token`
+  // (model_config extra="forbid" + required field → camelCase always 422'd).
+  // __isRefreshCall marks this so http.js's 401 interceptor doesn't try to
+  // refresh-and-retry a failing refresh call itself (would recurse forever).
+  return http.post(
+    '/v2/auth/refresh',
+    { refresh_token: refreshToken },
+    { __silent: true, __isRefreshCall: true }
+  ).then((env) => {
+    if (env.code !== '1000') throw new Error(env.message || 'Refresh failed')
+    const d = env.data || {}
+    return {
+      user: d.user,
+      accessToken: d.access_token,
+      refreshToken: d.refresh_token,
+      expiresIn: d.expires_in
+    }
+  })
+}
+
+export async function loginWithGoogle(credential) {
+  if (MOCK_MODE) {
+    await delay()
+    return {
+      user: mockUser('google_user@gmail.com'),
+      accessToken: 'mock.access.' + Date.now(),
+      refreshToken: 'mock.refresh.' + Date.now(),
+      expiresIn: 3600
+    }
+  }
+  return http.post('/v2/auth/google', { id_token: credential }).then((env) => {
+    if (env.code !== '1000') throw new Error(env.message || 'Google login failed')
+    const d = env.data || {}
+    return {
+      user: d.user,
+      accessToken: d.access_token,
+      refreshToken: d.refresh_token,
+      tokenType: d.token_type,
+      expiresIn: d.expires_in
+    }
+  })
 }
 
 export async function resetPassword({ account, newPassword }) {

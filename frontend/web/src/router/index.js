@@ -63,6 +63,14 @@ const routes = [
     meta: { title: 'nav.materials', requiresAuth: true }
   },
   {
+    // W36: 分大类材料收集向导 — Apply.vue 选完国家后先到这里，逐类强校验上传，
+    // 完成后带 material_ids 跳 OrderNew。
+    path: '/materials-wizard',
+    name: 'MaterialWizard',
+    component: () => import('@/views/MaterialWizard.vue'),
+    meta: { title: 'nav.materials', requiresAuth: true }
+  },
+  {
     // Story 1.1.2b: AI 校验结果页 N2 — 字段级校验 + 整改指引 + 重新拍摄
     path: '/materials/validate',
     name: 'MaterialsValidate',
@@ -153,16 +161,6 @@ const routes = [
     name: 'RpaStatus',
     component: () => import('@/views/RpaStatus.vue'),
     meta: { title: 'rpa.status_page_title', requiresAuth: true }
-  },
-  {
-    // W14-6: 后台限流配置可视化页
-    //   - 实时统计卡片 (今日访问 / 当前排队 / 24h 失败率 / 活跃账号)
-    //   - 限流参数编辑 (IP/day / 提交间隔 / 错峰 / rate key)
-    //   - 保存 → PUT /api/v2/admin/config/rpa
-    path: '/admin/rate-limit',
-    name: 'AdminRateLimit',
-    component: () => import('@/views/admin/RateLimit.vue'),
-    meta: { title: 'admin.ratelimit.page_title' }
   },
   {
     // W14: 支付结果页 (4 状态:success/failed/pending/cancelled + 30s polling)

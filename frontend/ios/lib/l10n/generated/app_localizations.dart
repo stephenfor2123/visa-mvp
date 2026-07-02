@@ -1245,7 +1245,7 @@ abstract class AppLocalizations {
   /// No description provided for @forgotPageSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Enter your phone and we\'ll send you a reset code'**
+  /// **'Enter your account and set a new password to reset right away.'**
   String get forgotPageSubtitle;
 
   /// No description provided for @forgotPhoneLabel.
@@ -1757,6 +1757,1002 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Submitting...'**
   String get ordernewSubmitting;
+
+  /// No description provided for @applyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply for a Visa'**
+  String get applyTitle;
+
+  /// No description provided for @applySub.
+  ///
+  /// In en, this message translates to:
+  /// **'4 steps to your visa'**
+  String get applySub;
+
+  /// No description provided for @applyStepCountry.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Destination'**
+  String get applyStepCountry;
+
+  /// No description provided for @applyStepChecklist.
+  ///
+  /// In en, this message translates to:
+  /// **'Materials Checklist'**
+  String get applyStepChecklist;
+
+  /// No description provided for @applyStepTrip.
+  ///
+  /// In en, this message translates to:
+  /// **'Trip Info'**
+  String get applyStepTrip;
+
+  /// No description provided for @applyStepConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get applyStepConfirm;
+
+  /// No description provided for @applyFeeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Fee'**
+  String get applyFeeLabel;
+
+  /// No description provided for @applyProcessingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing'**
+  String get applyProcessingLabel;
+
+  /// No description provided for @applyValidityLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Validity'**
+  String get applyValidityLabel;
+
+  /// No description provided for @applyVisaType.
+  ///
+  /// In en, this message translates to:
+  /// **'Visa Type'**
+  String get applyVisaType;
+
+  /// No description provided for @applyVisaTourism.
+  ///
+  /// In en, this message translates to:
+  /// **'Tourism'**
+  String get applyVisaTourism;
+
+  /// No description provided for @applyVisaBusiness.
+  ///
+  /// In en, this message translates to:
+  /// **'Business'**
+  String get applyVisaBusiness;
+
+  /// No description provided for @applyVisaStudent.
+  ///
+  /// In en, this message translates to:
+  /// **'Student'**
+  String get applyVisaStudent;
+
+  /// No description provided for @applyVisaFamily.
+  ///
+  /// In en, this message translates to:
+  /// **'Family'**
+  String get applyVisaFamily;
+
+  /// No description provided for @applyVisaOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get applyVisaOther;
+
+  /// No description provided for @applyDepartDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Departure Date'**
+  String get applyDepartDate;
+
+  /// No description provided for @applyReturnDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Return Date'**
+  String get applyReturnDate;
+
+  /// No description provided for @applyDepartCity.
+  ///
+  /// In en, this message translates to:
+  /// **'Departure City'**
+  String get applyDepartCity;
+
+  /// No description provided for @applyDepartCityPh.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Shanghai'**
+  String get applyDepartCityPh;
+
+  /// No description provided for @applyEmergencyContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Emergency Contact'**
+  String get applyEmergencyContact;
+
+  /// No description provided for @applyEmergencyPh.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. John +86 138xxxx'**
+  String get applyEmergencyPh;
+
+  /// No description provided for @applyPurpose.
+  ///
+  /// In en, this message translates to:
+  /// **'Trip Purpose'**
+  String get applyPurpose;
+
+  /// No description provided for @applyPurposePh.
+  ///
+  /// In en, this message translates to:
+  /// **'Briefly describe purpose'**
+  String get applyPurposePh;
+
+  /// No description provided for @applyBack.
+  ///
+  /// In en, this message translates to:
+  /// **'← Back'**
+  String get applyBack;
+
+  /// No description provided for @applyNextMaterials.
+  ///
+  /// In en, this message translates to:
+  /// **'Next: Fill Form'**
+  String get applyNextMaterials;
+
+  /// No description provided for @applyNextConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Next: Confirm'**
+  String get applyNextConfirm;
+
+  /// No description provided for @applyPickDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a date'**
+  String get applyPickDate;
+
+  /// No description provided for @applyConfirmSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm & Submit'**
+  String get applyConfirmSubmit;
+
+  /// No description provided for @applySubmitting.
+  ///
+  /// In en, this message translates to:
+  /// **'Submitting…'**
+  String get applySubmitting;
+
+  /// No description provided for @applyRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'req'**
+  String get applyRequired;
+
+  /// No description provided for @diagnoseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pre-Assessment'**
+  String get diagnoseTitle;
+
+  /// No description provided for @diagnoseSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your approval odds first'**
+  String get diagnoseSub;
+
+  /// No description provided for @diagnoseStepForm.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell us about yourself'**
+  String get diagnoseStepForm;
+
+  /// No description provided for @diagnoseResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Result'**
+  String get diagnoseResult;
+
+  /// No description provided for @diagnoseFactors.
+  ///
+  /// In en, this message translates to:
+  /// **'Factors'**
+  String get diagnoseFactors;
+
+  /// No description provided for @diagnoseSuggestions.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggestions'**
+  String get diagnoseSuggestions;
+
+  /// No description provided for @diagnoseCtaApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply for this country →'**
+  String get diagnoseCtaApply;
+
+  /// No description provided for @diagnoseRestart.
+  ///
+  /// In en, this message translates to:
+  /// **'Re-assess'**
+  String get diagnoseRestart;
+
+  /// No description provided for @diagnoseLevelHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'High chance'**
+  String get diagnoseLevelHigh;
+
+  /// No description provided for @diagnoseLevelMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium'**
+  String get diagnoseLevelMedium;
+
+  /// No description provided for @diagnoseLevelLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Low chance'**
+  String get diagnoseLevelLow;
+
+  /// No description provided for @diagnoseMarital.
+  ///
+  /// In en, this message translates to:
+  /// **'Marital Status'**
+  String get diagnoseMarital;
+
+  /// No description provided for @diagnoseMaritalSingle.
+  ///
+  /// In en, this message translates to:
+  /// **'Single'**
+  String get diagnoseMaritalSingle;
+
+  /// No description provided for @diagnoseMaritalMarried.
+  ///
+  /// In en, this message translates to:
+  /// **'Married'**
+  String get diagnoseMaritalMarried;
+
+  /// No description provided for @diagnoseMaritalDivorced.
+  ///
+  /// In en, this message translates to:
+  /// **'Divorced'**
+  String get diagnoseMaritalDivorced;
+
+  /// No description provided for @diagnoseMaritalWidowed.
+  ///
+  /// In en, this message translates to:
+  /// **'Widowed'**
+  String get diagnoseMaritalWidowed;
+
+  /// No description provided for @diagnoseIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly Income (CNY)'**
+  String get diagnoseIncome;
+
+  /// No description provided for @diagnoseIncomeBelow5k.
+  ///
+  /// In en, this message translates to:
+  /// **'<5k'**
+  String get diagnoseIncomeBelow5k;
+
+  /// No description provided for @diagnoseIncome5k15k.
+  ///
+  /// In en, this message translates to:
+  /// **'5k-15k'**
+  String get diagnoseIncome5k15k;
+
+  /// No description provided for @diagnoseIncome15k30k.
+  ///
+  /// In en, this message translates to:
+  /// **'15k-30k'**
+  String get diagnoseIncome15k30k;
+
+  /// No description provided for @diagnoseIncome30k100k.
+  ///
+  /// In en, this message translates to:
+  /// **'30k-100k'**
+  String get diagnoseIncome30k100k;
+
+  /// No description provided for @diagnoseIncomeAbove100k.
+  ///
+  /// In en, this message translates to:
+  /// **'>100k'**
+  String get diagnoseIncomeAbove100k;
+
+  /// No description provided for @diagnosePurpose.
+  ///
+  /// In en, this message translates to:
+  /// **'Travel Purpose'**
+  String get diagnosePurpose;
+
+  /// No description provided for @diagnosePurposeBusiness.
+  ///
+  /// In en, this message translates to:
+  /// **'Business'**
+  String get diagnosePurposeBusiness;
+
+  /// No description provided for @diagnosePurposeTourism.
+  ///
+  /// In en, this message translates to:
+  /// **'Tourism'**
+  String get diagnosePurposeTourism;
+
+  /// No description provided for @diagnosePurposeFamily.
+  ///
+  /// In en, this message translates to:
+  /// **'Family'**
+  String get diagnosePurposeFamily;
+
+  /// No description provided for @diagnosePurposeStudy.
+  ///
+  /// In en, this message translates to:
+  /// **'Study'**
+  String get diagnosePurposeStudy;
+
+  /// No description provided for @diagnosePurposeOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get diagnosePurposeOther;
+
+  /// No description provided for @diagnoseTravelHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Travel History (5y)'**
+  String get diagnoseTravelHistory;
+
+  /// No description provided for @diagnoseTravelNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get diagnoseTravelNone;
+
+  /// No description provided for @diagnoseTravel1to3.
+  ///
+  /// In en, this message translates to:
+  /// **'1-3'**
+  String get diagnoseTravel1to3;
+
+  /// No description provided for @diagnoseTravel4to10.
+  ///
+  /// In en, this message translates to:
+  /// **'4-10'**
+  String get diagnoseTravel4to10;
+
+  /// No description provided for @diagnoseTravelAbove10.
+  ///
+  /// In en, this message translates to:
+  /// **'10+'**
+  String get diagnoseTravelAbove10;
+
+  /// No description provided for @diagnoseVisaHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Visa History'**
+  String get diagnoseVisaHistory;
+
+  /// No description provided for @diagnoseVisaNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get diagnoseVisaNone;
+
+  /// No description provided for @diagnoseVisa1to2.
+  ///
+  /// In en, this message translates to:
+  /// **'1-2'**
+  String get diagnoseVisa1to2;
+
+  /// No description provided for @diagnoseVisaAbove2.
+  ///
+  /// In en, this message translates to:
+  /// **'2+'**
+  String get diagnoseVisaAbove2;
+
+  /// No description provided for @diagnoseEmployment.
+  ///
+  /// In en, this message translates to:
+  /// **'Employment'**
+  String get diagnoseEmployment;
+
+  /// No description provided for @diagnoseEmpEmployed.
+  ///
+  /// In en, this message translates to:
+  /// **'Employed'**
+  String get diagnoseEmpEmployed;
+
+  /// No description provided for @diagnoseEmpFreelancer.
+  ///
+  /// In en, this message translates to:
+  /// **'Freelancer'**
+  String get diagnoseEmpFreelancer;
+
+  /// No description provided for @diagnoseEmpStudent.
+  ///
+  /// In en, this message translates to:
+  /// **'Student'**
+  String get diagnoseEmpStudent;
+
+  /// No description provided for @diagnoseEmpRetired.
+  ///
+  /// In en, this message translates to:
+  /// **'Retired'**
+  String get diagnoseEmpRetired;
+
+  /// No description provided for @diagnoseEmpUnemployed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unemployed'**
+  String get diagnoseEmpUnemployed;
+
+  /// No description provided for @diagnoseAge.
+  ///
+  /// In en, this message translates to:
+  /// **'Age (optional)'**
+  String get diagnoseAge;
+
+  /// No description provided for @diagnoseAgePh.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. 30'**
+  String get diagnoseAgePh;
+
+  /// No description provided for @diagnoseSoloFemale.
+  ///
+  /// In en, this message translates to:
+  /// **'Solo female traveler'**
+  String get diagnoseSoloFemale;
+
+  /// No description provided for @diagnoseSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'View Result'**
+  String get diagnoseSubmit;
+
+  /// No description provided for @diagnoseSubmitting.
+  ///
+  /// In en, this message translates to:
+  /// **'Assessing…'**
+  String get diagnoseSubmitting;
+
+  /// No description provided for @diagnoseReselect.
+  ///
+  /// In en, this message translates to:
+  /// **'← Re-select country'**
+  String get diagnoseReselect;
+
+  /// No description provided for @diagnoseStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Assessment'**
+  String get diagnoseStart;
+
+  /// No description provided for @resourcesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Visa Q&A'**
+  String get resourcesTitle;
+
+  /// No description provided for @resourcesSub.
+  ///
+  /// In en, this message translates to:
+  /// **'AI answers from official sources'**
+  String get resourcesSub;
+
+  /// No description provided for @resourcesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. US visa fee'**
+  String get resourcesHint;
+
+  /// No description provided for @resourcesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Start asking'**
+  String get resourcesEmpty;
+
+  /// No description provided for @resourcesFollowup.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow up'**
+  String get resourcesFollowup;
+
+  /// No description provided for @resourcesSources.
+  ///
+  /// In en, this message translates to:
+  /// **'Sources'**
+  String get resourcesSources;
+
+  /// No description provided for @resourcesRelevance.
+  ///
+  /// In en, this message translates to:
+  /// **'Relevance'**
+  String get resourcesRelevance;
+
+  /// No description provided for @contactTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Us'**
+  String get contactTitle;
+
+  /// No description provided for @contactSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Replies within business hours (UTC+8, 9-18h)'**
+  String get contactSub;
+
+  /// No description provided for @contactEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get contactEmail;
+
+  /// No description provided for @contactEmailAddr.
+  ///
+  /// In en, this message translates to:
+  /// **'support@htex.app'**
+  String get contactEmailAddr;
+
+  /// No description provided for @contactEmailSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Reply within 24 hours'**
+  String get contactEmailSub;
+
+  /// No description provided for @contactChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Live Chat'**
+  String get contactChat;
+
+  /// No description provided for @contactChatSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Real-time on weekdays'**
+  String get contactChatSub;
+
+  /// No description provided for @contactBug.
+  ///
+  /// In en, this message translates to:
+  /// **'Bug Report'**
+  String get contactBug;
+
+  /// No description provided for @contactBugSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Engineers see directly'**
+  String get contactBugSub;
+
+  /// No description provided for @contactBiz.
+  ///
+  /// In en, this message translates to:
+  /// **'Business'**
+  String get contactBiz;
+
+  /// No description provided for @contactBizAddr.
+  ///
+  /// In en, this message translates to:
+  /// **'biz@htex.app'**
+  String get contactBizAddr;
+
+  /// No description provided for @contactBizSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Affiliate / Travel agencies'**
+  String get contactBizSub;
+
+  /// No description provided for @contactTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Emergencies: contact your local embassy. Htex cannot replace official channels.'**
+  String get contactTip;
+
+  /// No description provided for @passportUploadTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload Passport'**
+  String get passportUploadTitle;
+
+  /// No description provided for @passportUploadSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Snap a clear passport photo'**
+  String get passportUploadSub;
+
+  /// No description provided for @passportUploadTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Make sure the bio page is aligned and well-lit'**
+  String get passportUploadTip;
+
+  /// No description provided for @passportGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Gallery'**
+  String get passportGallery;
+
+  /// No description provided for @passportCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera'**
+  String get passportCamera;
+
+  /// No description provided for @passportRecognize.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognize'**
+  String get passportRecognize;
+
+  /// No description provided for @passportRecognizing.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognizing…'**
+  String get passportRecognizing;
+
+  /// No description provided for @passportReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Passport Info'**
+  String get passportReviewTitle;
+
+  /// No description provided for @passportReviewDetected.
+  ///
+  /// In en, this message translates to:
+  /// **'✓ Detected as passport'**
+  String get passportReviewDetected;
+
+  /// No description provided for @passportReviewWarn.
+  ///
+  /// In en, this message translates to:
+  /// **'⚠️ Not a passport'**
+  String get passportReviewWarn;
+
+  /// No description provided for @passportReviewConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm & Continue'**
+  String get passportReviewConfirm;
+
+  /// No description provided for @passportReviewRetake.
+  ///
+  /// In en, this message translates to:
+  /// **'Retake'**
+  String get passportReviewRetake;
+
+  /// No description provided for @passportReviewPassportNo.
+  ///
+  /// In en, this message translates to:
+  /// **'Passport No.'**
+  String get passportReviewPassportNo;
+
+  /// No description provided for @passportReviewSurname.
+  ///
+  /// In en, this message translates to:
+  /// **'Surname'**
+  String get passportReviewSurname;
+
+  /// No description provided for @passportReviewGivenName.
+  ///
+  /// In en, this message translates to:
+  /// **'Given Name'**
+  String get passportReviewGivenName;
+
+  /// No description provided for @passportReviewSex.
+  ///
+  /// In en, this message translates to:
+  /// **'Sex (M / F)'**
+  String get passportReviewSex;
+
+  /// No description provided for @passportReviewNationality.
+  ///
+  /// In en, this message translates to:
+  /// **'Nationality'**
+  String get passportReviewNationality;
+
+  /// No description provided for @passportReviewDob.
+  ///
+  /// In en, this message translates to:
+  /// **'Date of Birth (YYYY-MM-DD)'**
+  String get passportReviewDob;
+
+  /// No description provided for @passportReviewExpiry.
+  ///
+  /// In en, this message translates to:
+  /// **'Expiry (YYYY-MM-DD)'**
+  String get passportReviewExpiry;
+
+  /// No description provided for @loginAccountTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get loginAccountTab;
+
+  /// No description provided for @loginSmsTab.
+  ///
+  /// In en, this message translates to:
+  /// **'SMS'**
+  String get loginSmsTab;
+
+  /// No description provided for @loginAccountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Email or Username'**
+  String get loginAccountLabel;
+
+  /// No description provided for @loginAccountPh.
+  ///
+  /// In en, this message translates to:
+  /// **'user@example.com or username'**
+  String get loginAccountPh;
+
+  /// No description provided for @registerUsernameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Username'**
+  String get registerUsernameLabel;
+
+  /// No description provided for @registerUsernamePh.
+  ///
+  /// In en, this message translates to:
+  /// **'3-32 chars, starts with letter/digit'**
+  String get registerUsernamePh;
+
+  /// No description provided for @registerUsernameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'3-32 chars [A-Za-z0-9_.-], letter/digit start'**
+  String get registerUsernameHint;
+
+  /// No description provided for @registerEmailLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get registerEmailLabel;
+
+  /// No description provided for @registerEmailPh.
+  ///
+  /// In en, this message translates to:
+  /// **'user@example.com'**
+  String get registerEmailPh;
+
+  /// No description provided for @registerNicknameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Nickname (optional)'**
+  String get registerNicknameLabel;
+
+  /// No description provided for @registerNicknamePh.
+  ///
+  /// In en, this message translates to:
+  /// **'What should we call you?'**
+  String get registerNicknamePh;
+
+  /// No description provided for @registerEmailInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid email format'**
+  String get registerEmailInvalid;
+
+  /// No description provided for @registerUsernameInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid username format'**
+  String get registerUsernameInvalid;
+
+  /// No description provided for @homeSloganZh.
+  ///
+  /// In en, this message translates to:
+  /// **'Infinite possibilities, by your side'**
+  String get homeSloganZh;
+
+  /// No description provided for @homeCtaDiagnose.
+  ///
+  /// In en, this message translates to:
+  /// **'Check Odds'**
+  String get homeCtaDiagnose;
+
+  /// No description provided for @homeCtaAsk.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask Policy'**
+  String get homeCtaAsk;
+
+  /// No description provided for @homeTrust.
+  ///
+  /// In en, this message translates to:
+  /// **'100k+ users · 99% approval'**
+  String get homeTrust;
+
+  /// No description provided for @homeFeatureUploadTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload Passport'**
+  String get homeFeatureUploadTitle;
+
+  /// No description provided for @homeFeatureUploadSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto OCR'**
+  String get homeFeatureUploadSub;
+
+  /// No description provided for @homeFeatureDiagnoseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pre-Assessment'**
+  String get homeFeatureDiagnoseTitle;
+
+  /// No description provided for @homeFeatureDiagnoseSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Risk score'**
+  String get homeFeatureDiagnoseSub;
+
+  /// No description provided for @homeFeatureResourcesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Policy Q&A'**
+  String get homeFeatureResourcesTitle;
+
+  /// No description provided for @homeFeatureResourcesSub.
+  ///
+  /// In en, this message translates to:
+  /// **'RAG from 4 sources'**
+  String get homeFeatureResourcesSub;
+
+  /// No description provided for @homeFeatureContactTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Us'**
+  String get homeFeatureContactTitle;
+
+  /// No description provided for @homeFeatureContactSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekdays 9-18h'**
+  String get homeFeatureContactSub;
+
+  /// No description provided for @homeHotVisa.
+  ///
+  /// In en, this message translates to:
+  /// **'Popular Destinations'**
+  String get homeHotVisa;
+
+  /// No description provided for @homeViewAll.
+  ///
+  /// In en, this message translates to:
+  /// **'View all →'**
+  String get homeViewAll;
+
+  /// No description provided for @homeSectionFeatures.
+  ///
+  /// In en, this message translates to:
+  /// **'What you can do with Htex'**
+  String get homeSectionFeatures;
+
+  /// No description provided for @homeFooterUpload.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload'**
+  String get homeFooterUpload;
+
+  /// No description provided for @homeFooterDiagnose.
+  ///
+  /// In en, this message translates to:
+  /// **'Assess'**
+  String get homeFooterDiagnose;
+
+  /// No description provided for @homeFooterQa.
+  ///
+  /// In en, this message translates to:
+  /// **'Q&A'**
+  String get homeFooterQa;
+
+  /// No description provided for @homeFooterContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Support'**
+  String get homeFooterContact;
+
+  /// No description provided for @homeHeroCityPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'Endless possibilities, by your side'**
+  String get homeHeroCityPrefix;
+
+  /// No description provided for @homeFromPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'FROM'**
+  String get homeFromPrice;
+
+  /// No description provided for @homeApplyNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply Now'**
+  String get homeApplyNow;
+
+  /// No description provided for @homeFooterCopyright.
+  ///
+  /// In en, this message translates to:
+  /// **'Htex · Wherever you go, life is infinite'**
+  String get homeFooterCopyright;
+
+  /// No description provided for @destinationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Destination'**
+  String get destinationsTitle;
+
+  /// No description provided for @destinationsHero.
+  ///
+  /// In en, this message translates to:
+  /// **'Popular Visas'**
+  String get destinationsHero;
+
+  /// No description provided for @destinationsSchengen.
+  ///
+  /// In en, this message translates to:
+  /// **'Schengen 26'**
+  String get destinationsSchengen;
+
+  /// No description provided for @destinationsExpand.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand'**
+  String get destinationsExpand;
+
+  /// No description provided for @destinationsCollapse.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapse'**
+  String get destinationsCollapse;
+
+  /// No description provided for @destinationsValid.
+  ///
+  /// In en, this message translates to:
+  /// **'VALID'**
+  String get destinationsValid;
+
+  /// No description provided for @destinationsApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get destinationsApply;
+
+  /// No description provided for @destinationsSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search country'**
+  String get destinationsSearch;
+
+  /// No description provided for @selfieStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Take Selfie'**
+  String get selfieStart;
+
+  /// No description provided for @selfieRetake.
+  ///
+  /// In en, this message translates to:
+  /// **'Retake'**
+  String get selfieRetake;
+
+  /// No description provided for @selfieHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap below to start'**
+  String get selfieHint;
 }
 
 class _AppLocalizationsDelegate

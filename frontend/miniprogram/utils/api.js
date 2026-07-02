@@ -3,7 +3,7 @@
 // 后端 envelope: { code, message, data }
 // W6b 期间:VITE_MOCK 等价物 = wx.getStorageSync('mockMode') !== 'false',默认走真接口
 
-const MOCK_MODE = wx.getStorageSync('mockMode') !== 'false'  // 默认 false = 走真接口
+const MOCK_MODE = wx.getStorageSync('mockMode') === 'true'  // 默认 false = 走真接口
 
 function getApiBase() {
   const app = getApp()
@@ -365,6 +365,39 @@ async function sendResetCode({ phone, phoneCountry }) {
   return { sent: true, code: d.code, ttl: d.expires_in, mock: !!d.channel_txn_id && d.channel_txn_id.startsWith('mock_') }
 }
 
+async function wechatLogin() {
+  return new Promise((resolve, reject) => {
+    wx.login({
+      success: async (res) => {
+        if (!res.code) {
+          reject(new Error('微信登录失败:未获取到 code'))
+          return
+        }
+        try {
+          const env = await request({
+            url: '/api/v2/auth/wechat',
+            method: 'POST',
+            data: { code: res.code }
+          })
+          const d = unwrap(env)
+          resolve({
+            user: d.user,
+            accessToken: d.access_token,
+            refreshToken: d.refresh_token,
+            tokenType: d.token_type,
+            expiresIn: d.expires_in
+          })
+        } catch (e) {
+          reject(e)
+        }
+      },
+      fail: (err) => {
+        reject(new Error((err && err.errMsg) || 'wx.login failed'))
+      }
+    })
+  })
+}
+
 async function resetPassword({ phone, phoneCountry, smsCode, newPassword }) {
   if (MOCK_MODE) {
     await mockDelay(200)
@@ -387,6 +420,7 @@ module.exports = {
   smsLogin,
   sendSmsCode,
   register,
+  wechatLogin,
   listDestinations,
   orderList,
   orderDetail,

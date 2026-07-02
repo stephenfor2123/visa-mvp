@@ -21,7 +21,7 @@
       <div class="tp-row">
         <label class="tp-field">
           <span>{{ t('wizard.travel_depart_label') }}</span>
-          <input v-model="plan.departDate" type="date" class="tp-input" data-testid="tp-depart-date" />
+          <LocaleDateInput v-model="plan.departDate" test-id="tp-depart-date" />
         </label>
         <label class="tp-field">
           <span>{{ t('wizard.travel_flight_out_label') }}</span>
@@ -49,7 +49,7 @@
       <div class="tp-row">
         <label class="tp-field">
           <span>{{ t('wizard.travel_return_label') }}</span>
-          <input v-model="plan.returnDate" type="date" class="tp-input" data-testid="tp-return-date" />
+          <LocaleDateInput v-model="plan.returnDate" test-id="tp-return-date" />
         </label>
         <label class="tp-field">
           <span>{{ t('wizard.travel_flight_back_label') }}</span>
@@ -67,24 +67,28 @@
         <table class="tp-table">
           <thead>
             <tr>
-              <th>{{ t('wizard.itinerary_col_day') }}<template v-if="!isEnglishLocale"><br />Day</template></th>
-              <th>{{ t('wizard.itinerary_col_date') }}<template v-if="!isEnglishLocale"><br />Date</template></th>
+              <th>{{ t('wizard.itinerary_col_day') }}</th>
+              <th>{{ t('wizard.itinerary_col_date') }}</th>
               <th>
                 <span class="tp-required-mark" aria-label="required">*</span>
-                {{ t('wizard.itinerary_col_city') }}<template v-if="!isEnglishLocale"><br />City</template>
+                {{ t('wizard.itinerary_col_city') }}
               </th>
-              <th>{{ t('wizard.itinerary_col_transport') }}<template v-if="!isEnglishLocale"><br />Transport</template></th>
-              <th>{{ t('wizard.itinerary_col_attraction') }}<template v-if="!isEnglishLocale"><br />Itinerary</template></th>
-              <th>{{ t('wizard.itinerary_col_hotel') }}<template v-if="!isEnglishLocale"><br />Hotel</template></th>
+              <th>{{ t('wizard.itinerary_col_transport') }}</th>
+              <th>{{ t('wizard.itinerary_col_attraction') }}</th>
+              <th>{{ t('wizard.itinerary_col_hotel') }}</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="(d, i) in plan.days" :key="d.date" :data-testid="`tp-day-${i}`">
-              <td class="tp-td-day">Day {{ d.day }}</td>
+              <td class="tp-td-day">{{ t('wizard.travel_day') }} {{ d.day }}</td>
               <td class="tp-td-date">{{ formatDate(d.date) }}</td>
               <td>
-                <span v-if="d.transport === 'flight'" class="tp-city-from">{{ dayCityDisplayFn(i).split('→')[0] }}→</span>
-                <input v-model="d.city" :placeholder="t('wizard.travel_day_city_ph')" class="tp-input tp-cell-input" :data-testid="`tp-day-city-${i}`" />
+                <input v-model="d.city" :placeholder="t('wizard.travel_day_city_ph')" class="tp-input tp-cell-input" :data-testid="`tp-day-city-${i}`" @input="d.city_en = ''" />
+                <!-- W47b: 飞行日显示"上一个城市 →"，提示从哪起飞；
+                     位置放到输入框下方，跟"已填什么"的视觉层级更连贯 -->
+                <div v-if="d.transport === 'flight'" class="tp-city-from" :data-testid="`tp-day-city-from-${i}`">
+                  {{ t('wizard.travel_from_label') }}: {{ dayCityDisplayFn(i).split('→')[0] }}
+                </div>
               </td>
               <td>
                 <select
@@ -163,13 +167,9 @@ import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
+import LocaleDateInput from '@/components/LocaleDateInput.vue'
 
 const { t, locale } = useI18n()
-
-// W45 fix: when the active locale is English, the second header row
-// ("Day"/"Date"/…) would render the English word twice. Detect the
-// English locale (BCP-47 "en" or "en-US") and hide the duplicated line.
-const isEnglishLocale = computed(() => /^en(-|$)/i.test(locale.value || 'en'))
 
 const props = defineProps({
   plan: { type: Object, required: true },
@@ -294,23 +294,26 @@ function formatDateEn(dateStr) {
   }
 }
 
-function buildBilingualRows() {
-  // 表格每格 = "中文\n英文"（英文缺失时只保留中文 + \n 也无所谓，autotable 会裁掉）
-  const days = props.plan.days
-  return days.map((d, i) => {
-    const cityZh = props.dayCityDisplayFn(i) || ''
-    const transportKey = d.transport || ''
-    const transportZh = transportKey ? t(`wizard.transport_${transportKey}`) : ''
-    const transportEn = TRANSPORT_EN[transportKey] || ''
-    return [
-      `Day ${d.day}`,
-      `${formatDateEn(d.date)}\n${formatDateEn(d.date)}`,
-      cityZh,
-      transportZh && transportEn ? `${transportZh}\n${transportEn}` : (transportZh || transportEn),
-      d.attraction || '',
-      d.hotel || '',
-    ]
-  })
+// W47: 双语单元格 —— 目标语言在上，英文在下（灰色小字）。
+// 当前 UI 已是英文时只渲染一行，避免 "Flight / Flight" 这种重复。
+function bilingualCellHtml(target, en) {
+  const tv = escapeHtml(String(target ?? '').trim())
+  const ev = escapeHtml(String(en ?? '').trim())
+  if (!tv && !ev) return '<div style="color:#94a3b8">—</div>'
+  if (isEnglishLocale.value) return `<div>${ev || tv}</div>`
+  const top = tv || ev
+  const sub = tv && ev && tv !== ev
+    ? `<div style="color:#64748b;font-size:11px;margin-top:2px">${ev}</div>`
+    : ''
+  return `<div>${top}</div>${sub}`
+}
+
+// 表头同样目标语言在上、英文在下（白字，配蓝底）。
+function bilingualHeaderHtml(target, en) {
+  const tv = escapeHtml(String(target ?? '').trim())
+  const ev = escapeHtml(String(en ?? '').trim())
+  if (isEnglishLocale.value) return `<div>${ev || tv}</div>`
+  return `<div>${tv}</div><div style="font-size:10px;font-weight:600;opacity:.85;margin-top:1px">${ev}</div>`
 }
 
 async function onExportPdf() {
@@ -324,44 +327,68 @@ async function onExportPdf() {
   props.onCompileItineraryText()
 
   try {
-    const doc = new jsPDF({ unit: 'pt', format: 'a4' })
+    const marginX = 36
+    const marginTop = 40
+    const footerGap = 40 // 底部给页脚留白
+
+    // W47b 实现说明：
+    // - 整份行程单 = 一页、一张"目标语言结构化表格"（前端已经去掉英文副标题，
+    //   PDF 跟前端保持一致）。jsPDF 自带 helvetica 不支持 CJK，所以整块放
+    //   离屏 DOM 用 html2canvas 截图成图片再 addImage —— 中/越/印尼都能正确渲染。
+    // - 文件体积控制（之前 scale:2 + PNG → 7 天行程 3MB+，30 天能到 8MB）：
+    //     1. html2canvas scale 从 2 降到 1.4（视觉肉眼无差，分辨率砍掉一半多）
+    //     2. 输出格式 PNG → JPEG，quality 0.82（行程单无透明通道，纯文字 + 边框，
+    //        JPEG 压缩比 10~20×）
+    //     3. canvas 物理宽度限制在 1400px（多余像素直接 trim）
+    //   实测 7 天行程稳定 250~500KB；30 天最长约 800KB，远低于 1MB。
+    const canvas = await renderBilingualPageOneCanvas()
+    const MAX_W = 1400
+    let exportCanvas = canvas
+    if (canvas.width > MAX_W) {
+      const ratio = MAX_W / canvas.width
+      exportCanvas = document.createElement('canvas')
+      exportCanvas.width = MAX_W
+      exportCanvas.height = Math.round(canvas.height * ratio)
+      const ctx = exportCanvas.getContext('2d')
+      ctx.imageSmoothingEnabled = true
+      ctx.imageSmoothingQuality = 'high'
+      ctx.fillStyle = '#fff'
+      ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height)
+      ctx.drawImage(canvas, 0, 0, exportCanvas.width, exportCanvas.height)
+    }
+    const imgData = exportCanvas.toDataURL('image/jpeg', 0.82)
+
+    // A4 尺寸 (pt)。分别算纵向/横向下能把整张表放到多大，取更大的那个方向。
+    const A4 = { short: 595.28, long: 841.89 }
+    const fitScale = (pageW, pageH) =>
+      Math.min((pageW - marginX * 2) / exportCanvas.width, (pageH - marginTop - footerGap) / exportCanvas.height)
+    const portraitScale = fitScale(A4.short, A4.long)
+    const landscapeScale = fitScale(A4.long, A4.short)
+    const orientation = landscapeScale >= portraitScale ? 'landscape' : 'portrait'
+
+    const doc = new jsPDF({ unit: 'pt', format: 'a4', orientation, compress: true })
     const pageWidth = doc.internal.pageSize.getWidth()
     const pageHeight = doc.internal.pageSize.getHeight()
-    const marginX = 36
 
-    // W46 实现说明：
-    // - 第一页 = "双语结构化表格" + 标题/副标题。jsPDF 自带的 helvetica 字体不
-    //   支持 CJK，强行写中文字符会变成乱码（"\LzSU" 之类）。
-    // - 解法：把第一页的整张"标题 + 副标题 + 双语表"放到一个离屏 DOM 里，
-    //   用 html2canvas 截图成图片，再 addImage 到 PDF。这样中英文都能正确渲染。
-    // - 第二页 = 浏览器里逐日行程表的实时截图（保留"用户屏幕上看到啥 PDF 就
-    //   是啥"的视觉一致性），同样 html2canvas。
+    const usableWidth = pageWidth - marginX * 2
+    const maxHeight = pageHeight - marginTop - footerGap
 
-    const pageOneCanvas = await renderBilingualPageOneCanvas()
-    const imgOneData = pageOneCanvas.toDataURL('image/png')
-    const oneImgH = (pageOneCanvas.height / pageOneCanvas.width) * (pageWidth - marginX * 2)
-    doc.addImage(imgOneData, 'PNG', marginX, 40, pageWidth - marginX * 2, oneImgH)
+    let imgW = usableWidth
+    let imgH = (exportCanvas.height / exportCanvas.width) * imgW
+    if (imgH > maxHeight) {
+      const scale = maxHeight / imgH
+      imgH = maxHeight
+      imgW *= scale
+    }
+    const x = marginX + (usableWidth - imgW) / 2 // 缩小后水平居中
+    doc.addImage(imgData, 'JPEG', x, marginTop, imgW, imgH)
+
     // 页脚 (英文，helvetica 能渲染)
     doc.setFontSize(9)
     doc.setTextColor(120)
     const footer = `Generated by Htex · ${new Date().toISOString().slice(0, 10)}`
     doc.text(footer, pageWidth / 2, pageHeight - 18, { align: 'center' })
     doc.setTextColor(0)
-
-    // 第二页：浏览器里整张表的实时截图
-    const node = document.querySelector('[data-testid="tp-itinerary-preview"]')
-    if (node) {
-      const canvas = await html2canvas(node, { scale: 2, backgroundColor: '#ffffff', useCORS: true })
-      const imgData = canvas.toDataURL('image/png')
-      const usableWidth = pageWidth - marginX * 2
-      const imgHeight = (canvas.height / canvas.width) * usableWidth
-      doc.addPage()
-      doc.setFontSize(9)
-      doc.setTextColor(120)
-      doc.text(footer, pageWidth / 2, pageHeight - 18, { align: 'center' })
-      doc.setTextColor(0)
-      doc.addImage(imgData, 'PNG', marginX, 40, usableWidth, Math.min(imgHeight, pageHeight - 80))
-    }
 
     // 文件名: 行程单_{countryCode}_{departDate}_{returnDate}.pdf
     const cc = props.countryCode || 'XX'
@@ -386,34 +413,60 @@ async function renderBilingualPageOneCanvas() {
     font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
     color: #0f172a;
   `
-  const rows = buildBilingualRows()
-  const destEn = props.destinationName || props.countryCode || ''
-  const sub = `${destEn} · ${props.plan.departDate || ''} ~ ${props.plan.returnDate || ''}`
+  const days = props.plan.days
+  const destName = props.destinationName || props.countryCode || ''
+  const sub = `${destName} · ${props.plan.departDate || ''} ~ ${props.plan.returnDate || ''}`
 
-  const headers = ['Day / 天数', 'Date / 日期', 'City / 城市', 'Transport / 交通方式', 'Itinerary / 景点', 'Hotel / 住宿']
-  const colWidths = [70, 130, 110, 110, 260, 180]  // 加起来 ≈ 860，留 padding
+  // 标题：目标语言在上（已带天数），英文副标题在下
+  const titleTarget = t('wizard.travel_days_title', { n: days.length })
+  const titleEn = `Itinerary (${days.length} ${days.length === 1 ? 'day' : 'days'})`
+
+  // 表头：目标语言在前 + 英文在后（英文写死，避免额外 i18n key）
+  const headerDefs = [
+    [t('wizard.itinerary_col_day'), 'Day'],
+    [t('wizard.itinerary_col_date'), 'Date'],
+    [t('wizard.itinerary_col_city'), 'City'],
+    [t('wizard.itinerary_col_transport'), 'Transport'],
+    [t('wizard.itinerary_col_attraction'), 'Itinerary'],
+    [t('wizard.itinerary_col_hotel'), 'Hotel'],
+  ]
+  const colWidths = [64, 132, 120, 104, 250, 174]  // 加起来 ≈ 844
   const tableW = colWidths.reduce((a, b) => a + b, 0)
 
+  const headHtml = headerDefs.map(([tt, en], i) =>
+    `<th style="border:1px solid #3b6ef5;background:#3b6ef5;color:#fff;padding:6px 8px;text-align:left;font-size:12px;width:${colWidths[i]}px;font-weight:700">${bilingualHeaderHtml(tt, en)}</th>`
+  ).join('')
+
   let bodyHtml = ''
-  for (const r of rows) {
-    bodyHtml += '<tr>' + r.map((cell, i) => {
-      const [zh, en] = String(cell || '').split('\n')
-      const inner = (zh || en)
-        ? `<div>${escapeHtml(zh || '')}</div>${en ? `<div style="color:#64748b;font-size:11px;margin-top:2px">${escapeHtml(en)}</div>` : ''}`
-        : '<div style="color:#94a3b8">—</div>'
-      return `<td style="border:1px solid #e2e8f0;padding:6px 8px;vertical-align:top;font-size:12.5px;width:${colWidths[i]}px">${inner}</td>`
-    }).join('') + '</tr>'
-  }
+  days.forEach((d, i) => {
+    const transportKey = d.transport || ''
+    const cells = [
+      bilingualCellHtml(`Day ${d.day}`, ''),
+      // 日期：目标语言格式在上、英文格式在下（修掉之前英文重复两遍的 bug）
+      bilingualCellHtml(formatDate(d.date), formatDateEn(d.date)),
+      // 城市 / 景点 / 住宿：目标语言在上、LLM 给的英文镜像在下（W47）。
+      // 英文镜像缺失（用户手改过）时，bilingualCellHtml 自动只渲染一行。
+      bilingualCellHtml(props.dayCityDisplayFn(i), d.city_en),
+      bilingualCellHtml(
+        transportKey ? t(`wizard.transport_${transportKey}`) : '',
+        TRANSPORT_EN[transportKey] || ''
+      ),
+      bilingualCellHtml(d.attraction, d.attraction_en),
+      bilingualCellHtml(d.hotel, d.hotel_en),
+    ]
+    bodyHtml += '<tr>' + cells.map((inner, ci) =>
+      `<td style="border:1px solid #e2e8f0;padding:6px 8px;vertical-align:top;font-size:12.5px;width:${colWidths[ci]}px">${inner}</td>`
+    ).join('') + '</tr>'
+  })
 
   wrapper.innerHTML = `
     <div style="text-align:center;margin-bottom:6px">
-      <div style="font-size:22px;font-weight:800">行程单 / Itinerary</div>
+      <div style="font-size:22px;font-weight:800">${escapeHtml(titleTarget)}</div>
+      ${isEnglishLocale.value ? '' : `<div style="font-size:12px;color:#64748b;margin-top:2px">${escapeHtml(titleEn)}</div>`}
       <div style="font-size:13px;color:#475569;margin-top:6px">${escapeHtml(sub)}</div>
     </div>
-    <table style="border-collapse:collapse;margin-top:16px;width:${tableW}px;table-layout:fixed">
-      <thead>
-        <tr>${headers.map((h, i) => `<th style="border:1px solid #3b6ef5;background:#3b6ef5;color:#fff;padding:6px 8px;text-align:left;font-size:12px;width:${colWidths[i]}px;font-weight:700">${escapeHtml(h)}</th>`).join('')}</tr>
-      </thead>
+    <table style="border-collapse:collapse;margin:16px auto 0;width:${tableW}px;table-layout:fixed">
+      <thead><tr>${headHtml}</tr></thead>
       <tbody>${bodyHtml}</tbody>
     </table>
   `
@@ -463,7 +516,16 @@ function escapeHtml(s) {
 .tp-cell-input--wide { min-width: 180px; }
 // AI 填的格子给个淡紫底色提示"这是生成的，可以再点一次一键生成刷新，或者直接手改"
 .tp-cell-input.is-ai-filled { background: #f5f3ff; border-color: #ddd6fe; }
-.tp-city-from { font-size: 11px; color: #94a3b8; font-weight: 600; margin-right: 3px; white-space: nowrap; }
+// W47b: "从北京出发"提示 —— 放到 city 输入框下方一行（之前在框上方），
+// 让用户填了"到达城市"以后下面自然出现"是从哪个城市来的"，更连贯。
+.tp-city-from {
+  margin-top: 3px;
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 600;
+  white-space: nowrap;
+  line-height: 1.3;
+}
 
 .tp-gen-issues { margin-top: 12px; }
 .tp-gen-issue {

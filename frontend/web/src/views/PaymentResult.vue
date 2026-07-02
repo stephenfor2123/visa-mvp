@@ -213,11 +213,11 @@ import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
 import AppButton from '@/components/AppButton.vue'
+import AppHeader from '@/components/AppHeader.vue'
 import LangSwitch from '@/components/LangSwitch.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import {
-import AppHeader from '@/components/AppHeader.vue'
   queryPaymentStatus,
   cancelPayment,
   retryPayment

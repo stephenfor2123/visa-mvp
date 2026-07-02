@@ -179,14 +179,8 @@ class PaymentProvider:
         extra["payment"] = payment_blob
         order.extra = json.dumps(extra, ensure_ascii=False)
 
-        self.db_add_status_history(
-            db,
-            order_id=order.id,
-            from_status=order.status,
-            to_status=order.status,  # order status itself unchanged
-            source="payment",
-            note=f"payment: pending trade_no={trade_no} amount_cents={amount_cents}",
-        )
+        # Note: order.status is the initial status — no transition to record.
+        # Fix (agent2 2026-06-30): removed redundant from_status==to_status row.
         await record_audit(
             db,
             actor_type="system",
@@ -335,19 +329,26 @@ class PaymentProvider:
         # order into the processing queue). Earlier this was intentionally
         # left to manual admin approval only (verifier #1 W17 audit caught
         # the gap).
-        if order.status in ("created", "pending"):
-            old_status = order.status
+        # Fix (agent2 2026-06-30): capture prev_status BEFORE mutation so the
+        # history record is accurate; only write a row when status actually changed.
+        prev_status = order.status
+        if prev_status in ("created", "pending"):
             order.status = "submitted"
-            order.submitted_at = paid_at
+            if order.submitted_at is None:
+                order.submitted_at = paid_at
 
-        self.db_add_status_history(
-            db,
-            order_id=order.id,
-            from_status=order.status,
-            to_status=order.status,
-            source="payment",
-            note=f"payment: paid trade_no={blob.get('trade_no')}",
-        )
+        # Write status-history AFTER the mutation (from=prev, to=curr).
+        # Only write a row if something actually changed (idempotency / dedup).
+        new_status = order.status
+        if prev_status != new_status:
+            self.db_add_status_history(
+                db,
+                order_id=order.id,
+                from_status=prev_status,
+                to_status=new_status,
+                source="payment",
+                note=f"payment: status {prev_status}→{new_status} trade_no={blob.get('trade_no')}",
+            )
         await record_audit(
             db,
             actor_type="system",
@@ -751,15 +752,8 @@ class StripePaymentProvider(PaymentProvider):
         extra["payment"] = payment_blob
         order.extra = json.dumps(extra, ensure_ascii=False)
 
-        self.db_add_status_history(
-            db,
-            order_id=order.id,
-            from_status=order.status,
-            to_status=order.status,
-            source="payment",
-            note=f"payment: stripe intent created trade_no={trade_no} "
-                 f"amount_cents={amount_cents}",
-        )
+        # Note: order.status is the initial status — no transition to record.
+        # Fix (agent2 2026-06-30): removed redundant from_status==to_status row.
         await record_audit(
             db,
             actor_type="system",
@@ -954,14 +948,10 @@ class StripePaymentProvider(PaymentProvider):
         extra["payment"] = blob
         order.extra = json.dumps(extra, ensure_ascii=False)
 
-        self.db_add_status_history(
-            db,
-            order_id=order.id,
-            from_status=order.status,
-            to_status=order.status,
-            source="payment",
-            note=f"payment: stripe {event_type} trade_no={blob.get('trade_no')}",
-        )
+        # Note: Stripe provider does not change order.status (only blob["status"]),
+        # so we skip the no-op OrderStatusHistory row — the payment status is
+        # already reflected in the audit log via record_audit below.
+        # Fix (agent2 2026-06-30): removed redundant from_status==to_status row.
         await record_audit(
             db,
             actor_type="system",

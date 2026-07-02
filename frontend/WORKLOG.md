@@ -46,3 +46,56 @@
   - 验证: 4 locale JSON load OK (21 voice_* keys each). VoiceRecorder.vue 模板 AST 手写校验通过.
 
 - [2026-06-14 09:55] retry-2 verify-only: 跳过 npm run build (W14-6 memory 提示 macOS build 可能 hang), 跳过截图 (需 mic 权限). 后端 pytest 53/53 PASS 已确认, 见 `outputs/W14-5-voice/deliverable.md`.
+
+---
+
+# W36-W45 材料收集向导重做 + 多语言 + LLM 行程单 (Claude session, 2026-07-01 ~ 2026-07-02)
+
+Apply.vue 的材料收集从"单页文字清单"重做成分类强校验向导（护照/财力/工作/行程/保险/表单 6 大类），并接了真实 LLM 生成行程单。按主题记录，涉及大量新文件。
+
+## W36 — 材料收集向导（MaterialWizard）主体
+- [2026-07-01] ✓ `src/composables/useMaterialWizard.js`（新建）— 核心状态机：`CATEGORIES` 静态定义 6 大类，`useMaterialWizard(countryCode, visaType)` 管理每类上传状态、护照有效期强校验（`PASSPORT_MIN_VALIDITY_MONTHS=6`，前端预校验镜像后端规则）、跨材料诊断（调 `/materials/diagnose`）、大类完成才解锁下一类。state 持久化到 `localStorage`（key: `visa.wizard.<country>.<visaType>`）
+- [2026-07-01] ✓ `src/components/UploadItemCard.vue`（新建）— 单项上传卡片：文件选择 + `getUserMedia` 现场拍照，OCR 结果预览，模糊/裁切警告
+- [2026-07-01] ✓ `src/components/TravelPlanner.vue`（新建，后续 W41/W42 大改，见下）
+- [2026-07-01] ✓ `src/views/MaterialWizard.vue`（新建）— 主页面：分类导航条 + 进度条 + 渲染当前大类
+- [2026-07-01] ✓ 路由 `/materials-wizard`，`Apply.vue` 选完国家后跳转到这里（而不是直接进旧的 OrderNew.vue）
+
+## W37/W38 — i18n 全面接入（此前新组件是纯中文硬编码）
+- [2026-07-01~02] ✓ 排查发现 MaterialWizard/UploadItemCard/TravelPlanner 三个新组件完全没接 `useI18n()`，选什么语言都显示中文；`useMaterialWizard.js` 里 CATEGORIES 的 label/hint 改成 i18n key（`labelKey`/`hintKey`），组件里用 `t()` 取值
+- [2026-07-01~02] ✓ `frontend/shared/i18n/{zh-CN,en,vi,id}.json` 累计新增 `wizard.*` 命名空间 100+ key（分类名复用已有的 `apply.cat_*`，材料类型复用 `materials.type_*`，避免重复定义）
+- [2026-07-02] ✓ 诊断接口 (`/materials/diagnose`) 返回的 title/detail 是后端拼好的中文字符串，不会跟着语言切换 — 改成前端按 `issue.code` + 后端新增的 `params` 字段自己重新渲染（`translateDiagnoseIssue()`），认不出的 code 才回退显示后端原文
+
+## W38 — 废弃入口清理（"两套 UI"问题）
+- [2026-07-02] ✓ 排查发现早期原型页 `Materials.vue`（假上传、无 i18n、不联通后端）仍然是好几处入口的默认落点：`AppHeader.vue` 导航菜单"申请材料"、`Destinations.vue` 点国家卡片、`MaterialsDiagnose.vue` 空状态 CTA、`OrderNew.vue` 的"← 返回材料"按钮（`goBackMaterials()`）—— 全部改成指向真正联通后端的 `MaterialWizard`
+
+## W39 — 组合式函数里两个我自己引入的 bug
+- [2026-07-02] ✓ `it.label` 引用了已经不存在的字段（改造成 `labelKey` 后忘了同步这处），子项报错时标题显示 undefined —— 改成 `i18n.global.t(it.labelKey)`
+- [2026-07-02] ✓ `validateForGenerate` 导出时忘了包一层注入 `state.travelPlan`，`TravelPlanner.vue` 调用时崩溃 `Cannot read properties of undefined (reading 'departDate')`
+
+## W40/W41/W42 — TravelPlanner 行程单三轮迭代
+第一轮（W40）：航班号手填（不接真实航班 API，已跟用户确认）、拆去程/回程两块、逐日行程手动模式 + AI 一键补全模式、进度条。
+第二轮（W41，用户反馈后）：
+- [2026-07-02] ✓ 去掉单独的"逐日行程"编辑区块，改成直接在生成结果的表格里逐格编辑（city/transport/hotel/attraction 都是表格里的 input/select）
+- [2026-07-02] ✓ 默认全部留空（之前 city 会预填 destination）
+- [2026-07-02] ✓ 一键生成改成同时补 transport + hotel（原来只补 attraction）
+- [2026-07-02] ✓ 加 `_auto` 字段来源标记 —— AI 填的格子允许被下一次生成覆盖刷新，用户手填的永远保留；不然改了目的地/航班信息后已生成过的格子（包括回程那天）会一直卡在旧内容
+- [2026-07-02] ✓ 顶部"目的地"文字改了 → 自动把跟旧目的地文字相同的"每天城市"格子批量同步成新值
+第三轮（W42，用户再反馈）：
+- [2026-07-02] ✓ 回程出发地/到达地从"目的地→出发地"的只读提示文字改成两个真正独立可编辑的输入框（`plan.returnOrigin`/`plan.returnDestination`），支持开口程
+
+## W43 — OrderNew.vue "返回材料"按钮指错地方（见上方 W38 废弃入口清理）
+
+## W44 — 背景色 / UX 一致性
+- [2026-07-02] ✓ `OrderNew.vue` 之前每个目的地国家有一套独立的柔色径向渐变背景（`.ordernew-page[data-country-bg="US"]` 等 9 条规则），跟 `app-header`/`app-container` 的纯白不一致，材料向导跳过来会有明显变色割裂感 —— 改成纯白，删掉全部径向渐变 CSS
+
+## W45 — 401 会话过期 + refresh token 补链路
+- [2026-07-02] ✓ `api/auth.js` `refresh()` 发送字段名错了（`refreshToken` camelCase vs 后端要求的 `refresh_token`，且后端 `extra="forbid"`，一直 422）
+- [2026-07-02] ✓ `stores/auth.js` 加 `refreshAccessToken()`，`api/http.js` 拦截器加 401 静默 refresh-retry 一次的逻辑
+- [2026-07-02] ✓ `api/materials.js` 的 `uploadMaterialWithProgress()` 小文件路径用的是裸 `XMLHttpRequest`，绕过了 axios 拦截器，401 refresh 补丁对它不生效 —— 加 `_xhrPostMultipartWithRefresh()` helper
+
+## 已知问题
+- ⚠️ 全量后端测试 `pytest tests/ -m "not slow"` 会清空 dev DB（含 users 表），跑过一次后账号会消失，见 backend WORKLOG 对应条目
+
+## 验证方式
+- 全程用 Playwright headless 实测（登录 → 上传护照/材料 → 跨语言切换 → 生成行程单），没有用真实浏览器人工点击
+- 每次改动后跑 `@vue/compiler-sfc` 对 58 个 .vue 文件做模板/脚本编译检查（`node --check` + AST parse），不依赖起 dev server

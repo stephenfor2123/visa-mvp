@@ -47,6 +47,7 @@ and the consequences we accepted by making it.
 | 0003 | Payment integration — MockPayment for V2, Stripe for V2.1 | Accepted | 2026-06-15 |
 | 0004 | i18n — vue-i18n v9, four shipping locales (zh-CN/en/id/vi) | Accepted | 2026-06-15 |
 | 0005 | Error handling — BizException + ErrorCode enum | Accepted | 2026-06-15 |
+| 0006 | LLM material diagnosis (pre-payment) — design only, no provider selected | Proposed | 2026-07-01 |
 
 ## Notes
 

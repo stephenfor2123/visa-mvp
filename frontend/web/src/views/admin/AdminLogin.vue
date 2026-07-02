@@ -64,7 +64,7 @@
           </div>
 
           <p class="admin-login-mock-hint" data-testid="admin-login-mock-hint">
-            {{ t('admin.login.mock_hint') }}
+            测试账号: admin / Admin@2024
           </p>
         </form>
       </AppCard>
@@ -148,12 +148,15 @@ function onForgot() {
   alert(t('admin.login.forgot_password'))
 }
 
-onMounted(() => {
+onMounted(async () => {
   admin.hydrate()
+  // 运营后台强制中文，不管浏览器语言
+  const { setLocale } = await import('@/i18n')
+  await setLocale('zh-CN', { markUser: false })
   // Test/demo mode: pre-fill mock credentials so screenshots show a populated form
   if (route.query.demo !== undefined) {
     username.value = 'admin'
-    password.value = 'admin123'
+    password.value = 'Admin@2024'
   }
 })
 </script>

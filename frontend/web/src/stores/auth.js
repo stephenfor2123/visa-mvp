@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { login as apiLogin, register as apiRegister } from '@/api/auth'
+import { login as apiLogin, register as apiRegister, loginWithGoogle as apiLoginWithGoogle, refresh as apiRefresh } from '@/api/auth'
 
 const STORAGE_KEY = 'visa.auth'
 
@@ -30,7 +30,7 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         user: user.value,
         accessToken: accessToken.value,
-        refreshToken: user.value
+        refreshToken: refreshToken.value
       }))
     } catch {}
   }
@@ -63,8 +63,36 @@ export const useAuthStore = defineStore('auth', () => {
     return data
   }
 
+  async function loginWithGoogle(credential) {
+    const data = await apiLoginWithGoogle(credential)
+    user.value = data.user
+    accessToken.value = data.accessToken
+    refreshToken.value = data.refreshToken
+    persist()
+    return data
+  }
+
   function logout() {
     clear()
+  }
+
+  // W37: access token 只有 2h 有效期，之前从没人调用过 refresh_token 去续期——
+  // 一过 2h 用户就会被强制踢回登录页。http.js 的 401 拦截器在 logout 之前先
+  // 试一次这个，成功就静默续上，用户完全无感。
+  async function refreshAccessToken() {
+    hydrate()
+    if (!refreshToken.value) return false
+    try {
+      const data = await apiRefresh(refreshToken.value)
+      if (data.user) user.value = data.user
+      accessToken.value = data.accessToken
+      refreshToken.value = data.refreshToken
+      persist()
+      return true
+    } catch {
+      clear()
+      return false
+    }
   }
 
   return {
@@ -74,7 +102,9 @@ export const useAuthStore = defineStore('auth', () => {
     isLoggedIn,
     hydrate,
     loginByPassword,
+    loginWithGoogle,
     register,
+    refreshAccessToken,
     logout
   }
 })

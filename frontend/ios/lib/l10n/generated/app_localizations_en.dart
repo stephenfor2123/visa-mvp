@@ -588,7 +588,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get forgotPageSubtitle =>
-      'Enter your phone and we\'ll send you a reset code';
+      'Enter your account and set a new password to reset right away.';
 
   @override
   String get forgotPhoneLabel => 'Phone Number';
@@ -852,4 +852,505 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ordernewSubmitting => 'Submitting...';
+
+  @override
+  String get applyTitle => 'Apply for a Visa';
+
+  @override
+  String get applySub => '4 steps to your visa';
+
+  @override
+  String get applyStepCountry => 'Choose Destination';
+
+  @override
+  String get applyStepChecklist => 'Materials Checklist';
+
+  @override
+  String get applyStepTrip => 'Trip Info';
+
+  @override
+  String get applyStepConfirm => 'Confirm';
+
+  @override
+  String get applyFeeLabel => 'Fee';
+
+  @override
+  String get applyProcessingLabel => 'Processing';
+
+  @override
+  String get applyValidityLabel => 'Validity';
+
+  @override
+  String get applyVisaType => 'Visa Type';
+
+  @override
+  String get applyVisaTourism => 'Tourism';
+
+  @override
+  String get applyVisaBusiness => 'Business';
+
+  @override
+  String get applyVisaStudent => 'Student';
+
+  @override
+  String get applyVisaFamily => 'Family';
+
+  @override
+  String get applyVisaOther => 'Other';
+
+  @override
+  String get applyDepartDate => 'Departure Date';
+
+  @override
+  String get applyReturnDate => 'Return Date';
+
+  @override
+  String get applyDepartCity => 'Departure City';
+
+  @override
+  String get applyDepartCityPh => 'e.g. Shanghai';
+
+  @override
+  String get applyEmergencyContact => 'Emergency Contact';
+
+  @override
+  String get applyEmergencyPh => 'e.g. John +86 138xxxx';
+
+  @override
+  String get applyPurpose => 'Trip Purpose';
+
+  @override
+  String get applyPurposePh => 'Briefly describe purpose';
+
+  @override
+  String get applyBack => '← Back';
+
+  @override
+  String get applyNextMaterials => 'Next: Fill Form';
+
+  @override
+  String get applyNextConfirm => 'Next: Confirm';
+
+  @override
+  String get applyPickDate => 'Pick a date';
+
+  @override
+  String get applyConfirmSubmit => 'Confirm & Submit';
+
+  @override
+  String get applySubmitting => 'Submitting…';
+
+  @override
+  String get applyRequired => 'req';
+
+  @override
+  String get diagnoseTitle => 'Pre-Assessment';
+
+  @override
+  String get diagnoseSub => 'Check your approval odds first';
+
+  @override
+  String get diagnoseStepForm => 'Tell us about yourself';
+
+  @override
+  String get diagnoseResult => 'Your Result';
+
+  @override
+  String get diagnoseFactors => 'Factors';
+
+  @override
+  String get diagnoseSuggestions => 'Suggestions';
+
+  @override
+  String get diagnoseCtaApply => 'Apply for this country →';
+
+  @override
+  String get diagnoseRestart => 'Re-assess';
+
+  @override
+  String get diagnoseLevelHigh => 'High chance';
+
+  @override
+  String get diagnoseLevelMedium => 'Medium';
+
+  @override
+  String get diagnoseLevelLow => 'Low chance';
+
+  @override
+  String get diagnoseMarital => 'Marital Status';
+
+  @override
+  String get diagnoseMaritalSingle => 'Single';
+
+  @override
+  String get diagnoseMaritalMarried => 'Married';
+
+  @override
+  String get diagnoseMaritalDivorced => 'Divorced';
+
+  @override
+  String get diagnoseMaritalWidowed => 'Widowed';
+
+  @override
+  String get diagnoseIncome => 'Monthly Income (CNY)';
+
+  @override
+  String get diagnoseIncomeBelow5k => '<5k';
+
+  @override
+  String get diagnoseIncome5k15k => '5k-15k';
+
+  @override
+  String get diagnoseIncome15k30k => '15k-30k';
+
+  @override
+  String get diagnoseIncome30k100k => '30k-100k';
+
+  @override
+  String get diagnoseIncomeAbove100k => '>100k';
+
+  @override
+  String get diagnosePurpose => 'Travel Purpose';
+
+  @override
+  String get diagnosePurposeBusiness => 'Business';
+
+  @override
+  String get diagnosePurposeTourism => 'Tourism';
+
+  @override
+  String get diagnosePurposeFamily => 'Family';
+
+  @override
+  String get diagnosePurposeStudy => 'Study';
+
+  @override
+  String get diagnosePurposeOther => 'Other';
+
+  @override
+  String get diagnoseTravelHistory => 'Travel History (5y)';
+
+  @override
+  String get diagnoseTravelNone => 'None';
+
+  @override
+  String get diagnoseTravel1to3 => '1-3';
+
+  @override
+  String get diagnoseTravel4to10 => '4-10';
+
+  @override
+  String get diagnoseTravelAbove10 => '10+';
+
+  @override
+  String get diagnoseVisaHistory => 'Visa History';
+
+  @override
+  String get diagnoseVisaNone => 'None';
+
+  @override
+  String get diagnoseVisa1to2 => '1-2';
+
+  @override
+  String get diagnoseVisaAbove2 => '2+';
+
+  @override
+  String get diagnoseEmployment => 'Employment';
+
+  @override
+  String get diagnoseEmpEmployed => 'Employed';
+
+  @override
+  String get diagnoseEmpFreelancer => 'Freelancer';
+
+  @override
+  String get diagnoseEmpStudent => 'Student';
+
+  @override
+  String get diagnoseEmpRetired => 'Retired';
+
+  @override
+  String get diagnoseEmpUnemployed => 'Unemployed';
+
+  @override
+  String get diagnoseAge => 'Age (optional)';
+
+  @override
+  String get diagnoseAgePh => 'e.g. 30';
+
+  @override
+  String get diagnoseSoloFemale => 'Solo female traveler';
+
+  @override
+  String get diagnoseSubmit => 'View Result';
+
+  @override
+  String get diagnoseSubmitting => 'Assessing…';
+
+  @override
+  String get diagnoseReselect => '← Re-select country';
+
+  @override
+  String get diagnoseStart => 'Start Assessment';
+
+  @override
+  String get resourcesTitle => 'Visa Q&A';
+
+  @override
+  String get resourcesSub => 'AI answers from official sources';
+
+  @override
+  String get resourcesHint => 'e.g. US visa fee';
+
+  @override
+  String get resourcesEmpty => 'Start asking';
+
+  @override
+  String get resourcesFollowup => 'Follow up';
+
+  @override
+  String get resourcesSources => 'Sources';
+
+  @override
+  String get resourcesRelevance => 'Relevance';
+
+  @override
+  String get contactTitle => 'Contact Us';
+
+  @override
+  String get contactSub => 'Replies within business hours (UTC+8, 9-18h)';
+
+  @override
+  String get contactEmail => 'Email';
+
+  @override
+  String get contactEmailAddr => 'support@htex.app';
+
+  @override
+  String get contactEmailSub => 'Reply within 24 hours';
+
+  @override
+  String get contactChat => 'Live Chat';
+
+  @override
+  String get contactChatSub => 'Real-time on weekdays';
+
+  @override
+  String get contactBug => 'Bug Report';
+
+  @override
+  String get contactBugSub => 'Engineers see directly';
+
+  @override
+  String get contactBiz => 'Business';
+
+  @override
+  String get contactBizAddr => 'biz@htex.app';
+
+  @override
+  String get contactBizSub => 'Affiliate / Travel agencies';
+
+  @override
+  String get contactTip =>
+      'Emergencies: contact your local embassy. Htex cannot replace official channels.';
+
+  @override
+  String get passportUploadTitle => 'Upload Passport';
+
+  @override
+  String get passportUploadSub => 'Snap a clear passport photo';
+
+  @override
+  String get passportUploadTip =>
+      'Make sure the bio page is aligned and well-lit';
+
+  @override
+  String get passportGallery => 'Gallery';
+
+  @override
+  String get passportCamera => 'Camera';
+
+  @override
+  String get passportRecognize => 'Recognize';
+
+  @override
+  String get passportRecognizing => 'Recognizing…';
+
+  @override
+  String get passportReviewTitle => 'Confirm Passport Info';
+
+  @override
+  String get passportReviewDetected => '✓ Detected as passport';
+
+  @override
+  String get passportReviewWarn => '⚠️ Not a passport';
+
+  @override
+  String get passportReviewConfirm => 'Confirm & Continue';
+
+  @override
+  String get passportReviewRetake => 'Retake';
+
+  @override
+  String get passportReviewPassportNo => 'Passport No.';
+
+  @override
+  String get passportReviewSurname => 'Surname';
+
+  @override
+  String get passportReviewGivenName => 'Given Name';
+
+  @override
+  String get passportReviewSex => 'Sex (M / F)';
+
+  @override
+  String get passportReviewNationality => 'Nationality';
+
+  @override
+  String get passportReviewDob => 'Date of Birth (YYYY-MM-DD)';
+
+  @override
+  String get passportReviewExpiry => 'Expiry (YYYY-MM-DD)';
+
+  @override
+  String get loginAccountTab => 'Account';
+
+  @override
+  String get loginSmsTab => 'SMS';
+
+  @override
+  String get loginAccountLabel => 'Email or Username';
+
+  @override
+  String get loginAccountPh => 'user@example.com or username';
+
+  @override
+  String get registerUsernameLabel => 'Username';
+
+  @override
+  String get registerUsernamePh => '3-32 chars, starts with letter/digit';
+
+  @override
+  String get registerUsernameHint =>
+      '3-32 chars [A-Za-z0-9_.-], letter/digit start';
+
+  @override
+  String get registerEmailLabel => 'Email';
+
+  @override
+  String get registerEmailPh => 'user@example.com';
+
+  @override
+  String get registerNicknameLabel => 'Nickname (optional)';
+
+  @override
+  String get registerNicknamePh => 'What should we call you?';
+
+  @override
+  String get registerEmailInvalid => 'Invalid email format';
+
+  @override
+  String get registerUsernameInvalid => 'Invalid username format';
+
+  @override
+  String get homeSloganZh => 'Infinite possibilities, by your side';
+
+  @override
+  String get homeCtaDiagnose => 'Check Odds';
+
+  @override
+  String get homeCtaAsk => 'Ask Policy';
+
+  @override
+  String get homeTrust => '100k+ users · 99% approval';
+
+  @override
+  String get homeFeatureUploadTitle => 'Upload Passport';
+
+  @override
+  String get homeFeatureUploadSub => 'Auto OCR';
+
+  @override
+  String get homeFeatureDiagnoseTitle => 'Pre-Assessment';
+
+  @override
+  String get homeFeatureDiagnoseSub => 'Risk score';
+
+  @override
+  String get homeFeatureResourcesTitle => 'Policy Q&A';
+
+  @override
+  String get homeFeatureResourcesSub => 'RAG from 4 sources';
+
+  @override
+  String get homeFeatureContactTitle => 'Contact Us';
+
+  @override
+  String get homeFeatureContactSub => 'Weekdays 9-18h';
+
+  @override
+  String get homeHotVisa => 'Popular Destinations';
+
+  @override
+  String get homeViewAll => 'View all →';
+
+  @override
+  String get homeSectionFeatures => 'What you can do with Htex';
+
+  @override
+  String get homeFooterUpload => 'Upload';
+
+  @override
+  String get homeFooterDiagnose => 'Assess';
+
+  @override
+  String get homeFooterQa => 'Q&A';
+
+  @override
+  String get homeFooterContact => 'Support';
+
+  @override
+  String get homeHeroCityPrefix => 'Endless possibilities, by your side';
+
+  @override
+  String get homeFromPrice => 'FROM';
+
+  @override
+  String get homeApplyNow => 'Apply Now';
+
+  @override
+  String get homeFooterCopyright => 'Htex · Wherever you go, life is infinite';
+
+  @override
+  String get destinationsTitle => 'Choose Destination';
+
+  @override
+  String get destinationsHero => 'Popular Visas';
+
+  @override
+  String get destinationsSchengen => 'Schengen 26';
+
+  @override
+  String get destinationsExpand => 'Expand';
+
+  @override
+  String get destinationsCollapse => 'Collapse';
+
+  @override
+  String get destinationsValid => 'VALID';
+
+  @override
+  String get destinationsApply => 'Apply';
+
+  @override
+  String get destinationsSearch => 'Search country';
+
+  @override
+  String get selfieStart => 'Take Selfie';
+
+  @override
+  String get selfieRetake => 'Retake';
+
+  @override
+  String get selfieHint => 'Tap below to start';
 }

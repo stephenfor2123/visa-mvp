@@ -34,14 +34,17 @@ def _bearer(token: str) -> dict[str, str]:
 
 
 async def _register(client, phone: str) -> str:
-    """SMS-login -> access token. Auto-registers on first use (mock mode)."""
+    """Register or reuse account keyed by phone → returns access token."""
+    uname = f"u{phone}"
+    email = f"{phone}@test.local"
+    pwd = "Test1234"
     await client.post(
-        "/api/v2/auth/send-code",
-        json={"phone": phone, "phone_country": "+86", "purpose": "login"},
+        "/api/v2/auth/register",
+        json={"username": uname, "email": email, "password": pwd},
     )
     r = await client.post(
-        "/api/v2/auth/sms-login",
-        json={"phone": phone, "phone_country": "+86", "sms_code": "123456"},
+        "/api/v2/auth/login",
+        json={"account": email, "password": pwd},
     )
     assert r.status_code == 200, r.text
     return r.json()["data"]["access_token"]
@@ -173,6 +176,22 @@ class TestUpload:
         assert r2.status_code == 201
         assert r2.json()["data"]["material"]["id"] == first_id
         assert r2.json()["data"]["deduplicated"] is True
+
+    @pytest.mark.parametrize(
+        "material_type", ["bank", "employment", "hotel", "flight", "insurance"]
+    )
+    async def test_w36_wizard_material_types_accepted(self, client, material_type):
+        """材料向导新增分类（财力/工作/酒店/机票/保险）— W36."""
+        token = await _register(client, f"1390000{hash(material_type) % 10000:04d}")
+        files = {"file": (f"{material_type}.jpg", io.BytesIO(JPEG_BYTES), "image/jpeg")}
+        r = await client.post(
+            "/api/v2/materials/upload",
+            files=files,
+            data={"material_type": material_type},
+            headers=_bearer(token),
+        )
+        assert r.status_code == 201, r.text
+        assert r.json()["data"]["material"]["material_type"] == material_type
 
 
 # ----------------------------------------------------------------- #

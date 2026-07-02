@@ -10,7 +10,8 @@ import '../main.dart';
 
 class OrderDetailPage extends StatefulWidget {
   final String? orderNo;
-  const OrderDetailPage({super.key, this.orderNo});
+  OrderDetailPage({super.key, String? orderNo})
+      : orderNo = orderNo ?? Uri.base.queryParameters['order_no'];
 
   @override
   State<OrderDetailPage> createState() => _OrderDetailPageState();
@@ -202,7 +203,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                 const SizedBox(height: 4),
                 Text(_order!['order_no'] as String, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1A1A2E))),
                 const SizedBox(height: 4),
-                Text('$_countryName() · ${_visaTypeLabel()}', style: const TextStyle(fontSize: 14, color: Color(0xFF6B7280))),
+                Text('${_countryName()} · ${_visaTypeLabel()}', style: const TextStyle(fontSize: 14, color: Color(0xFF6B7280))),
                 const SizedBox(height: 16),
                 Row(
                   children: [

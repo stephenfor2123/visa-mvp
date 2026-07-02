@@ -9,7 +9,8 @@ import '../main.dart';
 
 class OrderFormPage extends StatefulWidget {
   final String? orderNo;
-  const OrderFormPage({super.key, this.orderNo});
+  OrderFormPage({super.key, String? orderNo})
+      : orderNo = orderNo ?? Uri.base.queryParameters['order_no'];
 
   @override
   State<OrderFormPage> createState() => _OrderFormPageState();

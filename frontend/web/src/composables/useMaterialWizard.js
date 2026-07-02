@@ -220,7 +220,10 @@ function rebuildTravelDays(plan) {
 function syncDestinationToDays(plan, oldDestination, newDestination) {
   if (!oldDestination || oldDestination === newDestination) return
   for (const d of plan.days || []) {
-    if (d.city === oldDestination) d.city = newDestination
+    if (d.city === oldDestination) {
+      d.city = newDestination
+      d.city_en = '' // W47: 城市变了，旧的英文镜像作废
+    }
   }
 }
 
@@ -552,8 +555,12 @@ export function useMaterialWizard(countryCode, visaType = 'tourism') {
 
   // 用户在某天格子里手动打字 → 标记这个字段是"手填"，以后一键生成不会再碰它。
   // city 永远是手填字段（就没有 _auto 这一说），不在这里管。
+  // W47: 用户手动改过 hotel/attraction 后，之前 LLM 给的英文镜像就过期了，
+  // 清掉对应的 *_en，PDF 那格会回退成只显示当前语言（而不是错的英文）。
   function markDayFieldManual(day, field) {
     day._auto = { ...(day._auto || {}), [field]: false }
+    if (field === 'hotel') day.hotel_en = ''
+    if (field === 'attraction') day.attraction_en = ''
   }
 
   // 一键生成：调用后端 LLM 接口补全 transport/hotel/attraction。

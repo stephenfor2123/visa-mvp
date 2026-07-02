@@ -20,21 +20,40 @@ import {
   ADMIN_STORAGE_KEYS
 } from '@/api/admin'
 
+async function _forceAdminLocale() {
+  try {
+    const { setLocale } = await import('@/i18n')
+    await setLocale('zh-CN', { markUser: false })
+  } catch {}
+}
+
 export const useAdminStore = defineStore('admin', () => {
   const token = ref(null)
   const profile = ref(null)
+  const permissions = ref([])
 
   const isAuthenticated = computed(() => !!token.value?.accessToken)
   const role = computed(() => token.value?.role || profile.value?.role || null)
   const username = computed(() => profile.value?.username || token.value?.username || null)
 
+  function hasPermission(code) {
+    return permissions.value.includes(code)
+  }
+
   function hydrate() {
-    if (token.value) return
+    if (token.value) {
+      _forceAdminLocale()
+      return
+    }
     try {
       const tokRaw = localStorage.getItem(ADMIN_STORAGE_KEYS.TOKEN)
       const profRaw = localStorage.getItem(ADMIN_STORAGE_KEYS.PROFILE)
       token.value = tokRaw ? JSON.parse(tokRaw) : null
       profile.value = profRaw ? JSON.parse(profRaw) : null
+      // Restore permissions from persisted token
+      if (token.value?.permissions) {
+        permissions.value = token.value.permissions
+      }
     } catch {
       token.value = null
       profile.value = null
@@ -42,14 +61,15 @@ export const useAdminStore = defineStore('admin', () => {
   }
 
   async function login(credentials) {
+    await _forceAdminLocale()
     const tok = await apiAdminLogin(credentials)
     token.value = tok
-    // Login already persists token; fetch profile for display
-    try {
-      const prof = await apiGetProfile()
-      profile.value = prof
-    } catch {
-      // profile is best-effort
+    // 登录响应含 permissions，直接用
+    permissions.value = tok.permissions || []
+    profile.value = {
+      ...(profile.value || {}),
+      username: tok.username || credentials.username,
+      role_name: tok.role_name,
     }
     return tok
   }
@@ -82,9 +102,11 @@ export const useAdminStore = defineStore('admin', () => {
   return {
     token,
     profile,
+    permissions,
     isAuthenticated,
     role,
     username,
+    hasPermission,
     hydrate,
     login,
     logout,

@@ -174,6 +174,9 @@ async def preprocess_image(
             corners=result.corners,
             stages=result.stages,
             warnings=result.warnings,
+            blur_score=result.blur_score,
+            is_blurry=result.is_blurry,
+            is_complete=result.is_complete,
         ),
     )
     _log.info(
@@ -283,6 +286,85 @@ async def classify_material(
         ],
     )
     return ApiResponse[ClassifyResponse](code="1000", message="OK", data=payload)
+
+
+# --------------------------------------------------------------------------- #
+# /{id}/ocr — run OCR on an already-uploaded material and PERSIST the result   #
+# --------------------------------------------------------------------------- #
+# W36: closes a real gap — `Material.ocr_result` was set to None at upload time
+# (material_service.upload()) and nothing anywhere ever wrote to it afterwards
+# (the stateless /ocr/recognize endpoint only returns fields to the caller, it
+# never touches the DB row). Every downstream consumer that reads
+# `material.ocr_result` from the DB (VisaDiagnoser field-level passport checks,
+# the order auto-fill draft) always saw an empty dict. This endpoint runs the
+# same preprocess+OCR pipeline as /ocr/recognize but against the already-stored
+# file, and writes the result back onto the material row.
+@router.post(
+    "/{material_id}/ocr",
+    response_model=ApiResponse[dict],
+    summary="Run OCR on a stored material and persist ocr_result",
+)
+async def run_material_ocr(
+    material_id: int = Path(..., ge=1),
+    lang: str = Form("en"),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> ApiResponse[dict]:
+    service = MaterialService(db)
+    material = await service.get(user_id=current_user.id, material_id=material_id)
+
+    try:
+        content = storage.read_bytes(material.storage_key)
+    except FileNotFoundError:
+        raise BizException(ErrorCode.MATERIAL_STORAGE_ERROR, message="stored file missing")
+
+    pre = get_preprocessor()
+    pp_result = pre.preprocess(content, apply_binarize=False)
+    is_blurry = pp_result.is_blurry
+    is_complete = pp_result.is_complete
+    if pp_result.corrected:
+        content = pp_result.image_bytes
+
+    fields: dict = {}
+    items: list = []
+    try:
+        from io import BytesIO
+
+        import cv2
+        import numpy as np
+        from PIL import Image
+
+        from app.services.ocr import OCREngine
+
+        pil = Image.open(BytesIO(content)).convert("RGB")
+        img_bgr = cv2.cvtColor(np.array(pil), cv2.COLOR_RGB2BGR)
+        engine = OCREngine(lang=lang)
+        items = engine.recognize(img_bgr)
+        fields = engine.extract_passport_fields(img_bgr)
+    except Exception as exc:
+        _log.warning("material ocr failed material_id={}: {}", material_id, exc)
+        fields = {"error": str(exc)}
+
+    # Persist as a FLAT dict (not nested under "fields") — this matches the
+    # contract `extractApplicantDraft()` in frontend/web/src/api/orders.js
+    # already expects (see makeDemoPassportMaterial() in the same file for
+    # the reference shape: passport_no/surname/given_name/... at the top
+    # level of ocr_result, not ocr_result.fields.xxx).
+    material.ocr_result = json.dumps(fields, ensure_ascii=False)
+    material.ocr_status = "failed" if fields.get("error") else "done"
+    await db.commit()
+
+    return ApiResponse[dict](
+        code="1000",
+        message="OK",
+        data={
+            "material_id": material_id,
+            "fields": fields,
+            "is_blurry": is_blurry,
+            "is_complete": is_complete,
+            "ocr_status": material.ocr_status,
+        },
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -405,6 +487,7 @@ async def diagnose(
                 detail=i.detail,
                 fix_suggestion=i.fix_suggestion,
                 related_material_id=i.related_material_id,
+                params=i.params,
             )
             for i in out.issues
         ],

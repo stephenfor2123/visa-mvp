@@ -212,13 +212,53 @@ async def query(
 # --------------------------------------------------------------------------- #
 _MATERIAL_KEYWORDS = [
     # (category, list of name keywords to match)
+    # W38: "insurance" checked before "travel" — insurance item descriptions
+    # often contain "...涵盖整个行程" (covers the whole itinerary), and "行程"
+    # is also a travel keyword; if travel were checked first every insurance
+    # item would get mis-bucketed into the travel group.
     ("identity", ["护照", "passport", "身份证", "户口", "照片", "photo", "白底", "证件"]),
     ("financial", ["银行流水", "bank statement", "存款", "存款证明", "财力", "纳税", "完税", "社保", "房产"]),
     ("work", ["在职", "在职证明", "employment", "营业执照", "公司", "在职证明", "在读", "学生证"]),
-    ("travel", ["机票", "行程单", "酒店", "预订", "itinerary", "酒店预订", "行程", "邀请函"]),
     ("insurance", ["保险", "insurance", "医疗保险"]),
+    ("travel", ["机票", "行程单", "酒店", "预订", "itinerary", "酒店预订", "行程", "邀请函"]),
     ("form", ["申请表", "application form", "DS-160", "签证申请表", "evisa", "e-visa"]),
 ]
+
+
+def _split_respecting_parens(section: str) -> List[str]:
+    """按 顿号/分号/换行/英文逗号+空格 切分，但跳过括号 ()（）内部的分隔符。
+
+    W38 fix: 旧版用 re.split 直接切，会把"护照原件 (有效期6个月以上, 至少1页
+    空白)"这种括号里带逗号的描述从中间切断，产出"护照原件 (有效期6个月以上"
+    和"至少1页空白)"两截头尾不接的碎片。这里改成手动扫描、记录括号深度，
+    深度 > 0 时不切分。
+    """
+    parts: List[str] = []
+    buf: List[str] = []
+    depth = 0
+    i = 0
+    n = len(section)
+    while i < n:
+        ch = section[i]
+        if ch in "（(":
+            depth += 1
+            buf.append(ch)
+        elif ch in "）)":
+            depth = max(0, depth - 1)
+            buf.append(ch)
+        elif depth == 0 and ch in "、;；\n":
+            parts.append("".join(buf))
+            buf = []
+        elif depth == 0 and ch == "," and i + 1 < n and section[i + 1] == " ":
+            parts.append("".join(buf))
+            buf = []
+            i += 1  # 顺带跳过逗号后的空格
+        else:
+            buf.append(ch)
+        i += 1
+    if buf:
+        parts.append("".join(buf))
+    return parts
 
 
 def _parse_materials_from_text(text: str) -> List[MaterialItem]:
@@ -238,11 +278,13 @@ def _parse_materials_from_text(text: str) -> List[MaterialItem]:
         section = m2.group(1)[:600]  # cap
     else:
         section = m.group(1)
-    # Split by 顿号 / 中英文分号 / 换行 / 英文逗号+空格, keep 括号完整
-    raw_items = re.split(r"[、;；\n]|, (?=\S)", section)
+    # W38 fix: 括号感知切分，不再用会切断括号内容的 re.split
+    raw_items = _split_respecting_parens(section)
     seen = set()
     for raw in raw_items:
-        clean = raw.strip(" ,。、;：（）()")
+        # W38 fix: 不再把 （）() 放进 strip 的字符集——括号感知切分后条目
+        # 本身括号是配对完整的，粗暴 strip 掉边缘括号反而会重新弄成不配对。
+        clean = raw.strip(" ,。、;：")
         # Skip if too short/long, or if it looks like a sentence fragment
         if not clean or len(clean) < 3 or len(clean) > 50:
             continue
@@ -267,6 +309,19 @@ def _parse_materials_from_text(text: str) -> List[MaterialItem]:
                 break
         items.append(MaterialItem(name=clean, category=category, required=True))
     return items
+
+
+# W35: the 26 Schengen member destinations share one visa policy, but the
+# curated RAG content is only seeded under country_code="FR" (see
+# scripts/seed_rag_sources.py). Without this fallback, picking any Schengen
+# country other than France returns an empty checklist even though the
+# content genuinely applies to it.
+SCHENGEN_CODES = {
+    "AT", "BE", "HR", "CZ", "DK", "EE", "FI", "FR", "DE", "GR",
+    "HU", "IS", "IT", "LV", "LI", "LT", "LU", "MT", "NL", "NO",
+    "PL", "PT", "SK", "SI", "ES", "SE", "CH",
+}
+_SCHENGEN_RAG_PROXY_CODE = "FR"
 
 
 def _extract_meta(text: str, patterns: List[str]) -> Optional[str]:
@@ -305,14 +360,24 @@ async def checklist(
 
     # Pull curated chunks first (they have the "所需材料" structure); fall back to retrieval
     from app.models.rag import RagChunk, RagSource as RS
-    stmt = (
-        select(RagChunk, RS)
-        .join(RS, RagChunk.source_id == RS.id)
-        .where(RS.country_code == country_code.upper())
-        .where(RS.enabled.is_(True))
-        .order_by(RS.id, RagChunk.chunk_index)
-    )
-    rows = (await db.execute(stmt)).all()
+
+    async def _lookup_chunks(code: str):
+        stmt = (
+            select(RagChunk, RS)
+            .join(RS, RagChunk.source_id == RS.id)
+            .where(RS.country_code == code)
+            .where(RS.enabled.is_(True))
+            .order_by(RS.id, RagChunk.chunk_index)
+        )
+        return (await db.execute(stmt)).all()
+
+    lookup_code = country_code.upper()
+    rows = await _lookup_chunks(lookup_code)
+    # W35: Schengen fallback — 26 member countries share one policy, seeded
+    # only under "FR". Retry with the proxy code before giving up.
+    if not rows and lookup_code in SCHENGEN_CODES and lookup_code != _SCHENGEN_RAG_PROXY_CODE:
+        rows = await _lookup_chunks(_SCHENGEN_RAG_PROXY_CODE)
+
     if rows:
         # Concatenate all chunks for this country, then parse
         full_text = "\n\n".join(chunk.content for chunk, _ in rows)
@@ -321,10 +386,13 @@ async def checklist(
         source_url = rows[0][1].url
     else:
         # Fallback: live RAG retrieval with a checklist-flavored query
+        retrieval_code = (
+            _SCHENGEN_RAG_PROXY_CODE if lookup_code in SCHENGEN_CODES else lookup_code
+        )
         retrieved = await retrieve(
             db,
             query=f"{country_name} 签证 所需材料 材料清单",
-            country_code=country_code.upper(),
+            country_code=retrieval_code,
             top_k=3,
         )
         full_text = "\n\n".join(r.text for r in retrieved)

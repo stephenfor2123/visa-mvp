@@ -51,7 +51,14 @@
       "profile": "我的资料",
       "materials": "申请材料",
       "applicants_loading": "加载中…",
-      "applicants_empty": "暂无申请人"
+      "applicants_empty": "暂无申请人",
+      "one_click_import": "一键导入",
+      "one_click_import_tip": "从历史订单中选择一个申请人,自动预填姓名和护照号",
+      "one_click_import_title": "选择申请人",
+      "one_click_import_hint": "导入后会预填姓名 / 护照号,其他字段继续在下方表单填写。",
+      "one_click_import_empty": "暂无可导入的申请人",
+      "one_click_import_done": "已导入,继续填写其他字段",
+      "applicant_used_count": "已办 {n} 次"
     },
     "schengen": "申根 26 国",
     "mega": {
@@ -1428,7 +1435,12 @@
     "travel_origin_ph": "如：北京",
     "travel_destination_label": "目的地",
     "travel_depart_label": "出发日期",
+    "travel_depart_date_ph": "选择出发日期（YYYY-MM-DD）",
+    "travel_from_label": "上一站",
+    "travel_day": "Day",
     "travel_return_label": "返回日期",
+    "travel_return_date_ph": "选择返回日期（YYYY-MM-DD）",
+    "date_clear_aria": "清除日期",
     "travel_recommend_label": "参考航班（点击选用，也可直接手填航班号）",
     "travel_flight_out_label": "去程航班号",
     "travel_flight_out_ph": "如：CA981",

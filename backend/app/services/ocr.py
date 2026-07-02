@@ -319,7 +319,8 @@ class OCREngine:
         elif field in ("sex",):
             value_re = re.compile(r"\b(M|F|MALE|FEMALE|男|女)\b", re.IGNORECASE)
         elif field == "nationality":
-            value_re = re.compile(r"\b([A-Z]{3,})\b")
+            # ISO 3166 alpha-2/alpha-3 (e.g. "US" / "FR" / "USA" / "GBR")
+            value_re = re.compile(r"\b([A-Z]{2,3})\b")
         elif field in ("dob", "expiry"):
             value_re = re.compile(r"\b(\d{1,4}[-/.]\d{1,2}[-/.]\d{1,4})\b")
         else:
@@ -421,7 +422,17 @@ class OCREngine:
         label_text: str,
         labels: List[str],
     ) -> Optional[str]:
-        """Look for a value to the right of the anchor (same y-band)."""
+        """Look for a value to the right of the anchor (same y-band).
+
+        W32 fix (2026-06-29): candidates used to be filtered with
+        ``x0_2 < anchor_x1`` which actually collects items on the LEFT of
+        the label — these are typically *previous* field labels, not the
+        value. Real passports lay out value to the RIGHT of the label
+        (e.g. "Surname | DOE", "Sex | M"). Switched to ``x0_2 > anchor_x1``
+        so we collect the right-hand value column. Layouts where value
+        sits on the line BELOW the label are still picked up by Pass 2
+        (word-split fallback) and Priority 3 (country passport_re).
+        """
         candidates: List[tuple] = []
         for i, (it2, y2, (x0_2, x1_2), _) in enumerate(indexed):
             if i == anchor_idx:
@@ -429,7 +440,8 @@ class OCREngine:
             if abs(y2 - anchor_y) > 60:
                 continue
             if x0_2 < anchor_x1:
-                candidates.append((x0_2, y2, it2))
+                continue
+            candidates.append((x0_2, y2, it2))
         candidates.sort(key=lambda c: (abs(c[1] - anchor_y), c[0]))
 
         for _, _, c in candidates[:8]:
@@ -441,10 +453,24 @@ class OCREngine:
                 if field == "sex" and val in ("男", "女"):
                     val = "M" if val == "男" else "F"
                 return val
-        # last-ditch: strip label from item text and see if value remains
+        # last-ditch: strip label from item text and see if value remains.
+        #
+        # W32 fix (extracted 2026-06-29): when OCR splits a multi-word label
+        # into separate items (e.g. "PASSPORT NO:" → ["PASSPORT", "NO:"]),
+        # `label_text` here is just one token like "PASSPORT" and no entry in
+        # `labels` matches it as a substring, so `leftover` ends up unchanged
+        # from `label_text`. In that case the value_re match below would catch
+        # the label itself (e.g. "PASSPORT" matches `[A-Z0-9]{7,12}` and got
+        # returned as the passport number). Guard against that — only return
+        # the leftover match when at least one label was actually stripped,
+        # otherwise let Pass 2 (word-split) / Priority 3 (country passport_re)
+        # try instead.
         leftover = label_text
         for lbl in labels:
             leftover = leftover.replace(lbl, " ")
+        if leftover.strip().upper() == (label_text or "").strip().upper():
+            # No label was stripped — refuse to return the label itself as a value.
+            return None
         m = value_re.search(leftover)
         if m:
             return m.group(0).strip().rstrip(",;:")
@@ -458,13 +484,18 @@ class OCREngine:
         value_re: "re.Pattern",
         field: str,
     ) -> Optional[str]:
-        """Same shape as _find_value_in_band, used by the W32 word-split path."""
+        """Same shape as _find_value_in_band, used by the W32 word-split path.
+
+        W32 fix (2026-06-29): same x-direction bug as _find_value_in_band —
+        we want values to the RIGHT of the label cluster, not the left.
+        """
         candidates: List[tuple] = []
         for i, (it2, y2, (x0_2, x1_2), _) in enumerate(indexed):
             if abs(y2 - cluster_y) > 60:
                 continue
             if x0_2 < cluster_x1:
-                candidates.append((x0_2, y2, it2))
+                continue
+            candidates.append((x0_2, y2, it2))
         candidates.sort(key=lambda c: (abs(c[1] - cluster_y), c[0]))
 
         for _, _, c in candidates[:8]:

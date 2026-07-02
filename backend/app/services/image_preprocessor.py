@@ -52,6 +52,15 @@ class PreprocessResult:
     stages: List[str] = field(default_factory=list)
     # warnings (non-fatal: e.g. "image too small, returned as-is")
     warnings: List[str] = field(default_factory=list)
+    # 清晰度: variance of Laplacian on the original capture — higher = sharper.
+    # 0.0 when the image was too small / undecodable to measure.
+    blur_score: float = 0.0
+    # 清晰度: True if blur_score is below BLUR_VARIANCE_THRESHOLD
+    is_blurry: bool = False
+    # 完整度: False if the detected document quad has a corner sitting on the
+    # frame edge (physical document likely extends outside the photo).
+    # True when no quad was found (nothing to judge completeness against).
+    is_complete: bool = True
 
 
 # ---------------------------------------------------------------- #
@@ -69,6 +78,17 @@ class ImagePreprocessor:
     CANNY_HIGH = 150
     # min area ratio (largest contour / image area) for "this is a document" decision
     MIN_AREA_RATIO = 0.20
+    # 清晰度: variance of Laplacian below this = "blurry". Measured on the
+    # original capture (not the resized/warped output) so it reflects actual
+    # camera focus quality regardless of our own downstream resizing.
+    # Empirical rule of thumb (OpenCV blur-detection convention): ~100 is the
+    # common default; we use a slightly more lenient 60 since visa material
+    # photos are point-and-shoot phone photos, not curated scans.
+    BLUR_VARIANCE_THRESHOLD = 60.0
+    # 完整度: a detected quad corner within this fraction of the shorter
+    # image edge from the frame boundary is treated as "touching the edge" —
+    # a strong signal the physical document extends beyond the photo.
+    EDGE_CUTOFF_MARGIN_RATIO = 0.01
 
     # ------------------------------------------------------------------ #
     # public API                                                          #
@@ -104,6 +124,14 @@ class ImagePreprocessor:
                 data, width=w, height=h, warnings=warnings, stages=stages + ["passthrough_small"]
             )
 
+        # 清晰度: measure on the raw capture — reflects the user's camera focus,
+        # independent of any resize/warp we do downstream.
+        blur_score = self._blur_score(img_bgr)
+        is_blurry = blur_score < self.BLUR_VARIANCE_THRESHOLD
+        stages.append("blur_check")
+        if is_blurry:
+            warnings.append(f"image_blurry(variance={blur_score:.1f})")
+
         # try to detect a 4-corner document contour
         quad, conf = self._detect_document_quad(img_bgr)
         stages.append("edge_detect")
@@ -113,7 +141,15 @@ class ImagePreprocessor:
             return self._passthrough(
                 data, width=w, height=h, confidence=conf,
                 warnings=warnings, stages=stages + ["passthrough_no_quad"],
+                blur_score=blur_score, is_blurry=is_blurry,
             )
+
+        # 完整度: does the detected quad touch the frame edge? If so the
+        # physical document likely extends beyond what the camera captured.
+        is_complete = self._is_quad_complete(quad, w, h)
+        stages.append("completeness_check")
+        if not is_complete:
+            warnings.append("document_edge_may_be_cut_off")
 
         # perspective correction
         warped = self._four_point_transform(img_bgr, quad)
@@ -140,7 +176,10 @@ class ImagePreprocessor:
         ok, buf = cv2.imencode(".jpg", warped, [cv2.IMWRITE_JPEG_QUALITY, 92])
         if not ok:
             warnings.append("encode_failed")
-            return self._passthrough(data, warnings=warnings, stages=stages + ["encode_failed"])
+            return self._passthrough(
+                data, warnings=warnings, stages=stages + ["encode_failed"],
+                blur_score=blur_score, is_blurry=is_blurry,
+            )
 
         out_bytes = buf.tobytes()
         out_h, out_w = warped.shape[:2]
@@ -153,6 +192,9 @@ class ImagePreprocessor:
             corners=[[int(p[0]), int(p[1])] for p in quad],
             confidence=round(conf, 3),
             corrected=True,
+            blur_score=blur_score,
+            is_blurry=is_blurry,
+            is_complete=is_complete,
             stages=stages,
             warnings=warnings,
         )
@@ -245,6 +287,25 @@ class ImagePreprocessor:
         return sum(scores) / len(scores)
 
     @staticmethod
+    def _blur_score(img_bgr: np.ndarray) -> float:
+        """清晰度: variance of the Laplacian — low variance = few sharp edges
+        = likely out of focus / motion-blurred. Standard, dependency-free
+        blur heuristic (no ML model needed)."""
+        gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
+        return float(cv2.Laplacian(gray, cv2.CV_64F).var())
+
+    def _is_quad_complete(self, quad: np.ndarray, w: int, h: int) -> bool:
+        """完整度: False if 2+ corners sit within EDGE_CUTOFF_MARGIN_RATIO of
+        the frame boundary — the physical document likely extends past what
+        the camera captured, so key fields near that edge may be missing."""
+        margin = max(2.0, min(w, h) * self.EDGE_CUTOFF_MARGIN_RATIO)
+        touching = 0
+        for x, y in quad:
+            if x <= margin or x >= (w - 1 - margin) or y <= margin or y >= (h - 1 - margin):
+                touching += 1
+        return touching < 2
+
+    @staticmethod
     def _order_points(pts: np.ndarray) -> np.ndarray:
         """Return (TL, TR, BR, BL)."""
         rect = np.zeros((4, 2), dtype=np.float32)
@@ -322,6 +383,8 @@ class ImagePreprocessor:
         confidence: float = 0.0,
         warnings: Optional[List[str]] = None,
         stages: Optional[List[str]] = None,
+        blur_score: float = 0.0,
+        is_blurry: bool = False,
     ) -> PreprocessResult:
         return PreprocessResult(
             image_bytes=data,
@@ -331,6 +394,10 @@ class ImagePreprocessor:
             corners=None,
             confidence=confidence,
             corrected=False,
+            blur_score=blur_score,
+            is_blurry=is_blurry,
+            # no quad was produced on any passthrough path, so completeness
+            # can't be judged — leave at the default True (unknown ≠ incomplete)
             stages=stages or [],
             warnings=warnings or [],
         )

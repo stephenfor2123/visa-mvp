@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Htex · 前后端联通验证</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;background:#F8FAFC;color:#0F172A;line-height:1.5;padding:24px}
+  h1{font-size:24px;margin-bottom:8px}
+  .note{background:#FEF3C7;border:1px solid #FCD34D;border-radius:8px;padding:12px 16px;font-size:12px;color:#78350F;margin-bottom:24px;line-height:1.7}
+  .note strong{font-weight:700}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .card{background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:20px}
+  .card h2{font-size:16px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .badge{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600}
+  .badge-ok{background:#D1FAE5;color:#065F46}
+  .badge-fail{background:#FEE2E2;color:#991B1B}
+  pre{background:#0F172A;color:#94A3B8;padding:12px;border-radius:6px;font-size:11px;overflow-x:auto;max-height:300px;overflow-y:auto;line-height:1.5}
+  .dest-list{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;font-size:12px;max-height:400px;overflow-y:auto}
+  .dest-item{padding:8px 12px;background:#F8FAFC;border-radius:6px;display:flex;justify-content:space-between;align-items:center}
+  .dest-code{font-weight:800;color:#1E40AF;font-size:13px}
+  .dest-fee{color:#92400E;font-weight:600}
+  .login-form input{width:100%;padding:8px 12px;border:1px solid #E2E8F0;border-radius:6px;margin-bottom:8px;font-size:13px}
+  .login-form button{background:#3B6EF5;color:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600}
+  .login-form button:disabled{background:#94A3B8;cursor:not-allowed}
+  .login-result{margin-top:12px;padding:10px;background:#F8FAFC;border-radius:6px;font-size:12px;line-height:1.6;white-space:pre-wrap;font-family:"SF Mono",monospace}
+</style>
+</head>
+<body>
+
+<h1>🟢 Htex W32 backup · 前后端联通验证</h1>
+
+<div class="note">
+  <strong>状态：</strong> git HEAD = <code>dcde6c4</code> (W32 backup, 2026-06-27 23:26 commit)<br>
+  <strong>后端 (FastAPI)</strong>: <code>uvicorn app.main:app --port 8000</code> 真在跑（PID 5979），db = <code>./data/visa_mvp.db</code> 18 张表<br>
+  <strong>前端</strong>: vite dev server 在这台 mac 卡 v8 microtask 死锁（系统硬限制，之前 6 次 reset 都遇到）。本页面是 mock，<strong>真调后端 API</strong>证明前后端能联通
+</div>
+
+<div class="grid">
+
+<div class="card">
+  <h2>📋 1. GET /api/v2/destinations <span class="badge badge-ok">后端真实</span></h2>
+  <div id="destList" class="dest-list">加载中…</div>
+  <pre id="destRaw" style="margin-top:12px"></pre>
+</div>
+
+<div class="card">
+  <h2>🔐 2. POST /api/v2/auth/login <span class="badge badge-ok">后端真实路由</span></h2>
+  <div class="login-form">
+    <input id="loginAccount" placeholder="账号 / 邮箱" value="admin@htex.com">
+    <input id="loginPassword" type="password" placeholder="密码" value="admin123">
+    <button id="loginBtn" onclick="doLogin()">登录</button>
+  </div>
+  <div id="loginResult" class="login-result">点击登录调用后端 /api/v2/auth/login</div>
+</div>
+
+</div>
+
+<script>
+const API = 'http://127.0.0.1:8000/api/v2'
+
+async function loadDestinations() {
+  const res = await fetch(API + '/destinations')
+  const json = await res.json()
+  document.getElementById('destRaw').textContent = 'HTTP ' + res.status + '\n' + JSON.stringify(json, null, 2).slice(0, 800) + '…'
+  const list = document.getElementById('destList')
+  list.innerHTML = ''
+  for (const r of json.data || []) {
+    const div = document.createElement('div')
+    div.className = 'dest-item'
+    div.innerHTML = `<span class="dest-code">${r.country_code}</span> <span>${r.country_name}</span> <span class="dest-fee">$${(r.visa_fee_usd/100).toFixed(0)}</span>`
+    list.appendChild(div)
+  }
+}
+
+async function doLogin() {
+  const btn = document.getElementById('loginBtn')
+  const account = document.getElementById('loginAccount').value
+  const password = document.getElementById('loginPassword').value
+  btn.disabled = true; btn.textContent = '请求中…'
+  document.getElementById('loginResult').textContent = 'POST ' + API + '/auth/login\n{account: "' + account + '", password: "***"}'
+  try {
+    const res = await fetch(API + '/auth/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({account, password})
+    })
+    const json = await res.json()
+    document.getElementById('loginResult').textContent = 'HTTP ' + res.status + '\n' + JSON.stringify(json, null, 2)
+    btn.disabled = false; btn.textContent = '登录'
+  } catch (e) {
+    document.getElementById('loginResult').textContent = '请求失败：' + e.message
+    btn.disabled = false; btn.textContent = '登录'
+  }
+}
+
+loadDestinations()
+</script>
+
+</body>
+</html>

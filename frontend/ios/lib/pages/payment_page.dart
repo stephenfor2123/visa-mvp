@@ -10,7 +10,8 @@ import '../l10n/generated/app_localizations.dart';
 
 class PaymentPage extends StatefulWidget {
   final String? orderNo;
-  const PaymentPage({super.key, this.orderNo});
+  PaymentPage({super.key, String? orderNo})
+      : orderNo = orderNo ?? Uri.base.queryParameters['order_no'];
 
   @override
   State<PaymentPage> createState() => _PaymentPageState();

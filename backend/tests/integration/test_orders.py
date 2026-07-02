@@ -34,10 +34,17 @@ def _bearer(token: str) -> dict[str, str]:
 
 
 async def _register(client, phone: str) -> str:
-    """SMS-login -> access token. Auto-registers on first use (mock mode)."""
+    """Register or reuse account keyed by phone → returns access token."""
+    uname = f"u{phone}"
+    email = f"{phone}@test.local"
+    pwd = "Test1234"
+    await client.post(
+        "/api/v2/auth/register",
+        json={"username": uname, "email": email, "password": pwd},
+    )
     r = await client.post(
-        "/api/v2/auth/sms-login",
-        json={"phone": phone, "phone_country": "+86", "sms_code": "123456"},
+        "/api/v2/auth/login",
+        json={"account": email, "password": pwd},
     )
     assert r.status_code == 200, r.text
     return r.json()["data"]["access_token"]
@@ -125,7 +132,7 @@ class TestCreateOrder:
         body = r.json()
         assert body["code"] == "1000"
         order_no = body["data"]["order_no"]
-        assert re.match(r"^V2-\d{8}-\d{6}$", order_no), f"bad order_no: {order_no}"
+        assert re.match(r"^V2-\d{8}-[0-9A-F]{8}$", order_no), f"bad order_no: {order_no}"
         assert body["data"]["status"] == "created"
         assert body["data"]["order"]["user_id"] > 0
         assert body["data"]["order"]["visa_type"] == "tourism"
@@ -222,7 +229,7 @@ class TestListOrders:
         assert len(body["items"]) == 2
         # items are ordered by created_at DESC -> first is the newest
         first = body["items"][0]
-        assert re.match(r"^V2-\d{8}-\d{6}$", first["order_no"])
+        assert re.match(r"^V2-\d{8}-[0-9A-F]{8}$", first["order_no"])
         assert first["status"] == "created"
 
         r2 = await client.get(
@@ -402,7 +409,7 @@ class TestCancelOrder:
 # Order number generator                                              #
 # ----------------------------------------------------------------- #
 class TestOrderNumberGenerator:
-    async def test_three_orders_in_a_day_have_monotonic_sequence(self, client):
+    async def test_three_orders_in_a_day_have_unique_nos(self, client):
         dest_id = await _seed_destination("US")
         token = await _register(client, "13855550040")
         mid = await _upload_material(client, token)
@@ -415,11 +422,9 @@ class TestOrderNumberGenerator:
         today = datetime.now(timezone.utc).strftime("%Y%m%d")
         prefix = f"V2-{today}-"
         for n in numbers:
-            assert n.startswith(prefix)
-        # Sequence part strictly increases
-        seqs = [int(n.split("-")[-1]) for n in numbers]
-        assert seqs == sorted(seqs)
-        assert len(set(seqs)) == 3  # unique
+            assert n.startswith(prefix), f"unexpected prefix: {n}"
+        # All three are unique (hex UUID suffix — not sequential by design)
+        assert len(set(numbers)) == 3
 
     async def test_format_well_formed(self, client):
         dest_id = await _seed_destination("US")
@@ -427,13 +432,12 @@ class TestOrderNumberGenerator:
         mid = await _upload_material(client, token)
         r = await _create_order(client, token, dest_id, [mid])
         order_no = r.json()["data"]["order_no"]
-        # 6-digit zero-padded sequence
-        match = re.match(r"^V2-(\d{4})(\d{2})(\d{2})-(\d{6})$", order_no)
+        # Format: V2-YYYYMMDD-XXXXXXXX (8 uppercase hex chars)
+        match = re.match(r"^V2-(\d{4})(\d{2})(\d{2})-([0-9A-F]{8})$", order_no)
         assert match, f"bad order_no: {order_no}"
-        y, m, d, seq = match.groups()
+        y, m, d, _hex = match.groups()
         # Today's date in UTC
         now = datetime.now(timezone.utc)
         assert int(y) == now.year
         assert int(m) == now.month
         assert int(d) == now.day
-        assert 1 <= int(seq) <= 999999

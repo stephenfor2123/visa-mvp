@@ -590,7 +590,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get forgotPageSubtitle =>
-      'Masukkan nomor HP, kami kirimkan kode reset';
+      'Masukkan akun Anda dan atur kata sandi baru untuk mengatur ulang sekarang.';
 
   @override
   String get forgotPhoneLabel => 'Nomor HP';
@@ -854,4 +854,505 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get ordernewSubmitting => 'Mengirim...';
+
+  @override
+  String get applyTitle => 'Ajukan Visa';
+
+  @override
+  String get applySub => '4 langkah untuk visa Anda';
+
+  @override
+  String get applyStepCountry => 'Pilih Tujuan';
+
+  @override
+  String get applyStepChecklist => 'Daftar Dokumen';
+
+  @override
+  String get applyStepTrip => 'Info Perjalanan';
+
+  @override
+  String get applyStepConfirm => 'Konfirmasi';
+
+  @override
+  String get applyFeeLabel => 'Fee';
+
+  @override
+  String get applyProcessingLabel => 'Processing';
+
+  @override
+  String get applyValidityLabel => 'Validity';
+
+  @override
+  String get applyVisaType => 'Visa Type';
+
+  @override
+  String get applyVisaTourism => 'Wisata';
+
+  @override
+  String get applyVisaBusiness => 'Bisnis';
+
+  @override
+  String get applyVisaStudent => 'Pelajar';
+
+  @override
+  String get applyVisaFamily => 'Keluarga';
+
+  @override
+  String get applyVisaOther => 'Lainnya';
+
+  @override
+  String get applyDepartDate => 'Departure Date';
+
+  @override
+  String get applyReturnDate => 'Return Date';
+
+  @override
+  String get applyDepartCity => 'Departure City';
+
+  @override
+  String get applyDepartCityPh => 'mis. Jakarta';
+
+  @override
+  String get applyEmergencyContact => 'Emergency Contact';
+
+  @override
+  String get applyEmergencyPh => 'mis. Budi +62 812xxxx';
+
+  @override
+  String get applyPurpose => 'Trip Purpose';
+
+  @override
+  String get applyPurposePh => 'Jelaskan tujuan';
+
+  @override
+  String get applyBack => '← Back';
+
+  @override
+  String get applyNextMaterials => 'Lanjut: Isi Form';
+
+  @override
+  String get applyNextConfirm => 'Lanjut: Konfirmasi';
+
+  @override
+  String get applyPickDate => 'Pick a date';
+
+  @override
+  String get applyConfirmSubmit => 'Konfirmasi & Kirim';
+
+  @override
+  String get applySubmitting => 'Mengirim…';
+
+  @override
+  String get applyRequired => 'req';
+
+  @override
+  String get diagnoseTitle => 'Pra-Penilaian';
+
+  @override
+  String get diagnoseSub => 'Cek peluang disetujui dulu';
+
+  @override
+  String get diagnoseStepForm => 'Ceritakan tentang diri Anda';
+
+  @override
+  String get diagnoseResult => 'Hasil Anda';
+
+  @override
+  String get diagnoseFactors => 'Faktor';
+
+  @override
+  String get diagnoseSuggestions => 'Saran';
+
+  @override
+  String get diagnoseCtaApply => 'Ajukan negara ini →';
+
+  @override
+  String get diagnoseRestart => 'Nilai ulang';
+
+  @override
+  String get diagnoseLevelHigh => 'High chance';
+
+  @override
+  String get diagnoseLevelMedium => 'Medium';
+
+  @override
+  String get diagnoseLevelLow => 'Low chance';
+
+  @override
+  String get diagnoseMarital => 'Marital Status';
+
+  @override
+  String get diagnoseMaritalSingle => 'Lajang';
+
+  @override
+  String get diagnoseMaritalMarried => 'Menikah';
+
+  @override
+  String get diagnoseMaritalDivorced => 'Cerai';
+
+  @override
+  String get diagnoseMaritalWidowed => 'Duda/Janda';
+
+  @override
+  String get diagnoseIncome => 'Monthly Income (CNY)';
+
+  @override
+  String get diagnoseIncomeBelow5k => '<5k';
+
+  @override
+  String get diagnoseIncome5k15k => '5k-15k';
+
+  @override
+  String get diagnoseIncome15k30k => '15k-30k';
+
+  @override
+  String get diagnoseIncome30k100k => '30k-100k';
+
+  @override
+  String get diagnoseIncomeAbove100k => '>100k';
+
+  @override
+  String get diagnosePurpose => 'Travel Purpose';
+
+  @override
+  String get diagnosePurposeBusiness => 'Bisnis';
+
+  @override
+  String get diagnosePurposeTourism => 'Wisata';
+
+  @override
+  String get diagnosePurposeFamily => 'Keluarga';
+
+  @override
+  String get diagnosePurposeStudy => 'Pelajar';
+
+  @override
+  String get diagnosePurposeOther => 'Lainnya';
+
+  @override
+  String get diagnoseTravelHistory => 'Travel History (5y)';
+
+  @override
+  String get diagnoseTravelNone => 'Tidak ada';
+
+  @override
+  String get diagnoseTravel1to3 => '1-3';
+
+  @override
+  String get diagnoseTravel4to10 => '4-10';
+
+  @override
+  String get diagnoseTravelAbove10 => '10+';
+
+  @override
+  String get diagnoseVisaHistory => 'Visa History';
+
+  @override
+  String get diagnoseVisaNone => 'Tidak ada';
+
+  @override
+  String get diagnoseVisa1to2 => '1-2';
+
+  @override
+  String get diagnoseVisaAbove2 => '2+';
+
+  @override
+  String get diagnoseEmployment => 'Employment';
+
+  @override
+  String get diagnoseEmpEmployed => 'Bekerja';
+
+  @override
+  String get diagnoseEmpFreelancer => 'Freelancer';
+
+  @override
+  String get diagnoseEmpStudent => 'Pelajar';
+
+  @override
+  String get diagnoseEmpRetired => 'Pensiun';
+
+  @override
+  String get diagnoseEmpUnemployed => 'Menganggur';
+
+  @override
+  String get diagnoseAge => 'Age (optional)';
+
+  @override
+  String get diagnoseAgePh => 'e.g. 30';
+
+  @override
+  String get diagnoseSoloFemale => 'Solo female traveler';
+
+  @override
+  String get diagnoseSubmit => 'Lihat Hasil';
+
+  @override
+  String get diagnoseSubmitting => 'Menilai…';
+
+  @override
+  String get diagnoseReselect => '← Pilih ulang negara';
+
+  @override
+  String get diagnoseStart => 'Mulai Penilaian';
+
+  @override
+  String get resourcesTitle => 'Tanya Jawab Visa';
+
+  @override
+  String get resourcesSub => 'AI menjawab dari sumber resmi';
+
+  @override
+  String get resourcesHint => 'mis. biaya visa AS';
+
+  @override
+  String get resourcesEmpty => 'Mulai bertanya';
+
+  @override
+  String get resourcesFollowup => 'Tanya lagi';
+
+  @override
+  String get resourcesSources => 'Sumber';
+
+  @override
+  String get resourcesRelevance => 'Relevansi';
+
+  @override
+  String get contactTitle => 'Hubungi Kami';
+
+  @override
+  String get contactSub => 'Balas dalam jam kerja (UTC+8, 9-18)';
+
+  @override
+  String get contactEmail => 'Email';
+
+  @override
+  String get contactEmailAddr => 'support@htex.app';
+
+  @override
+  String get contactEmailSub => 'Reply within 24 hours';
+
+  @override
+  String get contactChat => 'Chat Langsung';
+
+  @override
+  String get contactChatSub => 'Real-time on weekdays';
+
+  @override
+  String get contactBug => 'Lapor Bug';
+
+  @override
+  String get contactBugSub => 'Engineers see directly';
+
+  @override
+  String get contactBiz => 'Bisnis';
+
+  @override
+  String get contactBizAddr => 'biz@htex.app';
+
+  @override
+  String get contactBizSub => 'Affiliate / Travel agencies';
+
+  @override
+  String get contactTip =>
+      'Darurat: hubungi kedutaan setempat. Htex tidak menggantikan saluran resmi.';
+
+  @override
+  String get passportUploadTitle => 'Unggah Paspor';
+
+  @override
+  String get passportUploadSub => 'Ambil foto paspor yang jelas';
+
+  @override
+  String get passportUploadTip =>
+      'Pastikan halaman bio sejajar dan cukup cahaya';
+
+  @override
+  String get passportGallery => 'Galeri';
+
+  @override
+  String get passportCamera => 'Kamera';
+
+  @override
+  String get passportRecognize => 'Kenali';
+
+  @override
+  String get passportRecognizing => 'Mengenali…';
+
+  @override
+  String get passportReviewTitle => 'Konfirmasi Info Paspor';
+
+  @override
+  String get passportReviewDetected => '✓ Terdeteksi sebagai paspor';
+
+  @override
+  String get passportReviewWarn => '⚠️ Bukan paspor';
+
+  @override
+  String get passportReviewConfirm => 'Konfirmasi & Lanjut';
+
+  @override
+  String get passportReviewRetake => 'Ambil ulang';
+
+  @override
+  String get passportReviewPassportNo => 'Passport No.';
+
+  @override
+  String get passportReviewSurname => 'Surname';
+
+  @override
+  String get passportReviewGivenName => 'Given Name';
+
+  @override
+  String get passportReviewSex => 'Sex (M / F)';
+
+  @override
+  String get passportReviewNationality => 'Nationality';
+
+  @override
+  String get passportReviewDob => 'Date of Birth (YYYY-MM-DD)';
+
+  @override
+  String get passportReviewExpiry => 'Expiry (YYYY-MM-DD)';
+
+  @override
+  String get loginAccountTab => 'Akun';
+
+  @override
+  String get loginSmsTab => 'SMS';
+
+  @override
+  String get loginAccountLabel => 'Email atau Nama Pengguna';
+
+  @override
+  String get loginAccountPh => 'user@example.com atau username';
+
+  @override
+  String get registerUsernameLabel => 'Nama Pengguna';
+
+  @override
+  String get registerUsernamePh => '3-32 karakter, mulai huruf/angka';
+
+  @override
+  String get registerUsernameHint =>
+      '3-32 chars [A-Za-z0-9_.-], letter/digit start';
+
+  @override
+  String get registerEmailLabel => 'Email';
+
+  @override
+  String get registerEmailPh => 'user@example.com';
+
+  @override
+  String get registerNicknameLabel => 'Nama Panggilan (opsional)';
+
+  @override
+  String get registerNicknamePh => 'Apa panggilan Anda?';
+
+  @override
+  String get registerEmailInvalid => 'Format email salah';
+
+  @override
+  String get registerUsernameInvalid => 'Format nama pengguna salah';
+
+  @override
+  String get homeSloganZh => 'Kemungkinan tak terbatas, di sisi Anda';
+
+  @override
+  String get homeCtaDiagnose => 'Cek Peluang';
+
+  @override
+  String get homeCtaAsk => 'Tanya Kebijakan';
+
+  @override
+  String get homeTrust => '100rb+ pengguna · 99% disetujui';
+
+  @override
+  String get homeFeatureUploadTitle => 'Unggah Paspor';
+
+  @override
+  String get homeFeatureUploadSub => 'OCR otomatis';
+
+  @override
+  String get homeFeatureDiagnoseTitle => 'Pra-Penilaian';
+
+  @override
+  String get homeFeatureDiagnoseSub => 'Skor risiko';
+
+  @override
+  String get homeFeatureResourcesTitle => 'Tanya Kebijakan';
+
+  @override
+  String get homeFeatureResourcesSub => 'RAG 4 sumber';
+
+  @override
+  String get homeFeatureContactTitle => 'Hubungi Kami';
+
+  @override
+  String get homeFeatureContactSub => 'Hari kerja 9-18';
+
+  @override
+  String get homeHotVisa => 'Destinasi Populer';
+
+  @override
+  String get homeViewAll => 'Lihat semua →';
+
+  @override
+  String get homeSectionFeatures => 'Apa yang bisa Anda lakukan dengan Htex';
+
+  @override
+  String get homeFooterUpload => 'Unggah';
+
+  @override
+  String get homeFooterDiagnose => 'Penilaian';
+
+  @override
+  String get homeFooterQa => 'T&J';
+
+  @override
+  String get homeFooterContact => 'Layanan';
+
+  @override
+  String get homeHeroCityPrefix => 'Kemungkinan tak terbatas, di sisi Anda';
+
+  @override
+  String get homeFromPrice => 'DARI';
+
+  @override
+  String get homeApplyNow => 'Ajukan';
+
+  @override
+  String get homeFooterCopyright => 'Htex · Wherever you go, life is infinite';
+
+  @override
+  String get destinationsTitle => 'Pilih Tujuan';
+
+  @override
+  String get destinationsHero => 'Popular Visas';
+
+  @override
+  String get destinationsSchengen => 'Schengen 26';
+
+  @override
+  String get destinationsExpand => 'Bentang';
+
+  @override
+  String get destinationsCollapse => 'Lipat';
+
+  @override
+  String get destinationsValid => 'VALID';
+
+  @override
+  String get destinationsApply => 'Ajukan';
+
+  @override
+  String get destinationsSearch => 'Cari negara';
+
+  @override
+  String get selfieStart => 'Ambil Selfie';
+
+  @override
+  String get selfieRetake => 'Ambil ulang';
+
+  @override
+  String get selfieHint => 'Ketuk di bawah untuk mulai';
 }

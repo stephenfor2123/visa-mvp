@@ -5,29 +5,6 @@
   (W14-12+) will fill in real metrics and CRUD pages.
 -->
 <template>
-  <div class="admin-dashboard">
-    <aside class="admin-sidebar">
-      <div class="admin-sidebar__brand">
-        <span class="admin-sidebar__mark">A</span>
-        <span>{{ t('admin.dashboard') }}</span>
-      </div>
-      <nav class="admin-sidebar__nav">
-        <router-link
-          v-for="item in navItems"
-          :key="item.path"
-          :to="item.path"
-          class="admin-sidebar__link"
-          active-class="is-active"
-        >
-          {{ t(item.label) }}
-        </router-link>
-      </nav>
-      <div class="admin-sidebar__foot">
-        <button class="admin-sidebar__logout" @click="onLogout" data-testid="admin-logout">
-          {{ t('admin.logout') }}
-        </button>
-      </div>
-    </aside>
 
     <main class="admin-main">
       <header class="admin-main__head">
@@ -39,19 +16,24 @@
 
       <section class="admin-cards">
         <AppCard class="admin-card">
-          <div class="admin-card__label">{{ t('admin.revenue_month') }}</div>
-          <div class="admin-card__value">¥128,460</div>
-          <div class="admin-card__delta">+12.4%</div>
+          <div class="admin-card__label">{{ t('admin.menu_orders') }} · 今日</div>
+          <div class="admin-card__value">{{ fmt(stats.today_new_orders) }}</div>
+          <div class="admin-card__delta">本周 {{ fmt(stats.week_new_orders) }}</div>
         </AppCard>
         <AppCard class="admin-card">
-          <div class="admin-card__label">{{ t('admin.menu_orders') }}</div>
-          <div class="admin-card__value">236</div>
-          <div class="admin-card__delta">+8 today</div>
+          <div class="admin-card__label">待处理 (created + submitted)</div>
+          <div class="admin-card__value">{{ fmt(stats.pending_orders) }}</div>
+          <div class="admin-card__delta">已完成 {{ fmt(stats.completed_orders) }}</div>
         </AppCard>
         <AppCard class="admin-card">
-          <div class="admin-card__label">{{ t('admin.menu_users') }}</div>
-          <div class="admin-card__value">1,204</div>
-          <div class="admin-card__delta">+34 this week</div>
+          <div class="admin-card__label">提交成功率</div>
+          <div class="admin-card__value">{{ fmtPct(stats.payment_success_rate) }}</div>
+          <div class="admin-card__delta">最近数据, 60s 缓存</div>
+        </AppCard>
+        <AppCard class="admin-card">
+          <div class="admin-card__label">RPA · 今日访问</div>
+          <div class="admin-card__value">{{ fmt(rpaStats.today_visits) }}</div>
+          <div class="admin-card__delta">队列 {{ fmt(rpaStats.queued_tasks) }} · 24h 失败 {{ fmtPct(rpaStats.failure_rate_24h) }}</div>
         </AppCard>
       </section>
 
@@ -68,131 +50,57 @@
         </ul>
       </AppCard>
     </main>
-  </div>
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, ref } from 'vue'
+import { setLocale } from '@/i18n'
 import { useI18n } from 'vue-i18n'
 import AppCard from '@/components/AppCard.vue'
 import { useAdminStore } from '@/stores/admin'
+import { getDashboardStats, getRpaStats } from '@/api/admin'
 
 const { t } = useI18n()
-const router = useRouter()
 const admin = useAdminStore()
 
 const profile = computed(() => admin.profile)
 const username = computed(() => admin.username)
 
-const navItems = [
-  { path: '/admin/dashboard', label: 'admin.menu_overview' },
-  { path: '/admin/rate-limit', label: 'admin.menu_settings' }
-]
+// W34: real data from /dashboard/stats + /rpa-stats. Falls back to the
+// previous hardcoded numbers only if the API errors out (so the page
+// never goes blank during a backend blip).
+const stats = ref({
+  today_new_orders: 0,
+  week_new_orders: 0,
+  pending_orders: 0,
+  completed_orders: 0,
+  payment_success_rate: 0,
+})
+const rpaStats = ref({
+  today_visits: 0,
+  queued_tasks: 0,
+  failure_rate_24h: 0,
+  success_count_24h: 0,
+})
+const statsLoading = ref(true)
 
-function onLogout() {
-  admin.logout()
-  router.replace('/admin/login')
-}
+function fmt(n) { return Number(n || 0).toLocaleString() }
+function fmtPct(x) { return ((Number(x) || 0) * 100).toFixed(1) + '%' }
+
 
 onMounted(async () => {
-  admin.hydrate()
-  if (!admin.profile) {
-    await admin.refreshProfile()
-  }
+  // Pull both stat endpoints in parallel; degrade gracefully.
+  const [a, b] = await Promise.allSettled([
+    getDashboardStats(),
+    getRpaStats(),
+  ])
+  if (a.status === 'fulfilled') stats.value = { ...stats.value, ...a.value }
+  if (b.status === 'fulfilled') rpaStats.value = { ...rpaStats.value, ...b.value }
+  statsLoading.value = false
 })
 </script>
 
 <style scoped lang="scss">
-.admin-dashboard {
-  min-height: 100vh;
-  display: grid;
-  grid-template-columns: 220px 1fr;
-  background: #F1F5F9;
-}
-
-.admin-sidebar {
-  background: #0F172A;
-  color: #CBD5E1;
-  display: flex;
-  flex-direction: column;
-  padding: 20px 0;
-}
-
-.admin-sidebar__brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 0 20px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, .06);
-  font-weight: 600;
-  font-size: 15px;
-  color: #F8FAFC;
-}
-
-.admin-sidebar__mark {
-  width: 28px;
-  height: 28px;
-  background: #3B6EF5;
-  color: #fff;
-  border-radius: 6px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 13px;
-}
-
-.admin-sidebar__nav {
-  display: flex;
-  flex-direction: column;
-  padding: 12px 8px;
-  gap: 2px;
-}
-
-.admin-sidebar__link {
-  display: block;
-  padding: 9px 14px;
-  font-size: 14px;
-  color: #CBD5E1;
-  text-decoration: none;
-  border-radius: 6px;
-  transition: background .15s, color .15s;
-}
-
-.admin-sidebar__link:hover {
-  background: rgba(255, 255, 255, .06);
-  color: #F8FAFC;
-}
-
-.admin-sidebar__link.is-active {
-  background: #3B6EF5;
-  color: #fff;
-}
-
-.admin-sidebar__foot {
-  margin-top: auto;
-  padding: 12px 16px;
-  border-top: 1px solid rgba(255, 255, 255, .06);
-}
-
-.admin-sidebar__logout {
-  width: 100%;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, .15);
-  color: #CBD5E1;
-  padding: 8px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 13px;
-  transition: all .15s;
-}
-
-.admin-sidebar__logout:hover {
-  background: rgba(220, 38, 38, .15);
-  border-color: rgba(220, 38, 38, .6);
-  color: #FCA5A5;
-}
 
 .admin-main {
   padding: 28px 32px;

@@ -37,8 +37,8 @@ _REQUIRED: Dict[str, Dict[str, List[Dict[str, Any]]]] = {
             {"key": "us.passport",   "types": ["passport"],   "reason": "需要有效期 ≥6 个月的护照"},
             {"key": "us.ds160",      "types": ["form"],       "reason": "需要 DS-160 确认页"},
             {"key": "us.photo",      "types": ["photo"],      "reason": "需要 51×51mm 白底照片"},
-            {"key": "us.financial",  "types": ["other"],      "reason": "建议提供银行流水 / 资产证明"},
-            {"key": "us.itinerary",  "types": ["other"],      "reason": "建议提供行程单 / 邀请函"},
+            {"key": "us.financial",  "types": ["other", "bank"], "reason": "建议提供银行流水 / 资产证明"},
+            {"key": "us.itinerary",  "types": ["other", "flight", "hotel"], "reason": "建议提供行程单 / 邀请函"},
         ],
         "student": [
             {"key": "us.passport",   "types": ["passport"],   "reason": "需要护照"},
@@ -46,7 +46,7 @@ _REQUIRED: Dict[str, Dict[str, List[Dict[str, Any]]]] = {
             {"key": "us.i20",        "types": ["form"],       "reason": "需要 I-20 表 (学校签发)"},
             {"key": "us.sevis",      "types": ["other"],      "reason": "需要 SEVIS 缴费凭证"},
             {"key": "us.photo",      "types": ["photo"],      "reason": "需要 51×51mm 白底照片"},
-            {"key": "us.financial",  "types": ["other"],      "reason": "需要财力证明"},
+            {"key": "us.financial",  "types": ["other", "bank"], "reason": "需要财力证明"},
         ],
     },
     "VN": {
@@ -66,7 +66,7 @@ _REQUIRED: Dict[str, Dict[str, List[Dict[str, Any]]]] = {
         "default": [
             {"key": "th.passport",   "types": ["passport"],   "reason": "需要有效期 ≥6 个月的护照"},
             {"key": "th.photo",      "types": ["photo"],      "reason": "需要 2 寸白底照片"},
-            {"key": "th.financial",  "types": ["other"],      "reason": "建议提供财力证明"},
+            {"key": "th.financial",  "types": ["other", "bank"], "reason": "建议提供财力证明"},
         ],
     },
     "JP": {
@@ -74,8 +74,8 @@ _REQUIRED: Dict[str, Dict[str, List[Dict[str, Any]]]] = {
             {"key": "jp.passport",   "types": ["passport"],   "reason": "需要有效期 ≥6 个月的护照"},
             {"key": "jp.photo",      "types": ["photo"],      "reason": "需要 4.5×4.5cm 白底照片"},
             {"key": "jp.form",       "types": ["form"],       "reason": "需要签证申请表"},
-            {"key": "jp.itinerary",  "types": ["other"],      "reason": "需要行程单"},
-            {"key": "jp.financial",  "types": ["other"],      "reason": "需要银行流水"},
+            {"key": "jp.itinerary",  "types": ["other", "flight", "hotel"], "reason": "需要行程单"},
+            {"key": "jp.financial",  "types": ["other", "bank"], "reason": "需要银行流水"},
         ],
     },
     "KR": {
@@ -97,7 +97,7 @@ _REQUIRED: Dict[str, Dict[str, List[Dict[str, Any]]]] = {
             {"key": "gb.passport",   "types": ["passport"],   "reason": "需要有效期 ≥6 个月的护照"},
             {"key": "gb.photo",      "types": ["photo"],      "reason": "需要 35×45mm 白底照片"},
             {"key": "gb.form",       "types": ["form"],       "reason": "需要在线申请表"},
-            {"key": "gb.financial",  "types": ["other"],      "reason": "需要财力证明"},
+            {"key": "gb.financial",  "types": ["other", "bank"], "reason": "需要财力证明"},
         ],
     },
 }
@@ -123,6 +123,10 @@ class DiagnoseIssue:
     detail: str
     fix_suggestion: Optional[str] = None
     related_material_id: Optional[int] = None
+    # W39: raw values behind the zh-CN title/detail strings above, so a
+    # frontend can re-render the message in the user's own locale via its
+    # own i18n keyed by `code` instead of showing this server's zh-CN text.
+    params: Optional[dict] = None
 
 
 @dataclass
@@ -193,7 +197,14 @@ class VisaDiagnoser:
         for m in materials:
             mid = m.get("id")
             ocr = m.get("ocr_result") or {}
-            ocr_fields = ocr.get("fields", {}) if isinstance(ocr, dict) else {}
+            # W39 fix: the only code path that actually persists Material.ocr_result
+            # (POST /materials/{id}/ocr, see materials.py) writes a FLAT dict
+            # (e.g. {"expiry": "...", "passport_no": "..."}) to match what
+            # extractApplicantDraft() on the frontend expects. This used to read
+            # ocr["fields"] (a nested shape no producer ever actually writes),
+            # so ocr_fields was always {} and every passport was flagged as
+            # missing its expiry even when OCR found one.
+            ocr_fields = ocr if isinstance(ocr, dict) else {}
             mtype = m.get("material_type", "other")
 
             rule_count += 1
@@ -206,14 +217,27 @@ class VisaDiagnoser:
                     or ocr_fields.get("passport_expiry")
                 )
                 if not expiry:
-                    issues.append(DiagnoseIssue(
-                        code="passport.expiry_missing",
-                        severity="error",
-                        title="护照有效期字段缺失",
-                        detail="OCR 未识别到护照有效期,签证官会要求补交或直接拒签。",
-                        fix_suggestion="请上传清晰的护照首页扫描件,或手动填写有效期字段。",
-                        related_material_id=mid,
-                    ))
+                    # W45: ocr_fields.is_passport_doc == False 说明 OCR 压根没从图里
+                    # 认出任何护照特征（不是"读到护照但缺有效期"），用更准确的提示，
+                    # 不然用户看着明明是护照的图片却报"有效期缺失"会很困惑。
+                    if ocr_fields.get("is_passport_doc") is False:
+                        issues.append(DiagnoseIssue(
+                            code="passport.not_detected",
+                            severity="error",
+                            title="未识别到护照信息",
+                            detail="OCR 没有从这张图片里识别出任何护照特征（页眉、MRZ 码等），签证官会要求补交或直接拒签。",
+                            fix_suggestion="请确认上传的是清晰、完整的护照资料页,不是户口本、照片或其他证件。",
+                            related_material_id=mid,
+                        ))
+                    else:
+                        issues.append(DiagnoseIssue(
+                            code="passport.expiry_missing",
+                            severity="error",
+                            title="护照有效期字段缺失",
+                            detail="OCR 未识别到护照有效期,签证官会要求补交或直接拒签。",
+                            fix_suggestion="请上传清晰的护照首页扫描件,或手动填写有效期字段。",
+                            related_material_id=mid,
+                        ))
                 else:
                     months_left = self._months_until(expiry)
                     if months_left is not None and months_left < self.PASSPORT_MIN_VALIDITY_MONTHS:
@@ -224,6 +248,7 @@ class VisaDiagnoser:
                             detail=f"有效期 {expiry},剩余约 {months_left} 个月,大多数国家要求 ≥6 个月。",
                             fix_suggestion="出发前必须续期护照,否则会被直接拒签。",
                             related_material_id=mid,
+                            params={"min_months": self.PASSPORT_MIN_VALIDITY_MONTHS, "expiry": expiry, "months_left": months_left},
                         ))
                     elif months_left is not None:
                         positives.append(f"护照有效期充足 ({expiry}, 约 {months_left} 个月)")
@@ -241,6 +266,7 @@ class VisaDiagnoser:
                         detail=f"识别到的护照号 {pno!r} 不符合常见格式 (1 字母 + 7-8 位数字)。",
                         fix_suggestion="请确认上传的是护照资料页 (非签证页或封底)。",
                         related_material_id=mid,
+                        params={"passport_no": pno},
                     ))
                 if pno:
                     positives.append("护照号已成功识别")
@@ -270,6 +296,7 @@ class VisaDiagnoser:
                     detail="OCR 未能提取字段,签证官在审阅时会消耗更多时间,可能被退回要求重传。",
                     fix_suggestion="请重新上传清晰的扫描件,或检查文件是否损坏。",
                     related_material_id=mid,
+                    params={"material_type": mtype},
                 ))
 
         # 3. Field-level cross-checks (form fields)
@@ -466,6 +493,11 @@ _TYPE_LABELS = {
     "enrollment": "在校证明",
     "photo": "签证照片",
     "form": "申请表",
+    "bank": "银行流水",
+    "employment": "在职证明/营业执照",
+    "hotel": "酒店预订",
+    "flight": "机票行程",
+    "insurance": "旅行保险",
     "other": "其他材料",
 }
 

@@ -108,6 +108,15 @@ jobs:
           # --cov 修修修修修修修 (修修修修 ci badge)
           pytest tests/ -m "not slow" --tb=short --maxfail=5 --cov=app --cov-report=xml --cov-report=term-missing
 
+      - name: E2E regression (case12 — user register → order → pay → admin sync)
+        working-directory: backend
+        run: |
+          # W35: full happy path + reverse flow + 4-table consistency check.
+          # Requires backend on :8000 (started by job runner in CI dev env).
+          pip install httpx >/dev/null 2>&1 || true
+          python ../scripts/case12_e2e_regression.py
+        continue-on-error: false
+
       - name: Upload coverage
         if: always()
         uses: actions/upload-artifact@v4

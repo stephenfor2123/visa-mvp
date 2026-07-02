@@ -39,10 +39,17 @@ def _bearer(token: str) -> dict[str, str]:
 
 
 async def _register(client, phone: str) -> str:
-    """SMS-login -> access token. Auto-registers on first use (mock mode)."""
+    """Register or reuse account keyed by phone → returns access token."""
+    uname = f"u{phone}"
+    email = f"{phone}@test.local"
+    pwd = "Test1234"
+    await client.post(
+        "/api/v2/auth/register",
+        json={"username": uname, "email": email, "password": pwd},
+    )
     r = await client.post(
-        "/api/v2/auth/sms-login",
-        json={"phone": phone, "phone_country": "+86", "sms_code": "123456"},
+        "/api/v2/auth/login",
+        json={"account": email, "password": pwd},
     )
     assert r.status_code == 200, r.text
     return r.json()["data"]["access_token"]

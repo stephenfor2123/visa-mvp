@@ -51,7 +51,14 @@
       "profile": "Hồ sơ cá nhân",
       "materials": "Tài liệu đơn",
       "applicants_loading": "Đang tải…",
-      "applicants_empty": "Chưa có người nộp đơn"
+      "applicants_empty": "Chưa có người nộp đơn",
+      "one_click_import": "Nhập nhanh",
+      "one_click_import_tip": "Chọn người nộp đơn từ lịch sử đơn để tự động điền họ tên & hộ chiếu",
+      "one_click_import_title": "Chọn người nộp đơn",
+      "one_click_import_hint": "Họ tên và số hộ chiếu sẽ được điền sẵn; vui lòng điền các trường còn lại bên dưới.",
+      "one_click_import_empty": "Chưa có người nộp đơn để nhập",
+      "one_click_import_done": "Đã nhập — vui lòng điền các trường còn lại",
+      "applicant_used_count": "Đã dùng {n} lần"
     },
     "schengen": "Schengen 26 quốc gia",
     "mega": {
@@ -817,21 +824,21 @@
     "features": {
       "title": "Tại sao chọn chúng tôi",
       "subtitle": "Biến quy trình visa phức tạp thành 4 bước đơn giản",
-      "pay_after": {
-        "title": "Trả phí sau duyệt",
-        "desc": "Chỉ trả khi visa đậu — chúng tôi thắng khi bạn thắng."
-      },
-      "system_check": {
-        "title": "AI kiểm tra trước",
-        "desc": "Danh sách tự động + OCR — tỷ lệ đậu lần đầu cao hơn."
+      "data_safety": {
+        "title": "Dữ liệu ở máy bạn",
+        "desc": "Dữ liệu nhạy cảm lưu cục bộ — tuyệt đối không đưa lên cloud."
       },
       "templates": {
-        "title": "Mẫu một cú nhấp",
-        "desc": "6+ mẫu thư xác nhận, sao kê, thư mời — xong trong 30 giây."
+        "title": "Mẫu thông minh",
+        "desc": "Tạo lịch trình trong 1 phút — không lo sai định dạng."
       },
-      "data_safety": {
-        "title": "Dữ liệu không rò rỉ",
-        "desc": "Mã hóa cục bộ + truyền tải + lưu trữ. Xóa sau duyệt."
+      "smart_check": {
+        "title": "Kiểm tra thông minh",
+        "desc": "Không sợ gõ sai — chúng tôi rà từng dòng giúp bạn."
+      },
+      "pay_after": {
+        "title": "Đậu mới trả phí",
+        "desc": "Chỉ thu phí khi visa đậu — không đậu hoàn tiền dịch vụ."
       }
     },
     "toast_explore_pending": "Danh sách quốc gia sẽ có ở phiên bản tiếp theo",
@@ -1161,7 +1168,12 @@
     "travel_origin_ph": "vd: Bắc Kinh",
     "travel_destination_label": "Điểm đến",
     "travel_depart_label": "Ngày khởi hành",
+    "travel_depart_date_ph": "Chọn ngày khởi hành (YYYY-MM-DD)",
+    "travel_from_label": "Từ",
+    "travel_day": "Day",
     "travel_return_label": "Ngày về",
+    "travel_return_date_ph": "Chọn ngày về (YYYY-MM-DD)",
+    "date_clear_aria": "Xóa ngày",
     "travel_recommend_label": "Chuyến bay tham khảo (nhấn để chọn, hoặc nhập thủ công)",
     "travel_flight_out_label": "Số hiệu chuyến bay đi",
     "travel_flight_out_ph": "vd: CA981",

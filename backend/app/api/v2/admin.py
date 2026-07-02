@@ -23,7 +23,7 @@ Endpoints (all admin-only, protected by verify_admin_token):
 """
 from typing import Annotated, Optional
 
-from fastapi import APIRouter, Depends, Path, Query
+from fastapi import APIRouter, Body, Depends, Path, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_db
@@ -33,13 +33,24 @@ from app.schemas.admin import (
     AdminLoginRequest,
     AdminTokenData,
     AdminTokenOut,
+    AdminRoleOut,
+    AdminUserOut,
+    CreateRoleRequest,
+    UpdateRoleRequest,
     CountryOut,
     CreateCountryRequest,
+    CreateAdminUserRequest,
+    UpdateAdminUserRequest,
     PaginatedAuditLogList,
+    PaginatedCountryList,
     PaginatedOrderList,
+    PaginatedPaymentList,
+    PaginatedAdminUserList,
     PaginatedUserList,
     RpaConfigOut,
     RpaStatsOut,
+    ReorderCountriesRequest,
+    ToggleCountryRequest,
     UpdateCountryRequest,
     UpdateOrderStatusRequest,
     UpdateRpaConfigRequest,
@@ -49,30 +60,19 @@ from app.schemas.admin import (
     DashboardStatsOut,
     OrderDetailOut,
     OrderOut,
+    PaymentFlowOut,
     UserOut,
     UserOutSafe,
-)
-from app.schemas.admin import (
-    AdminLoginRequest,
-    AdminTokenData,
-    AdminTokenOut,
-    AuditLogOut,
-    CountryOut,
-    CreateCountryRequest,
-    PaginatedAuditLogList,
-    PaginatedCountryList,
-    PaginatedOrderList,
-    PaginatedUserList,
-    RpaConfigOut,
-    UpdateCountryRequest,
-    UpdateOrderStatusRequest,
-    UpdateRpaConfigRequest,
-    UpdateValidationRulesRequest,
-    ValidationRuleOut,
-    OrderDetailOut,
-    OrderOut,
-    UserOut,
-    UserOutSafe,
+    I18nOverrideOut,
+    CreateI18nOverrideRequest,
+    UpdateI18nOverrideRequest,
+    PaginatedI18nOverrideList,
+    ImportI18nOverridesRequest,
+    UserDetailOut,
+    UpdateUserRequest,
+    ResetPasswordResponse,
+    UserActionResponse,
+    PaginatedUserOrderList,
 )
 from app.schemas.common import ApiResponse
 from app.services.admin_service import AdminService
@@ -88,7 +88,7 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 @router.post(
     "/login",
     response_model=ApiResponse[AdminTokenOut],
-    summary="Admin login (independent from C-user auth)",
+    summary="Admin login (W34: DB-first, fallback to env password)",
 )
 async def admin_login(
     body: AdminLoginRequest,
@@ -99,6 +99,144 @@ async def admin_login(
     return ApiResponse[AdminTokenOut](
         code="1000", message="OK", data=AdminTokenOut(**result)
     )
+
+
+# --------------------------------------------------------------------------- #
+# Role & admin-user management (W34)                                         #
+# --------------------------------------------------------------------------- #
+@router.get(
+    "/roles",
+    response_model=ApiResponse[list[AdminRoleOut]],
+    summary="List all roles",
+)
+async def list_roles(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    admin: AdminTokenData = Depends(verify_admin_token),
+) -> ApiResponse[list[AdminRoleOut]]:
+    svc = AdminService(db)
+    out = await svc.list_roles()
+    return ApiResponse[list[AdminRoleOut]](
+        code="1000", message="OK", data=[AdminRoleOut(**r) for r in out]
+    )
+
+
+@router.post(
+    "/roles",
+    response_model=ApiResponse[AdminRoleOut],
+    status_code=201,
+    summary="Create a new role",
+)
+async def create_role(
+    body: CreateRoleRequest = Body(...),
+    db: AsyncSession = Depends(get_db),
+    admin: AdminTokenData = Depends(verify_admin_token),
+) -> ApiResponse[AdminRoleOut]:
+    svc = AdminService(db)
+    out = await svc.create_role(data=body.model_dump())
+    return ApiResponse[AdminRoleOut](code="1000", message="OK", data=AdminRoleOut(**out))
+
+
+@router.put(
+    "/roles/{role_id}",
+    response_model=ApiResponse[AdminRoleOut],
+    summary="Update a role (description / permissions / is_active)",
+)
+async def update_role(
+    role_id: int = Path(..., ge=1),
+    body: UpdateRoleRequest = Body(...),
+    db: AsyncSession = Depends(get_db),
+    admin: AdminTokenData = Depends(verify_admin_token),
+) -> ApiResponse[AdminRoleOut]:
+    svc = AdminService(db)
+    out = await svc.update_role(role_id=role_id, data=body.model_dump(exclude_none=True))
+    return ApiResponse[AdminRoleOut](code="1000", message="OK", data=AdminRoleOut(**out))
+
+
+@router.delete(
+    "/roles/{role_id}",
+    response_model=ApiResponse[dict],
+    summary="Soft-delete (deactivate) a role",
+)
+async def delete_role(
+    role_id: int = Path(..., ge=1),
+    db: AsyncSession = Depends(get_db),
+    admin: AdminTokenData = Depends(verify_admin_token),
+) -> ApiResponse[dict]:
+    svc = AdminService(db)
+    await svc.delete_role(role_id=role_id)
+    return ApiResponse[dict](code="1000", message="OK", data={"message": "角色已停用"})
+
+
+@router.get(
+    "/admin-users",
+    response_model=ApiResponse[PaginatedAdminUserList],
+    summary="Paginated admin user list",
+)
+async def list_admin_users(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    admin: AdminTokenData = Depends(verify_admin_token),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+) -> ApiResponse[PaginatedAdminUserList]:
+    svc = AdminService(db)
+    out = await svc.list_admin_users(page=page, page_size=page_size)
+    return ApiResponse[PaginatedAdminUserList](
+        code="1000", message="OK",
+        data=PaginatedAdminUserList(
+            items=[AdminUserOut(**u) for u in out["items"]],
+            page=out["page"], page_size=out["page_size"],
+            total=out["total"], total_pages=out["total_pages"],
+        ),
+    )
+
+
+@router.post(
+    "/admin-users",
+    response_model=ApiResponse[AdminUserOut],
+    status_code=201,
+    summary="Create admin user",
+)
+async def create_admin_user(
+    body: CreateAdminUserRequest = Body(...),
+    db: AsyncSession = Depends(get_db),
+    admin: AdminTokenData = Depends(verify_admin_token),
+) -> ApiResponse[AdminUserOut]:
+    svc = AdminService(db)
+    out = await svc.create_admin_user(
+        username=body.username, password=body.password, role_id=body.role_id
+    )
+    return ApiResponse[AdminUserOut](code="1000", message="OK", data=AdminUserOut(**out))
+
+
+@router.put(
+    "/admin-users/{user_id}",
+    response_model=ApiResponse[AdminUserOut],
+    summary="Update admin user",
+)
+async def update_admin_user(
+    user_id: int = Path(...),
+    body: UpdateAdminUserRequest = Body(...),
+    db: AsyncSession = Depends(get_db),
+    admin: AdminTokenData = Depends(verify_admin_token),
+) -> ApiResponse[AdminUserOut]:
+    svc = AdminService(db)
+    out = await svc.update_admin_user(user_id=user_id, data=body.model_dump(exclude_none=True))
+    return ApiResponse[AdminUserOut](code="1000", message="OK", data=AdminUserOut(**out))
+
+
+@router.delete(
+    "/admin-users/{user_id}",
+    response_model=ApiResponse[dict],
+    summary="Soft-delete admin user",
+)
+async def delete_admin_user(
+    user_id: int = Path(...),
+    db: AsyncSession = Depends(get_db),
+    admin: AdminTokenData = Depends(verify_admin_token),
+) -> ApiResponse[dict]:
+    svc = AdminService(db)
+    await svc.delete_admin_user(user_id=user_id)
+    return ApiResponse[dict](code="1000", message="OK", data={"message": "用户已禁用"})
 
 
 # --------------------------------------------------------------------------- #
@@ -122,7 +260,7 @@ async def list_users(
         code="1000",
         message="OK",
         data=PaginatedUserList(
-            items=[UserOutSafe.from_user_out(UserOut(**i)) for i in out["items"]],
+            items=[UserOutSafe.from_raw(i) for i in out["items"]],
             page=out["page"],
             page_size=out["page_size"],
             total=out["total"],
@@ -133,20 +271,136 @@ async def list_users(
 
 @router.get(
     "/users/{user_id}",
-    response_model=ApiResponse[UserOutSafe],
-    summary="User detail",
+    response_model=ApiResponse[UserDetailOut],
+    summary="C-端用户详情（含订单/材料统计）",
 )
 async def get_user(
     user_id: int = Path(..., ge=1),
     db: AsyncSession = Depends(get_db),
     admin: AdminTokenData = Depends(verify_admin_token),
+) -> ApiResponse[UserDetailOut]:
+    """C-端用户详情 — 在原 GET /users/{id} 基础上新增 order_count / material_count。
+    邮箱/手机号会被脱敏。"""
+    svc = AdminService(db)
+    out = await svc.get_user_detail(user_id=user_id)
+    return ApiResponse[UserDetailOut](
+        code="1000",
+        message="OK",
+        data=UserDetailOut.from_raw(out),
+    )
+
+
+# --------------------------------------------------------------------------- #
+# C-端用户管理 (W36: 详情 + 操作)                                              #
+# --------------------------------------------------------------------------- #
+@router.get(
+    "/users/{user_id}/orders",
+    response_model=ApiResponse[PaginatedUserOrderList],
+    summary="某 C-端用户关联的订单列表（分页）",
+)
+async def list_user_orders(
+    user_id: int = Path(..., ge=1),
+    db: AsyncSession = Depends(get_db),
+    admin: AdminTokenData = Depends(verify_admin_token),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+) -> ApiResponse[PaginatedUserOrderList]:
+    svc = AdminService(db)
+    out = await svc.list_user_orders(user_id=user_id, page=page, page_size=page_size)
+    # UserOrderItem schema is implicit (Pydantic auto-build from dict via Coercing)
+    return ApiResponse[PaginatedUserOrderList](
+        code="1000",
+        message="OK",
+        data=PaginatedUserOrderList(
+            items=out["items"],
+            page=out["page"],
+            page_size=out["page_size"],
+            total=out["total"],
+            total_pages=out["total_pages"],
+        ),
+    )
+
+
+@router.post(
+    "/users/{user_id}/disable",
+    response_model=ApiResponse[UserActionResponse],
+    summary="禁用 C-端账号（status=disabled）",
+)
+async def disable_user(
+    user_id: int = Path(..., ge=1),
+    db: AsyncSession = Depends(get_db),
+    admin: AdminTokenData = Depends(verify_admin_token),
+) -> ApiResponse[UserActionResponse]:
+    svc = AdminService(db)
+    raw = await svc.disable_user(user_id=user_id)
+    return ApiResponse[UserActionResponse](
+        code="1000",
+        message="账号已禁用",
+        data=UserActionResponse(
+            user_id=raw["id"], status=raw["status"], message="账号已禁用",
+            updated_at=raw["updated_at"],
+        ),
+    )
+
+
+@router.post(
+    "/users/{user_id}/restore",
+    response_model=ApiResponse[UserActionResponse],
+    summary="恢复 C-端账号（status=active，仅当 status=disabled）",
+)
+async def restore_user(
+    user_id: int = Path(..., ge=1),
+    db: AsyncSession = Depends(get_db),
+    admin: AdminTokenData = Depends(verify_admin_token),
+) -> ApiResponse[UserActionResponse]:
+    svc = AdminService(db)
+    raw = await svc.restore_user(user_id=user_id)
+    return ApiResponse[UserActionResponse](
+        code="1000",
+        message="账号已恢复",
+        data=UserActionResponse(
+            user_id=raw["id"], status=raw["status"], message="账号已恢复",
+            updated_at=raw["updated_at"],
+        ),
+    )
+
+
+@router.put(
+    "/users/{user_id}",
+    response_model=ApiResponse[UserOutSafe],
+    summary="修改 C-端用户信息（仅 nickname / language_pref / avatar_url）",
+)
+async def update_user(
+    user_id: int = Path(..., ge=1),
+    body: UpdateUserRequest = Body(...),
+    db: AsyncSession = Depends(get_db),
+    admin: AdminTokenData = Depends(verify_admin_token),
 ) -> ApiResponse[UserOutSafe]:
     svc = AdminService(db)
-    out = await svc.get_user(user_id=user_id)
+    raw = await svc.update_user(user_id=user_id, data=body.model_dump(exclude_none=True))
     return ApiResponse[UserOutSafe](
         code="1000",
         message="OK",
-        data=UserOutSafe.from_user_out(UserOut(**out)),
+        data=UserOutSafe.from_raw(raw),
+    )
+
+
+@router.post(
+    "/users/{user_id}/reset-password",
+    response_model=ApiResponse[ResetPasswordResponse],
+    summary="重置 C-端用户密码（返回一次性明文）",
+)
+async def reset_user_password(
+    user_id: int = Path(..., ge=1),
+    db: AsyncSession = Depends(get_db),
+    admin: AdminTokenData = Depends(verify_admin_token),
+) -> ApiResponse[ResetPasswordResponse]:
+    svc = AdminService(db)
+    out = await svc.reset_user_password(user_id=user_id)
+    return ApiResponse[ResetPasswordResponse](
+        code="1000",
+        message="密码已重置，请将新密码告知用户（仅展示一次）",
+        data=ResetPasswordResponse(**out),
     )
 
 
@@ -298,7 +552,7 @@ async def update_country(
 @router.delete(
     "/config/countries/{country_id}",
     response_model=ApiResponse[dict],
-    summary="Offline a country (set enabled=False)",
+    summary="Offline a country (set enabled=False, soft-delete)",
 )
 async def delete_country(
     country_id: int = Path(..., ge=1),
@@ -310,6 +564,51 @@ async def delete_country(
     return ApiResponse[dict](
         code="1000", message="OK", data={"message": "Country disabled"}
     )
+
+
+@router.post(
+    "/config/countries/reorder",
+    response_model=ApiResponse[dict],
+    summary="Bulk-update display_order for the V2 country picker",
+)
+async def reorder_countries(
+    body: ReorderCountriesRequest,
+    db: AsyncSession = Depends(get_db),
+    admin: AdminTokenData = Depends(verify_admin_token),
+) -> ApiResponse[dict]:
+    """Body: ``{ "orders": [{ "id": 1, "display_order": 0 }, ...] }``.
+
+    Writes each (id → display_order) pair in a single transaction and
+    returns the refreshed ordered list so the UI can re-render without
+    a second round-trip.
+    """
+    svc = AdminService(db)
+    out = await svc.reorder_countries(
+        orders=[{"id": item.id, "display_order": item.display_order} for item in body.orders]
+    )
+    return ApiResponse[dict](code="1000", message="OK", data=out)
+
+
+@router.post(
+    "/config/countries/{country_id}/toggle",
+    response_model=ApiResponse[CountryOut],
+    summary="Toggle the V2 enabled flag for a country",
+)
+async def toggle_country(
+    body: ToggleCountryRequest,
+    country_id: int = Path(..., ge=1),
+    db: AsyncSession = Depends(get_db),
+    admin: AdminTokenData = Depends(verify_admin_token),
+) -> ApiResponse[CountryOut]:
+    """Body: ``{ "enabled": true | false }``.
+
+    Distinct from ``PUT /config/countries/{id}`` because the toggle UX in
+    the admin panel is a single click — we don't want operators to also
+    have to send the full record just to flip a flag.
+    """
+    svc = AdminService(db)
+    out = await svc.toggle_country(country_id=country_id, enabled=body.enabled)
+    return ApiResponse[CountryOut](code="1000", message="OK", data=CountryOut(**out))
 
 
 # --------------------------------------------------------------------------- #
@@ -377,7 +676,7 @@ async def update_rpa_config(
 ) -> ApiResponse[RpaConfigOut]:
     svc = AdminService(db)
     updates = {k: v for k, v in body.model_dump().items() if v is not None}
-    out = svc.update_rpa_config(updates=updates)
+    out = await svc.update_rpa_config(updates=updates)
     return ApiResponse[RpaConfigOut](code="1000", message="OK", data=RpaConfigOut(**out))
 
 
@@ -448,3 +747,215 @@ async def list_logs(
             total_pages=out["total_pages"],
         ),
     )
+
+
+# --------------------------------------------------------------------------- #
+# Payment flow (资金流)                                                       #
+# --------------------------------------------------------------------------- #
+@router.get(
+    "/payments",
+    response_model=ApiResponse[PaginatedPaymentList],
+    summary="Paginated payment flow list (资金流)",
+)
+async def list_payments(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    admin: AdminTokenData = Depends(verify_admin_token),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    status: Optional[str] = Query(None, description="none | pending | paid | closed | failed"),
+) -> ApiResponse[PaginatedPaymentList]:
+    svc = AdminService(db)
+    out = await svc.list_payments(page=page, page_size=page_size, status=status)
+    return ApiResponse[PaginatedPaymentList](
+        code="1000",
+        message="OK",
+        data=PaginatedPaymentList(
+            items=[PaymentFlowOut(**i) for i in out["items"]],
+            page=out["page"],
+            page_size=out["page_size"],
+            total=out["total"],
+            total_pages=out["total_pages"],
+        ),
+    )
+
+
+# --------------------------------------------------------------------------- #
+# Validation rule extensions (W35)                                             #
+# --------------------------------------------------------------------------- #
+@router.post(
+    "/config/validation-rules/test",
+    response_model=ApiResponse[dict],
+    summary="Test a single validation rule against a sample value",
+)
+async def test_validation_rule(
+    body: dict = Body(...),
+    db: AsyncSession = Depends(get_db),
+    admin: AdminTokenData = Depends(verify_admin_token),
+) -> ApiResponse[dict]:
+    svc = AdminService(db)
+    out = await svc.test_validation_rule(
+        rule_code=body.get("rule_code") or "",
+        sample_value=body.get("sample_value"),
+    )
+    return ApiResponse[dict](code="1000", message="OK", data=out)
+
+
+@router.get(
+    "/config/validation-rules/{rule_code}/history",
+    response_model=ApiResponse[list[AuditLogOut]],
+    summary="Modification history for a single validation rule",
+)
+async def get_validation_rule_history(
+    rule_code: str,
+    db: AsyncSession = Depends(get_db),
+    admin: AdminTokenData = Depends(verify_admin_token),
+) -> ApiResponse[list[AuditLogOut]]:
+    svc = AdminService(db)
+    items = await svc.get_validation_rule_history(rule_code=rule_code)
+    return ApiResponse[list[AuditLogOut]](
+        code="1000", message="OK", data=[AuditLogOut(**i) for i in items]
+    )
+
+
+# --------------------------------------------------------------------------- #
+# Logs extensions (W35)                                                        #
+# --------------------------------------------------------------------------- #
+@router.get(
+    "/logs/actions",
+    response_model=ApiResponse[list[str]],
+    summary="Distinct action list from audit_log (for filter dropdown)",
+)
+async def list_log_actions(
+    db: AsyncSession = Depends(get_db),
+    admin: AdminTokenData = Depends(verify_admin_token),
+) -> ApiResponse[list[str]]:
+    svc = AdminService(db)
+    out = await svc.list_log_actions()
+    return ApiResponse[list[str]](code="1000", message="OK", data=out)
+
+
+@router.get(
+    "/logs/{log_id}",
+    response_model=ApiResponse[AuditLogOut],
+    summary="Single audit log detail",
+)
+async def get_log(
+    log_id: int = Path(..., ge=1),
+    db: AsyncSession = Depends(get_db),
+    admin: AdminTokenData = Depends(verify_admin_token),
+) -> ApiResponse[AuditLogOut]:
+    svc = AdminService(db)
+    out = await svc.get_log(log_id=log_id)
+    return ApiResponse[AuditLogOut](code="1000", message="OK", data=AuditLogOut(**out))
+
+
+# --------------------------------------------------------------------------- #
+# I18n overrides (W35)                                                         #
+# --------------------------------------------------------------------------- #
+@router.get(
+    "/i18n/overrides",
+    response_model=ApiResponse[PaginatedI18nOverrideList],
+    summary="List i18n overrides with pagination + filter",
+)
+async def list_i18n_overrides(
+    db: AsyncSession = Depends(get_db),
+    admin: AdminTokenData = Depends(verify_admin_token),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    locale: Optional[str] = Query(None),
+    q: Optional[str] = Query(None, description="key search"),
+) -> ApiResponse[PaginatedI18nOverrideList]:
+    svc = AdminService(db)
+    out = await svc.list_i18n_overrides(page=page, page_size=page_size, locale=locale, key=q)
+    return ApiResponse[PaginatedI18nOverrideList](
+        code="1000",
+        message="OK",
+        data=PaginatedI18nOverrideList(
+            items=[I18nOverrideOut(**i) for i in out["items"]],
+            page=out["page"],
+            page_size=out["page_size"],
+            total=out["total"],
+            total_pages=out["total_pages"],
+        ),
+    )
+
+
+@router.post(
+    "/i18n/overrides",
+    response_model=ApiResponse[I18nOverrideOut],
+    summary="Create i18n override",
+)
+async def create_i18n_override(
+    body: CreateI18nOverrideRequest,
+    db: AsyncSession = Depends(get_db),
+    admin: AdminTokenData = Depends(verify_admin_token),
+) -> ApiResponse[I18nOverrideOut]:
+    svc = AdminService(db)
+    out = await svc.create_i18n_override(payload=body.model_dump(), admin_id=admin.admin_id)
+    return ApiResponse[I18nOverrideOut](code="1000", message="OK", data=I18nOverrideOut(**out))
+
+
+@router.put(
+    "/i18n/overrides/{override_id}",
+    response_model=ApiResponse[I18nOverrideOut],
+    summary="Update i18n override",
+)
+async def update_i18n_override(
+    override_id: int = Path(..., ge=1),
+    body: UpdateI18nOverrideRequest = Body(...),
+    db: AsyncSession = Depends(get_db),
+    admin: AdminTokenData = Depends(verify_admin_token),
+) -> ApiResponse[I18nOverrideOut]:
+    svc = AdminService(db)
+    out = await svc.update_i18n_override(
+        override_id=override_id, payload=body.model_dump(exclude_none=True), admin_id=admin.admin_id
+    )
+    return ApiResponse[I18nOverrideOut](code="1000", message="OK", data=I18nOverrideOut(**out))
+
+
+@router.delete(
+    "/i18n/overrides/{override_id}",
+    response_model=ApiResponse[dict],
+    summary="Delete i18n override",
+)
+async def delete_i18n_override(
+    override_id: int = Path(..., ge=1),
+    db: AsyncSession = Depends(get_db),
+    admin: AdminTokenData = Depends(verify_admin_token),
+) -> ApiResponse[dict]:
+    svc = AdminService(db)
+    await svc.delete_i18n_override(override_id=override_id, admin_id=admin.admin_id)
+    return ApiResponse[dict](code="1000", message="OK", data={"message": "已删除"})
+
+
+@router.post(
+    "/i18n/overrides/import",
+    response_model=ApiResponse[dict],
+    summary="Bulk import i18n overrides for a locale",
+)
+async def import_i18n_overrides(
+    body: ImportI18nOverridesRequest,
+    db: AsyncSession = Depends(get_db),
+    admin: AdminTokenData = Depends(verify_admin_token),
+) -> ApiResponse[dict]:
+    svc = AdminService(db)
+    out = await svc.import_i18n_overrides(
+        locale=body.locale, entries=body.entries or {}, admin_id=admin.admin_id
+    )
+    return ApiResponse[dict](code="1000", message="OK", data=out)
+
+
+@router.get(
+    "/i18n/overrides/export",
+    response_model=ApiResponse[dict],
+    summary="Export all overrides for a locale as JSON dict",
+)
+async def export_i18n_overrides(
+    locale: str = Query(..., min_length=2),
+    db: AsyncSession = Depends(get_db),
+    admin: AdminTokenData = Depends(verify_admin_token),
+) -> ApiResponse[dict]:
+    svc = AdminService(db)
+    entries = await svc.export_i18n_overrides(locale=locale)
+    return ApiResponse[dict](code="1000", message="OK", data={"locale": locale, "entries": entries})
+

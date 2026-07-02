@@ -1,24 +1,7 @@
-// router/admin.js — admin sub-router module (W14-11)
-//
-// Owns everything under /admin/**. Mounted from src/router/index.js
-// by concatenating `adminRoutes` into the main routes array.
-//
-// Exports:
-//   - adminRoutes   : plain routes array (no router instance)
-//   - adminGuard    : beforeEach-style guard for use with the main router.
-//                     Guards the same flags (adminAuth / guestOnly).
-//
-// Storage check is performed via the admin Pinia store (which reads from
-// localStorage['admin_token']) — the admin token is intentionally separate
-// from the C-user `visa.auth` token.
-
+// router/admin.js — admin sub-router module
 import { useAdminStore } from '@/stores/admin'
 
 export const adminRoutes = [
-  {
-    path: '/admin',
-    redirect: '/admin/login'
-  },
   {
     path: '/admin/login',
     name: 'AdminLogin',
@@ -26,20 +9,106 @@ export const adminRoutes = [
     meta: { title: 'admin.login.title', guestOnly: true }
   },
   {
-    path: '/admin/dashboard',
-    name: 'AdminDashboard',
-    component: () => import('@/views/admin/AdminDashboard.vue'),
-    meta: { title: 'admin.dashboard', adminAuth: true }
-  },
-  {
-    // W14-6 / W14-11: shared RateLimit page. W14-6 ships the full
-    // element-plus-based view at views/admin/RateLimit.vue.
-    // W14-11 originally wrote a slim AdminRateLimit.vue (7KB) that
-    // collided on this route; deleted in W14-11 retry.
-    path: '/admin/rate-limit',
-    name: 'AdminRateLimit',
-    component: () => import('@/views/admin/RateLimit.vue'),
-    meta: { title: 'admin.menu_settings', adminAuth: true }
+    // Shared layout: sidebar + <router-view> for all authenticated admin pages
+    path: '/admin',
+    component: () => import('@/views/admin/AdminLayout.vue'),
+    meta: { adminAuth: true },
+    children: [
+      {
+        path: '',
+        redirect: 'dashboard'
+      },
+      {
+        path: 'dashboard',
+        name: 'AdminDashboard',
+        component: () => import('@/views/admin/AdminDashboard.vue'),
+        meta: { title: 'admin.dashboard', adminAuth: true }
+      },
+      {
+        path: 'orders',
+        name: 'AdminOrders',
+        component: () => import('@/views/admin/AdminOrders.vue'),
+        meta: { title: 'admin.orders.page_title', adminAuth: true }
+      },
+      {
+        path: 'orders/:id(\\d+)',
+        name: 'AdminOrderDetail',
+        component: () => import('@/views/admin/AdminOrderDetail.vue'),
+        meta: { title: 'admin.order_detail.page_title', adminAuth: true }
+      },
+      {
+        path: 'payments',
+        name: 'AdminPayments',
+        component: () => import('@/views/admin/AdminPayments.vue'),
+        meta: { title: 'admin.payments.page_title', adminAuth: true }
+      },
+      {
+        path: 'rate-limit',
+        name: 'AdminRateLimit',
+        component: () => import('@/views/admin/RateLimit.vue'),
+        meta: { title: 'admin.menu_settings', adminAuth: true }
+      },
+      {
+        path: 'roles',
+        name: 'AdminRoles',
+        component: () => import('@/views/admin/AdminRoles.vue'),
+        meta: { title: 'admin.roles.page_title', adminAuth: true, permission: 'users' }
+      },
+      {
+        path: 'users',
+        name: 'AdminUsers',
+        component: () => import('@/views/admin/AdminUsers.vue'),
+        meta: { title: 'admin.users.page_title', adminAuth: true, permission: 'users' }
+      },
+      {
+        path: 'c-users',
+        name: 'AdminCUsers',
+        component: () => import('@/views/admin/AdminCUsers.vue'),
+        meta: { title: 'admin.c_users.page_title', adminAuth: true, permission: 'users' }
+      },
+      {
+        path: 'c-users/:id(\\d+)',
+        name: 'AdminCUserDetail',
+        component: () => import('@/views/admin/AdminCUserDetail.vue'),
+        meta: { title: 'admin.c_users.detail_title', adminAuth: true, permission: 'users' }
+      },
+      {
+        path: 'countries',
+        name: 'AdminCountries',
+        component: () => import('@/views/admin/AdminCountries.vue'),
+        meta: { title: 'admin.countries.page_title', adminAuth: true, permission: 'countries' }
+      },
+      {
+        path: 'ai-rules',
+        name: 'AdminAiRules',
+        component: () => import('@/views/admin/AdminAiRules.vue'),
+        meta: { title: 'admin.ai_rules.page_title', adminAuth: true, permission: 'settings' }
+      },
+      {
+        path: 'rpa-strategy',
+        name: 'AdminRpaStrategy',
+        component: () => import('@/views/admin/AdminRpaStrategy.vue'),
+        meta: { title: 'admin.rpa_strategy.page_title', adminAuth: true, permission: 'settings' }
+      },
+      {
+        path: 'i18n',
+        name: 'AdminI18n',
+        component: () => import('@/views/admin/AdminI18n.vue'),
+        meta: { title: 'admin.i18n.page_title', adminAuth: true, permission: 'settings' }
+      },
+      {
+        path: 'logs',
+        name: 'AdminLogs',
+        component: () => import('@/views/admin/AdminLogs.vue'),
+        meta: { title: 'admin.logs.page_title', adminAuth: true, permission: 'dashboard' }
+      },
+      {
+        path: 'cleanup',
+        name: 'AdminCleanup',
+        component: () => import('@/views/admin/AdminCleanup.vue'),
+        meta: { title: 'admin.cleanup.page_title', adminAuth: true, permission: 'settings' }
+      },
+    ]
   },
   {
     path: '/admin/:pathMatch(.*)*',
@@ -47,18 +116,7 @@ export const adminRoutes = [
   }
 ]
 
-/**
- * Vue Router beforeEach-compatible guard for admin routes.
- * Caller invokes it inside the main router's beforeEach:
- *   const result = adminGuard(to, from)
- *   if (result) return result
- *
- * Returns:
- *   - undefined  → allow navigation
- *   - { name, query } → navigation target to redirect
- */
 export function adminGuard(to) {
-  // Only act on /admin/** routes.
   if (!to.path.startsWith('/admin')) return undefined
 
   const admin = useAdminStore()
@@ -66,6 +124,9 @@ export function adminGuard(to) {
 
   if (to.meta.adminAuth && !admin.isAuthenticated) {
     return { name: 'AdminLogin', query: { redirect: to.fullPath } }
+  }
+  if (to.meta.permission && !admin.hasPermission(to.meta.permission)) {
+    return { name: 'AdminDashboard' }
   }
   if (to.meta.guestOnly && admin.isAuthenticated) {
     return { name: 'AdminDashboard' }

@@ -358,95 +358,115 @@ onMounted(() => {
 })
 
 // W28 重构:Why choose us — 4 个用户利益点(从功能描述→用户价值)
-// 每个 feature 带专属 SVG icon(紫色/绿色/蓝色/橙色色调),不用 emoji
-const ICON_PAY_LATER = `
+// 顺序:数据安全 / 智能模版 / 智能核对 / 过签收费
+// 每个 feature 带专属 SVG icon,不用 emoji
+// 1. 数据安全 — 盾牌+锁 双重保护,蓝绿渐变
+const ICON_DATA_SAFETY = `
   <svg viewBox="0 0 48 48" fill="none">
     <defs>
-      <linearGradient id="ft-pay-grad" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%"  stop-color="#6366F1"/>
-        <stop offset="100%" stop-color="#8B5CF6"/>
-      </linearGradient>
-    </defs>
-    <rect x="6" y="12" width="36" height="26" rx="4" fill="url(#ft-pay-grad)"/>
-    <rect x="6" y="16" width="36" height="6" fill="rgba(0,0,0,.18)"/>
-    <circle cx="24" cy="26" r="5" fill="#fff"/>
-    <path d="M22 26 L23.6 27.6 L26.5 24.7" stroke="#6366F1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-    <rect x="14" y="30" width="8" height="2" rx="1" fill="rgba(255,255,255,.7)"/>
-    <rect x="14" y="34" width="6" height="2" rx="1" fill="rgba(255,255,255,.5)"/>
-  </svg>`
-const ICON_SHIELD = `
-  <svg viewBox="0 0 48 48" fill="none">
-    <defs>
-      <linearGradient id="ft-shield-grad" x1="0" y1="0" x2="0" y2="1">
+      <linearGradient id="ft-data-grad" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%"  stop-color="#10B981"/>
-        <stop offset="100%" stop-color="#059669"/>
+        <stop offset="100%" stop-color="#0891B2"/>
       </linearGradient>
     </defs>
-    <path d="M24 4 L40 10 V22 C40 32 33 40 24 44 C15 40 8 32 8 22 V10 Z"
-          fill="url(#ft-shield-grad)"/>
-    <path d="M16 22 L21 27 L32 16" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle cx="36" cy="14" r="5" fill="#fff" opacity=".95"/>
-    <path d="M33.5 14 L35.5 16 L38.5 13" stroke="#10B981" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- 外层盾牌 -->
+    <path d="M24 3 L40 9 V22 C40 32 33 41 24 45 C15 41 8 32 8 22 V9 Z"
+          fill="url(#ft-data-grad)"/>
+    <!-- 内层高光 -->
+    <path d="M24 7 L36 11.5 V22 C36 29.5 31 36.5 24 40"
+          fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1.6" stroke-linecap="round"/>
+    <!-- 中心锁体 -->
+    <rect x="17" y="22" width="14" height="11" rx="2" fill="#fff"/>
+    <path d="M19.5 22 V19 a4.5 4.5 0 0 1 9 0 V22"
+          fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+    <circle cx="24" cy="27" r="1.4" fill="#10B981"/>
+    <path d="M24 27 V29.5" stroke="#10B981" stroke-width="1.6" stroke-linecap="round"/>
   </svg>`
+
+// 2. 智能模版 — 行程单(地图+航班路线),蓝紫渐变
 const ICON_TEMPLATE = `
   <svg viewBox="0 0 48 48" fill="none">
     <defs>
       <linearGradient id="ft-tpl-grad" x1="0" y1="0" x2="1" y2="1">
         <stop offset="0%"  stop-color="#3B6EF5"/>
-        <stop offset="100%" stop-color="#6366F1"/>
+        <stop offset="100%" stop-color="#8B5CF6"/>
       </linearGradient>
     </defs>
-    <rect x="8" y="6" width="26" height="34" rx="3" fill="url(#ft-tpl-grad)"/>
-    <rect x="14" y="40" width="26" height="6" rx="2" fill="#6366F1" opacity=".25"/>
-    <path d="M22 6 V14 H34" fill="rgba(0,0,0,.15)"/>
-    <rect x="13" y="18" width="16" height="2" rx="1" fill="#fff" opacity=".85"/>
-    <rect x="13" y="22" width="12" height="2" rx="1" fill="#fff" opacity=".65"/>
-    <rect x="13" y="26" width="14" height="2" rx="1" fill="#fff" opacity=".65"/>
-    <rect x="13" y="30" width="10" height="2" rx="1" fill="#fff" opacity=".5"/>
-    <circle cx="38" cy="32" r="7" fill="#fff"/>
-    <path d="M35 32 L37.5 34.5 L42 30" stroke="#3B6EF5" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- 行程单底 -->
+    <rect x="7" y="6" width="28" height="36" rx="3" fill="url(#ft-tpl-grad)"/>
+    <path d="M20 6 V14 H35" fill="rgba(0,0,0,.18)"/>
+    <!-- 行程节点线 -->
+    <path d="M13 22 H29" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="2 2" opacity=".7"/>
+    <circle cx="13" cy="22" r="2" fill="#fff"/>
+    <circle cx="29" cy="22" r="2" fill="#fff"/>
+    <!-- 文字行 -->
+    <rect x="13" y="28" width="16" height="2" rx="1" fill="#fff" opacity=".85"/>
+    <rect x="13" y="32" width="12" height="2" rx="1" fill="#fff" opacity=".6"/>
+    <rect x="13" y="36" width="14" height="2" rx="1" fill="#fff" opacity=".6"/>
+    <!-- 飞机图标 -->
+    <g transform="translate(30 30)">
+      <circle cx="6" cy="6" r="9" fill="#fff"/>
+      <path d="M2 6 L10 6 M6 2 L10 6 L6 10 L2 6 M6 2 L6 -1"
+            stroke="#3B6EF5" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </g>
   </svg>`
-const ICON_CLOCK = `
+
+// 3. 智能核对 — 文档 + 放大镜 + ✓,蓝橙渐变
+const ICON_SMART_CHECK = `
   <svg viewBox="0 0 48 48" fill="none">
     <defs>
-      <linearGradient id="ft-clock-grad" x1="0" y1="0" x2="1" y2="1">
+      <linearGradient id="ft-check-grad" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%"  stop-color="#3B6EF5"/>
+        <stop offset="100%" stop-color="#06B6D4"/>
+      </linearGradient>
+      <linearGradient id="ft-check-glass" x1="0" y1="0" x2="1" y2="1">
         <stop offset="0%"  stop-color="#F59E0B"/>
         <stop offset="100%" stop-color="#EF4444"/>
       </linearGradient>
     </defs>
-    <circle cx="24" cy="24" r="18" fill="url(#ft-clock-grad)"/>
-    <circle cx="24" cy="24" r="13" fill="#fff"/>
-    <path d="M24 17 V24 L29 27" stroke="#F59E0B" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle cx="24" cy="24" r="1.8" fill="#F59E0B"/>
-    <text x="24" y="11" font-size="6" font-weight="800" fill="#fff" text-anchor="middle" font-family="ui-sans-serif, sans-serif">24</text>
+    <!-- 文档底 -->
+    <path d="M8 8 H26 L34 16 V40 H8 Z" fill="url(#ft-check-grad)"/>
+    <path d="M26 8 V16 H34" fill="rgba(0,0,0,.18)"/>
+    <!-- 文字行 -->
+    <rect x="13" y="20" width="14" height="2" rx="1" fill="#fff" opacity=".85"/>
+    <rect x="13" y="25" width="11" height="2" rx="1" fill="#fff" opacity=".65"/>
+    <rect x="13" y="30" width="13" height="2" rx="1" fill="#fff" opacity=".65"/>
+    <!-- 放大镜 -->
+    <circle cx="30" cy="30" r="8" fill="#fff" stroke="url(#ft-check-glass)" stroke-width="2.5"/>
+    <path d="M36 36 L41 41" stroke="url(#ft-check-glass)" stroke-width="3" stroke-linecap="round"/>
+    <!-- ✓ -->
+    <path d="M26 30 L29 33 L34 27" stroke="#F59E0B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
   </svg>`
-// ICON_LOCK: 数据安全 — 蓝绿色渐变 + 锁图标
-const ICON_LOCK = `
+
+// 4. 过签收费 — 收据 + ✓ + $ 符号,紫粉渐变
+const ICON_PAY_AFTER = `
   <svg viewBox="0 0 48 48" fill="none">
     <defs>
-      <linearGradient id="ft-lock-grad" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%"  stop-color="#10B981"/>
-        <stop offset="100%" stop-color="#0891B2"/>
+      <linearGradient id="ft-pay-grad" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%"  stop-color="#8B5CF6"/>
+        <stop offset="100%" stop-color="#EC4899"/>
       </linearGradient>
     </defs>
-    <rect x="8" y="20" width="32" height="22" rx="5" fill="url(#ft-lock-grad)"/>
-    <path d="M15 20 V14 a9 9 0 0 1 18 0 V20" stroke="#10B981" stroke-width="3" fill="none" stroke-linecap="round"/>
-    <circle cx="24" cy="30" r="2.4" fill="#fff"/>
-    <path d="M24 30 V34" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+    <!-- 收据底 -->
+    <path d="M10 6 H38 V40 L34 36 L30 40 L26 36 L22 40 L18 36 L14 40 L10 36 Z"
+          fill="url(#ft-pay-grad)"/>
+    <!-- $ 符号 -->
+    <text x="24" y="24" font-size="14" font-weight="800" fill="#fff"
+          text-anchor="middle" font-family="ui-sans-serif, sans-serif">$</text>
+    <!-- 文字行 -->
+    <rect x="15" y="27" width="18" height="1.6" rx=".8" fill="#fff" opacity=".85"/>
+    <rect x="17" y="31" width="14" height="1.6" rx=".8" fill="#fff" opacity=".6"/>
+    <!-- ✓ 圆章 -->
+    <circle cx="36" cy="12" r="7" fill="#fff"/>
+    <path d="M32.5 12 L35 14.5 L39.5 9.5" stroke="#8B5CF6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
   </svg>`
 
 const features = computed(() => [
   {
-    id: 'pay-after',
-    titleKey: 'home.features.pay_after.title',
-    descKey:  'home.features.pay_after.desc',
-    icon: ICON_PAY_LATER,
-  },
-  {
-    id: 'system-check',
-    titleKey: 'home.features.system_check.title',
-    descKey:  'home.features.system_check.desc',
-    icon: ICON_SHIELD,
+    id: 'data-safety',
+    titleKey: 'home.features.data_safety.title',
+    descKey:  'home.features.data_safety.desc',
+    icon: ICON_DATA_SAFETY,
   },
   {
     id: 'templates',
@@ -455,10 +475,16 @@ const features = computed(() => [
     icon: ICON_TEMPLATE,
   },
   {
-    id: 'data-safety',
-    titleKey: 'home.features.data_safety.title',
-    descKey:  'home.features.data_safety.desc',
-    icon: ICON_LOCK,
+    id: 'smart-check',
+    titleKey: 'home.features.smart_check.title',
+    descKey:  'home.features.smart_check.desc',
+    icon: ICON_SMART_CHECK,
+  },
+  {
+    id: 'pay-after',
+    titleKey: 'home.features.pay_after.title',
+    descKey:  'home.features.pay_after.desc',
+    icon: ICON_PAY_AFTER,
   },
 ])
 
@@ -970,9 +996,11 @@ function onCountry(countryCode) {
   background: linear-gradient(135deg, #F5F7FB 0%, #EEF2F7 100%);
   /* 不同 feature 用不同色调,统一感由 background 给 */
 }
-.feature--pay-after    .feature__icon { background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%); }
+.feature--data-safety  .feature__icon { background: linear-gradient(135deg, #ECFDF5 0%, #CFFAFE 100%); }
+.feature--templates    .feature__icon { background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%); }
+.feature--smart-check  .feature__icon { background: linear-gradient(135deg, #EFF6FF 0%, #CFFAFE 100%); }
+.feature--pay-after    .feature__icon { background: linear-gradient(135deg, #FAE8FF 0%, #FCE7F3 100%); }
 .feature--system-check .feature__icon { background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%); }
-.feature--templates    .feature__icon { background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%); }
 .feature--support-24h  .feature__icon { background: linear-gradient(135deg, #FFF7ED 0%, #FED7AA 100%); }
 .feature__icon svg { width: 36px; height: 36px; display: block; }
 .feature__body { min-width: 0; flex: 1; }

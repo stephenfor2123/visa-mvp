@@ -3,8 +3,6 @@ from app.schemas.auth import (  # noqa: F401
     LoginRequest,
     RefreshRequest,
     RegisterRequest,
-    SendCodeRequest,
-    SmsLoginRequest,
     TokenPair,
     UserPublic,
 )

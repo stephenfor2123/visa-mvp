@@ -1,8 +1,4 @@
-"""MFA Service — TOTP + SMS verification.
-
-MFA types:
-  - totp:  TOTP via pyotp (RFC 6238). Secret stored encrypted in user.mfa_secret.
-  - sms:   6-digit SMS code sent to user.mfa_phone.
+"""MFA Service — TOTP verification.
 
 MFA flow:
   1. POST /auth/mfa/verify  (with mfa_token + code) -> full TokenPair
@@ -17,7 +13,7 @@ import secrets
 from datetime import datetime, timedelta, timezone
 from typing import TYPE_CHECKING, Any, Optional
 
-from sqlalchemy import and_, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
@@ -32,7 +28,6 @@ from app.core.security import (
 )
 from app.models.user import User
 from app.models.user_session import UserSession
-from app.services.sms_service import SmsService
 
 if TYPE_CHECKING:
     from app.services.auth_service import ClientInfo
@@ -109,12 +104,12 @@ class MfaService:
         import pyotp
         return pyotp.random_base32(length=32)
 
-    def get_totp_uri(self, secret: str, user_phone: str) -> str:
+    def get_totp_uri(self, secret: str, account_name: str) -> str:
         """Return the otpauth:// URI for QR code generation."""
         import pyotp
         issuer = self.settings.app_name
         totp = pyotp.TOTP(secret)
-        return totp.provisioning_uri(name=user_phone, issuer_name=issuer)
+        return totp.provisioning_uri(name=account_name, issuer_name=issuer)
 
     def verify_totp(self, secret: str, code: str) -> bool:
         """Verify a 6-digit TOTP code against the secret (30s window, 1 step)."""
@@ -128,39 +123,6 @@ class MfaService:
             return False
 
     # ------------------------------------------------------------------ #
-    # SMS MFA                                                              #
-    # ------------------------------------------------------------------ #
-    async def send_sms_code(self, user: User) -> dict[str, Any]:
-        """Send a 6-digit SMS code to the user's MFA backup phone."""
-        if not user.mfa_phone:
-            raise BizException(
-                ErrorCode.MFA_NOT_ENABLED,
-                message="MFA SMS phone not configured",
-            )
-        sms_svc = SmsService(self.db)
-        return await sms_svc.send_code(
-            phone=user.mfa_phone,
-            phone_country=user.mfa_phone_country or "+86",
-            purpose="mfa",
-        )
-
-    async def verify_sms_code(self, user: User, code: str) -> bool:
-        """Verify a 6-digit SMS code for MFA."""
-        if not user.mfa_phone:
-            return False
-        sms_svc = SmsService(self.db)
-        try:
-            await sms_svc.verify_code(
-                phone=user.mfa_phone,
-                phone_country=user.mfa_phone_country or "+86",
-                code=code,
-                purpose="mfa",
-            )
-            return True
-        except BizException:
-            return False
-
-    # ------------------------------------------------------------------ #
     # Setup                                                               #
     # ------------------------------------------------------------------ #
     async def setup_totp(self, user: User) -> dict[str, Any]:
@@ -171,37 +133,19 @@ class MfaService:
         user.mfa_type = "totp"
         user.mfa_secret = encrypted
         await self.db.commit()
-        uri = self.get_totp_uri(secret, f"{user.mfa_phone_country or '+86'}{user.phone}")
+        account_name = user.email or user.username or str(user.id)
+        uri = self.get_totp_uri(secret, account_name)
         return {
             "secret": secret,  # only returned on setup; never again
             "otpauth_uri": uri,
             "mfa_type": "totp",
         }
 
-    async def setup_sms(self, user: User, sms_code: str, sms_phone: str, sms_phone_country: str) -> dict[str, Any]:
-        """Enable SMS MFA. Requires a verified SMS code first."""
-        sms_svc = SmsService(self.db)
-        await sms_svc.verify_code(
-            phone=sms_phone,
-            phone_country=sms_phone_country,
-            code=sms_code,
-            purpose="mfa_setup",
-        )
-        user.mfa_enabled = True
-        user.mfa_type = "sms"
-        user.mfa_phone = sms_phone
-        user.mfa_phone_country = sms_phone_country
-        user.mfa_secret = None
-        await self.db.commit()
-        return {"mfa_type": "sms", "mfa_phone": sms_phone, "mfa_phone_country": sms_phone_country}
-
     async def disable_mfa(self, user: User) -> dict[str, Any]:
         """Disable MFA for the user."""
         user.mfa_enabled = False
         user.mfa_type = None
         user.mfa_secret = None
-        user.mfa_phone = None
-        user.mfa_phone_country = None
         await self.db.commit()
         return {"mfa_enabled": False}
 
@@ -210,8 +154,6 @@ class MfaService:
         return {
             "mfa_enabled": user.mfa_enabled,
             "mfa_type": user.mfa_type,
-            "mfa_phone": user.mfa_phone,
-            "mfa_phone_country": user.mfa_phone_country,
         }
 
     # ------------------------------------------------------------------ #
@@ -247,8 +189,8 @@ class MfaService:
             "user": {
                 "id": user.id,
                 "uuid": user.uuid,
-                "phone": user.phone,
-                "phone_country": user.phone_country,
+                "username": user.username,
+                "email": user.email,
                 "nickname": user.nickname,
                 "avatar_url": user.avatar_url,
                 "language_pref": user.language_pref,

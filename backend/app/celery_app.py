@@ -23,7 +23,7 @@ celery_app = Celery(
     "visa_mvp",
     broker=settings.celery_broker_url,
     backend=settings.celery_result_backend,
-    include=["app.tasks.rpa_tasks"],
+    include=["app.tasks.rpa_tasks", "app.tasks.rag_tasks"],
 )
 
 # ── Serialiser (JSON so it works across processes) ──────────────────────────
@@ -46,6 +46,18 @@ celery_app.conf.update(
         "visibility_timeout": 43200,
     },
 )
+
+# ── Periodic tasks (celery beat) ─────────────────────────────────────────────
+# RAG source refresh: off by default, opt-in via RAG_AUTO_REFRESH_ENABLED=1
+# (see app/core/config.py). Manual refresh via POST /api/v2/rag/refresh
+# always works regardless of this setting.
+if settings.rag_auto_refresh_enabled:
+    celery_app.conf.beat_schedule = {
+        "rag-refresh-visa-sources": {
+            "task": "app.tasks.rag_tasks.refresh_rag_sources_task",
+            "schedule": settings.rag_auto_refresh_interval_hours * 3600.0,
+        },
+    }
 
 # ── Discover tasks from all registered packages ─────────────────────────────
 # (done automatically by `include=[]` above)

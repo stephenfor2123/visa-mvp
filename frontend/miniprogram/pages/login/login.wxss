@@ -215,3 +215,43 @@
   font-size: 22rpx;
   color: var(--ink-3, #9CA3AF);
 }
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin: 32rpx 0 24rpx;
+}
+.divider-line {
+  flex: 1;
+  height: 1rpx;
+  background: var(--border, #E5E7EB);
+}
+.divider-text {
+  font-size: 24rpx;
+  color: var(--ink-3, #9CA3AF);
+}
+.wechat-login-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  background: #07C160;
+  color: #fff;
+  border-radius: 16rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  padding: 28rpx 0;
+  border: none;
+}
+.wechat-login-btn-hover {
+  opacity: 0.85;
+}
+.wechat-icon {
+  font-size: 26rpx;
+  background: #fff;
+  color: #07C160;
+  border-radius: 6rpx;
+  padding: 2rpx 8rpx;
+  font-weight: 700;
+}

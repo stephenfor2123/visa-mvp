@@ -156,6 +156,19 @@ class PreprocessMeta(BaseModel):
         default_factory=list,
         description="Non-fatal warnings (e.g. 'image_too_small')",
     )
+    blur_score: float = Field(
+        0.0,
+        description="清晰度: Laplacian variance of the raw capture; higher = sharper",
+    )
+    is_blurry: bool = Field(
+        False,
+        description="清晰度: True if blur_score is below the sharpness threshold",
+    )
+    is_complete: bool = Field(
+        True,
+        description="完整度: False if the detected document quad touches the frame edge "
+        "(physical document likely extends beyond the photo)",
+    )
 
 
 class PreprocessResponse(BaseModel):
@@ -230,6 +243,10 @@ class DiagnoseIssue(BaseModel):
     detail: str
     fix_suggestion: Optional[str] = None
     related_material_id: Optional[int] = None
+    params: Optional[dict] = Field(
+        default=None,
+        description="raw values behind the pre-rendered zh-CN title/detail (e.g. {'months': 6, 'expiry': '2030-12-31'}), so frontends can re-render the message in the user's own locale instead of showing the server's zh-CN text",
+    )
 
 
 class DiagnoseRequest(BaseModel):
