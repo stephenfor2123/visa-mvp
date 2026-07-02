@@ -270,10 +270,12 @@ test.describe('S4.2 /destinations 立即申请按钮 (Destinations.vue)', () => 
 })
 
 test.describe('S4.3 /orders/new 按钮状态 (OrderNew.vue)', () => {
-  test('C17: /orders/new 受保护,未登录跳 /login?redirect=', async ({ page }) => {
-    await page.goto('/orders/new')
-    await page.waitForURL(/\/login/, { timeout: 5_000 })
-    expect(page.url()).toMatch(/redirect=/)
+  test('C17: /orders/new 不再受保护 (W47:游客可填表,登录墙在 submit)', async ({ page }) => {
+    // W47: 申请表单已内嵌到 MaterialWizard,游客可填表。
+    // 登录墙在 onSubmitForm 触发,不在 router guard 触发。
+    await page.goto('/orders/new', { waitUntil: 'networkidle' })
+    await expect(page).toHaveURL(/\/orders\/new/)
+    await expect(page.getByTestId('ordernew-section-basic')).toBeVisible({ timeout: 10_000 })
   })
 
   test('C18: 登录后 /orders/new 可见, 3 个 tab 按钮可见', async ({ page }) => {

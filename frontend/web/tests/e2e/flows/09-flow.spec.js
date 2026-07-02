@@ -176,10 +176,13 @@ test.describe('S5.2 路由 guard 中间态 (Router beforeEach)', () => {
     expect(page.url()).toMatch(/redirect=.+orders/)
   })
 
-  test('D8: 未登录访 /orders/new → 跳 /login?redirect=/orders/new', async ({ page }) => {
-    await page.goto('/orders/new')
-    await page.waitForURL(/\/login/, { timeout: 5_000 })
-    expect(page.url()).toMatch(/redirect=/)
+  test('D8: 未登录访 /orders/new → 不跳 (可填表,登录墙在 submit)', async ({ page }) => {
+    // W47: 申请表填写页已内嵌到 MaterialWizard 第 6 大类,游客也可填表,
+    // 登录墙在点 submit 时才触发。所以 /orders/new 直链不再 redirect to /login。
+    await page.goto('/orders/new', { waitUntil: 'networkidle' })
+    await expect(page).toHaveURL(/\/orders\/new/)
+    // 仍能看到基本 tab(说明页面能加载)
+    await expect(page.getByTestId('ordernew-section-basic')).toBeVisible({ timeout: 10_000 })
   })
 
   test('D9: 未登录访 /materials → 跳 /login?redirect=/materials', async ({ page }) => {
@@ -524,14 +527,16 @@ test.describe('S5.5 登出 + 受保护页跳 /login?redirect=', () => {
     expect(page.url()).toContain('orders')
   })
 
-  test('D31: 清 auth 后访 /orders/new → 跳 /login?redirect=/orders/new', async ({ page }) => {
+  test('D31: 清 auth 后访 /orders/new → 不跳 (可填表,登录墙在 submit)', async ({ page }) => {
+    // W47: 申请表单允许游客填写,登录墙在点 submit 时才触发,所以直链 /orders/new
+    // 不再 redirect 到 /login。
     await page.goto('/home', { waitUntil: 'domcontentloaded' })
     await injectAuth(page, { accessToken: 'fake.d31', refreshToken: 'r', user: { id: 't-d31', phone: '+8613800000031' } })
     await page.goto('/login')
     await page.evaluate(() => localStorage.removeItem('visa.auth'))
     await page.goto('/orders/new', { waitUntil: 'networkidle' })
-    await page.waitForURL(/\/login/, { timeout: 5_000 })
-    expect(page.url()).toMatch(/redirect=/)
+    await expect(page).toHaveURL(/\/orders\/new/)
+    await expect(page.getByTestId('ordernew-section-basic')).toBeVisible({ timeout: 10_000 })
   })
 
   test('D32: 清 auth 后访 /payment/result → 跳 /login?redirect=', async ({ page }) => {
