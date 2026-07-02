@@ -83,3 +83,11 @@ frontend/miniprogram/build_report.json
 
 # Vite dev server temp files (created when config has parse issues)
 frontend/web/vite.config.js.timestamp-*.mjs
+
+# Playwright test artifacts (regenerated on every test run)
+frontend/web/test-results/
+frontend/web/playwright-report/
+
+# Agent runtime metadata (NOT project code — mavis team jobs/deliverables, claude session cache)
+.harness/
+.claude/
