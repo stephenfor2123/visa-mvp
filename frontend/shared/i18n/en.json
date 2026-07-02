@@ -49,7 +49,9 @@
       "all": "All Applications",
       "new_order": "New Application",
       "profile": "My Profile",
-      "materials": "Application Materials"
+      "materials": "Application Materials",
+      "applicants_loading": "Loading…",
+      "applicants_empty": "No applicants yet"
     },
     "schengen": "Schengen 26 countries",
     "mega": {
@@ -1079,16 +1081,16 @@
       "view_all": "See all 30 countries",
       "compare": "Compare visas"
     },
-    "trust_stats": {
-      "users": "users served",
-      "on_time": "on-time delivery",
-      "rating": "user rating",
+"trust_stats": {
+      "users": "Users served",
+      "on_time": "Privacy first",
+      "rating": "User rating",
       "support": "7×24 local-language support"
     }
   },
   "trust": {
-    "on_time": "On Time Guaranteed",
-    "on_time_tip": "Visas delivered on time, or full refund"
+    "on_time": "Privacy First",
+    "on_time_tip": "Documents processed locally with encryption — we never handle your files directly"
   },
   "cs": {
     "open_search": "Search countries",
@@ -1144,10 +1146,10 @@
     "de_schengen": "Germany (Schengen)",
     "fr_schengen": "France (Schengen)",
     "schengen": "Schengen (26 countries)",
-    "us_sub": "B1/B2 · Student · Work",
-    "au_sub": "Tourist · Student · Work",
+    "us_sub": "B1/B2",
+    "au_sub": "Tourist",
     "schengen_sub": "FR/DE/IT/ES/NL…",
-    "gb_sub": "Tourist · Student · Work"
+    "gb_sub": "Tourist"
   },
   "stripe": {
     "card_label": "Card Details",
@@ -1447,7 +1449,8 @@
     "itinerary_col_attraction": "Itinerary",
     "itinerary_col_hotel": "Hotel",
     "travel_mode_manual": "Fill manually",
-    "travel_mode_auto": "One-click generate (AI)",
+    "travel_mode_smart": "Smart fill",
+    "travel_export_pdf": "Confirm itinerary, export PDF",
     "travel_generating": "Generating…",
     "travel_recompile_btn": "Recompile itinerary",
     "travel_day_city_ph": "e.g. Paris",

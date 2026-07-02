@@ -49,7 +49,9 @@
       "all": "全部申请",
       "new_order": "新建申请",
       "profile": "我的资料",
-      "materials": "申请材料"
+      "materials": "申请材料",
+      "applicants_loading": "加载中…",
+      "applicants_empty": "暂无申请人"
     },
     "schengen": "申根 26 国",
     "mega": {
@@ -1058,21 +1060,21 @@
     "features": {
       "title": "为什么选我们",
       "subtitle": "把繁琐的签证流程,变成 4 步搞定",
-      "pay_after": {
-        "title": "免服务费",
-        "desc": "通过才付款,通过率没信心不收钱。"
-      },
-      "system_check": {
-        "title": "专家 Pre-check",
-        "desc": "清单自动生成 + OCR 识别,一次过签率更高。"
+      "data_safety": {
+        "title": "数据安全",
+        "desc": "敏感数据本地存储,绝不上云。"
       },
       "templates": {
         "title": "智能模版",
-        "desc": "在职证明/流水/邀请函等 6+ 模板,30 秒填完。"
+        "desc": "快速生成行程单,1 分钟搞定。"
       },
-      "data_safety": {
-        "title": "数据安全",
-        "desc": "本地/传输/存储三重加密,出签即焚。"
+      "smart_check": {
+        "title": "智能核对",
+        "desc": "不用担心写错内容,全自动检查。"
+      },
+      "pay_after": {
+        "title": "过签收费",
+        "desc": "有效服务才收费,不过签服务费可退。"
       }
     },
     "toast_explore_pending": "国家列表将在下一版本接入",
@@ -1086,14 +1088,14 @@
     },
     "trust_stats": {
       "users": "已服务用户",
-      "on_time": "准时出签保障",
+      "on_time": "隐私保护",
       "rating": "用户评分",
       "support": "7×24 中文客服"
     }
   },
   "trust": {
-    "on_time": "准时出签保障",
-    "on_time_tip": "承诺准时出签,延误全额退款"
+    "on_time": "隐私保护",
+    "on_time_tip": "材料加密本地处理,我们不直接接触您的证件"
   },
   "cs": {
     "open_search": "搜索国家",
@@ -1169,10 +1171,10 @@
     "de_schengen": "德国(申根)",
     "fr_schengen": "法国(申根)",
     "schengen": "申根 (26 国)",
-    "us_sub": "B1/B2 学生/工作",
-    "au_sub": "旅游/学生/工作",
+    "us_sub": "B1/B2",
+    "au_sub": "旅游",
     "schengen_sub": "法/德/意/西/荷…",
-    "gb_sub": "旅游/学生/工作"
+    "gb_sub": "旅游"
   },
   "stripe": {
     "card_label": "信用卡信息",
@@ -1476,7 +1478,8 @@
     "itinerary_col_attraction": "行程/景点",
     "itinerary_col_hotel": "住宿",
     "travel_mode_manual": "手动填写",
-    "travel_mode_auto": "一键生成 (AI)",
+    "travel_mode_smart": "智能补充",
+    "travel_export_pdf": "确定行程,导出 PDF",
     "travel_generating": "生成中…",
     "travel_recompile_btn": "重新编译行程单",
     "travel_day_city_ph": "如：巴黎",

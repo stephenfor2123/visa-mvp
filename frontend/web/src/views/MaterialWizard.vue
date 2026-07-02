@@ -55,6 +55,7 @@
           <TravelPlanner
             :plan="wizard.state.travelPlan"
             :destination-name="destinationName"
+            :country-code="countryCode"
             :on-generate-itinerary="wizard.generateItinerary"
             :on-compile-itinerary-text="wizard.compileItineraryText"
             :on-rebuild-days="wizard.rebuildTravelDays"

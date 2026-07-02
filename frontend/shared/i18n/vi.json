@@ -49,7 +49,9 @@
       "all": "Tất cả đơn",
       "new_order": "Tạo đơn mới",
       "profile": "Hồ sơ cá nhân",
-      "materials": "Tài liệu đơn"
+      "materials": "Tài liệu đơn",
+      "applicants_loading": "Đang tải…",
+      "applicants_empty": "Chưa có người nộp đơn"
     },
     "schengen": "Schengen 26 quốc gia",
     "mega": {
@@ -841,16 +843,16 @@
       "view_all": "Xem 30 quốc gia",
       "compare": "So sánh visa"
     },
-    "trust_stats": {
-      "users": "người đã phục vụ",
-      "on_time": "đúng hạn",
-      "rating": "đánh giá người dùng",
+"trust_stats": {
+      "users": "Đã phục vụ",
+      "on_time": "Bảo mật",
+      "rating": "Đánh giá",
       "support": "Hỗ trợ 7×24 tiếng địa phương"
     }
   },
   "trust": {
-    "on_time": "Đúng hẹn cấp visa",
-    "on_time_tip": "Đảm bảo đúng hẹn, trễ hoàn tiền"
+    "on_time": "Bảo mật tuyệt đối",
+    "on_time_tip": "Hồ sơ xử lý mã hóa tại chỗ — chúng tôi không trực tiếp đụng vào giấy tờ của bạn"
   },
   "cs": {
     "open_search": "Tìm quốc gia",
@@ -906,10 +908,10 @@
     "de_schengen": "Đức (Schengen)",
     "fr_schengen": "Pháp (Schengen)",
     "schengen": "Schengen (26 quốc gia)",
-    "us_sub": "B1/B2 · Du học · Lao động",
-    "au_sub": "Du lịch · Du học · Lao động",
+    "us_sub": "B1/B2",
+    "au_sub": "Du lịch",
     "schengen_sub": "FR/DE/IT/ES/NL…",
-    "gb_sub": "Du lịch · Du học · Lao động"
+    "gb_sub": "Du lịch"
   },
   "stripe": {
     "card_label": "Chi tiết thẻ",
@@ -1209,7 +1211,8 @@
     "itinerary_col_attraction": "Lịch trình",
     "itinerary_col_hotel": "Khách sạn",
     "travel_mode_manual": "Điền thủ công",
-    "travel_mode_auto": "Tạo bằng một cú nhấp (AI)",
+    "travel_mode_smart": "Điền thông minh",
+    "travel_export_pdf": "Xác nhận hành trình, xuất PDF",
     "travel_generating": "Đang tạo…",
     "travel_recompile_btn": "Biên dịch lại lịch trình",
     "travel_day_city_ph": "vd: Paris",

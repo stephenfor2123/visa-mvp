@@ -49,7 +49,9 @@
       "all": "Semua Aplikasi",
       "new_order": "Aplikasi Baru",
       "profile": "Profil Saya",
-      "materials": "Dokumen Aplikasi"
+      "materials": "Dokumen Aplikasi",
+      "applicants_loading": "Memuat…",
+      "applicants_empty": "Belum ada申请人"
     },
     "schengen": "Schengen 26 negara",
     "mega": {
@@ -841,16 +843,16 @@
       "view_all": "Lihat 30 negara",
       "compare": "Bandingkan visa"
     },
-    "trust_stats": {
-      "users": "pengguna dilayani",
-      "on_time": "tepat waktu",
-      "rating": "rating pengguna",
-      "support": "Dukungan 7×24 bahasa lokal"
+"trust_stats": {
+      "users": "Pengguna dilayani",
+      "on_time": "Privasi terjamin",
+      "rating": "Penilaian pengguna",
+      "support": "Layanan 7×24 bahasa lokal"
     }
   },
   "trust": {
-    "on_time": "Visa Tepat Waktu",
-    "on_time_tip": "Visa dijamin tepat waktu, atau refund penuh"
+    "on_time": "Privasi Terjamin",
+    "on_time_tip": "Dokumen diproses lokal dengan enkripsi — kami tidak langsung menangani berkas Anda"
   },
   "cs": {
     "open_search": "Cari negara",
@@ -906,10 +908,10 @@
     "de_schengen": "Jerman (Schengen)",
     "fr_schengen": "Prancis (Schengen)",
     "schengen": "Schengen (26 negara)",
-    "us_sub": "B1/B2 · Pelajar · Kerja",
-    "au_sub": "Wisata · Pelajar · Kerja",
+    "us_sub": "B1/B2",
+    "au_sub": "Wisata",
     "schengen_sub": "FR/DE/IT/ES/NL…",
-    "gb_sub": "Wisata · Pelajar · Kerja"
+    "gb_sub": "Wisata"
   },
   "stripe": {
     "card_label": "Detail Kartu",
@@ -1209,7 +1211,8 @@
     "itinerary_col_attraction": "Itinerary",
     "itinerary_col_hotel": "Hotel",
     "travel_mode_manual": "Isi manual",
-    "travel_mode_auto": "Buat sekali klik (AI)",
+    "travel_mode_smart": "Isi pintar",
+    "travel_export_pdf": "Konfirmasi rencana, ekspor PDF",
     "travel_generating": "Membuat…",
     "travel_recompile_btn": "Kompilasi ulang itinerary",
     "travel_day_city_ph": "cth: Paris",
