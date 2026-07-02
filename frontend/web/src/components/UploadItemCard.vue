@@ -15,7 +15,7 @@
         </svg>
       </div>
     </div>
-    <p class="uic__hint">{{ t(item.hintKey, { cur: currencyFor(props.countryCode) }) }}</p>
+    <p class="uic__hint">{{ t(item.hintKey, { cur: currencyFor(props.countryCode), amount: amountFor(props.itemKey, props.countryCode) }) }}</p>
 
     <!-- idle: 上传 or 现场扫描 -->
     <div v-if="!record.collected && phase === 'idle'" class="uic__actions">
@@ -75,7 +75,7 @@
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 const props = defineProps({
   itemKey: { type: String, required: true },
@@ -89,17 +89,67 @@ const props = defineProps({
 // looked wrong on the en-US locale with US/GB/Schengen destinations. Map the
 // destination country to the local currency symbol (or the conventional code
 // in zh-CN / vi-VN) and inject it as {cur} into the i18n string.
+// W46: extend coverage — VN/ID/TH/KR/IN now route to their local currency
+// (IDR/VND/THB/KRW/INR) instead of falling back to ¥, and {amount} is
+// looked up per (item, country) so that "5万元" becomes "US$7,000" /
+// "Rp 100.000.000" / etc.
 const CURRENCY_BY_COUNTRY = {
-  US: '$',      CA: 'CA$', AU: 'A$', NZ: 'NZ$', SG: 'S$', JP: '¥',
+  // 美元区
+  US: '$', CA: 'CA$', AU: 'A$', NZ: 'NZ$', SG: 'S$',
+  // 欧洲
   GB: '£',
-  // Schengen member states share the euro for the customer-facing hint
+  // 申根成员国共用欧元
   AT: '€', BE: '€', HR: '€', CZ: '€', DK: '€', EE: '€', FI: '€', FR: '€',
   DE: '€', GR: '€', HU: '€', IS: '€', IT: '€', LV: '€', LI: '€', LT: '€',
   LU: '€', MT: '€', NL: '€', NO: '€', PL: '€', PT: '€', SK: '€', SI: '€',
   ES: '€', SE: '€',
+  // 亚洲
+  JP: '¥',     // JPY
+  CN: '¥',     // CNY（与 JPY 符号相同，靠 amount 区分）
+  KR: '₩',
+  TH: '฿',
+  IN: '₹',
+  VN: '₫',
+  ID: 'Rp',
 }
 function currencyFor(cc) {
   return CURRENCY_BY_COUNTRY[cc] || '¥'
+}
+
+// 各目的地国家的"银行流水建议余额 / 保险保额"下限（当地币种，业内常用值）。
+// 按 itemKey + countryCode 查表；查不到时退回 CNY 兜底。
+// 数值用 number 类型，i18n 字符串里 {amount} 会自动 toLocaleString 出千分位。
+const AMOUNT_TABLE = {
+  bank_statement: {
+    US: 7000, CA: 10000, AU: 10000, NZ: 10000, SG: 10000,
+    GB: 5500,
+    AT: 6500, BE: 6500, HR: 6500, CZ: 6500, DK: 6500, EE: 6500, FI: 6500,
+    FR: 6500, DE: 6500, GR: 6500, HU: 6500, IS: 6500, IT: 6500, LV: 6500,
+    LI: 6500, LT: 6500, LU: 6500, MT: 6500, NL: 6500, NO: 6500, PL: 6500,
+    PT: 6500, SK: 6500, SI: 6500, ES: 6500, SE: 6500,
+    JP: 1000000, KR: 10000000, TH: 200000, VN: 150000000, ID: 100000000,
+    IN: 500000, CN: 50000,
+  },
+  insurance: {
+    US: 50000, CA: 50000, AU: 50000, NZ: 50000, SG: 30000,
+    GB: 30000,
+    // 申根法定下限 3 万欧元
+    AT: 30000, BE: 30000, HR: 30000, CZ: 30000, DK: 30000, EE: 30000,
+    FI: 30000, FR: 30000, DE: 30000, GR: 30000, HU: 30000, IS: 30000,
+    IT: 30000, LV: 30000, LI: 30000, LT: 30000, LU: 30000, MT: 30000,
+    NL: 30000, NO: 30000, PL: 30000, PT: 30000, SK: 30000, SI: 30000,
+    ES: 30000, SE: 30000,
+    JP: 5000000, KR: 30000000, TH: 1000000, VN: 500000000, ID: 500000000,
+    IN: 3000000, CN: 300000,
+  },
+}
+function amountFor(itemKey, countryCode) {
+  const cc = countryCode || 'CN'
+  const table = AMOUNT_TABLE[itemKey]
+  if (!table) return '50,000'
+  const n = table[cc] != null ? table[cc] : table.CN
+  // 按当前 i18n locale 输出千分位: en/zh 用逗号, id/vi 用点号
+  return n.toLocaleString(locale.value || 'en-US')
 }
 const emit = defineEmits(['remove'])
 

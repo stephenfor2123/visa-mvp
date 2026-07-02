@@ -127,13 +127,40 @@ export function extractApplicantDraft(materials = []) {
   const fieldsToCheck = ['surname', 'given_name', 'sex', 'dob', 'nationality', 'passport_no', 'passport_expiry']
   const initial = fieldsToCheck.filter((k) => !draft[k]).length
 
+  // W47c: OCR 返回的 nationality 经常是 ISO 3166-1 alpha-3 (CHN/USA/VNM)，
+  // 但前端 nationalityOptions 用的是 alpha-2 (CN/US/VN)。这里做一次映射，
+  // 既保证下拉框能选中，也保证 ocrMarked 标记能被点亮。
+  const ISO3_TO_ISO2 = {
+    CHN: 'CN', USA: 'US', GBR: 'GB', JPN: 'JP', KOR: 'KR', PRK: 'KP',
+    IND: 'IN', IDN: 'ID', VNM: 'VN', PHL: 'PH', THA: 'TH', MYS: 'MY',
+    SGP: 'SG', AUS: 'AU', CAN: 'CA', FRA: 'FR', DEU: 'DE', ITA: 'IT',
+    ESP: 'ES', RUS: 'RU', NLD: 'NL', BEL: 'BE', CHE: 'CH', AUT: 'AT',
+    SWE: 'SE', NOR: 'NO', DNK: 'DK', FIN: 'FI', POL: 'PL', BRA: 'BR',
+    ARG: 'AR', MEX: 'MX', ZAF: 'ZA', EGY: 'EG', ARE: 'AE', TUR: 'TR',
+    SAU: 'SA', ISR: 'IL', NZL: 'NZ',
+  }
+  function normalizeNationality(raw) {
+    if (!raw) return ''
+    const s = String(raw).trim().toUpperCase()
+    if (!s) return ''
+    // 已是 alpha-2 且在 map 里 (即 2 字母码本身不是 3 字母码的 key)
+    if (s.length === 2 && Object.values(ISO3_TO_ISO2).includes(s)) return s
+    // 3 字母码 → 2 字母码
+    if (s.length === 3 && ISO3_TO_ISO2[s]) return ISO3_TO_ISO2[s]
+    // 兜底: 截前 2 位 (e.g. "CHINA" → "CH"，但前端没 CH，留原值让用户手选)
+    return s
+  }
+
   for (const m of materials) {
     const ocr = m?.ocr_result || m?.classification || null
     if (!ocr) continue
     // 兼容两种结构:ocr_result 是 dict (来自 §5.1.3) 或 classification.transcript (来自 voice)
     for (const k of fieldsToCheck) {
       if (!draft[k] && ocr[k]) {
-        draft[k] = String(ocr[k]).trim()
+        let val = String(ocr[k]).trim()
+        if (k === 'nationality') val = normalizeNationality(val)
+        if (k === 'sex') val = val.toUpperCase().startsWith('F') ? 'F' : (val.toUpperCase().startsWith('M') ? 'M' : val)
+        draft[k] = val
         prefilledCount += 1
       }
     }
@@ -150,7 +177,9 @@ export function extractApplicantDraft(materials = []) {
       draft.passport_no = ocr.passport_number || ocr.passportNo
       prefilledCount += 1
     }
-    if (draft.surname && draft.given_name && draft.passport_no) break // 拿够就停
+    // W47c: 7 个字段全填了才停 (之前只看 surname+given_name+passport_no 导致 sex/nationality 经常被漏)
+    const allFilled = fieldsToCheck.every((k) => draft[k])
+    if (allFilled) break
   }
   const percent = initial === 0 ? 0 : Math.round((prefilledCount / initial) * 100)
   return { draft, percent, prefilledCount, total: initial }

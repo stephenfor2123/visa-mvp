@@ -493,13 +493,14 @@ watch(locale, async () => {
 }, { immediate: false })
 
 function onCountry(countryCode) {
-  // W26 产品逻辑:首页 4 大卡点进去直接进申请页,不再"再选一次国家"。
-  // - 单一国家(US/AU/GB)→ 直接进 OrderNew,带 country + 默认 visa_type
+  // W26 产品逻辑:首页 4 大卡点进去直接进材料收集向导,不再"再选一次国家"。
+  // - 单一国家(US/AU/GB)→ 直接进 MaterialWizard,带 country + 默认 visa_type
   // - 申根(26 国)→ 跳专门"申根 26 国"页选具体哪个,因为一个卡不能代表 26 国
+  // W47: /orders/new 已合并到 MaterialWizard 第 6 大类"签证表格",无跳页体验
   if (countryCode === 'SCHENGEN') {
     router.push({ name: 'SchengenCountries' })
   } else {
-    router.push({ path: '/orders/new', query: { country: countryCode, visa_type: 'tourism' } })
+    router.push({ name: 'MaterialWizard', query: { country: countryCode, visa_type: 'tourism' } })
   }
 }
 </script>

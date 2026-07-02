@@ -5,15 +5,15 @@ const MOCK_MODE = import.meta.env.VITE_MOCK !== 'false' // 默认 mock
 
 // V2 首批 9 国(W1 已落库,B 端 destinations 端点暂未上线时用)
 const FALLBACK_DESTINATIONS = [
-  { id: 1, country_code: 'US', country_name: '美国', visa_types: ['tourism', 'student'], enabled: true },
-  { id: 2, country_code: 'JP', country_name: '日本', visa_types: ['tourism', 'student'], enabled: false },
-  { id: 3, country_code: 'UK', country_name: '英国', visa_types: ['tourism', 'student'], enabled: false },
-  { id: 4, country_code: 'AU', country_name: '澳大利亚', visa_types: ['tourism', 'student'], enabled: false },
-  { id: 5, country_code: 'CA', country_name: '加拿大', visa_types: ['tourism', 'student'], enabled: false },
-  { id: 6, country_code: 'DE', country_name: '德国(申根)', visa_types: ['tourism', 'student'], enabled: false },
-  { id: 7, country_code: 'FR', country_name: '法国(申根)', visa_types: ['tourism', 'student'], enabled: false },
-  { id: 8, country_code: 'SG', country_name: '新加坡', visa_types: ['tourism', 'student'], enabled: false },
-  { id: 9, country_code: 'NZ', country_name: '新西兰', visa_types: ['tourism', 'student'], enabled: false }
+  { id: 1, country_code: 'US', country_name: '美国', visa_types: ['tourism'], enabled: true },
+  { id: 2, country_code: 'JP', country_name: '日本', visa_types: ['tourism'], enabled: false },
+  { id: 3, country_code: 'UK', country_name: '英国', visa_types: ['tourism'], enabled: false },
+  { id: 4, country_code: 'AU', country_name: '澳大利亚', visa_types: ['tourism'], enabled: false },
+  { id: 5, country_code: 'CA', country_name: '加拿大', visa_types: ['tourism'], enabled: false },
+  { id: 6, country_code: 'DE', country_name: '德国(申根)', visa_types: ['tourism'], enabled: false },
+  { id: 7, country_code: 'FR', country_name: '法国(申根)', visa_types: ['tourism'], enabled: false },
+  { id: 8, country_code: 'SG', country_name: '新加坡', visa_types: ['tourism'], enabled: false },
+  { id: 9, country_code: 'NZ', country_name: '新西兰', visa_types: ['tourism'], enabled: false }
 ]
 
 // 翻译国家名(用 lang 切)

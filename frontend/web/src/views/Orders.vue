@@ -229,7 +229,7 @@ onMounted(loadOrders)
 <style scoped>
 .orders-page {
   min-height: 100vh;
-  background: var(--bg-page, #f5f7fa);
+  background: #FFFFFF;
 }
 .orders-shell {
   padding-top: 24px;

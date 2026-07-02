@@ -268,7 +268,17 @@ async function loadChecklist() {
   error.value = ''
   checklist.value = null
   try {
-    const env = await http.get('/v2/rag/checklist', { params: { country_code: form.country_code } })
+    // Map Vue i18n locale → backend language bucket.
+    //   en     → 'en'
+    //   id-ID  → 'id'
+    //   vi-VN  → 'vi'
+    //   zh-CN / anything else → 'zh-CN'
+    const rawLocale = (locale.value || 'zh-CN').toString().toLowerCase()
+    let lang = 'zh-CN'
+    if (rawLocale.startsWith('en')) lang = 'en'
+    else if (rawLocale.startsWith('id')) lang = 'id'
+    else if (rawLocale.startsWith('vi')) lang = 'vi'
+    const env = await http.get('/v2/rag/checklist', { params: { country_code: form.country_code, lang } })
     if (env.code !== '1000') throw new Error(env.message || 'checklist failed')
     checklist.value = env.data
   } catch (e) {
@@ -297,7 +307,7 @@ onMounted(loadCountries)
 <style scoped lang="scss">
 .apply-page { min-height: 100vh; background: #ffffff; display: flex; flex-direction: column; }
 .apply-main {
-  flex: 1; max-width: 980px; width: 100%;
+  flex: 1; max-width: 1200px; width: 100%;
   margin: 0 auto; padding: 32px 24px 80px;
 }
 .apply-hero {
@@ -356,13 +366,13 @@ onMounted(loadCountries)
 .apply-country {
   position: relative;
   display: flex; align-items: center; gap: 10px;
-  background: #f8fafc; border: 1.5px solid #e9edf5; border-radius: 14px;
+  background: #FFFFFF; border: 1.5px solid #e9edf5; border-radius: 14px;
   padding: 15px 16px; cursor: pointer;
   transition: transform .18s cubic-bezier(.2,.8,.2,1), box-shadow .18s ease, border-color .18s ease, background .18s ease;
   font-size: 14px; color: #0f172a;
-  &:hover { border-color: #93b4fb; background: #fff; transform: translateY(-2px); box-shadow: 0 10px 22px rgba(59,110,245,.12); }
+  &:hover { border-color: #93b4fb; background: #FFFFFF; transform: translateY(-2px); box-shadow: 0 10px 22px rgba(59,110,245,.12); }
   &.is-selected {
-    background: linear-gradient(135deg, #eff6ff 0%, #eef0ff 100%);
+    background: #FFFFFF;
     border-color: #3b6ef5;
     box-shadow: 0 8px 20px rgba(59,110,245,.16);
   }

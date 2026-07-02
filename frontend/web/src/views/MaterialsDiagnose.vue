@@ -20,7 +20,6 @@
               <option value="">{{ t('diagnose.visa_default', '默认 (推荐)') }}</option>
               <option value="tourist">{{ t('diagnose.visa_tourist', '旅游') }}</option>
               <option value="business">{{ t('diagnose.visa_business', '商务') }}</option>
-              <option value="student">{{ t('diagnose.visa_student', '留学') }}</option>
             </select>
           </label>
         </div>
@@ -96,10 +95,10 @@
           >
             <div class="diag-issue__head">
               <span :class="`diag-issue__sev diag-issue__sev--${iss.severity}`">{{ severityLabel(iss.severity) }}</span>
-              <span class="diag-issue__title">{{ iss.title }}</span>
+              <span class="diag-issue__title">{{ translateIssue(iss).title }}</span>
             </div>
-            <p class="diag-issue__detail">{{ iss.detail }}</p>
-            <p v-if="iss.fix_suggestion" class="diag-issue__fix">👉 {{ iss.fix_suggestion }}</p>
+            <p class="diag-issue__detail">{{ translateIssue(iss).detail }}</p>
+            <p v-if="translateIssue(iss).fix" class="diag-issue__fix">👉 {{ translateIssue(iss).fix }}</p>
           </div>
         </div>
 
@@ -175,11 +174,60 @@ const riskIcon = computed(() => {
 
 const riskLabel = computed(() => {
   if (!result.value) return ''
-  return { low: '低风险', medium: '中等风险', high: '高风险', critical: '严重风险' }[result.value.overall_risk] || '未知'
+  return {
+    low: t('diagnose.risk_low'),
+    medium: t('diagnose.risk_medium'),
+    high: t('diagnose.risk_high'),
+    critical: t('diagnose.risk_critical'),
+  }[result.value.overall_risk] || t('diagnose.risk_unknown')
 })
 
 function severityLabel(sev) {
-  return { info: '提示', warning: '警告', error: '错误', critical: '关键' }[sev] || sev
+  return t(`diagnose.severity_${sev}`) || sev
+}
+
+// W46: render issue title/detail/fix via the i18n keys returned by the backend.
+// Fallback chain: (1) use key + params interpolation, (2) use key without
+// params, (3) use the pre-rendered zh-CN field the server sent. This way a
+// brand-new issue code that has no frontend translation yet still shows
+// something readable.
+function translateIssue(issue) {
+  const out = { title: issue.title, detail: issue.detail, fix: issue.fix_suggestion }
+
+  // Resolve country name in the current locale for {cc}/{country} interpolation
+  const ccKey = `diagnose.country_${(countryCode.value || '').toLowerCase()}`
+  const ccLocal = t(ccKey) !== ccKey ? t(ccKey) : countryCode.value
+
+  // Resolve visa-type label
+  const visaRaw = (issue.params && issue.params.visa) || ''
+  const visaKey = `diagnose.visa_${visaRaw || 'default'}_lbl`
+  const visaLocal = t(visaKey) !== visaKey ? t(visaKey) : visaRaw
+
+  // Resolve material-type labels (for the "please add" suggestion)
+  let typesLocal = (issue.params && issue.params.types) || ''
+  if (issue.params && Array.isArray(issue.params.type_tokens)) {
+    typesLocal = issue.params.type_tokens.map((tk) => {
+      const k = `diagnose.type_${tk}`
+      return t(k) !== k ? t(k) : tk
+    }).join(', ')
+  }
+
+  if (issue.title_key) {
+    const params = { cc: ccLocal, country: ccLocal, visa: visaLocal, types: typesLocal, ...(issue.params || {}) }
+    const v = t(issue.title_key, params)
+    if (v !== issue.title_key) out.title = v
+  }
+  if (issue.detail_key) {
+    const params = { ...(issue.params || {}), cc: ccLocal, country: ccLocal, visa: visaLocal }
+    const v = t(issue.detail_key, params)
+    if (v !== issue.detail_key) out.detail = v
+  }
+  if (issue.fix_key) {
+    const params = { types: typesLocal, ...(issue.params || {}) }
+    const v = t(issue.fix_key, params)
+    if (v !== issue.fix_key) out.fix = v
+  }
+  return out
 }
 
 onMounted(async () => {
@@ -215,9 +263,9 @@ async function runDiagnose() {
 </script>
 
 <style scoped lang="scss">
-.diag-page { min-height: 100vh; background: #F8FAFC; }
+.diag-page { min-height: 100vh; background: #FFFFFF; }
 .diag-shell {
-  max-width: 880px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 24px 20px 80px;
 }

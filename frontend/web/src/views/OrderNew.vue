@@ -280,10 +280,6 @@
                   <input v-model="form.visa_type" type="radio" value="tourism" />
                   <span>✈ {{ t('orders.visa_tourism') }}</span>
                 </label>
-                <label class="radio-pill" :class="{ on: form.visa_type === 'student' }">
-                  <input v-model="form.visa_type" type="radio" value="student" />
-                  <span>🎓 {{ t('orders.visa_student') }}</span>
-                </label>
               </div>
             </div>
 
@@ -921,15 +917,15 @@ async function loadAll() {
 
 // Fallback: when B backend /v2/destinations not ready or DB missing table (V2 first batch 9 countries)
 const FALLBACK_DESTINATIONS = [
-  { id: 1, country_code: 'US', country_name_key: 'country.us', visa_types: ['tourism', 'student'], enabled: true },
-  { id: 2, country_code: 'JP', country_name_key: 'country.jp', visa_types: ['tourism', 'student'], enabled: false },
-  { id: 3, country_code: 'UK', country_name_key: 'country.uk', visa_types: ['tourism', 'student'], enabled: false },
-  { id: 4, country_code: 'AU', country_name_key: 'country.au', visa_types: ['tourism', 'student'], enabled: false },
-  { id: 5, country_code: 'CA', country_name_key: 'country.ca', visa_types: ['tourism', 'student'], enabled: false },
-  { id: 6, country_code: 'DE', country_name_key: 'country.de_schengen', visa_types: ['tourism', 'student'], enabled: false },
-  { id: 7, country_code: 'FR', country_name_key: 'country.fr_schengen', visa_types: ['tourism', 'student'], enabled: false },
-  { id: 8, country_code: 'SG', country_name_key: 'country.sg', visa_types: ['tourism', 'student'], enabled: false },
-  { id: 9, country_code: 'NZ', country_name_key: 'country.nz', visa_types: ['tourism', 'student'], enabled: false }
+  { id: 1, country_code: 'US', country_name_key: 'country.us', visa_types: ['tourism'], enabled: true },
+  { id: 2, country_code: 'JP', country_name_key: 'country.jp', visa_types: ['tourism'], enabled: false },
+  { id: 3, country_code: 'UK', country_name_key: 'country.uk', visa_types: ['tourism'], enabled: false },
+  { id: 4, country_code: 'AU', country_name_key: 'country.au', visa_types: ['tourism'], enabled: false },
+  { id: 5, country_code: 'CA', country_name_key: 'country.ca', visa_types: ['tourism'], enabled: false },
+  { id: 6, country_code: 'DE', country_name_key: 'country.de_schengen', visa_types: ['tourism'], enabled: false },
+  { id: 7, country_code: 'FR', country_name_key: 'country.fr_schengen', visa_types: ['tourism'], enabled: false },
+  { id: 8, country_code: 'SG', country_name_key: 'country.sg', visa_types: ['tourism'], enabled: false },
+  { id: 9, country_code: 'NZ', country_name_key: 'country.nz', visa_types: ['tourism'], enabled: false }
 ]
 
 // W29: 登录回跳后从 localStorage 恢复游客填的 draft
@@ -1206,7 +1202,7 @@ watch(isLastTab, async (val) => {
   padding: 14px 24px; background: #fff; border-bottom: 1px solid var(--border, #E2E8F0);
 }.app-header__user { font-size: 13px; color: var(--ink-3, #64748B); }
 
-.ordernew-shell { max-width: 960px; margin: 0 auto; padding: 24px 20px 60px; }
+.ordernew-shell { max-width: 1200px; margin: 0 auto; padding: 24px 20px 60px; }
 
 // ============== Hero ==============
 .hero {

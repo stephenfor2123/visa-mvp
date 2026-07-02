@@ -281,13 +281,13 @@ function onRescanAll() {
 
 function onContinue() {
   if (counts.value.fail > 0) return
-  // Pass previous material_ids through, OrderNew reads from query
+  // W47: 校验通过 → 直接进 MaterialWizard 第 6 大类填表(同页体验)
   const ids = (route.query.material_ids || '').toString()
   const params = new URLSearchParams()
   if (ids) params.set('material_ids', ids)
   if (route.query.country) params.set('country', route.query.country)
   if (route.query.visa_type) params.set('visa_type', route.query.visa_type)
-  router.push({ name: 'OrderNew', query: Object.fromEntries(params.entries()) })
+  router.push({ name: 'MaterialWizard', query: Object.fromEntries(params.entries()) })
 }
 
 // ============== W3 P0 root-fix: ref + setOnTrigger pattern ==============
@@ -336,13 +336,13 @@ watch(
 <style scoped lang="scss">
 .validate-page {
   min-height: 100vh;
-  background: var(--bg-alt, #F8FAFC);
+  background: #FFFFFF;
   display: flex;
   flex-direction: column;
 }
 
 .validate-shell {
-  max-width: 960px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 32px 20px 60px;
   width: 100%;

@@ -306,9 +306,13 @@ export function useMaterialWizard(countryCode, visaType = 'tourism') {
 
   function itemsRequiredCollected(catDef) {
     const c = state.categories[catDef.key]
-    return catDef.items
-      .filter((it) => !it.optional && !it.auto)
-      .every((it) => c.items[it.key]?.collected)
+    // W48: 修复 — 之前 `.filter(!it.optional)` 对全 optional 的分类(如 insurance)
+    // 会得到空数组,`every` 在空数组上返回 true,导致旅行保险没填也显示绿色对勾。
+    // 现在:必须至少有一项**非 optional** 才走 `every`;全 optional 分类返回 false
+    // (除非用户显式点过 skip / validated)。
+    const required = catDef.items.filter((it) => !it.optional && !it.auto)
+    if (required.length === 0) return false
+    return required.every((it) => c.items[it.key]?.collected)
   }
 
   const activeCategoryReady = computed(() => {

@@ -612,7 +612,7 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped lang="scss">
-.orderdetail-page { min-height: 100vh; background: var(--bg-alt, #F8FAFC); }
+.orderdetail-page { min-height: 100vh; background: #FFFFFF; }
 
 // ============== Header ==============
 .app-header {
@@ -631,7 +631,7 @@ onBeforeUnmount(() => {
 .ws-pill--pending { background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
 .ws-pill--fallback { background: #EAF0FE; color: #2D5BFF; border: 1px solid #93C5FD; }
 
-.orderdetail-shell { max-width: 960px; margin: 0 auto; padding: 24px 20px 60px; }
+.orderdetail-shell { max-width: 1200px; margin: 0 auto; padding: 24px 20px 60px; }
 
 // ============== Hero ==============
 .hero {

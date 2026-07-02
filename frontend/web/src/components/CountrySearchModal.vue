@@ -199,7 +199,8 @@ function onPick(c) {
     // 申根国 → 跳 SchengenCountries 让用户选具体国
     router.push({ name: 'SchengenCountries' })
   } else {
-    router.push({ path: '/orders/new', query: { country: c.country_code, visa_type: 'tourism' } })
+    // W47: 选完国家 → 直接进 MaterialWizard,材料 + 表格同页完成
+    router.push({ name: 'MaterialWizard', query: { country: c.country_code, visa_type: 'tourism' } })
   }
 }
 

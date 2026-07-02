@@ -143,7 +143,7 @@ onMounted(() => {
    ============================================================ */
 .dest-page {
   min-height: 100vh;
-  background: linear-gradient(180deg, #F5F7FB 0%, #EEF2F8 100%);
+  background: #FFFFFF;
 }
 .dest-shell { max-width: 1200px; margin: 0 auto; padding: 32px 24px 80px; }
 .page-title { font-size: 32px; font-weight: 700; margin: 0 0 6px; color: #0F172A; letter-spacing: -0.5px; }
@@ -187,7 +187,7 @@ onMounted(() => {
   position: relative;
   width: 100%;
   height: 200px;
-  background: linear-gradient(135deg, #3B6EF5 0%, #6E59F0 100%);
+  background: #FFFFFF;
   overflow: hidden;
 }
 
@@ -251,7 +251,7 @@ onMounted(() => {
 .dest-card__cover-fallback {
   position: absolute; inset: 0;
   display: flex; align-items: center; justify-content: center;
-  background: linear-gradient(135deg, #1E293B 0%, #475569 100%);
+  background: #FFFFFF;
 }
 .dest-card__flag-big { font-size: 80px; }
 

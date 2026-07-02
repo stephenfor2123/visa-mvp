@@ -192,7 +192,7 @@ onMounted(loadCountries)
 }
 .resources-main {
   flex: 1;
-  max-width: 980px;
+  max-width: 1200px;
   width: 100%;
   margin: 0 auto;
   padding: 32px 24px 80px;

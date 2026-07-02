@@ -365,7 +365,7 @@ onMounted(loadCountries)
 .diagnose-page { min-height: 100vh; background: #fff; display: flex; flex-direction: column; }
 .diagnose-main {
   flex: 1;
-  max-width: 880px;
+  max-width: 1200px;
   width: 100%;
   margin: 0 auto;
   padding: 32px 24px 80px;

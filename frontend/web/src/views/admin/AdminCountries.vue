@@ -63,7 +63,6 @@
             <div class="form-field"><label>{{ t('admin.countries.form_types') }}</label>
               <div class="perm-grid">
                 <label class="perm-check"><input type="checkbox" value="tourism" v-model="form.visa_types" /> {{ t('admin.countries.type_tourism') }}</label>
-                <label class="perm-check"><input type="checkbox" value="student" v-model="form.visa_types" /> {{ t('admin.countries.type_student') }}</label>
               </div>
             </div>
             <div class="form-field"><label>{{ t('admin.countries.form_template') }}</label><input v-model="form.form_template_url" class="form-input" /></div>

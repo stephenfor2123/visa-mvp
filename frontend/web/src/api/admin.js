@@ -266,7 +266,7 @@ export async function listAdminOrders(params = {}) {
       { id: 1041, order_no: 'V2-20260629-000041', user_id: 12, destination_id: 1, visa_type: 'tourism',
         status: 'reviewing', total_amount: 18500, currency: 'USD', aff_code: 'SUMMER10',
         created_at: '2026-06-29T07:42:00Z', updated_at: '2026-06-29T08:55:00Z' },
-      { id: 1040, order_no: 'V2-20260628-000128', user_id: 8, destination_id: 2, visa_type: 'student',
+      { id: 1040, order_no: 'V2-20260628-000128', user_id: 8, destination_id: 2, visa_type: 'tourism',
         status: 'approved', total_amount: 14500, currency: 'USD', aff_code: null,
         created_at: '2026-06-28T22:10:00Z', updated_at: '2026-06-29T03:20:00Z' },
       { id: 1039, order_no: 'V2-20260628-000127', user_id: 22, destination_id: 1, visa_type: 'tourism',
