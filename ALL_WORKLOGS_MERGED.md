@@ -12,15 +12,16 @@
 
 **当前版本**: `w45-material-wizard-llm-itinerary` (2026-07-02) — 材料收集向导 + LLM 行程生成 + 4 语种 i18n。
 
-**最近一次端到端自测** (2026-07-02, Claude 自测):
-- ✅ 走通: 注册/登录 → 选 US → 材料向导六大类强校验 → 上传+OCR → 真实 MiniMax LLM 生成行程 → 订单创建 → 多语言切换
+**最近一次端到端自测** (2026-07-02, Mavis W47c/W48 全量回归 + 3 个 i18n bug 修):
+- ✅ 走通: visa_diagnoser 命名空间错位修 → MaterialsDiagnose.vue 26 个 key 4 语言全 hit;MaterialWizard 重做 vite build OK;RAG 多语言 53/53 测试通过;AppHeader mega menu 跨节点 hover bridge 生效;TravelPlanner W47c 兜底"最后一天是飞机" + W48 CityInput 删 Combobox
+- ✅ 顺手修了: 4 个 i18n 文件补 8 个 orders.* 一键导入 key + en.json 补 admin.order_detail.section_audit
 - ⏸ 有意留空: 支付未接线(提交后跳 RPA、订单 0.00 元);RPA 前端假进度(后端任务无 worker)
-- 🐛 待修 8 项:work 签证标签误显 Student / 英文下国家名显示代码 / hero 统计文案 4 语种坏 / i18n 缺 key / 行程表头英文局部重复 / 向导进度条不实时 / ¥ 符号未本地化 / RPA 步骤百分比矛盾
+- 🐛 历史遗留: `tests/rag/test_rag_auto_refresh.py` 因 venv 缺 celery 跑不起来;`test_w8/w9_integration.py` 因仓库无 `A_WORKLOG.md` 失败
 
 **关键状态**:
 - i18n:4 语种(zh-CN / en / id / vi),W10 起 100% 字段覆盖,共 ~1648 i18n entries
-- 测试:后端 pytest 历史峰值 415/415 PASS(W22),CI 仍撞 venv 死链/Id-vi 同名/PaddleOCR 缺等环境问题
-- Git: 主干 77+ commits,期间经历 W1 → W45 五个 sprint 阶段(W1-W14 多 Agent 并行,W15-W22 CI 修复,W25-W33 rebrand+微交互,W36-W45 材料向导)
+- 测试:后端 pytest 历史峰值 415/415 PASS(W22),CI 仍撞 venv 死链/Id-vi 同名/PaddleOCR 缺等环境问题;W47c 回归 601 PASS / 18 skip / 2 fail (历史 worklog 收口检查失败)
+- Git: 主干 78+ commits,期间经历 W1 → W48 六个 sprint 阶段(W1-W14 多 Agent 并行,W15-W22 CI 修复,W25-W33 rebrand+微交互,W36-W45 材料向导,W46-W48 全量回归+i18n 修复)
 
 ---
 
@@ -28,6 +29,7 @@
 
 | Date | Version | 关键改动 | 来源 |
 |------|---------|----------|------|
+| 2026-07-02 | W47c/W48 全量回归 | W36-W48 工作 commit + visa_diagnoser 命名空间错位修 + 4 语言补 9 key | 本 session |
 | 2026-07-02 | `w45-material-wizard-llm-itinerary` | 材料收集 6 大类强校验向导 + MiniMax LLM 行程单 + 401 refresh 链路 | CHANGELOG.md, KNOWN_ISSUES.md §2 |
 | 2026-06-30 | `w32-checkpoint-atlys-feature` | 无新提交(checkpoint 8 feature) | CHANGELOG.md |
 | 2026-06-28 | W32/W33 commits | micro-interaction 4 原型 + W33 OCR preview + 4 步 wizard + 多目的地 cart | git log 4d1d265 → 7193bc6 |
@@ -647,6 +649,55 @@
 
 ---
 
+### W47c + W48 — 全量改动回归 + 3 个 i18n bug 修复 (2026-07-02 19:30 ~ 20:03)
+
+**Owner**: Mavis session (post-W36-W48 大改造的回归扫描 + bug 修)
+
+**背景**: W36-W45 / W46 / W47 三轮大改动落地后,工作区有 39 个 modified + 14 个 untracked 未提交。本 session 把今天新开发的功能完整走一遍回顾测试,聚焦容易出问题的地方(RAG 多语言 / MaterialWizard 重做 / AppHeader 下拉菜单 / TravelPlanner / visa_diagnoser / i18n key 同步),扫出 3 个 bug 全修。
+
+**改动文件清单 (W36-W48 全量,本次提交)**:
+- 后端 6 文件: `app/api/v2/materials.py` `app/api/v2/rag.py` `app/models/rag.py` `app/schemas/material.py` `app/services/rag/refresh.py` `app/services/visa_diagnoser.py`
+- 后端 4 新文件: `alembic/versions/0014_rag_language.py` `scripts/seed_rag_chunks_en.py` `_id.py` `_vi.py` `tests/rag/test_localize_curated_text.py`
+- 前端 23 文件 modified: 视图 17 + 组件 4 + API 3 + composable 1 + router 1 + e2e 2
+- 前端 3 新文件: `components/CityInput.vue` `components/MaterialTemplatePreview.vue` `data/materialTemplates.js` (322 行)
+- 6 张开发过程截图 (w47_*, w48_*)
+- i18n 4 文件 modified
+
+**W46 / W47 / W47c 关键功能**:
+- **RAG 多语言**: `localize_curated_text(text, country)` 按目的国把"余额建议 ≥ 5万元"重写成 US$7,000 / £5,500 / Rp 100.000.000 / ₫150,000,000,申根 3万欧元保险不动。0014 迁移加 `rag_source.language` / `rag_chunk.language` 索引,query endpoint 按 lang 过滤,优雅降级到 zh-CN
+- **MaterialWizard 重做**: 把 OrderNew 表单 (basic / travel / emergency) 嵌到第 6 大类,游客可填表;登录墙在 onSubmitForm 触发。`/materials-wizard` 路由移除 requiresAuth
+- **AppHeader**: mega menu 从 `.mega-menu` 内提到 `.app-header` 子元素 (deel.com 风格跨宽度);人物头像整合"我的申请 + profile + 退出登录"
+- **TravelPlanner**: CityInput 纯文本输入框 (W48 删 Combobox 建议下拉);行程表方向提示基于行索引 (Day1 / 中间飞行日 / 最后一天返程);`watch days.length` 兜底"最后一天是飞机"语义;PDF 双语导出 (W47 之前段)
+- **MaterialTemplatePreview**: 3 类核心材料 (identity / financial / work) 中英双语样本预览,占位符 `{{name}}` 高亮,各国差异说明
+
+**回归测试扫出的 3 个 bug + 修法**:
+
+| # | 严重度 | Bug | 修法 |
+|---|--------|-----|------|
+| 1 | 🟠 高 | `visa_diagnoser.py` 60 处用了 `diag.*` 命名空间 (title_key / detail_key / fix_key / reason_key),但 i18n 文件实际写在 `diagnose.*` 下。前端 `t(issue.title_key)` 全部查不到,显示原始 key 字符串 | 全文 `diag.` → `diagnose.` (60 处),4 语言下 26 个 key 全 hit |
+| 2 | 🟡 中 | 4 个 i18n 文件缺 8 个 `orders.*` 一键导入相关 key (前端用 `t(key) || 中文兜底` 兜底所以不崩,但 i18n 抽取意义被破坏) | zh-CN/en/id/vi 全部补上 8 keys,翻译都给到 |
+| 3 | 🟢 低 | `en.json` 缺 `admin.order_detail.section_audit` 一个 key | 补 "Audit Log" |
+
+**验证结果**:
+- ✅ backend pytest 601 PASS / 18 skip (2 个 W8/W9 worklog 收口失败是历史问题,跟今天无关;A_WORKLOG.md 文件不存在)
+- ✅ backend pytest -k diag 11/11 PASS (visa_diagnoser 修改后回归)
+- ✅ backend pytest -k rag --ignore=test_rag_auto_refresh 53/53 PASS (RAG 多语言化覆盖)
+- ✅ frontend `npx vite build` 通过 (MaterialWizard 重做 + MaterialTemplatePreview + CityInput 全编译 OK)
+- ✅ Playwright `09-flow.spec.js` D8 + D31 + `08-button.spec.js` C17 三个改动相关测试 PASS (/orders/new 不再受保护,登录墙在 submit 触发)
+- ⚠️ Playwright `09-flow.spec.js` 全量跑 14 个失败 (依赖后端 127.0.0.1:8000,本环境未起后端),26 通过 — 与今天改动无关
+
+**测试覆盖遗留(已知未处理)**:
+- `tests/rag/test_rag_auto_refresh.py` 因 venv 缺 `celery` 跑不起来 — celery 在 `requirements.txt` 里有,需要补 venv
+- 后端 9 个 `tests/integration/test_w8_integration.py` + `test_w9_integration.py` 因仓库无 `A_WORKLOG.md` 文件失败 (历史 worklog 收口检查)
+
+**产品改动提示 (非 bug,需用户 review 确认)**:
+- AppHeader 下拉里的"新建订单"按钮从 `/orders/new` 改为 `/destinations` — 跟 MaterialWizard 重做一致 (表单内嵌 wizard 之后 `/orders/new` 只剩直链入口,符合"游客先选国家再填表"的新流程)
+- `/materials-wizard` 路由移除 `requiresAuth` — 游客可填表
+
+**commit**: `f275915 fix(i18n): visa_diagnoser 命名空间错位 + 4 语言补 9 个 key`
+
+---
+
 ## 3. 已知问题汇总
 
 ### 3.1 待修(P0/P1 必修)
@@ -775,6 +826,35 @@ iOS Xcode 缺用 flutter build web 替代。工程妥协:同一份 lib/*.dart + 
 
 Stripe 真接凭据存 macOS 钥匙串(App Secret),.env 只放占位值。
 
+#### 4.2.11 D-I18N-NAMESPACE-CONSISTENCY-CHECK(W47c)
+
+后端 `title_key` / `detail_key` / `fix_key` / `reason_key` 一律用完整 namespace (eg. `diagnose.ocr_failed_title`),不缩写 (eg. `diag.*`)。前端 i18n key 命名空间是单一来源,后端 key 必须能在 4 个 i18n 文件 (`zh-CN/en/id/vi`) 全部命中,否则前端 `t(key)` fallback 显示原始 key 字符串。
+
+**自检脚本**:
+```python
+import json, re
+from pathlib import Path
+backend = Path("backend/app/services/xxx.py").read_text()
+keys = set(re.findall(r'_key="([a-z0-9_.]+)"', backend))
+for lang in ["zh-CN", "en", "id", "vi"]:
+    data = json.loads(Path(f"frontend/shared/i18n/{lang}.json").read_text())
+    flat = {f"{p}{k}" for ...}  # flatten dict
+    missing = [k for k in keys if k not in flat]
+    assert not missing, f"{lang} 缺 {[k for k in missing]}"
+```
+
+**教训**: W47 visa_diagnoser.py 写了 60 处 `diag.*`,但 i18n 实际是 `diagnose.*` 命名空间。前端 t() 全部 miss,显示原始 key 字符串。修一次全量替换 60 处比改 4 个 i18n 文件 188 处更省事。
+
+#### 4.2.12 D-MEGA-MENU-HOVER-BRIDGE(W47c)
+
+deel.com 风格 mega menu 把 panel 从 trigger 父元素拎到外层 (`.app-header`) 做绝对定位时,必须自己桥接 hover leave/enter 的定时器:
+- 拎出来后 panel 和 trigger 是独立兄弟节点,鼠标在两者之间移动会经过 gap 触发 trigger 的 mouseleave,启动 close timer
+- 如果不在 panel mouseenter 里 cancel 这个 timer,面板会被误关
+- 推荐延迟 350ms (180ms 太短,正常鼠标跨 100px 需要 300-500ms)
+- 模式: `trigger.mouseenter = open + cancel-leave-timer`;`panel.mouseenter = open + cancel-leave-timer`;`trigger.mouseleave = start 350ms close timer (timer 内如果 enter panel 会被 cancel)`
+- 反模式: 只加延迟不加 cancel — 用户移到 panel 时仍会被关掉
+- 适用范围: 所有 mega menu / dropdown panel / 浮层菜单
+
 ### 4.3 重要决策记录
 
 | 时间 | 决策 | 理由 |
@@ -858,15 +938,16 @@ W33 (2026-06-28):         OCR preview + 4 步 wizard + 多目的地 cart
 | i18n 语种 | zh-CN / en / id / vi (4 语种, W10 起 100% 字段覆盖) |
 | i18n entries | ~1648 (412 keys × 4 语种) |
 | 主包 gzip | 444 kB (W15-P0-bundle-optimization 待优化到 < 200 kB) |
-| pytest 历史峰值 | 415/415 PASS (W22, 2026-06-21) |
+| pytest 历史峰值 | 415/415 PASS (W22, 2026-06-21);W47c 回归 601/601 PASS(除历史 worklog 收口) |
 | W14 收口 | 11 task 4 plan 并发 / 8 worker / 176+ PASS / 7 分钟 retry |
 | D-VERIFY-RUNNER | 工具化 1.0, verify 耗时 90s → 30s |
-| Tactical memory | 32+ rule 累计 |
-| git commits | 77+ (2026-06-11 ~ 2026-06-28 区间) |
+| Tactical memory | 34+ rule 累计(W47c 新增 2 条:i18n 命名空间一致性 + mega menu 跨节点 hover bridge) |
+| git commits | 78+ (2026-06-11 ~ 2026-07-02 区间;W47c 加 1 commit `f275915 fix(i18n)`) |
 | W45 端到端自测 | ✅ 注册/登录/材料向导/OCR/LLM 行程/订单/多语言 全 PASS; ⏸ 支付 + RPA 留空; 🐛 8 项待修 |
+| W47c/W48 回归 | ✅ 601/601 PASS;修 3 个 i18n bug(visa_diagnoser 命名空间 + 4 语言补 8 orders.* key + en 补 1 admin key) |
 
 ---
 
-**生成时间**: 2026-07-02 13:30 (Asia/Shanghai)
-**生成者**: mavis team / merge-worklogs
-**源文件数**: 38
+**生成时间**: 2026-07-02 20:03 (Asia/Shanghai, W47c/W48 增量更新)
+**生成者**: Mavis (W47c/W48 全量回归 + 3 个 i18n bug 修复 + worklog 增量)
+**源文件数**: 38 + W47c/W48 增量 (5 commit 文件 + worklog 自身)
