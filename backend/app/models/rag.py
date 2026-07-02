@@ -22,6 +22,7 @@ class RagSource(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     country_code: Mapped[str] = mapped_column(String(8), nullable=False, index=True)
+    language: Mapped[str] = mapped_column(String(8), nullable=False, default="zh-CN", index=True)
     url: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
     content_type: Mapped[str] = mapped_column(String(32), nullable=False, default="web")  # web | curated
     enabled: Mapped[bool] = mapped_column(default=True, nullable=False)
@@ -42,4 +43,5 @@ class RagChunk(Base):
     content: Mapped[str] = mapped_column(Text, nullable=False)
     embedding: Mapped[str] = mapped_column(Text, nullable=False)  # JSON array of floats
     embedding_dim: Mapped[int] = mapped_column(Integer, nullable=False)
+    language: Mapped[str] = mapped_column(String(8), nullable=False, default="zh-CN")
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)

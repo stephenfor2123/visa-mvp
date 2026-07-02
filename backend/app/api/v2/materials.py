@@ -487,6 +487,9 @@ async def diagnose(
                 detail=i.detail,
                 fix_suggestion=i.fix_suggestion,
                 related_material_id=i.related_material_id,
+                title_key=i.title_key,
+                detail_key=i.detail_key,
+                fix_key=i.fix_key,
                 params=i.params,
             )
             for i in out.issues

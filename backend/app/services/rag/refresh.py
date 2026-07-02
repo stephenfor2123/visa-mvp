@@ -5,6 +5,7 @@ Idempotent: refreshing a source replaces its chunks.
 from __future__ import annotations
 
 import json
+import re
 from datetime import datetime
 from typing import List, Optional
 
@@ -15,6 +16,81 @@ from app.models.rag import RagChunk, RagSource
 from app.services.rag.chunker import chunk_text
 from app.services.rag.crawler import fetch_url
 from app.services.rag.embedder import embed
+
+
+# W46: per-destination recommended minimum bank-statement balance, in the
+# destination country's local currency. The RAG curated content used to
+# hardcode "余额建议 ≥ 5万元" for every country, which made no sense for
+# applicants targeting the US / GB / VN / ID etc. We rewrite the canonical
+# phrase in `localize_curated_text` below before chunking.
+_BANK_BALANCE_BY_COUNTRY = {
+    "US": "US$7,000",
+    "GB": "£5,500",
+    "FR": "€6,500", "DE": "€6,500", "IT": "€6,500", "ES": "€6,500",
+    "NL": "€6,500", "CH": "€6,500", "AT": "€6,500", "BE": "€6,500",
+    "JP": "¥1,000,000",
+    "AU": "AU$10,000",
+    "CA": "CA$10,000",
+    "KR": "₩10,000,000",
+    "SG": "S$10,000",
+    "TH": "฿200,000",
+    "VN": "₫150,000,000",
+    "ID": "Rp 100.000.000",
+    "IN": "₹500,000",
+}
+
+# 申根法定保险下限 3 万欧元，US/GB 等没有法定下限但业内常见 5 万美元
+_INSURANCE_MIN_BY_COUNTRY = {
+    "US": "US$50,000",
+    "GB": "£30,000",
+    # Schengen 法定下限
+    "FR": "€30,000", "DE": "€30,000", "IT": "€30,000", "ES": "€30,000",
+    "NL": "€30,000", "CH": "€30,000", "AT": "€30,000", "BE": "€30,000",
+    "JP": "¥5,000,000",
+    "AU": "AU$50,000",
+    "CA": "CA$50,000",
+    "KR": "₩30,000,000",
+    "SG": "S$30,000",
+    "TH": "฿1,000,000",
+    "VN": "₫500,000,000",
+    "ID": "Rp 500.000.000",
+    "IN": "₹3,000,000",
+}
+
+
+def localize_curated_text(text: str, country_code: str) -> str:
+    """Replace canonical zh-CN money phrases with the destination-country
+    equivalent. The original phrases are still kept in chunks for fallback
+    matching when the destination isn't in our table.
+
+    Currently handles two patterns:
+      - "余额建议 ≥ 5 万元" / "余额建议 ≥ 5万元" / "余额建议 ≥ 5 万"
+      - "保额 ≥ 30 万元" / "保额 ≥ 3万欧元" (Schengen only — already correct)
+    """
+    if not country_code:
+        return text
+    cc = country_code.upper()
+
+    balance = _BANK_BALANCE_BY_COUNTRY.get(cc)
+    if balance:
+        # match both with/without space, with/without 元
+        text = re.sub(
+            r"余额建议\s*≥\s*5\s*万(?:元)?",
+            f"余额建议 ≥ {balance}",
+            text,
+        )
+
+    insurance = _INSURANCE_MIN_BY_COUNTRY.get(cc)
+    if insurance:
+        # only rewrite the "30 万元" generic insurance phrase; leave the
+        # existing Schengen-specific "3万欧元" alone (it's already correct)
+        text = re.sub(
+            r"保额\s*≥\s*30\s*万(?:元)?",
+            f"保额 ≥ {insurance}",
+            text,
+        )
+
+    return text
 
 
 async def _replace_chunks(db: AsyncSession, source_id: int, texts: List[str]) -> int:
@@ -62,6 +138,10 @@ async def refresh_source(db: AsyncSession, source: RagSource) -> dict:
             source.last_error = f"no curated content for: {source.name}"
             await db.flush()
             return {"id": source.id, "status": "error", "error": source.last_error}
+        # W46: rewrite canonical zh-CN money phrases to the destination's
+        # local currency before chunking (so RAG retrievals match users
+        # querying in their own currency, e.g. "Rp" for ID applicants).
+        text = localize_curated_text(text, source.country_code)
     else:
         return {"id": source.id, "status": "error", "error": f"unknown content_type: {source.content_type}"}
 

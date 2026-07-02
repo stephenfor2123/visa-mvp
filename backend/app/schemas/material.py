@@ -243,6 +243,12 @@ class DiagnoseIssue(BaseModel):
     detail: str
     fix_suggestion: Optional[str] = None
     related_material_id: Optional[int] = None
+    # W46: i18n keys + structured params. When set, frontend should look these
+    # up in its own locale and interpolate `params` instead of rendering the
+    # pre-rendered zh-CN `title`/`detail` strings.
+    title_key: Optional[str] = None
+    detail_key: Optional[str] = None
+    fix_key: Optional[str] = None
     params: Optional[dict] = Field(
         default=None,
         description="raw values behind the pre-rendered zh-CN title/detail (e.g. {'months': 6, 'expiry': '2030-12-31'}), so frontends can re-render the message in the user's own locale instead of showing the server's zh-CN text",

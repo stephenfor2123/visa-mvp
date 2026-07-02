@@ -261,42 +261,170 @@ def _split_respecting_parens(section: str) -> List[str]:
     return parts
 
 
-def _parse_materials_from_text(text: str) -> List[MaterialItem]:
-    """Extract material items from a chunk text containing '所需材料' section.
-
-    Strategy: stop at the next section header (签证费/审理时间/有效期/etc.) or
-    end of paragraph, then split by 、 / ; / 。 / \\n, keeping bracketed details intact.
-    """
-    items: List[MaterialItem] = []
-    # Find "所需材料" 段 — until the next Chinese section header or end
-    m = re.search(r"(?:所需材料|基础材料)[:：]([\s\S]*?)(?:\n\n|签证费[:：]|审理时间[:：]|签证可在|使馆[:：]|联系方|官网[:：]|面签预约[:：]|电子签|常见拒|提高通过|面试常见问题|经济材料)", text)
-    if not m:
-        # Fallback: just take the whole text after 所需材料:
-        m2 = re.search(r"所需材料[:：]([\s\S]+)", text)
-        if not m2:
-            return items
-        section = m2.group(1)[:600]  # cap
-    else:
-        section = m.group(1)
-    # W38 fix: 括号感知切分，不再用会切断括号内容的 re.split
-    raw_items = _split_respecting_parens(section)
-    seen = set()
-    for raw in raw_items:
-        # W38 fix: 不再把 （）() 放进 strip 的字符集——括号感知切分后条目
-        # 本身括号是配对完整的，粗暴 strip 掉边缘括号反而会重新弄成不配对。
-        clean = raw.strip(" ,。、;：")
-        # Skip if too short/long, or if it looks like a sentence fragment
-        if not clean or len(clean) < 3 or len(clean) > 50:
-            continue
-        # Skip fragments that are clearly not materials (sentences)
-        # Materials usually end with: 复印件, 证明, 确认, 申请表, 保单, 流水, 单, 信
-        # or contain size cm/mm indicators
-        is_material = any(kw in clean for kw in [
+# --------------------------------------------------------------------------- #
+# Per-language config (header keywords, terminators, material keywords, strip chars)
+# --------------------------------------------------------------------------- #
+_LANG_CONFIG = {
+    "zh-CN": {
+        "section_header": r"(?:所需材料|基础材料)(?::|：)",
+        "terminators": r"\n\n|签证费(?::|：)|审理时间(?::|：)|签证可在|使馆(?::|：)|联系方|官网(?::|：)|面签预约(?::|：)|电子签|常见拒|提高通过|面试常见问题|经济材料",
+        "strip_chars": " ,。、;：",
+        # Match-these-keywords ⇒ this row is a material
+        "material_keywords": [
             "护照", "照片", "身份证", "户口", "证明", "申请表", "流水", "存款",
             "机票", "酒店", "行程", "保险", "邀请函", "营业执照", "确认页",
             "签证表", "保单", "税单", "税证明", "在职", "在读", "DS-160",
             "mm", "cm", "复印件", "原件",
-        ])
+        ],
+        # Fee/processing/validity extraction regexes (line-oriented)
+        "fee_patterns": [
+            # Skip the section-title variant 签证费用与审理时间 which appears
+            # as a header (no actual fee amount). Prefer lines with a digit.
+            r"签证费(?::|：)?\s*[^。\n]{0,80}?\d+[^。\n]{0,40}",
+            r"签证费用(?::|：)?\s*[^。\n]{0,80}?\d+[^。\n]{0,40}",
+            r"费用(?::|：)?\s*[^。\n]{0,80}?\d+[^。\n]{0,40}",
+            r"MRV\s*费(?::|：)?\s*[^\n。]{0,40}",
+        ],
+        "processing_patterns": [
+            r"审理时间(?::|：)?\s*[^\n。]{0,60}",
+            r"审批通常\s*\d+[\-–]\d*\s*个工作日",
+            r"\d+\s*个工作日出?签",
+        ],
+        "validity_patterns": [
+            r"有效期(?::|：)?\s*[^\n。]{0,60}",
+            r"可停留[^\n。]{0,40}",
+        ],
+        # Retrieval fallback query template
+        "retrieval_query_tpl": "{country_name} 签证 所需材料 材料清单",
+    },
+    "en": {
+        "section_header": r"(?:Required\s+Materials?|Documents?\s+Required)[^\n]*?(?::|：)",
+        "terminators": r"\n\n|Fee(?::|：)|Processing\s+Time|Validity|Stay|Embassy|Contact|Official\s+Website|Interview\s+Booking|eVisa|Common\s+Rejection|Tips\s+for\s+Approval|Interview\s+FAQ|Financial\s+Documents",
+        "strip_chars": " ,.;:",
+        "material_keywords": [
+            "passport", "photo", "photograph", "identification", "id card",
+            "household", "certificate", "application form", "bank statement",
+            "deposit", "flight", "hotel", "itinerary", "insurance",
+            "invitation", "business license", "confirmation",
+            "DS-160", "mm", "cm", "copy", "original", "proof",
+        ],
+        "fee_patterns": [
+            r"(?:Visa\s+Fee|Application\s+Fee|Fee)(?::|：)?[ \t]*(?:[$£€¥])?\s*(?:USD|GBP|EUR|AUD|CNY)?[ \t]*(?:[$£€¥])?\s*\d[\d,.]*(?:\s*(?:USD|GBP|EUR|AUD|CNY))?[^\n.]*",
+            r"MRV\s*Fee(?::|：)?[ \t]*[^\n.]*",
+            r"(?:USD|GBP|EUR|AUD|CNY)[ \t]*[$£€¥]?[ \t]*\d[\d,.]*",
+        ],
+        "processing_patterns": [
+            r"(?:Processing\s+Time|Processing)[ \t]*(?::|：)[ \t]*[^\n]+",
+            r"\d+\s*(?:to\s*\d+\s*)?business\s+days?",
+            r"\d+\s*-\s*\d+\s*working\s+days?",
+        ],
+        "validity_patterns": [
+            r"(?:Validity|Valid\s+for)[ \t]*(?::|：)[ \t]*[^\n]+",
+            r"(?:Stay|Stay\s+Duration|Maximum\s+Stay)[ \t]*(?::|：)[ \t]*[^\n]+",
+        ],
+        "retrieval_query_tpl": "{country_name} visa required documents checklist",
+    },
+    "id": {
+        # Indonesian: header appears as a label followed by a colon, e.g.
+        #   "Dokumen yang Dibutuhkan untuk Visa Standard Visitor Inggris:"
+        # We anchor on the colon so the regex matches regardless of what
+        # sits between the header keyword and the colon.
+        "section_header": r"(?:Dokumen\s+yang\s+Dibutuhkan|Persyaratan\s+Dokumen|Dokumen\s+diperlukan)[^\n]*?(?::|：)",
+        "terminators": r"\n\n|Biaya(?::|：)|Waktu\s+Proses|Masa\s+Berlaku|Durasi\s+Tinggal|Kedutaan|Kontak|Situs\s+Resmi|Pemesanan\s+Wawancara|eVisa|Alasan\s+Penolakan\s+Umum|Tips\s+Persetujuan|FAQ\s+Wawancara|Dokumen\s+Keuangan",
+        "strip_chars": " ,.;:",
+        "material_keywords": [
+            "paspor", "foto", "identitas", "ktp", "kartu keluarga", "sertifikat",
+            "formulir aplikasi", "formulir pendaftaran", "rekening koran",
+            "deposito", "penerbangan", "hotel", "itinierari", "asuransi",
+            "surat undangan", "izin usaha", "konfirmasi",
+            "DS-160", "mm", "cm", "salinan", "asli", "bukti",
+        ],
+        "fee_patterns": [
+            r"(?:Biaya\s+Visa|Biaya\s+Aplikasi|Biaya)(?::|：)?[ \t]*(?:[$£€¥])?\s*(?:Rp\.?|IDR|USD|GBP|EUR|AUD|CNY)?[ \t]*(?:[$£€¥])?\s*\d[\d.,]*(?:\s*(?:Rp\.?|IDR|USD|GBP|EUR|AUD|CNY))?[^\n.]*",
+            r"(?:Rp\.?|IDR|USD|GBP|EUR|AUD|CNY)[ \t]*[$£€¥]?[ \t]*\d[\d.,]*",
+        ],
+        "processing_patterns": [
+            r"(?:Waktu\s+Proses|Pemrosesan)[ \t]*(?::|：)[ \t]*[^\n]+",
+            r"\d+\s*(?:hingga\s*\d+\s*)?hari\s+kerja",
+            r"\d+\s*-\s*\d+\s*hari\s+kerja",
+        ],
+        "validity_patterns": [
+            r"(?:Masa\s+Berlaku|Berlaku\s+untuk|Durasi\s+Tinggal)[ \t]*(?::|：)[ \t]*[^\n]+",
+        ],
+        "retrieval_query_tpl": "{country_name} visa dokumen yang dibutuhkan",
+    },
+    "vi": {
+        # Vietnamese header is followed by qualifier text before the colon,
+        # e.g. "Giấy tờ cần thiết cho Vương quốc Anh:". Anchor on colon.
+        "section_header": r"(?:Giấy\s+tờ\s+cần\s+thiết|Tài\s+liệu\s+cần\s+thiết|Hồ\s+sơ\s+cần)[^\n]*?(?::|：)",
+        "terminators": r"\n\n|Lệ\s+phí(?::|：)|Thời\s+gian\s+xử\s+lý|Thời\s+hạn|Thời\s+gian\s+lưu\s+trú|Đại\s+sứ\s+quán|Liên\s+hệ|Trang\s+web\s+chính\s+thức|Đặt\s+lịch\s+phỏng\s+vấn|eVisa|Lý\s+do\s+từ\s+chối\s+phổ\s+biến|Mẹo\s+phê\s+duyệt|Câu\s+hỏi\s+thường\s+gặp\s+về\s+phỏng\s+vấn|Giấy\s+tờ\s+tài\s+chính",
+        "strip_chars": " ,.;:",
+        "material_keywords": [
+            "hộ chiếu", "ảnh", "cmnd", "cccd", "sổ hộ khẩu", "giấy chứng nhận",
+            "đơn xin", "đơn đăng ký", "sao kê ngân hàng",
+            "tiền gửi", "chuyến bay", "khách sạn", "lịch trình", "bảo hiểm",
+            "thư mời", "giấy phép kinh doanh", "xác nhận",
+            "DS-160", "mm", "cm", "bản sao", "bản gốc", "bằng chứng",
+        ],
+        "fee_patterns": [
+            r"(?:Lệ\s+phí\s+Visa|Lệ\s+phí\s+Đơn|Lệ\s+phí)(?::|：)?[ \t]*(?:[$£€¥])?\s*(?:VND|USD|GBP|EUR|AUD|CNY)?[ \t]*(?:[$£€¥])?\s*\d[\d.,]*(?:\s*(?:VND|USD|GBP|EUR|AUD|CNY))?[^\n.]*",
+            r"(?:VND|USD|GBP|EUR|AUD|CNY)[ \t]*[$£€¥]?[ \t]*\d[\d.,]*",
+        ],
+        "processing_patterns": [
+            r"(?:Thời\s+gian\s+xử\s+lý|Xử\s+lý)[ \t]*(?::|：)[ \t]*[^\n]+",
+            r"\d+\s*(?:đến\s*\d+\s*)?ngày\s+làm\s+việc",
+            r"\d+\s*-\s*\d+\s*ngày\s+làm\s+việc",
+        ],
+        "validity_patterns": [
+            r"(?:Thời\s+hạn|Có\s+giá\s+trị\s+trong|Thời\s+gian\s+lưu\s+trú)[ \t]*(?::|：)[ \t]*[^\n]+",
+        ],
+        "retrieval_query_tpl": "{country_name} visa giấy tờ cần thiết",
+    },
+}
+
+
+def _get_lang_config(lang: str) -> dict:
+    """Return config dict for the requested language, falling back to en."""
+    if lang in _LANG_CONFIG:
+        return _LANG_CONFIG[lang]
+    # Map common locale variants to the closest supported bucket
+    short = lang.lower().split("-")[0]
+    return _LANG_CONFIG.get(short, _LANG_CONFIG["en"])
+
+
+def _parse_materials_from_text(text: str, lang: str = "zh-CN") -> List[MaterialItem]:
+    """Extract material items from a chunk text containing a materials section.
+
+    Pulls section header / terminator / keyword lists from the per-language
+    config so all four supported languages (zh-CN, en, id, vi) parse with the
+    same algorithm — only the language-specific regexes differ.
+    """
+    cfg = _get_lang_config(lang)
+    items: List[MaterialItem] = []
+    # The section_header pattern is anchored on its trailing colon, so the
+    # captured group starts immediately after the header line ends.
+    section_match = re.search(
+        cfg["section_header"] + r"([\s\S]*?)(?:" + cfg["terminators"] + ")",
+        text,
+        flags=re.IGNORECASE,
+    )
+    if not section_match:
+        # Fallback: take whatever comes after the header line
+        m2 = re.search(cfg["section_header"] + r"([\s\S]+)", text, flags=re.IGNORECASE)
+        if not m2:
+            return items
+        section = m2.group(1)[:600]
+    else:
+        section = section_match.group(1)
+
+    raw_items = _split_respecting_parens(section)
+    seen = set()
+    for raw in raw_items:
+        clean = raw.strip(cfg["strip_chars"])
+        if not clean or len(clean) < 3 or len(clean) > 80:
+            continue
+        clean_lower = clean.lower()
+        is_material = any(kw.lower() in clean_lower for kw in cfg["material_keywords"])
         if not is_material:
             continue
         if clean in seen:
@@ -304,7 +432,7 @@ def _parse_materials_from_text(text: str) -> List[MaterialItem]:
         seen.add(clean)
         category = "base"
         for cat, kws in _MATERIAL_KEYWORDS:
-            if any(kw in clean for kw in kws):
+            if any(kw.lower() in clean_lower for kw in kws):
                 category = cat
                 break
         items.append(MaterialItem(name=clean, category=category, required=True))
@@ -341,9 +469,20 @@ def _extract_meta(text: str, patterns: List[str]) -> Optional[str]:
 async def checklist(
     db: Annotated[AsyncSession, Depends(get_db)],
     country_code: Annotated[str, Query(min_length=1, max_length=8)],
+    lang: Annotated[str, Query(min_length=2, max_length=8)] = "zh-CN",
 ) -> ApiResponse[ChecklistOut]:
-    """Use RAG to extract required materials + meta (fee / processing time / validity)."""
-    # Look up the destination row for country name
+    """Use RAG to extract required materials + meta (fee / processing time / validity).
+
+    The ``lang`` query parameter selects which language of RAG chunks to read.
+    If no chunks exist for the requested language the endpoint falls back to
+    zh-CN (so the page never breaks when an English variant hasn't been
+    seeded yet — a product-friendly default).
+    """
+    # Normalize lang → accepted bucket values
+    requested_lang = (lang or "zh-CN").strip()
+    is_english = requested_lang.startswith("en")
+
+    # Look up the destination row for country name (pick by lang)
     from app.models.destination import VisaDestination
     import json as _json
     dest_row = (await db.execute(
@@ -352,36 +491,63 @@ async def checklist(
     if dest_row:
         try:
             i18n = _json.loads(dest_row.country_name_i18n)
-            country_name = i18n.get("zh-CN") or i18n.get("en") or country_code.upper()
+            # Pick name in the requested language; fall back chain ensures we
+            # always have something to display.
+            primary_fallback = "zh-CN" if requested_lang == "zh-CN" else "en"
+            country_name = (
+                i18n.get(requested_lang)
+                or i18n.get(primary_fallback)
+                or i18n.get("en")
+                or i18n.get("zh-CN")
+                or country_code.upper()
+            )
         except Exception:
             country_name = country_code.upper()
     else:
         country_name = country_code.upper()
 
-    # Pull curated chunks first (they have the "所需材料" structure); fall back to retrieval
+    # Pull curated chunks first (they have the materials-list structure); fall
+    # back to retrieval. Filter by language so we don't return Chinese text
+    # when the user is on English mode.
     from app.models.rag import RagChunk, RagSource as RS
 
-    async def _lookup_chunks(code: str):
+    async def _lookup_chunks(code: str, lang_bucket: str):
         stmt = (
             select(RagChunk, RS)
             .join(RS, RagChunk.source_id == RS.id)
             .where(RS.country_code == code)
             .where(RS.enabled.is_(True))
+            .where(RS.language == lang_bucket)
             .order_by(RS.id, RagChunk.chunk_index)
         )
         return (await db.execute(stmt)).all()
 
     lookup_code = country_code.upper()
-    rows = await _lookup_chunks(lookup_code)
+    # Try requested language first, then gracefully degrade to zh-CN so the
+    # endpoint stays useful while we phase in English seed data country by
+    # country.
+    rows = await _lookup_chunks(lookup_code, requested_lang)
+    effective_lang = requested_lang
+    if not rows and requested_lang != "zh-CN":
+        rows = await _lookup_chunks(lookup_code, "zh-CN")
+        effective_lang = "zh-CN" if rows else requested_lang
+
     # W35: Schengen fallback — 26 member countries share one policy, seeded
     # only under "FR". Retry with the proxy code before giving up.
     if not rows and lookup_code in SCHENGEN_CODES and lookup_code != _SCHENGEN_RAG_PROXY_CODE:
-        rows = await _lookup_chunks(_SCHENGEN_RAG_PROXY_CODE)
+        rows = await _lookup_chunks(_SCHENGEN_RAG_PROXY_CODE, requested_lang)
+        if not rows and requested_lang != "zh-CN":
+            rows = await _lookup_chunks(_SCHENGEN_RAG_PROXY_CODE, "zh-CN")
+            effective_lang = "zh-CN" if rows else requested_lang
 
+    full_text = ""
+    materials: List[MaterialItem] = []
+    source_name = None
+    source_url = None
     if rows:
         # Concatenate all chunks for this country, then parse
         full_text = "\n\n".join(chunk.content for chunk, _ in rows)
-        materials = _parse_materials_from_text(full_text)
+        materials = _parse_materials_from_text(full_text, lang=effective_lang)
         source_name = rows[0][1].name
         source_url = rows[0][1].url
     else:
@@ -389,32 +555,26 @@ async def checklist(
         retrieval_code = (
             _SCHENGEN_RAG_PROXY_CODE if lookup_code in SCHENGEN_CODES else lookup_code
         )
+        retrieval_query = _get_lang_config(effective_lang)["retrieval_query_tpl"].format(
+            country_name=country_name
+        )
         retrieved = await retrieve(
             db,
-            query=f"{country_name} 签证 所需材料 材料清单",
+            query=retrieval_query,
             country_code=retrieval_code,
             top_k=3,
         )
         full_text = "\n\n".join(r.text for r in retrieved)
-        materials = _parse_materials_from_text(full_text)
+        materials = _parse_materials_from_text(full_text, lang=effective_lang)
         source_name = retrieved[0].source_name if retrieved else None
         source_url = retrieved[0].source_url if retrieved else None
 
-    # Extract fee / processing time / validity from full text
-    fee = _extract_meta(full_text, [
-        r"签证费[:：]?\s*[^\n。]{0,60}",
-        r"费用[:：]?\s*[^\n。]{0,60}",
-        r"MRV\s*费[:：]?\s*[^\n。]{0,40}",
-    ])
-    processing_time = _extract_meta(full_text, [
-        r"审理时间[:：]?\s*[^\n。]{0,60}",
-        r"审批通常\s*\d+[\-–]\d*\s*个工作日",
-        r"\d+\s*个工作日出?签",
-    ])
-    validity = _extract_meta(full_text, [
-        r"有效期[:：]?\s*[^\n。]{0,60}",
-        r"可停留[^\n。]{0,40}",
-    ])
+    # Extract fee / processing time / validity from full text using the
+    # active language's regex set.
+    cfg_meta = _get_lang_config(effective_lang)
+    fee = _extract_meta(full_text, cfg_meta["fee_patterns"])
+    processing_time = _extract_meta(full_text, cfg_meta["processing_patterns"])
+    validity = _extract_meta(full_text, cfg_meta["validity_patterns"])
 
     return ApiResponse[ChecklistOut](
         code="1000",
