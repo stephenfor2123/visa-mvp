@@ -202,7 +202,7 @@ def case_error_injection(client: httpx.Client) -> None:
 # ============================================================================ #
 def case_db_connection_pool(client: httpx.Client) -> None:
     section("5. DB 连接池 — 100 次 admin list users")
-    admin_r = client.post(f"{BASE}/admin/login", json={"username": "admin", "password": "Admin@2024"}, timeout=10)
+    admin_r = client.post(f"{BASE}/admin/login", json={"username": "admin", "password": "HtexAd@26"}, timeout=10)
     admin_token = admin_r.json()["data"]["access_token"]
     h = {"Authorization": f"Bearer {admin_token}"}
     codes = []
@@ -227,7 +227,7 @@ def case_db_connection_pool(client: httpx.Client) -> None:
 # ============================================================================ #
 def case_long_session(client: httpx.Client) -> None:
     section("6. 长 session — 持续访问 30s 不超时")
-    admin_r = client.post(f"{BASE}/admin/login", json={"username": "admin", "password": "Admin@2024"}, timeout=10)
+    admin_r = client.post(f"{BASE}/admin/login", json={"username": "admin", "password": "HtexAd@26"}, timeout=10)
     if admin_r.status_code != 200 or "data" not in admin_r.json():
         record("long session setup login", False, f"{admin_r.status_code} {admin_r.text[:100]}")
         return
@@ -252,7 +252,7 @@ def case_long_session(client: httpx.Client) -> None:
 # ============================================================================ #
 def case_sqlite_concurrent_read(client: httpx.Client) -> None:
     section("7. SQLite 读写并发 — 50 读 + 1 写同时")
-    admin_r = client.post(f"{BASE}/admin/login", json={"username": "admin", "password": "Admin@2024"}, timeout=10)
+    admin_r = client.post(f"{BASE}/admin/login", json={"username": "admin", "password": "HtexAd@26"}, timeout=10)
     admin_token = admin_r.json()["data"]["access_token"]
     h_admin = {"Authorization": f"Bearer {admin_token}"}
 

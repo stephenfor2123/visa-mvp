@@ -1,0 +1,15 @@
+{
+  "email": "mock_f821d64f@htex.test",
+  "order_no": "V2-20260711-20CEB9AD",
+  "material_ids": [
+    7,
+    7,
+    7,
+    7,
+    7,
+    7
+  ],
+  "admin_user_found": true,
+  "admin_order_found": true,
+  "visa_countries": 29
+}

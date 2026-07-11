@@ -40,9 +40,9 @@ import httpx
 
 BASE = "http://127.0.0.1:8000"
 USER_EMAIL = "demo138001380001@htex.app"
-USER_PWD = "123456"
+USER_PWD = "Htex@2026"
 ADMIN_USER = "admin"
-ADMIN_PWD = "Admin@2024"
+ADMIN_PWD = "HtexAd@26"
 SYSTEM_KEY = "dev-system-key-change-me-in-prod-visa-mvp-2026"
 
 # Poll-tick 重试上限: 经验上 10 次内 reviewing→approved/rejected 命中率 99%

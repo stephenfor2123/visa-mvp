@@ -31,10 +31,10 @@ BASE = "http://127.0.0.1:8000"
 # Demo 用户 1 — W26 后登录走 email/username, 不再是 phone
 # (frontend/web/src/views/Login.vue:145 + TEST-ACCOUNTS.md)
 USER_EMAIL = "demo138001380001@htex.app"
-USER_PWD = "123456"
+USER_PWD = "Htex@2026"
 ADMIN_USER = "admin"
-# ADMIN_PASSWORD_SECRET 在 backend/.env — 默认 Admin@2024 (本地 dev)
-ADMIN_PWD = "Admin@2024"
+# ADMIN_PASSWORD_SECRET 在 backend/.env — 默认 HtexAd@26 (本地 dev)
+ADMIN_PWD = "HtexAd@26"
 
 
 def log(tag: str, msg: str) -> None:

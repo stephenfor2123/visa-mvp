@@ -27,9 +27,9 @@ import httpx
 
 BASE = "http://127.0.0.1:8000"
 USER_EMAIL = "demo138001380001@htex.app"
-USER_PWD = "123456"
+USER_PWD = "Htex@2026"
 ADMIN_USER = "admin"
-ADMIN_PWD = "Admin@2024"
+ADMIN_PWD = "HtexAd@26"
 
 
 def log(tag: str, msg: str) -> None:

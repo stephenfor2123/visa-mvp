@@ -1,0 +1,120 @@
+{
+  "email": "e2e_50b6a455@htex.test",
+  "order_no": "V2-20260711-1DD95481",
+  "results": [
+    {
+      "step": "0.1 destinations",
+      "ok": true,
+      "detail": "http=200 count=29 US=True",
+      "severity": "P1"
+    },
+    {
+      "step": "0.2 RAG checklist US",
+      "ok": true,
+      "detail": "materials=8",
+      "severity": "P1"
+    },
+    {
+      "step": "1.1 register",
+      "ok": true,
+      "detail": "email=e2e_50b6a455@htex.test",
+      "severity": "P1"
+    },
+    {
+      "step": "1.2 auth/me",
+      "ok": false,
+      "detail": "email=None",
+      "severity": "P1"
+    },
+    {
+      "step": "3.1 upload passport",
+      "ok": 5,
+      "detail": "material_id=5",
+      "severity": "P1"
+    },
+    {
+      "step": "3.2 upload photo",
+      "ok": 5,
+      "detail": "material_id=5",
+      "severity": "P1"
+    },
+    {
+      "step": "3.3 materials list API",
+      "ok": true,
+      "detail": "http=200 (404=known gap)",
+      "severity": "P2"
+    },
+    {
+      "step": "4.1 create order",
+      "ok": true,
+      "detail": "order_no=V2-20260711-1DD95481 status=created amount=185.00",
+      "severity": "P1"
+    },
+    {
+      "step": "5.3 user order detail",
+      "ok": true,
+      "detail": "status=created",
+      "severity": "P1"
+    },
+    {
+      "step": "5.4 orders list",
+      "ok": true,
+      "detail": "found=True",
+      "severity": "P1"
+    },
+    {
+      "step": "5.1 payment create",
+      "ok": true,
+      "detail": "code=1000",
+      "severity": "P1"
+    },
+    {
+      "step": "5.2 payment后订单状态",
+      "ok": false,
+      "detail": "status=submitted (created=known gap if unpaid)",
+      "severity": "P1"
+    },
+    {
+      "step": "4.2 submit order",
+      "ok": false,
+      "detail": "http=400 code=1001 msg=Invalid request parameters",
+      "severity": "P1"
+    },
+    {
+      "step": "6.1 admin login",
+      "ok": true,
+      "detail": "http=200",
+      "severity": "P1"
+    },
+    {
+      "step": "6.2 admin dashboard",
+      "ok": true,
+      "detail": "http=200 code=1000",
+      "severity": "P0"
+    },
+    {
+      "step": "6.3 admin users",
+      "ok": false,
+      "detail": "found=False",
+      "severity": "P1"
+    },
+    {
+      "step": "6.4 admin orders",
+      "ok": true,
+      "detail": "found=True",
+      "severity": "P1"
+    },
+    {
+      "step": "6.6 admin status update",
+      "ok": true,
+      "detail": "http=200 code=1000",
+      "severity": "P0"
+    },
+    {
+      "step": "6.8 admin countries",
+      "ok": false,
+      "detail": "total=0",
+      "severity": "P1"
+    }
+  ]
+}

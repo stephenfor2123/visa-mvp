@@ -26,7 +26,7 @@ import httpx
 
 BASE = "http://127.0.0.1:8000"
 ADMIN_USERNAME = "admin"
-ADMIN_PASSWORD = "Admin@2024"
+ADMIN_PASSWORD = "HtexAd@26"
 
 
 def log(tag, msg):

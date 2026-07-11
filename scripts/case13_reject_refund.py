@@ -95,7 +95,7 @@ def setup_order_paid(client: httpx.Client) -> Tuple[str, str, str]:
         print(f"  setup register failed: {r}")
         sys.exit(1)
     user_token = r["body"]["data"]["access_token"]
-    admin_tok = post(client, "/admin/login", {"username": "admin", "password": "Admin@2024"})
+    admin_tok = post(client, "/admin/login", {"username": "admin", "password": "HtexAd@26"})
     admin_token = admin_tok["body"]["data"]["access_token"]
 
     # 上传材料 + 下单
@@ -185,7 +185,7 @@ def case_reject_unpaid_no_refund(client: httpx.Client) -> None:
     user = {"username": f"unpaid_{suffix}", "email": f"unpaid_{suffix}@htex.test", "password": "Test@2024"}
     r = post(client, "/auth/register", user)
     user_token = r["body"]["data"]["access_token"]
-    admin_tok = post(client, "/admin/login", {"username": "admin", "password": "Admin@2024"})
+    admin_tok = post(client, "/admin/login", {"username": "admin", "password": "HtexAd@26"})
     admin_token = admin_tok["body"]["data"]["access_token"]
 
     files = {"file": ("pp.jpg", b"x" * 200, "image/jpeg")}
@@ -270,7 +270,7 @@ def case_refund_ledger_immutable(client: httpx.Client) -> None:
     section("5. 边界: 退费流水不可删（V0 §4.6.3）")
     # 当前 V0.4 还没有独立 refund 表，admin /payments 列表也没有删除接口
     # 这一步作为 V0.5 验证锚点
-    r = get(client, "/admin/payments?page=1&page_size=1", token=post(client, "/admin/login", {"username": "admin", "password": "Admin@2024"})["body"]["data"]["access_token"])
+    r = get(client, "/admin/payments?page=1&page_size=1", token=post(client, "/admin/login", {"username": "admin", "password": "HtexAd@26"})["body"]["data"]["access_token"])
     if envelope_ok(r):
         record("refund ledger accessible to admin", True, "payment list endpoint works")
     # 检查有没有 DELETE /admin/payments/{id}

@@ -82,7 +82,7 @@ def envelope_data(resp: Dict[str, Any]) -> Any:
 # ============================================================================ #
 def phase_admin_login(client: httpx.Client) -> str:  # type: ignore[misc]
     section("0. Admin 登录")
-    r = post(client, "/admin/login", {"username": "admin", "password": "Admin@2024"})
+    r = post(client, "/admin/login", {"username": "admin", "password": "HtexAd@26"})
     if not envelope_ok(r):
         record("admin login", False, f"status={r['status']} body={r['body']}")
         sys.exit(1)

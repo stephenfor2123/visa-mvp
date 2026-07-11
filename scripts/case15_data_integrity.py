@@ -162,7 +162,7 @@ def case_disabled_user_login(client) -> None:
     user = {"username": f"dis_{suffix}", "email": f"dis_{suffix}@htex.test", "password": "Dis@2024"}
     r = post(client, "/auth/register", user)
     user_id = r.json()["data"]["user"]["id"]
-    admin_t = post(client, "/admin/login", {"username": "admin", "password": "Admin@2024"})
+    admin_t = post(client, "/admin/login", {"username": "admin", "password": "HtexAd@26"})
     admin_token = admin_t.json()["data"]["access_token"]
     # admin 禁用
     r1 = post(client, f"/admin/users/{user_id}/disable", {}, token=admin_token)
@@ -190,20 +190,36 @@ def case_pending_destroy_no_order(client) -> None:
         return
     user_id = r.json()["data"]["user"]["id"]
     user_token = r.json()["data"]["access_token"]
-    admin_t = post(client, "/admin/login", {"username": "admin", "password": "Admin@2024"})
+    admin_t = post(client, "/admin/login", {"username": "admin", "password": "HtexAd@26"})
     admin_token = admin_t.json()["data"]["access_token"]
     # admin 软删（pending_destroy）
     del_(client, f"/admin/users/{user_id}", token=admin_token)
-    # 用旧 token 试着下单 — 应该被拒绝（用户已 pending_destroy）
+    # 用旧 token 试着下单 — 应该被拒绝（用户已 pending_destroy）。
+    # 当前 V0.4 实现：upload 先 401/403 拒绝（产品行为），然后 order 也被拒。
+    # 旧 case 期望 upload 成功 → order 被拒，但产品选择是 upload 先拦，更安全。
     h = {"Authorization": f"Bearer {user_token}"}
     files = {"file": ("pp.jpg", b"x" * 200, "image/jpeg")}
     ur = client.post(f"{BASE}/materials/upload", files=files, data={"material_type": "passport"}, headers=h)
-    mid = ur.json()["data"]["material"]["id"]
-    r = client.post(f"{BASE}/orders", json={
-        "destination_id": 1, "visa_type": "tourism", "material_ids": [mid],
-        "applicant_data": {"surname": "T", "given_name": "U", "sex": "M", "dob": "1990-01-01", "nationality": "CHN", "passport_no": "PC345678", "passport_expiry": "2030-01-01"},
-    }, headers=h)
-    record("pending_destroy user order rejected", r.status_code in (401, 403), f"status={r.status_code}")
+    if ur.status_code in (401, 403):
+        record("pending_destroy user upload rejected", True, f"upload status={ur.status_code} (产品行为: pending_destroy 用户不可写)")
+        # 下游 order 也应被拒 — 测一下边界一致
+        r = client.post(f"{BASE}/orders", json={
+            "destination_id": 1, "visa_type": "tourism", "material_ids": [1],
+            "applicant_data": {"surname": "T", "given_name": "U", "sex": "M", "dob": "1990-01-01", "nationality": "CHN", "passport_no": "PC345678", "passport_expiry": "2030-01-01"},
+        }, headers=h)
+        record("pending_destroy user order rejected", r.status_code in (401, 403), f"order status={r.status_code}")
+    else:
+        # 如果产品改成 upload 不拦，再走原 order 测试路径
+        try:
+            mid = ur.json()["data"]["material"]["id"]
+        except Exception:
+            record("pending_destroy upload returned non-error but bad shape", False, f"upload body={ur.text[:120]}")
+            return
+        r = client.post(f"{BASE}/orders", json={
+            "destination_id": 1, "visa_type": "tourism", "material_ids": [mid],
+            "applicant_data": {"surname": "T", "given_name": "U", "sex": "M", "dob": "1990-01-01", "nationality": "CHN", "passport_no": "PC345678", "passport_expiry": "2030-01-01"},
+        }, headers=h)
+        record("pending_destroy user order rejected", r.status_code in (401, 403), f"status={r.status_code}")
 
 
 # ============================================================================ #
@@ -240,7 +256,7 @@ def case_cross_user_isolation(client) -> None:
 def case_status_history_preserved(client) -> None:
     section("7. 状态历史完整 — 每次状态变化都记录")
     suffix = uuid.uuid4().hex[:6]
-    r = post(client, "/auth/register", {"username": f"h_{suffix}", "email": f"h_{suffix}@htex.test", "password": "H@2024"})
+    r = post(client, "/auth/register", {"username": f"h_{suffix}", "email": f"h_{suffix}@htex.test", "password": "Htest@2024"})
     user_token = r.json()["data"]["access_token"]
     h = {"Authorization": f"Bearer {user_token}"}
     files = {"file": ("pp.jpg", b"x" * 200, "image/jpeg")}
@@ -252,7 +268,7 @@ def case_status_history_preserved(client) -> None:
     }, token=user_token)
     order_no = r.json()["data"]["order"]["order_no"]
     # admin 推进 3 次
-    admin_t = post(client, "/admin/login", {"username": "admin", "password": "Admin@2024"})
+    admin_t = post(client, "/admin/login", {"username": "admin", "password": "HtexAd@26"})
     admin_token = admin_t.json()["data"]["access_token"]
     rl = get(client, "/admin/orders?page=1&page_size=50", token=admin_token).json()["data"]["items"]
     oid = next(o["id"] for o in rl if o["order_no"] == order_no)
@@ -274,12 +290,12 @@ def case_status_history_preserved(client) -> None:
 def case_write_then_read_fresh(client) -> None:
     section("8. 写完即读 — fresh session 验证持久化")
     suffix = uuid.uuid4().hex[:6]
-    r = post(client, "/auth/register", {"username": f"fr_{suffix}", "email": f"fr_{suffix}@htex.test", "password": "Fr@2024"})
+    r = post(client, "/auth/register", {"username": f"fr_{suffix}", "email": f"fr_{suffix}@htex.test", "password": "FrTest@2024"})
     user_id = r.json()["data"]["user"]["id"] if isinstance(r.json()["data"]["user"], dict) else r.json()["data"]["user_id"]
     time.sleep(1)
     # 新 client 读
     with httpx.Client() as c2:
-        admin_t = post(c2, "/admin/login", {"username": "admin", "password": "Admin@2024"})
+        admin_t = post(c2, "/admin/login", {"username": "admin", "password": "HtexAd@26"})
         admin_token = admin_t.json()["data"]["access_token"]
         rl = get(c2, "/admin/users?page=1&page_size=200", token=admin_token).json()["data"]["items"]
     found = any(u["id"] == user_id for u in rl)
@@ -291,7 +307,7 @@ def case_write_then_read_fresh(client) -> None:
 # ============================================================================ #
 def case_audit_log_immutable(client) -> None:
     section("9. 审计日志完整性 — admin 操作都有 audit")
-    admin_t = post(client, "/admin/login", {"username": "admin", "password": "Admin@2024"})
+    admin_t = post(client, "/admin/login", {"username": "admin", "password": "HtexAd@26"})
     admin_token = admin_t.json()["data"]["access_token"]
     # 拉所有 actions 列表
     r = get(client, "/admin/logs/actions", token=admin_token)
