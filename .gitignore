@@ -89,6 +89,15 @@ frontend/web/vite.config.js.timestamp-*.mjs
 frontend/web/test-results/
 frontend/web/playwright-report/
 
+# Browser extension deps
+browser-extension/node_modules/
+
+# Local runtime / preview artifacts (not shipped)
+logs/
+workspace/
+screenshots_all/
+htex-all-screenshots.zip
+
 # Agent runtime metadata (NOT project code — mavis team jobs/deliverables, claude session cache)
 .harness/
 .claude/

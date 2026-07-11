@@ -1,7 +1,7 @@
 # Htex · 跨境签证 AI
 
-> **跨境签证一站式服务 MVP** — 用户提交申请、平台 OCR 识别护照字段、RPA 自动递交官方签证门户、Mock 支付通道闭环、状态可实时查询。
-> 三端共享同一套 `/api/v2/*` 后端协议：Web（Vue 3）+ iOS（Flutter）+ 微信小程序。
+> **跨境签证一站式服务 MVP** — 用户提交申请、平台 OCR 识别护照字段、支付闭环、状态可实时查询。
+> 三端共享同一套 `/api/v2/*` 后端协议：Web（Vue 3，**主攻越南/印尼海外客户**）+ iOS（Flutter）+ 微信小程序（**暂停**）。
 
 [![Build Status](https://img.shields.io/badge/build-WIP-lightgrey.svg)](#构建状态) [![Tests](https://img.shields.io/badge/tests-122%20passed-blue.svg)](#测试) [![Coverage](https://img.shields.io/badge/coverage-TBD-yellow.svg)](#测试) <!-- TODO: 替换为真实 CI badge -->
 
@@ -29,13 +29,13 @@
 1. **账号** — 手机号 + 验证码注册 / 登录，JWT 滑动刷新
 2. **申请录入** — 选择目的国 / 签证类型 / 出行日期，填写个人信息
 3. **材料上传 + OCR** — 护照 / 证件 PDF/JPG/PNG 自动识别 MRZ 字段
-4. **RPA 自动递交** — 后端 RPA worker 自动登录官方签证门户（Indonesia e-Visa / Vietnam e-Visa 等）填写并提交
-5. **支付（Mock）** — V2 阶段默认 Mock 通道，V2.1 切换 Stripe / 支付宝
+4. **RPA 自动递交** — ⏸ MVP 阶段关闭（`FEATURE_RPA_ENABLED=0`），后期再开
+5. **支付（Mock/Stripe）** — V2 阶段默认 Mock 通道，V2.1 切换 Stripe
 6. **状态查询** — 订单时间线 + WebSocket 推送 + 30s 轮询
 
 支持 **4 语种**：简体中文（zh-CN）/ 英文（en）/ 印尼语（id）/ 越南语（vi），国际化覆盖登录、订单、支付、RPA、管理后台、合规条款等 6 大 section。
 
-> **业务范围**：MVP 阶段仅对接 2 个官方签证门户（Indonesia / Vietnam），其余国家为占位路由。
+> **业务范围**：主攻**越南、印尼海外客户**，帮其办理**美国、申根、英国、澳大利亚**等签证。RPA / 保险 / 微信小程序暂缓。详见 [`docs/PRODUCT_SCOPE.md`](docs/PRODUCT_SCOPE.md)。
 > **合规**：法务 review 框架已搭建（`docs/LEGAL_REVIEW_NOTES.md` 18 项 checklist），deadline 2026-06-25。
 
 ---
@@ -276,10 +276,59 @@ flutter analyze            # 静态分析
 
 ---
 
+## 6. Google OAuth 登录（W48）
+
+前端 `Login.vue` / `Register.vue` 在 `VITE_GOOGLE_CLIENT_ID` 非空时,通过 Google Identity Services 渲染 "Continue with Google" 按钮。点击后浏览器拿到 Google `id_token`,POST 到 `POST /api/v2/auth/google`,后端用 `GOOGLE_CLIENT_ID` 验签、签发 JWT pair,并自动注册或关联已有账号(按 `google_sub` / `email` 匹配)。
+
+### 6.1 本地开发 — 不配也能跑
+
+`VITE_GOOGLE_CLIENT_ID` 留空时 `/login` / `/register` 不渲染 Google 按钮,只走邮箱/用户名 + 密码登录(默认行为)。后端 `GOOGLE_CLIENT_ID` 留空时 `/api/v2/auth/google` 返回 500(预期)。
+
+### 6.2 启用 Google 登录(3 步)
+
+1. **创建 OAuth Client**
+   - 打开 https://console.cloud.google.com/apis/credentials
+   - **Create Credentials → OAuth 2.0 Client IDs → Web application**
+   - **Authorized JavaScript origins** 加:
+     - `http://localhost:5173`(开发)
+     - `https://visa.example.com`(生产,按你真实域名改)
+   - 拿到形如 `1234…xyz.apps.googleusercontent.com` 的 client id
+
+2. **写进两个 env**
+   ```bash
+   # backend/.env
+   GOOGLE_CLIENT_ID=1234…xyz.apps.googleusercontent.com
+
+   # frontend/web/.env
+   VITE_GOOGLE_CLIENT_ID=1234…xyz.apps.googleusercontent.com
+   ```
+
+3. **重启两个服务**(`vite` 启动时读 env,改完必须重启)
+
+刷新 `http://localhost:5173/login`,密码框下方会出现"或"分隔线和 Google 登录按钮。
+
+### 6.3 测试覆盖
+
+| 层级 | 文件 | 覆盖 |
+|---|---|---|
+| 后端 service | `backend/tests/test_auth_google.py` | 10 cases — happy / returning / email-link / invalid token / wrong audience / not-configured / disabled / no-email / session 落库 / audit log |
+| 前端 api | `frontend/web/src/__tests__/api/auth.test.ts` | 4 cases — mock 模式 / 真模式 envelope 解码 / 错误抛出 |
+| 前端 UI | `frontend/web/src/__tests__/Login.google.test.ts` | 2 cases — client_id 留空不渲染 / 设值后渲染 + callback 链路 |
+| 端到端 | `frontend/web/tests/e2e/google-login.spec.js` | 2 cases — GIS mock + 后端 mock,验证 token 写入 + 跳 `/destinations` |
+
+### 6.4 已知限制
+
+- 不支持同账号从不同 Google 账号绑定切换(目前以首次绑定的 `google_sub` 为准)
+- 暂未做撤销流程 — `UserSession.refresh_token_hash` 可以吊销,但 id_token 本身的有效期由 Google 控制(默认 1h)
+- 越南/印尼网络偶尔打不通 `accounts.google.com` 时按钮会卡在加载态,后续可加 fallback 提示
+
+---
+
 ## 文档索引
 
 | 文档 | 用途 |
 |---|---|
+| [`docs/PRODUCT_SCOPE.md`](docs/PRODUCT_SCOPE.md) | **产品范围**（越/印尼客户 × 美/申根/英/澳签证；RPA/保险/小程序开关） |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | 系统架构（顶层组件图 / 数据流 / 横切关注点） |
 | [`docs/API.md`](docs/API.md) | REST + WebSocket API 参考（942 行） |
 | [`docs/LEGAL_REVIEW_NOTES.md`](docs/LEGAL_REVIEW_NOTES.md) | 法务 review 18 项 checklist |

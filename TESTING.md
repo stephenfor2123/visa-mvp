@@ -31,8 +31,9 @@
 - **范围**：跨浏览器、跨端到端用户旅程（S1 注册 → 登录 → 主页 → 提交订单）。
 - **依赖**：起 `vite dev server`（`globalSetup.cjs`）+ 假设后端 FastAPI 在 `http://127.0.0.1:8000` 跑着。
 - **运行**：秒级到分钟级，**默认 `workers: 1` + `fullyParallel: false`**（注册流程涉及 DB 状态，串行更稳）。
-- **现状**：5 个 spec（`register.spec.js`、`login.spec.js`、`destination.spec.js`、`i18n-full-locale.spec.js`、`screenshot.spec.js`）。
+- **现状**：6 个 spec（`register.spec.js`、`login.spec.js`、`destination.spec.js`、`i18n-full-locale.spec.js`、`password-toggle.spec.js`、`screenshot.spec.js`、`google-login.spec.js`）。
 - **配置**：`frontend/web/playwright.config.cjs`。
+- **Google OAuth e2e** (`google-login.spec.js`)：GIS 库用 `page.route` mock，`/api/v2/auth/google` 用 `page.route` 拦截，无需真 Google client id。`global-setup.cjs` 注入 `VITE_GOOGLE_CLIENT_ID=fake-e2e-client-id.apps.googleusercontent.com` 让 placeholder 渲染。
 
 ### 1.4 顶层 root-level 测试（特殊情况）
 
@@ -212,3 +213,4 @@ cd backend
 | 日期 | 变更 |
 |---|---|
 | 2026-06-15 | 初版：分层 / 覆盖率目标 / mock 约定落地。Baseline = 454 tests collected (6 collection errors). |
+| 2026-07-09 | W48: Google OAuth 测试覆盖。后端 `tests/test_auth_google.py` (10 cases: happy/returning/email-link/invalid/audience/not-configured/disabled/no-email/session/audit-log)；前端 `src/__tests__/api/auth.test.ts` (4) + `src/__tests__/Login.google.test.ts` (2)；Playwright `tests/e2e/google-login.spec.js` (2)。总计 backend auth 测试 29 → 39。 |

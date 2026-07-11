@@ -217,7 +217,9 @@ they are **in scope**, but we list them so reporters can focus their effort.
 
 - **Authentication & sessions** — JWT issuance, refresh, revocation; SMS
   one-time-passcode delivery via the `SMS_CHANNEL` adapter; rate limiting on
-  `/auth/*` endpoints.
+  `/auth/*` endpoints; Google OAuth (`/auth/google` — Google id_token
+  signature verification against `GOOGLE_CLIENT_ID`, sub-based auto-registration,
+  email linking to existing password accounts, disabled-account handling).
 - **Payment integration** — Stripe webhook signature verification, idempotency
   keys, refund and dispute flows. See
   [`docs/stripe-credentials-setup.md`](docs/stripe-credentials-setup.md).

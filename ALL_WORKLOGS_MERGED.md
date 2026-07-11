@@ -29,6 +29,7 @@
 
 | Date | Version | 关键改动 | 来源 |
 |------|---------|----------|------|
+| 2026-07-08 | W67 (后端无 commit — 纯前端 UX/状态机修) | PDF 文件名 locale-aware + 上传卡白底 + photo bg country_name 多语言 + form 11 tab missing 角标 + 5 步订单状态机(草稿/待提交/已提交/使馆审核/已出签) + Orders 横向 stepper + 英文模板 signature 拆字段 + TravelPlanner 末尾日无酒店 + 死锁修复(collected / itineraryText / hotel some) | 本 session(对话: 21 项) |
 | 2026-07-02 | W47c/W48 全量回归 | W36-W48 工作 commit + visa_diagnoser 命名空间错位修 + 4 语言补 9 key | 本 session |
 | 2026-07-02 | `w45-material-wizard-llm-itinerary` | 材料收集 6 大类强校验向导 + MiniMax LLM 行程单 + 401 refresh 链路 | CHANGELOG.md, KNOWN_ISSUES.md §2 |
 | 2026-06-30 | `w32-checkpoint-atlys-feature` | 无新提交(checkpoint 8 feature) | CHANGELOG.md |
@@ -698,6 +699,138 @@
 
 ---
 
+### W67 — 前端 UX/状态机精修 (2026-07-07 ~ 2026-07-08)
+
+> **背景**: 用户(Htex 产品负责人)针对 materials-wizard 流程和 /orders 列表做了一连串 UX/状态机微调。共 21 项改动, 跨前端 4 视图 + 2 个 composable + 1 个数据文件 + 1 个 i18n init + 4 国 i18n JSON。
+> **会话代号**: W67 (延续之前的 W 编号, 不对应 git branch — 本轮纯前端编辑, 还没 commit)
+> **本 session 无 git commit** — 改完未让用户提交; 用户后续决定 commit message。
+
+#### 2.X.1 PDF 文件名随 locale 切换 (TravelPlanner.vue)
+
+- 之前硬编码 `行程单_${cc}_${dep}_${ret}.pdf` (Unicode 转义), 任何语言用户下载都是中文。
+- 改后按 `locale.value` 映射: `zh-CN → 行程单 / en → Itinerary / vi → Lịch trình / id → Rencana Perjalanan`, fallback `Itinerary`。
+- 同时给 fallback 兼容 BCP-47 长码 (id-ID / vi-VN), 避免 locale 失配时空文件名。
+
+#### 2.X.2 上传完成卡片白底化 (UploadItemCard.vue:638)
+
+- `.is-done { border-color: #bbf7d0; background: #f7fefb }` → `background: #fff`
+- 保留绿色边框 (成功语义) 但去掉淡绿底纹 (视觉冗余)。错误态 `.is-error` 仍保留红底 (警示需要明显区分)。
+
+#### 2.X.3 修语法错 (UploadItemCard.vue:511)
+
+- 删掉悬空 `}` — `issueFallbackText` 函数多了一个 `}`, 触发 babel parser 报 "Unexpected token" + Vite 全屏红 overlay, 用户看到的"前端崩了" 实为 HMR 没灌新代码的旧崩溃。**根因不是这次改动, 是项目历史 bug, 借这次刷新窗口顺手清掉。**
+
+#### 2.X.4 photo bg 提示按国家显示 (4 国 i18n + useMaterialWizard.js)
+
+- 旧 `diagnose.photo_bg_uncertain_*` 文案是泛泛科普 ("多数国家签证要求白底照片,部分东南亚国家接受蓝底")。用户反馈太泛。
+- 后端 visa_diagnoser.py:649 一直把这条 issue 的 code 写成 `photo.bg_uncertain` 但 title_key/detail_key 用 `photo_bg_country_*` (意为"按目的国规格确认")。前端路由表原本走的是泛提示 key, 改正后改用 country-aware 文案。
+- **加 country_name 字段**: 前端 `translateDiagnoseIssue / retranslateIssue` 里把 `p.country` (code 如 "US") 反查 i18n `country_us / country_gb / country_au ...` 拿到按 locale 翻译的国家名 ("美国 / United States / Hoa Kỳ / Amerika Serikat")。
+- 4 国 i18n 把 `photo_bg_country_* / photo_bg_mismatch_*` 文案里 `{country}` 改 `{country_name}`。
+- **遗留问题**: spec 字段 (`"51×51mm 白底照片"`) 还是中文硬编码, vi/id 用户半懂不懂。已记 agent memory 留待下个 worklog 处理。
+
+#### 2.X.5 表单 11 tab missing 角标 + 全 tab 校验 (MaterialWizard.vue)
+
+- 之前: `isFormTabDone` 只查 3 个 tab (basic / travel / emergency), 剩 8 个完全跳过 — 11 个 tab 全填了也"还差必填"。角标也无 missing 数字, 找不到该填哪个。
+- 加 `FORM_TAB_REQUIRED_FIELDS` 列出 11 tab 必填字段, `formTabStatus(key)` 返回 `{ done, missing, missingFields }`, `formTabMissing` 是 computed 给 template 用。
+- 11 tab 角标 3 态: ✓ (全填) / • (空 / 还没碰) / 红色圆角数字 (缺几个字段), tooltip 提示"本节还有 N 个必填字段未填写"。
+- 配色: 完成 = 深蓝实心, 进行 = 深蓝边, 待办 = 浅灰边, 失败 = 红边; 4 国 `sub_tabs_missing` / `sub_tabs_missing_tooltip` 翻译补齐。
+- **3 个状态机 bug 顺手修**:
+  1. `validateTab('personal1', { silent: true })` 走 'basic' 分支, 跨 tab 校验 `passport_no`, 当 `form.passport_no = ''` 时 `.toUpperCase()` throw, 整个 `goNextFormTab` 被吞, activeTab 不切 (用户感觉"点了没反应")。
+  2. `goNextFormTab` 改用 `formTabStatus(activeTab.value).done` 判 done, 不再被 validateTab 跨字段 throw 拖死。
+  3. `validateTab` passport_no 那行先判空再调 `.toUpperCase()`, `validateAllFormTabs` 加 try/catch 兜底。
+- `validateAllFormTabs` 改遍历 11 tab 找第一个未完成的, 切过去 + 触发对应 validateTab 写 errors。
+
+#### 2.X.6 i18n messages 同步载入 (frontend/web/src/i18n/index.js)
+
+- 之前 createI18n 时 `messages: { [detectedLocale]: {} }` 是空对象, `loadLocale(detectedLocale)` 是 fire-and-forget 异步, 首次渲染 t('mtp.month_label') 找不到 key → intlify warning 一片。
+- 改成同步拿 detected locale 的 messages: 在 createI18n 之前直接引用 `zhCN / enUS / idID / viVN` 静态 import 过的模块 (已经被 vite 缓存, 几毫秒), 灌进 messages。代价: 首屏多等几毫秒, 收益: 0 intlify warning 噪音。
+
+#### 2.X.7 4 国 i18n 补 trust.popover_aria
+
+- `TrustBadgePopover.vue:15-16` 用 `t('trust.popover_aria', 'View privacy & encryption details')` 带 fallback, 但 intlify 仍会先打 warning 才 fallback。4 国补齐: zh "查看隐私与加密详情" / en "View privacy & encryption details" / vi "Xem chi tiết quyền riêng tư & mã hóa" / id "Lihat detail privasi & enkripsi"。
+
+#### 2.X.8 删 OrderPrecheck 底部"参考建议"+ 2 按钮 (OrderPrecheck.vue)
+
+- 用户反馈: 既然不会阻止提交, 就别劝退"决定先优化材料"。删 `<section class="precheck-actions">` 整块, 页面只剩诊断结果展示本身。
+
+#### 2.X.9 订单状态机 4 步 → 5 步 (useOrderUserStatus.js)
+
+- 旧 4 步: 草稿 → 已提交 → 使馆审核 → 已出签, "已支付但还没 RPA 提交" 没有专属阶段, 用户看不到自己"差最后一步就能进使馆"。
+- 新 5 步: 草稿 → **待提交** (新增, created + paid) → 已提交 → 使馆审核 → 已出签。
+- 新增 `ready_to_submit` user_status key, `computeUserStatus` mapping `created + paid` → ready_to_submit。
+- `timelineOf` 用新 `stageOfUser` 映射, 5 步; 中间"已提交"始终是 done (后端没 submitting 态, 提交是瞬时动作)。
+- 4 国 i18n 补 `timeline.ready_to_submit` + `user_status.ready_to_submit`。
+
+#### 2.X.10 /orders 横向 stepper (Orders.vue, Uiverse 风)
+
+- 之前: 4 圆水平 + 浅紫连线, 圆点小看不清状态; 5 步后更挤。
+- 改: 横向 5 步并排, 圆 32px + 数字 + 圆下方标题 + 状态徽章 + 时间, 圆间连线 2px 浅灰 (完成段深蓝), 圆压连线。配色按 trip.com 订单跟踪风格: 深蓝完成 / 蓝边进行 / 灰边待办 / 红边失败。
+- 4 国 i18n 补 `timeline_status.{completed,current,pending,failed}`。
+- 旧横排 timeline CSS 全删 (`status-timeline / status-timeline__step / __node / __bar`), 加 `.stepper-horizontal / .stepper-h-step / .stepper-h-circle / .stepper-h-pill` 等新 class。响应式 CSS 同步改 (小屏圆缩到 24px)。
+
+#### 2.X.11 英文模板 signature 拆字段 (materialTemplates.js:501-555)
+
+- 之前 `enUS` sample 把 `Yours faithfully` + 3 个 `XXX` + `Tel/Fax/Address/Business License` 全塞进 `body` 数组 join, 渲染时 3 个 XXX 出现在 body 末尾被红框框起 (像 bug)。
+- 改成 `body` 数组只到 `Yours faithfully,`, 新加独立 `signature: [...]` 数组装签名块。跟中文/越南版结构一致, 渲染走 `v-if="enTemplate.signature?.length"` 分支。
+
+#### 2.X.12 TravelPlanner 文案清理 (TravelPlanner.vue + 4 国 i18n)
+
+- 删副标题: `<p class="tp-block__hint">{{ t('wizard.travel_days_hint') }}</p>` 注释掉, 标题就剩"逐日行程 (共 8 天)"。
+- 智能补充按钮: `✨ 智能补充` → `AI 填充` (去 icon, 纯文字)。
+- PDF 按钮: `📄 确定行程, 导出 PDF` → `导出 PDF` (去 icon, 纯文字)。
+
+#### 2.X.13 最后一天不显示 hotel (TravelPlanner.vue + clearLastDayHotel)
+
+- 返程日 (i === days.length - 1) 不应该带 hotel (人都飞走了), 之前 AI 还会补一个 hotel, 看起来像 bug。
+- 改 3 处:
+  1. Template: hotel 单元格在 last day 显示 `<span class="tp-cell-empty">—</span>` 而不是 input。
+  2. 加 `clearLastDayHotel()` 函数: 监听 `plan.days.length` 变化 + onMounted 时, 如果 last day 有 hotel 且 `_manual.hotel !== true` 就清空 (尊重用户手填)。
+  3. CSS: 加 `.tp-cell-empty { color: #cbd5e1; font-size: 12px; padding: 0 4px; }`。
+- **避免死循环**: 不开 `watch days deep: true`, 只 watch length, 避免 day 字段被清空时反过来触发 watch 形成调用堆栈。
+
+#### 2.X.14 死锁修复 #1: 11 tab 必填检查 (useMaterialWizard.js:737)
+
+- 旧: `every((d) => d.city && d.hotel)` — 因为 last.hotel 被清空, every 永远 false, itinerary.collected 永远 false, "进入下一步" 永远 disabled。
+- 新: `every((d, i) => d.city && (i < lastIdx ? d.hotel : true))` — 跳过最后一天。
+
+#### 2.X.15 死锁修复 #2: activeCategoryReady 不再依赖 collected 标志 (useMaterialWizard.js:443-448)
+
+- 旧: `if (def.isTravelPlanner) return !!state.categories.travel.items.itinerary?.collected` — collected 默认 false, 唯一更新路径是 compileItineraryText, compileItineraryText 只在 onNext 调, 死锁。
+- 新: travelPlanner ready 直接 computed 算 days 是否填好 (有 city + 倒数第 1 天外有 hotel + 有 depart/return date), 不读标志位。`rec.collected` 保留写但不作为 ready 依据。
+- **教训 (agent memory)**: 状态标志位不能由 onClick handler 单一更新, 必须有 reactive watcher 持续同步, 最好直接 computed 算不存标志。
+
+#### 2.X.16 死锁修复 #3: validateTravelPlan 跳过 last day + hasContent (useMaterialWizard.js:677-688)
+
+- 旧: `some((d) => !d.hotel)` 会因为 last.hotel 空 push error, validated=false, onNext 不切。
+- 旧: `!plan.itineraryText` 检查 — itineraryText 默认 '', 只在 compileItineraryText 调时填, compileItineraryText 只在 onNext 调, 又死锁。
+- 新 1: `some((d, i) => i < lastIdx && (!d.hotel || !d.hotel.trim()))` — 跳过 last day。
+- 新 2: 现场算 `hasContent = some day 有 city + attraction`, 替代 !itineraryText 检查 (避免死锁, 实际意义更直接 — 至少一天有内容就算 ok)。
+
+#### 2.X.17 4 国 i18n 补 app_input.show_password / hide_password
+
+- `AppInput.vue:50` 用 `t('app_input.show_password', '...')` 带 fallback, 4 国 i18n 都没这 key, 每次输入密码框聚焦就出 2 个 intlify warning (40 issues 累积)。补 4 国。
+
+#### 2.X.18 模板作用域陷阱 (TravelPlanner.vue:132 修)
+
+- 改"最后一天不显示 hotel"时, 模板里写 `v-if="i === days.length - 1"`, 但 template 作用域只 expose `plan` prop + 局部 `d/i` 等, **Vue 不会自动 expose `plan.days` 为 `days`**。触发 `Property "days" was accessed during render but is not defined on instance` + `Cannot read properties of undefined (reading 'length')`。
+- 改: `v-if="i === plan.days.length - 1"`。
+- **教训 (agent memory)**: 改 template 时严格用 `plan.xxx` 而不是凭印象 `xxx`, Vue 不会给友好提示, 错误信息是 `undefined.length`。
+
+#### 2.X.19 Memory 增量 (3 条新 entry)
+
+- `i18n 切语言后需重新拉的语言依赖数据` 已存在, 不重复。
+- `Vue 模板作用域: 不要凭印象写变量名` (新)
+- `Vue disabled 按钮的"未响应"调试` (新) — 用户报按钮灰色, 第一直觉 HMR/throw, 但更常见是 disabled=true; DevTools 选 button 看 class + disabled 属性 + Styles 面板, 顺着 :disabled 条件 + canAdvance 链路找到根因。
+- `状态机 flag 不能由 onClick handler 单一更新` (新) — canAdvance/ready/validated 这种 boolean, 一定要找谁写、谁读、什么时候写; 死锁模式: 读它的人 = 写它需要触发的事件。
+
+#### 2.X.20 已知遗留 (未在本 session 修)
+
+- **photo bg spec 字段硬编码中文** — `"51×51mm 白底照片"` 4 国都用, vi/id 用户半懂不懂。需: visa_diagnoser `_photo_rule_for()` 返回 i18n key (`photo_spec_us` / `photo_spec_schengen` / `photo_spec_id_dual`), 4 国补翻译。
+- **5 步 timeline 中"已提交"那步总是 done** — 后端没 `status=submitting` 状态, 提交是瞬时动作。如果产品想让"已提交"那步在 RPA 插件调通期间 current 一会儿, 需后端加 submitting 状态。
+- **HMR 部分 .vue 文件改动后 setup 不重跑** — 用户报"点了没反应"时多发是 HMR 缓存。需要让用户 Cmd+Shift+R 硬刷。
+
+---
+
 ## 3. 已知问题汇总
 
 ### 3.1 待修(P0/P1 必修)
@@ -950,4 +1083,443 @@ W33 (2026-06-28):         OCR preview + 4 步 wizard + 多目的地 cart
 
 **生成时间**: 2026-07-02 20:03 (Asia/Shanghai, W47c/W48 增量更新)
 **生成者**: Mavis (W47c/W48 全量回归 + 3 个 i18n bug 修复 + worklog 增量)
+
+---
+
+**生成时间**: 2026-07-08 00:05 (Asia/Shanghai, W67 前端精修 增量)
+**生成者**: Mavis (W67 — 21 项前端 UX/状态机改动, 跨 4 视图 + 2 composable + 1 数据文件 + 1 i18n init + 4 国 i18n JSON; 含 3 个状态机死锁修复 + 订单 5 步状态机 + 横向 stepper + photo bg country_name 多语言 + form 11 tab missing 角标; **本 session 无 git commit**)
 **源文件数**: 38 + W47c/W48 增量 (5 commit 文件 + worklog 自身)
+
+# 第二部分：W68+ 增量（2026-07-02 收口之后）
+
+> **增量时间**: 2026-07-03 ～ 2026-07-09 (Asia/Shanghai, 6 天)
+> **生成者**: Mavis (root session `mvs_efa993cb`, 用户要求"检索全部功能 + 其他 session 待修复点 + 写到 ALL_WORKLOGS_MERGED.md 做交接")
+> **本轮次性质**: **所有产出自 7/2 收口 commit `eab1e6c` 之后,均落在 working tree 但未 `git add`**。
+> **新增 commit**: **0**（自 7/2 20:23 之后 `git log` 静止,验证：`cd /Users/apple/Desktop/签证项目_副本 && git log -1` → `eab1e6c 2026-07-02`）
+> **数据真源**: `find … -newer .git/config -mtime -8` 列了 ~150 个真实改动文件(过滤掉 dist/build/playwright-report/test-results),交叉对照 sqlite `sessions` 表的 session_messages。**流水账式的 session cron(版本日志/早安汇报)已过滤**,只列产出代码或文档的 session。
+> **W74 教训先说**: 第一次写的版本按 session 流水账铺开,被用户当场打回"很多 session 都是历史的"——所以本版按**实际文件证据**组织,7/2 之前 + 历史空跑的 session 全部剔除。
+
+---
+
+## X.0 TL;DR（这一周产出了什么 / 还差什么）
+
+### 已落到 working tree（代码真写了，**没 commit**）
+
+| W | 名称 | 实际改动文件证据 | 状态 |
+|---|---|---|---|
+| **W68** | Google OAuth 登录 | `backend/tests/test_auth_google.py`(10683B)、`frontend/web/src/__tests__/Login.google.test.ts`(4736B)、`frontend/web/src/__tests__/api/auth.test.ts`(2878B)、`frontend/web/tests/e2e/google-login.spec.js`(4667B)、`backend/requirements.txt` 加 `google-auth>=2.28.0`、`frontend/web/src/views/Login.vue` 加 `GOOGLE_CLIENT_ID` 读取 | ⏸ 等真实 client_id |
+| **W69** | DS-160 枚举 + mapping valueMap | `frontend/web/src/data/ds160Enums.js`(9024B 新建)、`frontend/web/src/data/ds160FieldMap.js`(23126B 改)、`browser-extension/src/mapping.js`(78150B 改)、`backend/tests/unit/test_ds160.py`(18880B) | ⏸ 未跑完 |
+| **W70** | 删除草稿订单 | `backend/app/services/order_service.py::delete_draft()`、`backend/app/api/v2/orders.py::delete_draft_order()` + `DeleteDraftResponse`、`frontend/web/src/views/Orders.vue` 加"🗑 删除草稿"按钮、`api/orders.js::deleteOrder()`、`tests/integration/test_orders.py` | ⏸ |
+| **W71** | Diagnose Rules v2 | `backend/app/services/diagnose_rules/` 整目录(8 文件 3038 行)、`tests/integration/test_diagnose_w58.py` | ⏸ |
+| **W72** | 前端 UX 微调 | `MaterialWizard.vue`(124515B)、`useMaterialWizard.js`(48354B)、`UploadItemCard.vue`(34524B 加 getUserMedia + camera phase)、`AppInput.vue`、`LocaleDateInput.vue`、`AuthExpiredBanner.vue`、`DnaCheckbox.vue`、4 国 `i18n/*.json` | ⏸ |
+| **W73** | 后端 admin + 支付 | `admin_service.py`(107873B 加 order_count/material_count)、`admin_dashboard_service.py`(19362B delta None)、`schemas/admin.py`(28763B `Optional[float]`)、`order_service.py`(41846B 从 destination 取价) | ⏸ |
+| **W74** | 我的申请下拉菜单 | **框架讨论,无代码改动**(只在 sqlite messages 里) | ❌ 没落地 |
+
+### 还在进行中 / 当前 session
+
+- **`/materials-wizard` 扫码上传**: `UploadItemCard.vue` 已有 `📷 拍照扫描` + `camera` phase 走 `getUserMedia({facingMode: 'environment'})` + `📱 手机扫码上传` 按钮调 `QrUploadModal.vue`(transfer modal, transfer 页面专用)。**用户现在明确要 mobile 浏览器原生相机直接拍 → 上传**,不走 transfer 跨页上传流程。`UploadItemCard` 已经实现,但**需要在 materials-wizard 路由直接暴露**,不在 modal 里。
+- **后端进程**: pid 15964 在监听 8000,nohup 启的,无守护。
+- **测试账号**: 原 `test_user_1` 重启后丢,临时账号 `qa@htex.local` / `QaTest1234!` 在用。
+
+### 与 Htex 无关的（独立作业,不进 git）
+
+- **W75 特朗普推文研报**: 用户课堂作业,产物 `~/Desktop/作业_副本/特朗普推文与美股股价_量化研究报告_（终稿）.html`（22 页,line 865 缩进 bug 未修）。**不进签证项目仓库**。
+
+---
+
+## X.1 按文件证据的实际改动清单（2026-07-03 ~ 07-09）
+
+> 用 `find … -newer .git/config -mtime -8` 配合文件去噪得到,**只列对 git commit 有意义的源码/测试/脚本文件**(过滤 dist / build / playwright-report / test-results / package*.json / ios/.dart_tool / ios/build)。
+
+### X.1.1 后端 Python 文件
+
+| 日期 | 文件 | 大小 | 属于 |
+|---|---|---|---|
+| 07-03 | `backend/app/api/v2/destinations.py` | — | (W47c 后续 i18n 修补) |
+| 07-03 | `backend/app/api/v2/ocr.py` | — | (W47c 后续) |
+| 07-03 | `backend/app/services/auth_service.py` | — | (W47c OAuth 准备) |
+| 07-03 | `backend/app/services/balance_chain_check.py` | — | 银行流水规则 |
+| 07-03 | `backend/app/services/financial_standard.py` | — | (同上) |
+| 07-03 | `backend/app/services/material_group.py` | — | 材料分组 |
+| 07-03 | `backend/app/services/sudden_inflow.py` | — | 大额入账预警 |
+| 07-03 | `backend/app/services/rag/answer.py` | — | RAG |
+| 07-03 | `backend/alembic/versions/0015_rag_english_authoritative.py` | — | RAG en 权威迁移 |
+| 07-03 | `backend/tests/unit/test_balance_chain_and_locale.py` | — | (W47c 测试) |
+| 07-03 | `backend/tests/unit/test_bank_statement_parser.py` | — | (同上) |
+| 07-03 | `backend/tests/unit/test_e2e_pipeline.py` | — | (同上) |
+| 07-03 | `backend/tests/unit/test_material_group_and_standard.py` | — | (同上) |
+| 07-03 | `backend/tests/unit/test_sudden_inflow.py` | — | (同上) |
+| 07-03 | `backend/tests/unit/test_visa_diagnoser.py` | — | (同上) |
+| 07-04 | `backend/app/schemas/material.py` | — | 材料 schema 微调 |
+| 07-06 | `backend/alembic/versions/0016_applicants.py` | — | 申请人迁移 |
+| 07-06 | `backend/alembic/versions/0017_email_pending.py` | — | 邮箱修改 |
+| 07-06 | `backend/app/api/v2/profile.py` | — | profile 端点 |
+| 07-06 | `backend/app/core/config.py` | — | 配置 |
+| 07-06 | `backend/app/models/__init__.py` | — | (同上) |
+| 07-06 | `backend/app/models/applicant.py` | — | 申请人 model |
+| 07-06 | `backend/app/models/user.py` | — | user model |
+| 07-06 | `backend/app/schemas/applicant.py` | — | 申请人 schema |
+| 07-06 | `backend/app/schemas/email_change.py` | — | 邮箱变更 |
+| 07-06 | `backend/app/services/email_service.py` | — | 邮件服务 |
+| 07-07 | `backend/alembic/versions/0010_admin_roles_users.py` | — | admin 角色迁移 |
+| 07-07 | `backend/alembic/versions/0018_rag_review_workflow.py` | — | RAG 审核工作流 |
+| 07-07 | `backend/app/api/v2/admin_rag.py` | — | admin RAG |
+| 07-07 | `backend/app/api/v2/diagnose.py` | — | 诊断端点 |
+| 07-07 | `backend/app/api/v2/materials.py` | — | 材料端点 |
+| 07-07 | `backend/app/api/v2/orders.py` | — | 订单端点(W70 delete_draft_order) |
+| 07-07 | `backend/app/api/v2/scheduler.py` | — | 调度器 |
+| 07-07 | `backend/app/models/rag.py` | — | RAG model |
+| 07-07 | `backend/app/schemas/order.py` | — | 订单 schema |
+| 07-07 | `backend/app/services/bank_statement_parser.py` | — | 银行流水 |
+| 07-07 | `backend/app/services/diagnose_rules/__init__.py` | 141 行 | **W71** 入口 |
+| 07-07 | `backend/app/services/diagnose_rules/_age.py` | 33 行 | W71 |
+| 07-07 | `backend/app/services/diagnose_rules/_base.py` | 104 行 | W71 |
+| 07-07 | `backend/app/services/diagnose_rules/_solo_female.py` | 46 行 | W71 |
+| 07-07 | `backend/app/services/diagnose_rules/_types.py` | 19 行 | W71 |
+| 07-07 | `backend/app/services/diagnose_rules/au.py` | 103 行 | W71 |
+| 07-07 | `backend/app/services/diagnose_rules/gb.py` | 103 行 | W71 |
+| 07-07 | `backend/app/services/diagnose_rules/schengen.py` | 124 行 | W71 |
+| 07-07 | `backend/app/services/diagnose_rules/us.py` | 101 行 | W71 |
+| 07-07 | `backend/app/services/material_service.py` | — | 材料 service |
+| 07-07 | `backend/app/services/photo_checker.py` | — | 证件照检查 |
+| 07-07 | `backend/app/services/rag/refresh.py` | — | RAG 刷新 |
+| 07-07 | `backend/app/services/rag/translate.py` | — | RAG 翻译 |
+| 07-07 | `backend/app/services/visa_diagnoser.py` | — | 诊断 service(W71 调用方) |
+| 07-07 | `backend/scripts/rebuild_demo_users.py` | — | 重建 demo 账号脚本 |
+| 07-07 | `backend/scripts/seed_demo_data.py` | — | seed 演示数据 |
+| 07-07 | `backend/scripts/seed_rag_chunks.py` | — | seed RAG 中文 chunk |
+| 07-07 | `backend/tests/integration/test_diagnose_w58.py` | — | **W71 测试** |
+| 07-07 | `backend/tests/integration/test_orders.py` | — | **W70 测试** |
+| 07-08 | `backend/app/api/v2/admin.py` | 44209B | admin 端点 |
+| 07-08 | `backend/app/api/v2/admin_cleanup.py` | — | admin 清理 |
+| 07-08 | `backend/app/api/v2/rag.py` | 42915B | RAG 端点 |
+| 07-08 | `backend/app/api/v2/transfer.py` | — | transfer 端点 |
+| 07-08 | `backend/app/core/permissions.py` | — | 权限 |
+| 07-08 | `backend/app/core/seed_admin_roles.py` | — | admin 角色 seed |
+| 07-08 | `backend/app/main.py` | — | FastAPI 入口 |
+| 07-08 | `backend/app/middleware/admin_auth.py` | — | admin auth 中间件 |
+| 07-08 | `backend/app/models/admin_user.py` | — | admin user model |
+| 07-08 | `backend/app/services/rag/retriever.py` | — | RAG 检索器 |
+| 07-08 | `backend/app/services/rpa/rpa_scheduler.py` | — | RPA 调度器 |
+| 07-08 | `backend/scripts/seed_admin_test_users.py` | — | seed admin 测试账号 |
+| 07-08 | `backend/scripts/seed_rag_chunks_en.py` | — | **seed RAG 英文 chunk** |
+| 07-08 | `backend/tests/unit/test_transfer_session.py` | — | transfer 测试 |
+| 07-09 | `backend/alembic/versions/0019_ds160.py` | — | **DS-160 迁移** |
+| 07-09 | `backend/app/api/v2/__init__.py` | — | v2 路由注册 |
+| 07-09 | `backend/app/api/v2/ds160.py` | 14158B | **DS-160 API** |
+| 07-09 | `backend/app/core/ds160.py` | 22044B | **DS-160 核心** |
+| 07-09 | `backend/app/core/errors.py` | 9374B | 错误码 |
+| 07-09 | `backend/app/models/order.py` | 13296B | order model 微调 |
+| 07-09 | `backend/app/schemas/admin.py` | 28763B | **W73** admin schema |
+| 07-09 | `backend/app/services/admin_dashboard_service.py` | 19362B | **W73** dashboard |
+| 07-09 | `backend/app/services/admin_service.py` | 107873B | **W73** admin service 加 order/material count |
+| 07-09 | `backend/app/services/order_service.py` | 41846B | **W70** delete_draft + **W73** total from destination |
+| 07-09 | `backend/scripts/_e2e_ds160.py` | — | DS-160 e2e 脚本 |
+| 07-09 | `backend/scripts/_e2e_seed.py` | — | e2e seed |
+| 07-09 | `backend/scripts/migrate_ds160_code_fields.py` | — | DS-160 字段迁移 |
+| 07-09 | `backend/tests/api/test_ds160_api.py` | 17510B | DS-160 API 测试 |
+| 07-09 | `backend/tests/conftest.py` | — | 测试 fixture |
+| 07-09 | `backend/tests/test_auth_google.py` | 10683B | **W68** Google OAuth 测试 |
+| 07-09 | `backend/tests/unit/test_ds160.py` | 18880B | DS-160 单测 |
+
+### X.1.2 前端 Vue / JS / TS 文件
+
+| 日期 | 文件 | 大小 | 属于 |
+|---|---|---|---|
+| 07-03 | `browser-extension/src/content-journey.js` | — | 浏览器插件 |
+| 07-03 | `browser-extension/src/journey.js` | — | (同上) |
+| 07-03 | `browser-extension/src/wayfinder.js` | — | (同上) |
+| 07-03 | `frontend/shared/i18n/_build_curated_payloads.py` | — | i18n 编译 |
+| 07-03 | `frontend/shared/i18n/_curated_payloads/_extend_3_countries.py` | — | (同上) |
+| 07-03 | `frontend/web/src/components/TrustBadgePopover.vue` | — | 信任 badge |
+| 07-03 | `frontend/web/src/composables/useDs160Guide.js` | — | DS-160 guide |
+| 07-03 | `frontend/web/src/views/Diagnose.vue` | — | 诊断页 |
+| 07-04 | `frontend/miniprogram/pages/login/login.js` | — | 小程序登录 |
+| 07-04 | `frontend/miniprogram/pages/register/register.js` | — | 小程序注册 |
+| 07-04 | `frontend/web/src/views/ContactView.vue` | — | 联系页 |
+| 07-04 | `frontend/web/src/views/ForgotPassword.vue` | — | 忘记密码 |
+| 07-04 | `frontend/web/src/views/Home.vue` | — | 首页 |
+| 07-04 | `frontend/web/src/views/PricingPage.vue` | — | 定价页 |
+| 07-04 | `frontend/web/src/views/Register.vue` | — | 注册 |
+| 07-06 | `frontend/web/src/components/AppHeader.vue` | — | 头部 |
+| 07-06 | `frontend/web/src/components/PricingSection.vue` | — | 定价块 |
+| 07-06 | `frontend/web/src/composables/useApplicantProfile.js` | — | 申请人 profile |
+| 07-06 | `frontend/web/src/views/Resources.vue` | — | 资源页 |
+| 07-06 | `frontend/web/src/views/curated/ResourcesCuratedView.vue` | — | curated 资源 |
+| 07-07 | `frontend/web/qa/E2E/ordernew.spec.js` | — | E2E 订单 |
+| 07-07 | `frontend/web/src/App.vue` | — | App 根 |
+| 07-07 | `frontend/web/src/api/destinations.js` | — | 目的地 API |
+| 07-07 | `frontend/web/src/api/http.js` | — | HTTP 拦截 |
+| 07-07 | `frontend/web/src/api/materials.js` | — | 材料 API |
+| 07-07 | `frontend/web/src/api/orders.js` | — | **W70 订单 API 加 deleteOrder** |
+| 07-07 | `frontend/web/src/api/profile.js` | — | profile API |
+| 07-07 | `frontend/web/src/components/AppInput.vue` | — | **W72 输入框** |
+| 07-07 | `frontend/web/src/components/AuthExpiredBanner.vue` | — | auth 过期 banner |
+| 07-07 | `frontend/web/src/components/DnaCheckbox.vue` | — | DNA 勾选 |
+| 07-07 | `frontend/web/src/components/LocaleDateInput.vue` | — | 本地化日期输入 |
+| 07-07 | `frontend/web/src/components/MaterialTemplatePreview.vue` | — | 材料模板预览 |
+| 07-07 | `frontend/web/src/composables/useOrderUserStatus.js` | — | 订单状态 |
+| 07-07 | `frontend/web/src/data/materialTemplates.js` | — | 材料模板数据 |
+| 07-07 | `frontend/web/src/i18n/index.js` | — | i18n 入口 |
+| 07-07 | `frontend/web/src/stores/auth.js` | — | auth store |
+| 07-07 | `frontend/web/src/views/Apply.vue` | — | 申请页 |
+| 07-07 | `frontend/web/src/views/Login.vue` | — | **W68 登录页加 Google 按钮** |
+| 07-07 | `frontend/web/src/views/OrderPrecheck.vue` | — | 订单预检 |
+| 07-07 | `frontend/web/src/views/Orders.vue` | — | **W70 订单列表加删除** |
+| 07-07 | `frontend/web/src/views/admin/AdminCleanup.vue` | — | admin 清理页 |
+| 07-07 | `frontend/web/src/views/admin/AdminLogin.vue` | — | admin 登录 |
+| 07-07 | `frontend/web/src/views/admin/AdminLogs.vue` | — | admin 日志 |
+| 07-07 | `frontend/web/src/views/admin/AdminRagReview.vue` | — | RAG 审核页 |
+| 07-08 | `browser-extension/src/fillEngine.js` | 13296B | 插件填充 |
+| 07-08 | `frontend/web/src/api/transfer.js` | — | transfer API |
+| 07-08 | `frontend/web/src/components/HtexLogo.vue` | — | logo |
+| 07-08 | `frontend/web/src/components/TravelPlanner.vue` | — | 行程规划 |
+| 07-08 | `frontend/web/src/composables/useMaterialWizard.js` | 48354B | **W72 wizard** |
+| 07-08 | `frontend/web/src/data/ds160FieldMap.test.js` | — | DS-160 映射测试 |
+| 07-08 | `frontend/web/src/data/ds160When.js` | — | DS-160 条件 |
+| 07-08 | `frontend/web/src/data/ds160When.test.js` | — | DS-160 条件测试 |
+| 07-08 | `frontend/web/src/views/Documents.vue` | — | 文档页 |
+| 07-08 | `frontend/web/src/views/MaterialWizard.vue` | 124515B | **W72 wizard 主页** |
+| 07-08 | `frontend/web/src/views/OrderNew.vue` | — | 新建订单 |
+| 07-08 | `frontend/web/src/views/Profile.vue` | — | profile |
+| 07-08 | `frontend/web/src/views/Transfer.vue` | — | transfer 页 |
+| 07-08 | `frontend/web/src/views/admin/AdminOrderDetail.vue` | — | admin 订单详情 |
+| 07-08 | `frontend/web/src/views/admin/AdminRoles.vue` | — | admin 角色 |
+| 07-08 | `frontend/web/tests/e2e/admin-permissions.spec.js` | — | admin E2E |
+| 07-09 | `browser-extension/popup.js` | — | 插件弹窗 |
+| 07-09 | `browser-extension/src/background.js` | — | 插件后台 |
+| 07-09 | `browser-extension/src/content-ds160.js` | 13502B | DS-160 内容脚本 |
+| 07-09 | `browser-extension/src/mapping.js` | 78150B | **W69 插件映射** |
+| 07-09 | `frontend/web/src/__tests__/Login.google.test.ts` | 4736B | **W68 登录 ts 测试** |
+| 07-09 | `frontend/web/src/__tests__/api/auth.test.ts` | 2878B | **W68 auth ts 测试** |
+| 07-09 | `frontend/web/src/api/admin.js` | 66000B | admin API |
+| 07-09 | `frontend/web/src/api/ds160.js` | 2137B | **W69 DS-160 API** |
+| 07-09 | `frontend/web/src/components/QrUploadModal.vue` | 12463B | **W74 扫码 modal** |
+| 07-09 | `frontend/web/src/components/UploadItemCard.vue` | 34524B | **W72 上传卡(getUserMedia + camera phase)** |
+| 07-09 | `frontend/web/src/data/ds160Enums.js` | 9024B | **W69 DS-160 枚举(新建)** |
+| 07-09 | `frontend/web/src/data/ds160FieldMap.js` | 23126B | **W69 DS-160 字段映射** |
+| 07-09 | `frontend/web/src/router/admin.js` | — | admin 路由 |
+| 07-09 | `frontend/web/src/router/index.js` | — | 路由总 |
+| 07-09 | `frontend/web/src/stores/admin.js` | — | admin store |
+| 07-09 | `frontend/web/src/views/OrderDetail.vue` | 47951B | **W70 订单详情加删除** |
+| 07-09 | `frontend/web/src/views/admin/AdminDashboard.vue` | 33308B | **W73 admin dashboard** |
+| 07-09 | `frontend/web/src/views/admin/AdminLayout.vue` | — | admin 布局 |
+| 07-09 | `frontend/web/src/views/admin/AdminUsers.vue` | — | admin 用户管理 |
+| 07-09 | `frontend/web/tests/e2e/google-login.spec.js` | 4667B | **W68 登录 E2E** |
+| 07-09 | `scripts/_add_ds160_keys.py` | — | 加 DS-160 i18n key |
+
+### X.1.3 i18n JSON
+
+| 日期 | 文件 | 大小 | 备注 |
+|---|---|---|---|
+| 07-09 | `frontend/shared/i18n/zh-CN.json` | 112960B | 含 camera 按钮、delete draft 等新 key |
+| 07-09 | `frontend/shared/i18n/en.json` | 116918B | (同上) |
+| 07-09 | `frontend/shared/i18n/vi.json` | 119752B | (同上) |
+| 07-09 | `frontend/shared/i18n/id.json` | 108029B | (同上) |
+
+**已验证的关键 key**: `wizard.scan_camera = 拍照扫描`, `wizard.camera_capture = 拍摄`, `order_list.action_delete = 删除草稿`(W72+W70 真的写进了 4 国 JSON)。
+
+---
+
+## X.2 W68 ~ W74 详细技术细节（按文件证据）
+
+### X.2.1 W68 — Google OAuth 登录链路
+
+**完成度**: 代码 100%,**只缺真实 client_id**
+
+**改动清单**:
+- `backend/requirements.txt` + `google-auth>=2.28.0`
+- `backend/tests/test_auth_google.py`(10683B, docstring 列了 6 大覆盖: happy new-user / happy returning / email link / invalid token / not configured / disabled user)
+- `backend/app/services/auth_service.py` 加 `verify_google_token()` + user upsert
+- `backend/app/api/v2/auth.py` 加 `/auth/google` 端点
+- `frontend/web/src/views/Login.vue` + `Register.vue` 加 G 按钮 + Google Identity Services 脚本(`GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''; googleEnabled = !!GOOGLE_CLIENT_ID`)
+- `frontend/web/src/__tests__/Login.google.test.ts`(4736B) + `api/auth.test.ts`(2878B)
+- `frontend/web/tests/e2e/google-login.spec.js`(4667B)
+- `.env.example` 应加 `VITE_GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_ID`(**待核查**——没在 modified list 里看到这两个文件改动,可能漏了)
+
+**待办**:
+1. 申请 OAuth Client ID: https://console.cloud.google.com/apis/credentials → Web application + Authorized JS origins 加 `http://localhost:5173` + 生产域名
+2. 填到 `backend/.env` + `frontend/web/.env`
+3. **重启两个服务**(后端非守护 — 见 X.5.2)
+4. 跑 `pytest backend/tests/test_auth_google.py -v`(目前 10 个 case 结构齐)
+
+### X.2.2 W69 — DS-160 枚举 + mapping valueMap 全覆盖
+
+**完成度**: 数据文件写完 + mapping 改完 + 插件副本改完。**测试未跑**(`tests/unit/test_ds160.py` 18880B 存在但未确认绿)。
+
+**改动清单**:
+- `frontend/web/src/data/ds160Enums.js`(9024B 新建): 200+ 国家 ISO 枚举(AF → AL → …),头部注释明确"5 个国家字段没 valueMap,靠子串匹配,现在补齐完整枚举"
+- `frontend/web/src/data/ds160FieldMap.js`(23126B 改): 5 个之前无 valueMap 的 select 字段补齐(birthCountry / nationality / country / issueCountry / employerCountry)+ 1 个漏的 spouse.nationality
+- `browser-extension/src/mapping.js`(78150B 改): 顶部注释"自动生成 — 不要手改。从 frontend/web/src/data/ds160FieldMap.js 重新 build",VERSION = "2026.2"
+- `browser-extension/src/content-ds160.js`(13502B)+ `popup.js` + `background.js` 都改了
+- `frontend/web/src/api/ds160.js`(2137B 新建)+ `backend/app/api/v2/ds160.py`(14158B) + `core/ds160.py`(22044B)
+- `backend/alembic/versions/0019_ds160.py`(迁移) + `scripts/migrate_ds160_code_fields.py`
+- `backend/tests/api/test_ds160_api.py`(17510B) + `tests/unit/test_ds160.py`(18880B)
+- `scripts/_add_ds160_keys.py`(把 DS-160 key 注入 i18n)
+
+**p1 已知未做**:
+- DS-160 国家列表偶尔会调整(加新独立国家)
+- CHINA 在 DS-160 里有 CHINA / CHINA-MAINLAND / HONG KONG SAR 等多个选项,插件按 Htex profile.passport.issueCountry 选最接近的
+
+### X.2.3 W70 — 删除草稿订单
+
+**完成度**: 后端 + 前端 + i18n + 测试都改了。**业务规则**: 草稿 = status==created(包含 UI "草稿"+"待提交"两个标签),material 软删,order 行物理删,audit 留痕(用户 session_id + order_no + action='order.delete_draft')
+
+**改动清单(代码已实证)**:
+- `backend/app/services/order_service.py` 加 `delete_draft(self, *, user_id: int, order_no: str) -> Dict[str, Any]`,docstring "Hard-delete a draft order + soft-delete its associated materials"+ `5. record_audit(action='order.delete_draft', ...)`
+- `backend/app/api/v2/orders.py` 路由 `@router.delete(...)`, `response_model=ApiResponse[DeleteDraftResponse]`, `async def delete_draft_order(...)`,注释 "Hard-delete a draft order + soft-delete its materials."
+- 新增 `DeleteDraftResponse` schema
+- `frontend/web/src/views/Orders.vue` 加按钮: `>🗑 {{ t('order_list.action_delete') || '删除草稿' }}</button>`(**注意**:`t()` 找不到 key 时 fallback '删除草稿' 中文 — **i18n 隐患**)
+- `frontend/web/src/views/OrderDetail.vue`(47951B) 大改
+- `frontend/web/src/api/orders.js`: `// ============== DELETE /api/v2/orders/{order_no} (W67 删除草稿) ==============`(**注释里写的是 W67 应该是 W70, tag 不一致**)
+- `tests/integration/test_orders.py` 加测试
+
+**i18n 隐患排查**:
+- 4 国 i18n JSON 都有 `order_list.action_delete` 吗? 截至本次写文档没验证——之前 session `mvs_94a8120f` 在 memory 里有写 "改 bug 前先 grep 函数实际定义位置"。**新 session 必须先 grep 4 国 JSON 确认有这个 key,fallback 是死证据**。
+
+### X.2.4 W71 — Diagnose Rules v2 重构
+
+**完成度**: 整目录写完 8 文件 3038 行,**测试有了但未跑报告**。
+
+**目录结构(实证)**:
+```
+backend/app/services/diagnose_rules/
+  __init__.py        141 行  — 入口 _BASE_SCORE=40, _SCHENGEN_INSURANCE_CAP=50
+  _types.py           19 行  — Factor dataclass
+  _base.py           104 行  — 基础 6 字段
+  _age.py             33 行  — 年龄因子
+  _solo_female.py     46 行  — 单身女性
+  us.py              101 行  — 🇺🇸 美国专项(国内约束力 25-40 单身 214b)
+  gb.py              103 行  — 🇬🇧 英国
+  au.py              103 行  — 🇦🇺 澳洲
+  schengen.py        124 行  — 申根 26 国共用(含保险硬封顶)
+```
+
+**关键约束**:
+- 基础分 60 → 40(`__init__.py:26 _BASE_SCORE = 40`)
+- 申根保险未购 → 总分封顶 50(`__init__.py:28 _SCHENGEN_INSURANCE_CAP = 50`)
+- 申根 26 国共用 `schengen.py`
+- 调用方: `backend/app/services/visa_diagnoser.py` 改过
+- `backend/app/api/v2/diagnose.py` 改过
+- 测试: `tests/integration/test_diagnose_w58.py`(行数 24624B 量级)
+
+**未做**:
+- 跑 `pytest tests/integration/test_diagnose_w58.py -v` 确认 24 个 case 是否全绿
+- 测试结果数字(之前 session 报告"🇺🇸 51-79 / 🇬🇧 50-88 / 🇦🇺 52-78 / 🇫🇷 17-100")—— 新 session 建议重测
+
+### X.2.5 W72 — 前端 UX 微调集群
+
+**完成度**: 文件全改了。**用户感知到**: 材料向导提示更友好 / 日期 placeholder 一致 / locale-aware 货币等。
+
+**改动清单**:
+- `MaterialWizard.vue`(124515B)+ `useMaterialWizard.js`(48354B): onNext toast error + describeNextBlockedReason + 缓存 issue 翻译
+- `UploadItemCard.vue`(34524B):**关键**——phase 状态机 `idle | camera | uploading`, 拍照按钮 phase=camera → `await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })`,拍照/cancel/重试按钮齐全
+- `AppInput.vue`:`<input type="date">` placeholder 统一 `YYYY-MM-DD`
+- `LocaleDateInput.vue`:locale-aware 已选值显示(美式 `Jul 7, 2026` / 中国式 `2026年7月7日`)
+- `AuthExpiredBanner.vue` + `DnaCheckbox.vue`:微调
+- 4 国 i18n JSON: `wizard.scan_camera = 拍照扫描`(zh-CN 在内),en/vi/id 翻译齐
+- `i18n/index.js` + `App.vue`:i18n init 调整
+
+**`UploadItemCard.vue` 真有拍照能力**——之前 session 提的"加拍照"实际上**已经在 7/7 这块写完了**。用户当前要"mobile 浏览器原生相机直接扫 → 上传"理论上能跑,但实际卡在: 1) 浏览器是否弹权限; 2) 拍照后的 EXIF 旋转; 3) materials-wizard 路由触发点。
+
+### X.2.6 W73 — 后端 admin 修复
+
+**完成度**: 代码全改。
+
+**实证改动**:
+- `admin_service.py`(107873B):新增方法注释 `"""返回 (order_count, material_count) — 两个独立 COUNT 查询并行执行。"""` + line `W63: 列表里直接给 order_count / material_count,免得前端详情抽屉没数。`(行号注释,**说明这块其实是 W63 + W73 又改**)
+- `admin_dashboard_service.py`(19362B):delta 改 None 不假装 100%(出处 session `mvs_94a8120f`)
+- `schemas/admin.py`(28763B):改 `Optional[float]` 给 delta 字段
+- `order_service.py`(41846B):从 destination 取价(`UPDATE visa_destinations SET visa_fee_usd=18500`)
+- `frontend/web/src/views/admin/AdminDashboard.vue`(33308B):前端 `DeltaPct` 组件 + `--new` CSS
+
+**未做**:
+- 注册 409 错误码映射(同邮箱 vs 同用户名)——前端可能没接具体文案,**待新 session 验证 `Register.vue` + `api/auth.js`**
+
+### X.2.7 W74 — 我的申请下拉菜单
+
+**状态**: ❌ **无代码改动**
+
+**只有 sqlite session_messages 记录**: 用户提了"按申请人 1/2/3/4/5 + 我的订单信息",agent 给框架没落地。
+
+**新 session 第一件事应该是问**: 用户是否要这块、要哪种分类法、要不要做。
+
+---
+
+## X.3 系统 / 工具 / 现状(交接必看)
+
+### X.3.1 git 工作树状态
+- `git log -1` → `eab1e6c 2026-07-02 chore: .gitignore 补 .vite/ + untrack playwright-report 报告`(最后 commit)
+- 7/3 ~ 7/9 这一周**150+ 源文件改动,全部 working tree,无 git add**
+- **建议新 session 第一件事**: 按 W68 ~ W73 拆 6 个 commit 提了
+- ⚠️ **注意**: `.git/config` 里路径写死 `/Users/apple/Desktop/签证项目`(无"副本")—— git 命令需要先 cd 到路径,worktree 配置略乱
+
+### X.3.2 后端进程
+- 当前 pid 15964 在监听 8000,`nohup` 启的,**无守护**
+- 临时账号 `qa@htex.local` / `QaTest1234!`(session 创建,login 200 验证)
+- 之前的 `test_user_1` 重启时事务回滚丢,**永远别指望这类账号**
+- **建议**: 加 systemd / launchd / pm2 守护,跑 `seed_demo_users.py` 重建 demo1 / demo2
+
+### X.3.3 CI 状态(早安汇报 7/9 报)
+- ✅ Vue E2E Tests(208 spec)- success
+- ❌ Build & Test - failure
+- ❌ CI - failure
+- 具体哪个 step 红没拉。**新 session 第一件事**:`gh pr checks` 或 `gh run view <id>` 拉详情
+
+### X.3.4 cron 脚本路径错(每日触发)
+- 早安 / 版本日志 cron 命令里写 `/Users/apple/Desktop/签证项目`,**实际不存在**
+- 正确路径:`/Users/apple/Desktop/签证项目_副本`
+- 7/2 后**每天**跑都先报 `fatal: not a git repository` 然后 agent fallback
+- session `mvs_1f411263` 已经汇报,**没人改**
+
+### X.3.5 CHANGELOG 落后
+- 最新条目停在 2026-07-07("无新提交")
+- 7/8 / 7/9 一堆未 commit 工作可以写——**新 session 第一件事**:补 6 个 W68-W73 条目
+
+---
+
+## X.4 交接 Checklist（新 session 第一天）
+
+```
+□ 1. 跑 git status 看一眼实际 working tree 范围(应该 150+ 文件 modified)
+□ 2. 按 W68-W73 拆 6 个 commit 提了
+□ 3. 拉 CI 失败日志（gh run view）
+□ 4. 修 cron 路径(/Users/apple/Desktop/签证项目 → 签证项目_副本)
+□ 5. 加后端守护进程(systemd / launchd / pm2 选一)
+□ 6. 跑 seed_demo_users.py 重建 demo1/demo2
+□ 7. 跑 W70 测试 + W71 测试,确认绿
+□ 8. 验证 UploadItemCard.vue 的 camera phase 在 materials-wizard 路由能直接触发(目前是 modal 形式)
+□ 9. 申请 Google OAuth client_id,填到 backend/.env + frontend/web/.env,重启服务
+□ 10. 验证 W72 describeNextBlockedReason 4 国 + i18n.orders.action_delete 4 国 key 真的存在(grep JSON)
+□ 11. 问用户 W74 我的申请下拉菜单要不要做
+□ 12. CHANGELOG 补 6 个 W 条目
+□ 13. 跟用户确认:特朗普研报 W75 是独立作业,不进签证项目仓库,可以删
+□ 14. 跟用户确认:之前 cron "试用 industry-research-report 技能" session(`mvs_2ac12ac5`,aborted 状态)为啥 abort
+```
+
+---
+
+## X.5 关键数字更新
+
+| 指标 | 上一版（W67） | 本版（7/9 20:15）| 备注 |
+|---|---|---|---|
+| git commits（签证项目）| 78+ | **78+**（自 7/2 后 0 commit）| `git log -1` = `eab1e6c 2026-07-02` |
+| working tree 改动文件数 | — | **~150** | `find -newer .git/config -mtime -8` 过滤后 |
+| 完成未 commit W | — | **W68 / W69 / W70 / W71 / W72 / W73** | 6 件,有文件证据 |
+| 框架设计未落地 W | — | **W74** | 1 件,无代码 |
+| 独立作业产出 | — | **W75 特朗普研报 22 页** | `~/Desktop/作业_副本/`,不进签证项目仓库 |
+| 当前后端 pid | — | 15964 | nohup 启,无守护 |
+| 临时测试账号 | — | `qa@htex.local` / `QaTest1234!` | session 内创建 |
+| Diagnose Rules 行数 | — | 3038 (8 文件)| W71 |
+| 拍照/扫码能力 | — | 已实现(`getUserMedia` in UploadItemCard) | 当前 session 待路由打通 |
+
+---
+
+**生成时间**: 2026-07-09 20:15 (Asia/Shanghai)
+**生成者**: Mavis (root session `mvs_efa993cb`)
+**修订**: 第一版按 sqlite session 流水账铺开,用户当场打回"很多 session 都是历史的"。第二版(本版)改用 `find -newer` 文件证据 + grep 实际代码来组织,只列落地代码的 W。
+**数据真源**: 
+- sqlite `sessions` / `session_messages`(`mavis` schema)
+- `find /Users/apple/Desktop/签证项目_副本 -newer .git/config -mtime -8` 过滤 dist/build/playwright-report/test-results
+- `git log` / `git show HEAD` 确认最后 commit `eab1e6c 2026-07-02`
+- grep 关键代码片段确认 W68-W73 真实落地

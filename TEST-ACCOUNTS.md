@@ -1,6 +1,8 @@
 # Htex Test Accounts & Demo Guide
 
-> 2026-06-25 整理 — 给 Htex 团队 / 客户 / 投资人演示用
+> 2026-07-07 更新 — 8 位密码 + 银行流水 sample + 修正登录入口描述
+>
+> 给 Htex 团队 / 客户 / 投资人演示用。所有密码均为 **8 位**,符合生产密码策略(`password_min_length=8` + 字母+数字)。
 
 ## 一、Web 入口
 
@@ -10,7 +12,7 @@
 | **后端 API** | http://127.0.0.1:8000 | FastAPI,Swagger 在 `/docs` |
 | **后端 Health** | http://127.0.0.1:8000/health | `{"status":"ok","db_ok":true,"version":"0.1.0"}` |
 | **AI 拒签诊断** | http://127.0.0.1:5173/materials/diagnose | 直接进诊断页(需先登录) |
-| **管理后台** | http://127.0.0.1:5173/admin/login | `admin / admin123` |
+| **管理后台** | http://127.0.0.1:5173/admin/login | `admin / HtexAd@26` |
 
 > ⚠️ **这些 URL 是本地 dev 环境**,生产环境需要替换。
 
@@ -20,16 +22,40 @@
 
 | Email(也可用 username) | 密码 | 用途 | 说明 |
 |---|---|---|---|
-| `demo138001380001@htex.app` (or `demo_user_138001380001`) | `123456` | 主测试账号 | 全新用户,无订单 |
-| `demo138001380002@htex.app` (or `demo_user_138001380002`) | `123456` | 有 1 个待提交订单 | 演示"待提交"状态流 |
-| `demo138001380003@htex.app` (or `demo_user_138001380003`) | `123456` | 有完整申请 | 演示"审核中 / 通过"状态流 |
+| `demo138001380001@htex.app` (or `demo_user_138001380001`) | `Htex@2026` | 主测试账号 | 全新用户,无订单 |
+| `demo138001380002@htex.app` (or `demo_user_138001380002`) | `Htex@2026` | 有 1 个待提交订单 | 演示"待提交"状态流 |
+| `demo138001380003@htex.app` (or `demo_user_138001380003`) | `Htex@2026` | 有完整申请 | 演示"审核中 / 通过"状态流 |
 
-- **登录方式**(W26 起改为 email/username): `POST /api/v2/auth/login` body `{"account":"<email or username>","password":"<pwd>"}`
-- **历史手机号登录已废弃** — 早期版本(TEST-ACCOUNTS v1)用的手机号 + `HtexDemo2026` 不再可用,seed script 2026-06-26 已迁移到 email/username + `123456`
+### 登录方式(W26 起,只支持 email / username)
+
+```bash
+POST /api/v2/auth/login
+{
+  "account": "demo138001380001@htex.app",   # ← email 或 username 二选一
+  "password": "Htex@2026"
+}
+```
+
+> ⚠️ **历史手机号登录已废弃** — 早期版本(TEST-ACCOUNTS v1 / DEMO-ACCOUNT.md)用的
+> `13800138000x + 123456 / demo1234` 不再可用。`POST /api/v2/auth/login` 现在只接受
+> email 或 username 作为 `account` 字段。手机号不能直接登(后端 `_get_user_by_account`
+> 只走 email/username 两条分支,见 `backend/app/services/auth_service.py:40-80`)。
+>
+> 旧文档 `DEMO-ACCOUNT.md` 已标记为 **deprecated**,请以本文档为准。
+
 - **JWT 有效期**: 2 小时(刷新 token 7 天)
 
-> 重置 demo: `.venv/bin/python scripts/seed_demo_data.py --reset --user-count 3` — 重置后会自动给 demo phone users 补 email/username 字段(本文件反映这一行为)
-> 如果重置后仍登录失败,执行 `UPDATE users SET email=CONCAT('demo', phone, '@htex.app'), username=CONCAT('demo_user_', phone) WHERE phone IS NOT NULL AND email IS NULL;`
+### 重置 demo 数据
+
+```bash
+cd /Users/apple/Desktop/签证项目_副本/backend
+.venv/bin/python scripts/seed_demo_data.py --reset --user-count 3
+# 想要 admin 密码也写进 .env,加 --apply-admin-password
+.venv/bin/python scripts/seed_demo_data.py --reset --user-count 3 --apply-admin-password
+```
+
+`--reset` 会清掉旧 demo 用户(`username LIKE 'demo_user_%'`),`--apply-admin-password`
+会把 `ADMIN_PASSWORD_SECRET=HtexAd@26` 写入 `backend/.env`(idempotent)。
 
 ---
 
@@ -37,7 +63,15 @@
 
 | 用户名 | 密码 | URL | 权限 |
 |---|---|---|---|
-| `admin` | `admin123` | http://127.0.0.1:5173/admin/login | 查看所有用户、订单、审计日志 |
+| `admin` | `HtexAd@26` | http://127.0.0.1:5173/admin/login | 查看所有用户、订单、审计日志 |
+
+**注意 admin 密码跟用户密码区分**:
+
+- 用户密码 `Htex@2026` — 给 3 个普通用户用
+- admin 密码 `HtexAd@26` — 给 admin 后台用(避免运营/客服拿用户密码也能登 admin)
+
+**env 同步**: admin 密码在 `backend/.env` 的 `ADMIN_PASSWORD_SECRET` 字段。
+seed 脚本 `--apply-admin-password` 会自动写入并覆盖旧值。
 
 ---
 
@@ -55,6 +89,21 @@
 | `06_id_card_cn.png` | 中国居民身份证正面 | **测试功能2: 身份证分类** |
 | `07_photo_white.png` | 白底 2 寸签证照片 | **测试功能2: 签证照分类** |
 | `08_ds160_form.png` | DS-160 申请表 | **测试功能2: 申请表分类 + OCR** |
+| **`09_bank_statement_zh.jpg`** | **中文银行流水(扫描版)** | **测试功能3: 银行流水识别 + 分类** |
+| **`10_bank_statement_en.pdf`** | **英文银行流水(PDF 版)** | **海外签证官递签用样本 / 验证 PDF 上传路径** |
+
+### 银行流水 sample 说明(W47c+ 新增)
+
+- `09_bank_statement_zh.jpg`:ICBC 个人账户,6 个月(2025-12-01 → 2026-05-31),
+  88 笔交易,期初余额 CNY 78,432.50 → 期末 96,215.80。视觉上扫描风(浅噪点 +
+  纸张米色),方便测试 `bank_statement_parser.py` 的中文 OCR + 余额链校验。
+- `10_bank_statement_en.pdf`:英文 formal 版本,带 summary(inflow / outflow /
+  net / avg monthly balance),给海外签证官递签做样式参考。
+
+**生成器**: `scripts/gen_bank_statement_sample.py`(标准库 + PIL + reportlab,无
+网络依赖,可重复运行)。所有数据合成(账户号、姓名、对方账户),仅用于 demo。
+
+---
 
 ### 国家封面图 (Destinations)
 
@@ -75,7 +124,8 @@
 ### Step 1: 登录
 
 1. 打开 http://127.0.0.1:5173
-2. 手机号 `138001380001` / 密码 `HtexDemo2026` 登录
+2. 邮箱 `demo138001380001@htex.app` / 密码 `Htex@2026` 登录
+3. 或者带 `?demo=1` 参数:`http://127.0.0.1:5173/login?demo=1` 自动预填
 
 ### Step 2: 进入 /destinations 选国家
 
@@ -92,6 +142,8 @@
 | `06_id_card_cn.png` | **功能2: 自动分类** | 系统判断"这是 **身份证** (95%)",点"✓ 接受" |
 | `07_photo_white.png` | **功能2** | 系统判断"这是 **签证照片** (95%)" |
 | `08_ds160_form.png` | **功能2** | 系统判断"这是 **申请表** (95%)" |
+| **`09_bank_statement_zh.jpg`** | **功能3** | 系统判断"这是 **银行流水** (95%)" |
+| **`10_bank_statement_en.pdf`** | **功能3 + PDF 上传** | 验证 PDF MIME + OCR 路径 |
 
 ### Step 4: /materials/diagnose AI 拒签诊断
 
@@ -128,7 +180,8 @@
 
 ### Q1. 登录提示"密码最少 8 位"?
 
-所有 demo 账户密码都是 `HtexDemo2026` (12 字符),请检查是否输错或复制到空格。
+所有 demo 账户密码都是 **8 位**(`Htex@2026` / `HtexAd@26`),符合策略。请检查是否输错或
+复制到空格。
 
 ### Q2. 401 弹窗一直弹?
 
@@ -149,21 +202,35 @@ JWT 过期 (2h) 或 localStorage 里的 token 失效。重新登录即可。
 
 RAG 知识库没数据。当前只 seed 了 ID/VN 两国政策。US/FR/JP/KR 等主流国家的政策 RAG 文档需要补到 `app/services/rag/curated_content`。
 
+### Q6. admin 登录报"账号或密码错误"?
+
+确认两件事:
+1. `backend/.env` 第 79 行 `ADMIN_PASSWORD_SECRET=HtexAd@26`(本地 dev 默认)
+2. 前端是否走了 mock: `VITE_MOCK=true` 时前端硬编码 `admin/HtexAd@26`,不走后端;
+   `VITE_MOCK=false` 时才打后端 `/api/v2/admin/login`
+
+如果改了 `ADMIN_PASSWORD_SECRET`,**重启后端**才会生效。
+
+### Q7. 用手机号登录返 2001?
+
+W26 后 `/api/v2/auth/login` 不再接受手机号作 account — 必须用 email 或 username。
+手机号目前是用户表里的旧字段,没参与登录 lookup(详见 `auth_service._get_user_by_account`)。
+
 ---
 
 ## 八、如何扩展示例数据
 
 ```bash
-# 重置 demo 数据
-cd /Users/apple/Desktop/签证项目/backend
-.venv/bin/python scripts/seed_demo_data.py --reset --user-count 5
+# 重置 demo 数据(3 个普通用户 + admin env 密码)
+cd /Users/apple/Desktop/签证项目_副本/backend
+.venv/bin/python scripts/seed_demo_data.py --reset --user-count 3 --apply-admin-password
 
 # 重置 + 重建 RAG 知识库
 .venv/bin/python scripts/seed_rag_sources.py
 
 # 批量回填 OCR + 看准确率
-PYTHONPATH=backend /Users/apple/Desktop/签证项目/backend/.venv/bin/python \
-  /Users/apple/Desktop/签证项目/scripts/batch_ocr_and_bench.py --reset
+PYTHONPATH=backend /Users/apple/Desktop/签证项目_副本/backend/.venv/bin/python \
+  /Users/apple/Desktop/签证项目_副本/scripts/batch_ocr_and_bench.py --reset
 ```
 
 ---
@@ -174,4 +241,8 @@ PYTHONPATH=backend /Users/apple/Desktop/签证项目/backend/.venv/bin/python \
 - 前端改完没生效:刷新浏览器 (Vite HMR 通常自动)
 - 数据库锁了:`pkill -9 -f 'uvicorn app.main:app'` 然后 `cd backend && .venv/bin/python app/main.py` 重启
 
-> Last updated: 2026-06-25 by Mavis (Htex demo build session)
+---
+
+> Last updated: 2026-07-07 by Mavis (Htex demo build session)
+> 上次变更:统一 8 位密码(`Htex@2026` 用户 / `HtexAd@26` admin) + 新增银行流水 sample
+> (`09_bank_statement_zh.jpg` + `10_bank_statement_en.pdf`,生成器 `scripts/gen_bank_statement_sample.py`)。

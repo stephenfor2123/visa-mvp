@@ -1,23 +1,29 @@
-# 演示账号说明(DEMO-ACCOUNT)
+# 演示账号说明(DEMO-ACCOUNT) — **DEPRECATED 2026-07-07**
 
-> 本文档汇总项目所有演示账号(普通用户、admin、iOS)、登录入口、mock 支付测试流程与重置命令,方便开发 / QA / 演示人员快速使用。
+> ⚠️ **本文档已废弃**,W26 (2026-06-25) 之后已迁移到 email/username 登录体系,
+> **手机号 + 密码的登录方式不再可用**(`POST /api/v2/auth/login` 只走 email/username 两条分支)。
 >
-> 适用范围:`/Users/apple/Desktop/签证项目/`(签证 MVP,4 国支持)
+> **请改用 [`TEST-ACCOUNTS.md`](./TEST-ACCOUNTS.md)** — 当前生效的演示账号、密码、
+> 银行流水 sample 一站式文档。
 >
-> 最后更新:2026-06-15
+> 本文件保留下来是因为里面 iOS 入口、Mock 支付测试流程、API 重置命令等历史操作
+> 细节仍有参考价值,内容冻结不再更新。账号/密码表格已同步到 8 位新规则,供查阅比对。
 
----
+## 1. 账号总览(冻结 — 以 TEST-ACCOUNTS.md 为准)
 
-## 1. 账号总览
-
-| 角色 | 用户名 / 手机号 | 密码 / 验证码 | 登录入口 | 用途 |
+| 角色 | 登录账号 | 密码 | 登录入口 | 用途 |
 | --- | --- | --- | --- | --- |
-| 普通用户 1(无订单) | `+86 13800138000` | 密码 `demo1234` | Web `/login`、iOS Login 页 | 演示"刚注册完成,选国家 → 上传材料"完整流程 |
-| 普通用户 2(已下单) | `+86 13800138001` | 密码 `demo1234` | Web `/login`、iOS Login 页 | 演示"已申请,未支付"订单状态、取消订单 |
-| 普通用户 3(已支付) | `+86 13800138002` | 密码 `demo1234` | Web `/login`、iOS Login 页 | 演示"已支付,等待 RPA 出签"状态流转、订单详情 |
-| 管理员(admin) | 用户名 `admin` | 密码 `admin123` | Web `/admin/login`(`http://localhost:4173/admin/login`) | 用户管理 / 订单管理 / 国家配置 / 限流配置 / 审计日志 |
+| 普通用户 1(无订单) | `demo138001380001@htex.app` / `demo_user_138001380001` | `Htex@2026` | Web `/login`、iOS Login 页 | 演示"刚注册完成,选国家 → 上传材料"完整流程 |
+| 普通用户 2(已下单) | `demo138001380002@htex.app` / `demo_user_138001380002` | `Htex@2026` | Web `/login`、iOS Login 页 | 演示"已申请,未支付"订单状态、取消订单 |
+| 普通用户 3(已支付) | `demo138001380003@htex.app` / `demo_user_138001380003` | `Htex@2026` | Web `/login`、iOS Login 页 | 演示"已支付,等待 RPA 出签"状态流转、订单详情 |
+| 管理员(admin) | 用户名 `admin` | 密码 `HtexAd@26` | Web `/admin/login`(`http://localhost:5173/admin/login`) | 用户管理 / 订单管理 / 国家配置 / 限流配置 / 审计日志 |
 
-> **密码策略**:`PASSWORD_MIN_LENGTH=8`(`backend/.env.example` 第 24 行)。演示密码 `demo1234` 故意违反该策略(通过直接写库绕过 `AuthService.register` 校验),**仅供本地开发与演示使用**;admin 密码 `admin123` 满足策略。生产部署必须改用强密码。
+> **密码策略**:`PASSWORD_MIN_LENGTH=8`(`backend/.env.example` 第 24 行)。
+> 演示密码 `Htex@2026` / `HtexAd@26` 均为 8 位,**满足**该策略,不再像旧版 `demo1234`
+> 那样靠直接写库绕过校验。生产部署仍必须改用强密码,这两个仅用于本地开发与演示。
+>
+> **admin 密码来源**:`backend/.env` 第 79 行 `ADMIN_PASSWORD_SECRET=HtexAd@26`(生产
+> 必须改)。seed 脚本 `--apply-admin-password` 会自动写入并覆盖旧值。
 
 ---
 

@@ -1,5 +1,37 @@
 # Htex 版本日志
 
+## 2026年07月07日（今日）
+
+**版本**: `w32-checkpoint-atlys-feature-12-geab1e6c`
+
+**今日提交**: 无新提交
+
+---
+
+## 2026年07月04日（今日）
+
+**版本**: `w32-checkpoint-atlys-feature-12-geab1e6c`
+
+**今日提交**: 无新提交
+
+---
+
+## 2026年07月03日（今日）
+
+**版本**: `w32-checkpoint-atlys-feature-12-geab1e6c`
+
+**今日提交**:
+- `eab1e6c` chore: .gitignore 补 .vite/ + untrack playwright-report 报告
+- `c9fe977` test(e2e): W47c 登录墙后移 e2e + 过程截图 + sample 模板图
+- `bd9cf46` feat(rag): W46 RAG 多语言化 + visa_diagnoser i18n 化
+- `70f4320` feat(header): W47c mega menu 跨宽度 + user-menu 整合 + TravelPlanner 兜底
+- `e0c68da` feat(materials): W48 MaterialWizard 重做 + 3 类材料双语样本预览
+- `3b3c926` chore(worklog): 记录 W47c/W48 全量回归 + 3 个 i18n bug 修复
+- `f275915` fix(i18n): visa_diagnoser 命名空间错位 + 4 语言补 9 个 key
+- `12196ca` test(commit-3): 补 W40 测试文件 + W47 英文镜像契约锁定 + W25 rebrand 残留 typo
+- `3ef46b8` feat(materials): W36-W45 材料收集向导重做 + LLM 行程单 + 多项 bug 修复
+- `c455b41` feat(header): W41 头部「我的申请」下拉显示申请人姓名 + 一键导入
+
 ---
 
 ## 2026年07月02日
