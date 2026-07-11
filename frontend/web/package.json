@@ -14,16 +14,20 @@
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:ui": "playwright test --ui",
-    "test:e2e:screenshot": "playwright test --reporter=list"
+    "test:e2e:screenshot": "playwright test --reporter=list",
+    "check:ext-mapping": "node scripts/build-extension-mapping.mjs --check",
+    "build:ext-mapping": "node scripts/build-extension-mapping.mjs"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.1",
+    "@stripe/stripe-js": "^5.10.0",
     "axios": "^1.7.2",
     "element-plus": "^2.7.5",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
     "pinia": "^2.1.7",
+    "qrcode": "^1.5.4",
     "vue": "^3.4.27",
     "vue-i18n": "^9.13.1",
     "vue-router": "^4.3.2"

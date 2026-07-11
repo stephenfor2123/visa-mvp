@@ -26,7 +26,7 @@
             maxlength="120"
             input-id="login-account"
             data-testid="login-account"
-            @blur="errors.account = validateAccount(account) || ''"
+            @blur="errors.account = validateAccount(account) ? t(validateAccount(account)) : ''"
           />
 
           <AppInput
@@ -36,11 +36,12 @@
             type="password"
             required
             :error="errors.password"
-            :hint="pwdStrengthHint"
             maxlength="64"
             input-id="login-password"
+            autocomplete="current-password"
+            password-toggle
             data-testid="login-password"
-            @blur="errors.password = validatePassword(password) || ''"
+            @blur="errors.password = validatePassword(password) ? t(validatePassword(password)) : ''"
           />
 
           <div class="auth-row">
@@ -78,7 +79,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
 import AppCard from '@/components/AppCard.vue'
@@ -108,17 +109,6 @@ const googleEnabled = !!GOOGLE_CLIENT_ID
 const googleBtnRef = ref(null)
 const googleLoading = ref(false)
 
-const pwdStrengthHint = computed(() => {
-  const v = password.value
-  if (!v) return ''
-  if (v.length < 6) return t('errors.pwd_too_short')
-  if (v.length >= 12 && /[A-Z]/.test(v) && /\d/.test(v) && /[^A-Za-z0-9]/.test(v)) {
-    return t('validation.pwd_strength_strong')
-  }
-  if (v.length >= 8 && /\d/.test(v)) return t('validation.pwd_strength_mid')
-  return t('validation.pwd_strength_weak')
-})
-
 function validatePwd() {
   errors.account = validateAccount(account.value) ? t(validateAccount(account.value)) : ''
   errors.password = validatePassword(password.value) ? t(validatePassword(password.value)) : ''
@@ -134,7 +124,14 @@ async function onPwdSubmit() {
     const redirect = route.query.redirect || '/destinations'
     router.push(redirect)
   } catch (e) {
-    toast.error(e?.message || t('toast.login_fail'))
+    // 不暴露 axios 默认的 "Request failed with status code XXX",换成中文友好提示
+    const status = e?.response?.status
+    let msg = e?.message || t('toast.login_fail')
+    if (status === 401) msg = t('login.error_invalid_credentials') || '账号或密码错误'
+    else if (status === 429) msg = t('login.error_too_many') || '尝试次数过多,请稍后再试'
+    else if (status >= 500) msg = t('login.error_server') || '服务暂时不可用,请稍后重试'
+    else if (msg && /^Request failed with status code \d+/.test(msg)) msg = t('login.error_invalid_credentials') || '账号或密码错误'
+    toast.error(msg)
   } finally {
     submitting.value = false
   }
@@ -185,7 +182,7 @@ onMounted(() => {
   auth.hydrate()
   if (route.query.demo !== undefined) {
     account.value = 'demo138001380001@htex.app'
-    password.value = '123456'
+    password.value = 'Htex@2026'
   }
   if (googleEnabled) {
     if (window.google) {

@@ -6,6 +6,7 @@
       <div class="page-header">
         <h1 class="page-title">{{ t('agreement.page_title') }}</h1>
         <p class="page-sub">{{ t('agreement.page_subtitle') }}</p>
+        <p class="agreement-disclaimer">{{ t('agreement.beta_disclaimer') }}</p>
       </div>
 
       <!-- Tabs -->
@@ -52,6 +53,11 @@
           <h3 class="agreement-section__title">{{ t('agreement.terms_section_4_title') }}</h3>
           <p class="agreement-section__body">{{ t('agreement.terms_section_4_body') }}</p>
         </section>
+
+        <section class="agreement-section">
+          <h3 class="agreement-section__title">{{ t('agreement.terms_section_5_title') }}</h3>
+          <p class="agreement-section__body">{{ t('agreement.terms_section_5_body') }}</p>
+        </section>
       </div>
 
       <!-- Privacy -->
@@ -78,6 +84,21 @@
           <h3 class="agreement-section__title">{{ t('agreement.privacy_section_4_title') }}</h3>
           <p class="agreement-section__body">{{ t('agreement.privacy_section_4_body') }}</p>
         </section>
+
+        <section class="agreement-section">
+          <h3 class="agreement-section__title">{{ t('agreement.privacy_section_5_title') }}</h3>
+          <p class="agreement-section__body">{{ t('agreement.privacy_section_5_body') }}</p>
+        </section>
+
+        <section class="agreement-section">
+          <h3 class="agreement-section__title">{{ t('agreement.privacy_section_6_title') }}</h3>
+          <p class="agreement-section__body">{{ t('agreement.privacy_section_6_body') }}</p>
+        </section>
+
+        <section class="agreement-section">
+          <h3 class="agreement-section__title">{{ t('agreement.privacy_section_7_title') }}</h3>
+          <p class="agreement-section__body">{{ t('agreement.privacy_section_7_body', { email: t('agreement.privacy_contact_email') }) }}</p>
+        </section>
       </div>
     </main>
   </div>
@@ -88,13 +109,21 @@
 // 当前 4 语种 (zh-CN / en / id / vi) agreement / privacy 文本均为 AI 自译, 未经法务 review
 // review checklist + 状态矩阵见 /Users/apple/Desktop/签证项目/docs/LEGAL_REVIEW_NOTES.md
 // review 通过后请删除本注释
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import LangSwitch from '@/components/LangSwitch.vue'
 import AppHeader from '@/components/AppHeader.vue'
 
 const { t } = useI18n()
-const activeTab = ref('terms')
+const route = useRoute()
+const activeTab = ref(route.query.tab === 'privacy' ? 'privacy' : 'terms')
+
+onMounted(() => {
+  if (route.query.tab === 'privacy' || route.query.tab === 'terms') {
+    activeTab.value = route.query.tab
+  }
+})
 </script>
 
 <style scoped>
@@ -120,6 +149,16 @@ const activeTab = ref('terms')
   font-size: 14px;
   color: #6b7280;
   margin: 0;
+}
+.agreement-disclaimer {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #92400e;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
 }
 .tab-nav {
   display: flex;

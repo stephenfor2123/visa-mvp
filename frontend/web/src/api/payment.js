@@ -211,6 +211,23 @@ export async function retryPayment(orderId) {
   })
 }
 
+// ============== GET /api/v2/payment/config ==============
+export async function getPaymentConfig() {
+  try {
+    const resp = await http.get('/v2/payment/config', { __silent: true })
+    if (resp?.code && resp.code !== '1000') {
+      const e = new Error(resp.message || 'get payment config failed')
+      e.code = resp.code
+      throw e
+    }
+    return resp
+  } catch (err) {
+    const e = new Error(err?.response?.data?.message || err.message || 'get payment config failed')
+    e.code = err?.response?.data?.code || err?.code
+    throw e
+  }
+}
+
 // ============== POST /api/v2/payment/create ==============
 // 真实后端 create 端点: 调 create_payment 后端路由
 export async function createPayment({ order_no, amount_cents, currency = 'USD', method = 'mock_wechat', desc = '' }) {

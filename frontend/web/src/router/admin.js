@@ -52,50 +52,36 @@ export const adminRoutes = [
         path: 'roles',
         name: 'AdminRoles',
         component: () => import('@/views/admin/AdminRoles.vue'),
-        meta: { title: 'admin.roles.page_title', adminAuth: true, permission: 'users' }
+        meta: { title: 'admin.roles.page_title', adminAuth: true, permission: 'role.manage' }
       },
       {
         path: 'users',
         name: 'AdminUsers',
         component: () => import('@/views/admin/AdminUsers.vue'),
-        meta: { title: 'admin.users.page_title', adminAuth: true, permission: 'users' }
+        meta: { title: 'admin.users.page_title', adminAuth: true, permission: 'user.view' }
       },
-      {
-        path: 'c-users',
-        name: 'AdminCUsers',
-        component: () => import('@/views/admin/AdminCUsers.vue'),
-        meta: { title: 'admin.c_users.page_title', adminAuth: true, permission: 'users' }
-      },
-      {
-        path: 'c-users/:id(\\d+)',
-        name: 'AdminCUserDetail',
-        component: () => import('@/views/admin/AdminCUserDetail.vue'),
-        meta: { title: 'admin.c_users.detail_title', adminAuth: true, permission: 'users' }
-      },
+      // W63: /admin/c-users 路由删除 — 后端 /v2/admin/c-users 接口不存在,
+      // 老用户管理已迁移到 /admin/users。如果需要回退可从 git history 拿
       {
         path: 'countries',
         name: 'AdminCountries',
         component: () => import('@/views/admin/AdminCountries.vue'),
-        meta: { title: 'admin.countries.page_title', adminAuth: true, permission: 'countries' }
+        meta: { title: 'admin.countries.page_title', adminAuth: true, permission: 'country.manage' }
       },
       {
         path: 'ai-rules',
         name: 'AdminAiRules',
         component: () => import('@/views/admin/AdminAiRules.vue'),
-        meta: { title: 'admin.ai_rules.page_title', adminAuth: true, permission: 'settings' }
+        meta: { title: 'admin.ai_rules.page_title', adminAuth: true, permission: 'ai_rules.edit' }
       },
       {
-        path: 'rpa-strategy',
-        name: 'AdminRpaStrategy',
-        component: () => import('@/views/admin/AdminRpaStrategy.vue'),
-        meta: { title: 'admin.rpa_strategy.page_title', adminAuth: true, permission: 'settings' }
+        // W62 — RAG 内容审核 (singleton 页面,详情用 modal 形式)
+        path: 'rag-review',
+        name: 'AdminRagReview',
+        component: () => import('@/views/admin/AdminRagReview.vue'),
+        meta: { title: 'admin.rag_review.page_title', adminAuth: true, permission: 'rag.review' }
       },
-      {
-        path: 'i18n',
-        name: 'AdminI18n',
-        component: () => import('@/views/admin/AdminI18n.vue'),
-        meta: { title: 'admin.i18n.page_title', adminAuth: true, permission: 'settings' }
-      },
+      // W63: RPA 策略 / i18n 路由下线 (MVP 不在 scope, 历史保留 git)
       {
         path: 'logs',
         name: 'AdminLogs',

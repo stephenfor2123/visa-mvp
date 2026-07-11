@@ -84,7 +84,8 @@
 import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
-import { uploadMaterial, getMaterialTypeOptions, getAcceptTypes, getMaxBytes } from '@/api/materials'
+import { processMaterial, getMaterialTypeOptions, getAcceptTypes, getMaxBytes } from '@/api/materials'
+import { addLocalDocument, fileToDataUrl } from '@/utils/localPrivacyStorage'
 import { useToast } from '@/composables/useToast'
 
 const { t } = useI18n()
@@ -184,8 +185,17 @@ async function autoCapture() {
     capturedDataUrl.value = dataUrl
     // Convert dataURL to Blob then wrap as File for upload
     const file = dataUrlToFile(dataUrl, `${materialType.value}_${Date.now()}.jpg`)
-    const mat = await uploadMaterial(file, materialType.value, route.query.orderNo || null)
-    toast.success(`✓ ${mat.file_name} uploaded`)
+    await processMaterial(file, materialType.value)
+    const thumbUrl = await fileToDataUrl(file)
+    addLocalDocument({
+      localId: `scan_${Date.now()}`,
+      file_name: file.name,
+      file_size: file.size,
+      material_type: materialType.value,
+      thumbUrl,
+      fileUrl: thumbUrl,
+    })
+    toast.success(`✓ ${file.name}`)
     // Show user 800ms preview then return to list
     autoCaptureTimer = setTimeout(() => {
       goBack()

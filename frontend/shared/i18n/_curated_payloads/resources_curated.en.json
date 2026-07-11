@@ -1,0 +1,719 @@
+{
+  "verified_at_label": "Verified {date}",
+  "cta_open_source": "Open official source",
+  "back_to_resources": "Back to Resources",
+  "empty_country": "No curated content for this country yet.",
+  "try_other_country": "Try another country above or use the RAG search box on the Resources page.",
+  "country": {
+    "us": "United States",
+    "gb": "United Kingdom",
+    "au": "Australia",
+    "schengen": "Schengen (EU)"
+  },
+  "wiki": {
+    "title": "Visa Wiki",
+    "intro": "Country-by-country guide — what each visa is, who it is for, and what you can do with it. Sourced from official immigration authorities.",
+    "us": {
+      "title": "United States B1/B2 Visitor Visa — Wiki",
+      "intro": "Visitor visas (B-1 / B-2 / combined B1/B2) are nonimmigrant visas for persons entering the United States temporarily for business (B-1), tourism (B-2), or a combination.",
+      "_verified_at": "2026-07-03",
+      "items": [
+        {
+          "title": "What is the B-1 / B-2 visa?",
+          "desc": "B-1 is for business activities (meetings, conferences, short-term training, negotiating contracts). B-2 is for tourism, visiting family / friends, or medical treatment. Most applicants apply for the combined B1/B2 visa.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
+          "notes": "This is the bread-and-butter US short-stay visa: tourism/visiting family = B-2, business/meetings = B-1, and most people apply for them combined as B1/B2 on a single document."
+        },
+        {
+          "title": "Who needs a U.S. visa vs. who can use ESTA / Visa Waiver",
+          "desc": "Most European passport holders and around 40 other countries can travel visa-free under the Visa Waiver Program (ESTA required, $40 USD since 2025-09-30). People's Republic of China passport holders must apply for a B1/B2 visa and complete EVUS enrollment.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visa-waiver-program.html",
+          "notes": "About 40 countries get visa-free entry to the US (VWP). Mainland Chinese passports are not on that list—you must apply for B1/B2, and even with a 10-year visa you still need EVUS enrollment."
+        },
+        {
+          "title": "B1/B2 validity vs. length of stay",
+          "desc": "Validity (visa expiration) can be up to 10 years multiple-entry for PRC nationals. Length of stay at each entry is decided by CBP at the port — typically up to 6 months. The two concepts are independent.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
+          "notes": "Visa validity is \"how long the visa itself is good for\"; it is NOT how long you can stay. A 10-year visa does not mean 10 years of continuous stay—CBP at the border decides your actual stay length each time."
+        },
+        {
+          "title": "EVUS for PRC passport holders",
+          "desc": "PRC citizens with a 10-year B1/B2 (or B-1 / B-2) visa must enroll in EVUS at www.EVUS.gov before each trip. Fee $30 USD per enrollment since 2025-09-30. Valid 2 years, until passport expires, or until visa expires — whichever comes first.",
+          "url": "https://www.cbp.gov/travel/international-visitors/electronic-visa-update-system",
+          "notes": "EVUS is a free-but-mandatory enrollment for Chinese B1/B2 holders: refresh every 2 years, or whenever you get a new passport or new visa. Forgetting to update will get you denied boarding."
+        },
+        {
+          "title": "Section 214(b) — most common refusal ground",
+          "desc": "Section 214(b) (immigrant intent presumption) is the single most common refusal ground. If refused, the applicant may reapply at any time if circumstances have changed — there is no mandatory wait period.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/visa-denials.html",
+          "notes": "214(b) is the law that says \"prove you will come back.\" It is not an accusation of lying—it is the default assumption, and you counter it with strong ties (job, family, property). No mandatory wait after a 214(b) refusal; reapply with stronger evidence any time."
+        },
+        {
+          "title": "Section 222(g) — overstay auto-voids the visa",
+          "desc": "Under INA 222(g), if you overstay your authorized period of stay, your visa is automatically voided. Any multiple-entry visa voided for overstay is not valid for any future travel to the United States.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/visa-denials.html",
+          "notes": "222(g) is the harshest overstay consequence: even if you leave, that visa is permanently voided, and it hurts future applications. Always double-check your I-94 authorized stay before flying home."
+        }
+      ]
+    },
+    "gb": {
+      "title": "United Kingdom Standard Visitor Visa — Wiki",
+      "intro": "Standard Visitor is the main short-term route for tourism, business visits, short study (up to 6 months) and permitted paid engagements. Length of stay is usually up to 6 months; longer stays require a different route.",
+      "items": [
+        {
+          "title": "What is a Standard Visitor visa?",
+          "desc": "A single short-term route that covers tourism, visiting family or friends, business meetings and short study (≤6 months). Permitted paid engagements are allowed for visiting experts.",
+          "url": "https://www.gov.uk/standard-visitor",
+          "notes": "This is the only UK short-stay visa you need. Tourism, family visits, business, and short study (< 6 months) all use Standard Visitor. GOV.UK is the single source of truth; travel-agent \"express\" services are not real."
+        },
+        {
+          "title": "Who needs a UK visa vs. who can use ETA / visa-free",
+          "desc": "Most EU and Gulf-passport travellers can use the Electronic Travel Authorisation (ETA) for short stays. PRC passport holders must apply for a Standard Visitor visa. Always check the official tool before booking.",
+          "url": "https://www.gov.uk/check-uk-visa",
+          "notes": "ETA is not a visa—it is an electronic authorization for visa-exempt nationals (similar to US ESTA). Mainland Chinese passports are not eligible for ETA; you must apply for the full visa."
+        },
+        {
+          "title": "Standard Visitor vs. Visitor in Transit",
+          "desc": "Standard Visitor allows entry and activities in the UK. Visitor in Transit (£74.50) is for passengers passing through UK border control on the way to another country.",
+          "url": "https://www.gov.uk/transit-visa/visitor-in-transit-visa",
+          "notes": "Visitor in Transit is for passengers who stay airside at a UK airport and immediately connect elsewhere. If you want to step out into London, you need Standard Visitor."
+        },
+        {
+          "title": "Long-term Standard Visitor (2 / 5 / 10 years)",
+          "desc": "You may apply for a 2-year, 5-year, or 10-year long-term Standard Visitor visa at higher cost. Each visit can still be up to 6 months. The long-term visa does not let you live in the UK.",
+          "url": "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa",
+          "notes": "A 10-year visa sounds great, but it costs more, requires more documents, and each entry still only allows 6 months. A standard 6-month visa is the right choice for most travelers."
+        },
+        {
+          "title": "Tuberculosis (TB) test for China-resident applicants",
+          "desc": "Applicants who have lived in China (or other listed countries) for 6+ months must take a TB test at a UK Home-Office-approved clinic and submit the certificate. Tests from non-approved clinics are not accepted.",
+          "url": "https://www.gov.uk/tb-test-visa",
+          "notes": "TB tests are only valid from UK Home Office-designated hospitals. There are 19 designated hospitals across mainland China; expect 1-2 weeks to book an appointment."
+        },
+        {
+          "title": "Permitted activities — what you can and cannot do",
+          "desc": "Allowed: tourism, family visits, transit, business meetings, paid engagements as an expert, study ≤6 months. Not allowed: paid/unpaid work in the UK (unless a permitted paid engagement), benefits, frequent successive visits to live in the UK.",
+          "url": "https://www.gov.uk/standard-visitor",
+          "notes": "Working in the UK on a Standard Visitor is strictly prohibited (except permitted paid engagement). Violation = deportation + 10-year entry ban. Even remote work for a Chinese company counts."
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    },
+    "au": {
+      "title": "Australia Visitor Visa (Subclass 600) — Wiki",
+      "intro": "Visitor visa (Subclass 600) is the main short-term route for tourism, visiting family/friends or short business visits. Five streams exist (Tourist, Business Visitor, Sponsored Family, Approved Destination, Frequent Traveller) — choose the stream that matches your purpose.",
+      "items": [
+        {
+          "title": "What is Subclass 600 (Visitor visa)?",
+          "desc": "A short-term temporary visa allowing tourism, family visits, business visits and short-term non-work activities. Length of stay is set by the case officer; common grants are 3, 6 or 12 months per visit.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "Subclass 600 is Australia's catch-all short-stay visa. 5 streams cover different purposes: tourism (Tourist), business (Business Visitor), family-sponsored visits (Sponsored Family)."
+        },
+        {
+          "title": "Who can apply onshore vs. offshore",
+          "desc": "Most Chinese applicants apply offshore through ImmiAccount. Onshore extension is possible only in specific scenarios and is becoming more restrictive for visa-hopping.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "The rule is apply offshore, but onshore renewal is possible if your current visa is about to expire. \"Visa hopping\" (renewing 600 right before it expires) is getting harder to get approved."
+        },
+        {
+          "title": "Validity vs. length of stay",
+          "desc": "Subclass 600 is usually issued as multiple-entry 1 year for tourist stream. Each visit can be up to 3 months (sometimes 6 or 12 months by case-officer decision).",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "A 3-month stay per entry is the default; officers can extend to 6 or 12 months at their discretion, but stating \"I want to stay 6 months\" does not guarantee it."
+        },
+        {
+          "title": "Sponsored Family Stream",
+          "desc": "Australian citizen or PR relatives (parents, adult children) can sponsor their relatives. Sponsored applicants may get longer validity (18 months to 5 years depending on case).",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600/sponsored-family-stream",
+          "notes": "Sponsorship from an Australian citizen or PR relative (parents, adult children) can extend validity to 18 months–5 years. More paperwork, longer visa in return."
+        },
+        {
+          "title": "'No Further Stay' clause (since 2025-03-21)",
+          "desc": "Since 21 March 2025, all Subclass 600 grant letters contain a No Further Stay condition — holders cannot apply for most other visas while in Australia. Plan accordingly.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "No Further Stay means you cannot apply for any other visa from inside Australia (some exceptions). If you want to switch to a student/work visa, you must leave and reapply offshore."
+        },
+        {
+          "title": "Frequent Traveller Stream (high-volume travellers)",
+          "desc": "A separate stream for citizens of certain countries (including PRC) who travel frequently. Validity up to 10 years; each stay up to 3 months. Higher fee.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600/frequent-traveller-stream",
+          "notes": "Frequent Traveller is reserved for specific passport holders (mainland China, SE Asia etc.) with 10-year validity. Regular applicants should use the Tourist Stream."
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    },
+    "schengen": {
+      "title": "Schengen Short-Stay Visa (Type C) — Wiki",
+      "intro": "Type C short-stay visas are issued by the 29 Schengen states under a single EU Visa Code. The 180/90 rule: in any 180-day period, you may stay up to 90 days in the whole Schengen area combined.",
+      "items": [
+        {
+          "title": "What is a Schengen Short-Stay (Type C) visa?",
+          "desc": "A uniform short-stay visa valid for up to 90 days in any 180-day period across the whole Schengen area. Issued by the Schengen state you visit first or stay longest in.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "Schengen is \"one visa, 26 countries.\" Apply at the main destination country (or first entry country) — you cannot just pick whichever consulate is closest."
+        },
+        {
+          "title": "29 Schengen states and uniform rules",
+          "desc": "Schengen includes 25 EU member states (Austria, Belgium, Czech Republic, Denmark, Estonia, Finland, France, Germany, Greece, Hungary, Italy, Latvia, Lithuania, Luxembourg, Malta, Netherlands, Poland, Portugal, Slovakia, Slovenia, Spain, Sweden) plus 4 non-EU members (Iceland, Liechtenstein, Norway, Switzerland).",
+          "url": "https://home-affairs.ec.europa.eu/policies/schengen-borders-visa-policy_en",
+          "notes": "29 Schengen countries ≠ 27 EU countries. Iceland, Norway, Switzerland are Schengen but not EU. Short-stay rules apply uniformly across all of them."
+        },
+        {
+          "title": "180 / 90 rule — how it is calculated",
+          "desc": "The 90-day count is rolling: every day you spend in the Schengen area uses one of 90 days in the preceding 180 days. Calculation uses an online calculator or stamps on your passport.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "180/90 is a rolling 180-day window, not a calendar year. The EU has an official online calculator—search \"schengen calculator\" to check your remaining days."
+        },
+        {
+          "title": "Where to apply — main-destination rule",
+          "desc": "Only one country → that country. Multiple countries → main destination (longest stay). Equal stays → first point of entry.",
+          "url": "https://www.schengenvisainfo.com/where-to-apply/",
+          "notes": "In a multi-country trip, \"main destination\" = the country where you spend the most nights, not the one you visit most often. Get this wrong and your application gets sent back."
+        },
+        {
+          "title": "Biometrics and VIS",
+          "desc": "First application captures 10 fingerprints; valid across all Schengen states for 59 months. Subsequent applications within 59 months generally skip biometrics.",
+          "url": "https://www.consilium.europa.eu/en/press/press-releases/2024/05/14/schengen-visa/",
+          "notes": "VIS is the Schengen fingerprint database. Within 59 months, you usually skip the fingerprinting step on repeat applications—unless you change passport or nationality."
+        },
+        {
+          "title": "EES and ETIAS — what is coming",
+          "desc": "EES (Entry/Exit System) replaces passport stamps with electronic logs. ETIAS (similar to US ESTA) introduces a pre-travel authorisation for visa-exempt travellers. These do not replace the visa requirement itself.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32018R1240",
+          "notes": "EES (electronic entry/exit) and ETIAS (electronic authorization) are rolling out 2025-2026. EES affects all non-EU travelers; ETIAS is for visa-exempt nationals. Mainland Chinese passports still need a full Schengen visa."
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    }
+  },
+  "policy": {
+    "title": "Policy Lookup",
+    "intro": "Direct links to the latest official statutes, regulations, fee tables, and visa bulletins. Updated against the source on the date shown.",
+    "us": {
+      "title": "United States — Policy & Statutes",
+      "intro": "Authoritative pages from the U.S. Department of State (travel.state.gov) and CBP for B1/B2 visa policy.",
+      "_verified_at": "2026-07-03",
+      "items": [
+        {
+          "title": "Application (MRV) fee — $185 USD",
+          "desc": "The non-refundable Machine-Readable Visa application fee for B1/B2 is $185 USD, paid before the interview for most nationalities. Issuance fee varies by nationality (see reciprocity tables).",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/fees/fees-reciprocity-tables.html",
+          "notes": "$185 is the non-refundable application fee. Wait until you're ready for the interview—don't pay, then realize your documents aren't in order."
+        },
+        {
+          "title": "Fees and Reciprocity Tables",
+          "desc": "Official list of visa fees by visa class and nationality. Includes any bilateral issuance fees. Updated by the U.S. Department of State.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/fees/fees-reciprocity-tables.html",
+          "notes": "The Reciprocity Tables determine any additional \"issuance fee\" by nationality. Mainland Chinese B1/B2 = $0 issuance fee, but other nationalities can pay hundreds of dollars extra."
+        },
+        {
+          "title": "Visa Bulletin",
+          "desc": "Monthly publication by the Department of State. For B1/B2 (nonimmigrant) there is no waiting list — but the bulletin is the reference for all visa classes and is updated each month.",
+          "url": "https://travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin.html",
+          "notes": "B1/B2 has no waiting list. The Visa Bulletin matters for H-1B / green cards. As a B1/B2 applicant, just check the bulletin once for any major changes."
+        },
+        {
+          "title": "Designated Nonimmigrant Visa Locations (effective 2025-09-06)",
+          "desc": "Effective 2025-09-06, all nonimmigrant visa applicants should schedule their interview at the U.S. embassy or consulate in their country of residence or nationality.",
+          "url": "https://travel.state.gov/content/travel/en/News/visas-news/adjudicating-niv-applicants-in-their-country-of-residence.html",
+          "notes": "New rule: you must interview in your country of residence (or nationality). Don't book a US visa interview while you're traveling abroad—it will be rejected."
+        },
+        {
+          "title": "U.S. Visas News — current operations",
+          "desc": "Live status of visa services, including temporary pauses, expanded screening, and policy changes. Updated frequently.",
+          "url": "https://travel.state.gov/content/travel/en/News/visas-news.html",
+          "notes": "Visas News is the operations bulletin: strikes, system maintenance, policy tweaks all post here first. Check it the week before your interview."
+        },
+        {
+          "title": "Visa Photo Requirements",
+          "desc": "Composition, size, background, and digital-image specifications for the photo uploaded during the DS-160 application.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/photos.html",
+          "notes": "Photo specs are strict: 51x51mm white background, taken within 6 months, no glasses. Go to a professional visa photo shop—don't use your phone selfie."
+        }
+      ]
+    },
+    "gb": {
+      "title": "United Kingdom — Policy & Statutes",
+      "intro": "Authoritative pages from GOV.UK for Standard Visitor policy.",
+      "items": [
+        {
+          "title": "Application fee — £135 GBP (6-month visa)",
+          "desc": "£135 for the standard short-term (up to 6 months) Standard Visitor visa. £74.50 for Visitor in Transit. Long-term variants are higher.",
+          "url": "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa",
+          "notes": "£135 is the price for the standard 6-month visa. Long-term variants (2/5/10 years) cost £400/£771/£964. 10-year makes sense only if you actually travel frequently."
+        },
+        {
+          "title": "Apply online through GOV.UK",
+          "desc": "All UK visa applications must be submitted online via GOV.UK. There is no visa-on-arrival option for Chinese nationals.",
+          "url": "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa",
+          "notes": "You must apply online via GOV.UK. VFS centres only handle biometrics (fingerprints) and document submission—the application itself lives in the GOV.UK system."
+        },
+        {
+          "title": "Check if you need a UK visa",
+          "desc": "Official tool to check whether your nationality needs a visa, an ETA, or neither.",
+          "url": "https://www.gov.uk/check-uk-visa",
+          "notes": "The \"check if you need a UK visa\" tool answers \"do I need a visa at all?\" in 5 seconds—select your nationality and destination."
+        },
+        {
+          "title": "Eligibility requirements",
+          "desc": "You must be able to show you will leave the UK at end of visit, support yourself and dependants, fund the return/onward journey, and not live in the UK through frequent or successive visits.",
+          "url": "https://www.gov.uk/standard-visitor",
+          "notes": "\"Will leave the UK\" is the central test: job, family, property—any one or two can convince the officer. Submitting nothing = high refusal risk."
+        },
+        {
+          "title": "Electronic Travel Authorisation (ETA)",
+          "desc": "From 2025 onward several non-visa nationalities must obtain an ETA before travel to the UK. Currently eligible nationalities include EU, Gulf and several Asia-Pacific passports.",
+          "url": "https://www.gov.uk/guidance/apply-for-an-electronic-travel-authorisation-eta",
+          "notes": "ETA is a 2025 rule: EU, Gulf, Singapore, Korea, and dozens of other passports need an ETA before flying to the UK. Mainland Chinese passports still need a full visa."
+        },
+        {
+          "title": "Visa decision and appeals",
+          "desc": "If refused, you may apply for an Administrative Review within 28 days of the refusal date if the visa was decided under Appendix Visitor.",
+          "url": "https://www.gov.uk/immigration-asylum-tribunal",
+          "notes": "Administrative Review is NOT a re-evaluation of your case—it checks whether the officer made a procedural error. 28-day window, rarely successful. Most people just reapply with better documents."
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    },
+    "au": {
+      "title": "Australia — Policy & Statutes",
+      "intro": "Authoritative pages from Australia's Department of Home Affairs for Visitor visa 600.",
+      "items": [
+        {
+          "title": "Application fee — from AUD $190 (Tourist Stream)",
+          "desc": "From offshore applications the Tourist Stream base fee is AUD $190. Other streams (Sponsored Family, Approved Destination) may differ. Check the Visa Pricing Table before paying.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "AUD $190 is the base Tourist Stream fee for offshore applications. There's also an ImmiAccount service fee on top. Use a credit card—the exchange rate is friendlier."
+        },
+        {
+          "title": "Apply via ImmiAccount",
+          "desc": "All Subclass 600 applications are submitted through the online ImmiAccount portal. There is no paper application for Chinese passports.",
+          "url": "https://online.immi.gov.au/",
+          "notes": "ImmiAccount is the official Department of Home Affairs portal for everything: uploads, payment, status. Use a stable email—avoid 163/qq etc. that tend to send notifications to spam."
+        },
+        {
+          "title": "Visa pricing table (latest)",
+          "desc": "Official pricing by visa subclass and stream. Updated by the Department of Home Affairs. Use this as the authoritative source for current fees.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600/fees",
+          "notes": "Fee schedules get updated. Check the latest 1 month before departure to avoid \"outdated price\" surprises."
+        },
+        {
+          "title": "Global visa processing times",
+          "desc": "Live processing-time estimates for each visa subclass, broken down by stream and applicant location.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-processing-times",
+          "notes": "Processing time varies by region and season. Mainland Chinese 600 applications typically take 2-6 weeks; peak (summer/Chinese New Year) can stretch to 8 weeks."
+        },
+        {
+          "title": "Health and character requirements",
+          "desc": "Most short-term visitor visas require passing health examinations and character checks; long stays or certain nationalities may require additional panel-physician visits.",
+          "url": "https://immi.homeaffairs.gov.au/help-support/meeting-our-requirements/health",
+          "notes": "Health exams aren't always triggered. The officer decides based on your nationality, intended stay, and documents—then issues a medical referral letter if needed."
+        },
+        {
+          "title": "Visitor visa 600 news and policy changes",
+          "desc": "Live updates from the Department of Home Affairs — fee changes, eligibility changes, processing-time changes.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "Subclass 600 policy updates land on the Department's news page. The 2025-03-21 No Further Stay clause came from here."
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    },
+    "schengen": {
+      "title": "Schengen — Policy & Statutes",
+      "intro": "Authoritative sources from the European Commission and EU Council for Schengen visa policy.",
+      "items": [
+        {
+          "title": "Application fee — €90 EUR (adult)",
+          "desc": "From Commission Delegated Regulation (EU) 2024/1415, effective 2024-06-11: visa fee is €90 for adults and €45 for children 6–12 years. Children under 6 are free. External service providers (VFS, TLScontact) charge their own service fee on top.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32024R1415",
+          "notes": "€90 is the unified fee; children 6-12 pay €45, under 6 is free. VFS/TLScontact also charge a service fee (varies by country, €30-50)."
+        },
+        {
+          "title": "Visa Code — Council Regulation 810/2009",
+          "desc": "The Visa Code (Reg. (EC) 810/2009) is the core legal basis for Schengen short-stay visas. Amended by 2019/1155 (codification) and 2024/1415 (fee and processing changes).",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "Council Reg. 810/2009 is the \"constitution\" of Schengen visas. You can find the original via CELEX:32009R0810."
+        },
+        {
+          "title": "Travel medical insurance — €30,000 minimum",
+          "desc": "Medical insurance must cover at least €30,000 and be valid in all Schengen states for the entire stay. Must cover emergency hospitalisation, medical evacuation and repatriation of remains.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "€30,000 is the minimum. Buying €50,000 coverage costs only marginally more and gives you more headroom for claims. Must cover the entire trip + all Schengen countries."
+        },
+        {
+          "title": "Standard decision time — 15 calendar days",
+          "desc": "From admissibility, consulates decide within 15 calendar days. May extend to 30 days (and in exceptional cases 60 days).",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "15 calendar days is the legal maximum; in practice most decisions come in 5-10 working days. Peak season can stretch to 30 days."
+        },
+        {
+          "title": "Right to appeal a refusal",
+          "desc": "If refused, you receive a standard form citing the ground for refusal. You may appeal in the refusing member state within the deadline set by that state's national law (often 15 to 30 days).",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "You can appeal or reapply, but appeals rarely succeed. Better path: read the refusal letter, strengthen weak points (insurance, itinerary, funds), and reapply."
+        },
+        {
+          "title": "ETIAS for visa-exempt travellers (from 2025)",
+          "desc": "ETIAS will require visa-exempt travellers (US, UK and most other non-EU passports) to obtain pre-travel authorisation. €20 fee, valid 3 years or until passport expiry.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32018R1240",
+          "notes": "ETIAS is NOT a visa—it is an \"electronic visa waiver\" for visa-exempt nationals (like US ESTA). Mainland Chinese passports can't use it; you still need a full Schengen visa."
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    }
+  },
+  "templates": {
+    "title": "Document Templates",
+    "intro": "Ready-to-download templates for the supporting documents visa officers commonly ask for: employment letter, leave letter, bank statement explanation, etc.",
+    "us": {
+      "title": "United States B1/B2 — Supporting Document Templates",
+      "intro": "Common supporting documents at the U.S. visa interview. We provide templates; specific requirements vary by U.S. Embassy or Consulate.",
+      "_verified_at": "2026-07-03",
+      "items": [
+        {
+          "title": "Employment letter — English + bilingual",
+          "desc": "On company letterhead: position, salary, length of employment, approved leave, and signature. Most U.S. consulates accept bilingual Chinese/English versions.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
+          "notes": "The employment letter needs: company letterhead, position, salary, start date, approved leave, manager signature. Bilingual Chinese-English; the officer reads the English."
+        },
+        {
+          "title": "Bank statement — what officers look at",
+          "desc": "Recent 3-6 months of statements on bank letterhead, with consistent balance. We do not provide a downloadable statement — request one from your bank.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
+          "notes": "Officers focus on \"balance\" and \"regular salary deposits\", not the number of transactions. Print the last 6 months, avoid sudden large inflows/outflows."
+        },
+        {
+          "title": "Trip itinerary",
+          "desc": "Day-by-day plan with flights, hotel bookings, and points of interest. Should be consistent with the dates on your visa application. We provide a JSON / Excel template on the platform.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
+          "notes": "The itinerary must show every day's city, transport, and lodging—matching your flight/hotel bookings. Use Htex's \"Itinerary Generator\" for a free template."
+        },
+        {
+          "title": "DS-160 confirmation page",
+          "desc": "Print the confirmation page after submitting Form DS-160 online. Required at the interview along with your passport and photo.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/forms/ds-160-online-nonimmigrant-visa-application.html",
+          "notes": "DS-160 is the universal non-immigrant visa application form. After submission you get a confirmation page with a barcode—bring it to the interview. Fill online, not the offline PDF."
+        },
+        {
+          "title": "Travel insurance — not mandatory for B1/B2",
+          "desc": "Unlike Schengen, the United States does not require travel medical insurance for B1/B2 visa applicants. Coverage is strongly recommended for the trip.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
+          "notes": "B1/B2 doesn't legally require insurance, but bringing one shows \"I am a responsible traveler.\" $50,000-$100,000 coverage is plenty."
+        },
+        {
+          "title": "What NOT to bring",
+          "desc": "U.S. consulates explicitly state that invitation letters and Affidavits of Support are not required and are not used as factors in the decision. Bringing them does not improve your application.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
+          "notes": "Common mistakes: do NOT bring property certificates, vehicle registration, or household registry (officers don't care). DO bring old passports—they show travel history and help."
+        }
+      ]
+    },
+    "gb": {
+      "title": "United Kingdom Standard Visitor — Supporting Document Templates",
+      "intro": "Common supporting documents at the UK visa decision stage. Templates provided; specific requirements may vary by visa application centre.",
+      "items": [
+        {
+          "title": "Employment letter — English",
+          "desc": "On company letterhead: position, salary, length of employment, approved leave, and signature. UKVI accepts the UK-office-issued version or a Chinese-issued version with certified translation.",
+          "url": "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa",
+          "notes": "UK employment letter: fully in English, with position, salary, approved leave, manager signature + company stamp. UK officers are picky about Chinese-style certificate formatting."
+        },
+        {
+          "title": "Bank statements — what the officer looks at",
+          "desc": "Recent 3-6 months of statements showing consistent balance and regular inflow (salary). Print on bank letterhead with stamp.",
+          "url": "https://www.gov.uk/standard-visitor",
+          "notes": "UK officer looks for: last 6 months of statements, stable monthly balance > £50k (for 6-month-trip costs), clear salary labels."
+        },
+        {
+          "title": "Trip itinerary and accommodation bookings",
+          "desc": "Day-by-day plan with hotel reservations or host invitation and return-flight booking. Should be consistent with the application.",
+          "url": "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa",
+          "notes": "Hotel + flight bookings should be \"free cancellation\" reservations (booking.com / Trip.com free-cancel options). Pay only after the visa is approved."
+        },
+        {
+          "title": "Tuberculosis test certificate",
+          "desc": "Required for applicants resident in China for 6+ months. Issued only by UK Home Office approved clinics (a list of clinics is published on GOV.UK).",
+          "url": "https://www.gov.uk/tb-test-visa",
+          "notes": "TB certificates have a 6-month validity. If your visa processing takes 3 months, the certificate may expire—you'll need a re-test."
+        },
+        {
+          "title": "Travel insurance — not strictly required",
+          "desc": "Standard Visitor visa does not require travel insurance as a formal condition. It is strongly recommended — UK healthcare is not free for non-residents.",
+          "url": "https://www.gov.uk/standard-visitor",
+          "notes": "UK insurance isn't mandatory, but having one helps. Choose coverage that spans \"all UK + Schengen\" in case you add a side trip to Europe."
+        },
+        {
+          "title": "What NOT to bring",
+          "desc": "Unlike Schengen, the UK does not ask for a separate 'Invitation Letter'. Bring the host's invitation only if you cannot otherwise show accommodation.",
+          "url": "https://www.gov.uk/standard-visitor",
+          "notes": "Don't bring: property certificates, vehicle registration, large deposit photos (UK officers don't weigh these). DO bring: old passports, travel photos—these help."
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    },
+    "au": {
+      "title": "Australia Subclass 600 — Supporting Document Templates",
+      "intro": "Common supporting documents for a Subclass 600 application. Templates provided; specific requirements may vary.",
+      "items": [
+        {
+          "title": "ImmiAccount registration",
+          "desc": "Create a free ImmiAccount before starting. One account can hold multiple applications (useful for family groups).",
+          "url": "https://online.immi.gov.au/lusc/register",
+          "notes": "After registering ImmiAccount, all uploads go here. Sort your documents into clean folders before uploading; don't rename halfway through."
+        },
+        {
+          "title": "Travel history and identity",
+          "desc": "Scan your passport bio page, current Chinese ID, household registration (户口本) and any past visas / entry stamps. Combine multi-page household register into one PDF.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "Travel history: old passports, flight orders, travel photos. Australian officers are sensitive to \"is this person genuinely traveling?\"—stack the evidence."
+        },
+        {
+          "title": "Employment and financial evidence",
+          "desc": "Employer letter, recent payslips and 3–6 months of bank statements on bank letterhead. Property / vehicle titles are optional but help.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "Financials: employment letter + bank statements + property/vehicle certificates (supporting). Bring all three—missing one may trigger a request for more documents."
+        },
+        {
+          "title": "Travel itinerary",
+          "desc": "Day-by-day plan with bookings — for Subclass 600 the itinerary should clearly show the trip is genuine and temporary.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "The itinerary must list daily locations matching the application's stated purpose. If you say \"tourism\" but the itinerary is all business meetings, expect confusion."
+        },
+        {
+          "title": "Document translation guidance",
+          "desc": "Immi does not require certified translation for documents in English. Chinese documents may be uploaded as-is alongside English forms.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "Australia requires all non-English documents to be translated into English. Translations should include translator's signature, date, and credential statement. Notarized translation is the safest."
+        },
+        {
+          "title": "What NOT to submit",
+          "desc": "Avoid uploading: notarised invitation letters (rarely required), promotional photos, social-media screenshots. Upload what supports your genuine visitor profile.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "Skip: large wealth-management certificates (officers may question the source), full business licenses (unnecessary), household registry (Australia doesn't check this)."
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    },
+    "schengen": {
+      "title": "Schengen Short-Stay — Supporting Document Templates",
+      "intro": "Common supporting documents for a Schengen short-stay visa application. Templates provided; specific requirements may vary by consulate.",
+      "items": [
+        {
+          "title": "Travel medical insurance certificate",
+          "desc": "From an EU-approved insurer or recognised Chinese insurer. Coverage wording must explicitly state Schengen-wide coverage and the €30,000 minimum.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "Schengen insurance is the strictest: minimum €30,000 medical + emergency rescue, covering the entire trip + all Schengen countries. Taobao/Alipay have dedicated Schengen policies."
+        },
+        {
+          "title": "Employment letter (Chinese + German/French)",
+          "desc": "Company letterhead: position, salary, length of employment, approved leave, and signature. Some consulates accept bilingual, others require official translation.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "Employment letter must be bilingual: Chinese + German/French/Spanish, depending on the application country. Germany is especially strict—the company letterhead needs German translation."
+        },
+        {
+          "title": "Bank statements — what the officer looks at",
+          "desc": "Recent 3–6 months showing consistent balance and regular inflow (salary). Print on bank letterhead with stamp. Some consulates ask for a sealed statement from the bank.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "Schengen officer looks for: 6 months of statements, average daily balance covering €60-100/day (multiply by total trip days)."
+        },
+        {
+          "title": "Accommodation proof",
+          "desc": "Hotel bookings for the whole stay or a host's written confirmation + their ID/passport copy. Booking.com confirmations are normally accepted; free accommodation may require notarised attestation.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "Accommodation must cover the entire trip: hotel orders / Airbnb confirmations / friend invitation letter + their passport (for friend invites)."
+        },
+        {
+          "title": "Round-trip flight reservation",
+          "desc": "Confirmed return flight booking (not paid, just booked). Do not buy the ticket until the visa is granted.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "Return flight: book a \"refundable\" reservation first, pay after visa approval. Buying a real ticket before approval = high risk of losing money on refusal."
+        },
+        {
+          "title": "Schengen application form (uniform format)",
+          "desc": "The same form is used across all Schengen states. Available at VFS / TLScontact centres, embassies, and the EU 'Visa' page.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "The Schengen application form is a unified format. Fill online, then print, sign, and date. Typewritten is preferred over handwritten."
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    }
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "intro": "Real questions applicants ask before and after the interview — answered with citations from the official U.S. Department of State sources.",
+    "us": {
+      "title": "United States B1/B2 — Common Questions",
+      "intro": "Most-asked questions about the U.S. B1/B2 process — fees, refusal, EVUS, length of stay.",
+      "_verified_at": "2026-07-03",
+      "items": [
+        {
+          "title": "Do I need an invitation letter or Affidavit of Support?",
+          "desc": "No. The U.S. Department of State explicitly states that an invitation letter or Affidavit of Support is NOT needed and is NOT a factor in the decision. If you bring one, it is ignored.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
+          "notes": "No. B1/B2 is about YOUR intent to return, not about an inviter. Invitation letters are optional and rarely affect the decision."
+        },
+        {
+          "title": "How long is the wait for an interview?",
+          "desc": "Wait times vary by U.S. Embassy / Consulate and season. Check the official Global Visa Wait Times page before scheduling — some posts have a several-month backlog in summer.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/global-visa-wait-times.html",
+          "notes": "Off-season: 1-2 weeks. Peak (May-Aug / Chinese New Year): 4-8 weeks. Work backwards from your flight: book interview 4 weeks before departure."
+        },
+        {
+          "title": "Can I reapply after a 214(b) refusal?",
+          "desc": "Yes, at any time. There is no mandatory wait period. Reapply only when your circumstances have meaningfully changed (different job, family status, property, etc.) and you can present new evidence.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/visa-denials.html",
+          "notes": "Yes, and no waiting period. Add new evidence (new job / property / marriage) and reapply. Don't reapply without changes—you'll be refused for the same reason."
+        },
+        {
+          "title": "What happens if I overstay even by one day?",
+          "desc": "Under Section 222(g) of the INA, the visa of anyone who overstays is automatically voided. Future travel to the United States with that visa becomes impossible, even if it is still within the printed validity period.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/visa-denials.html",
+          "notes": "Even one day over = overstay. Consequence: automatic visa voidance (222(g)), and that voided visa is permanently unusable. Future applications are also affected."
+        },
+        {
+          "title": "Is travel insurance required?",
+          "desc": "Not required for B1/B2. It is strongly recommended because U.S. healthcare costs are very high. The Schengen requirement does not apply here.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
+          "notes": "Not required, but recommended. Accidents, emergency medical, emergency evacuation all cost money. $50k-$100k coverage, 2-3 week trip premium: ¥200-400."
+        },
+        {
+          "title": "How do I pay the MRV fee?",
+          "desc": "Payment method depends on the specific U.S. Embassy or Consulate. Most posts accept credit/debit card at the time of scheduling, some require bank transfer or in-person payment. The amount is $185 USD.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/fees/visafee/t-current-visa-mrv-fee.html",
+          "notes": "Online with credit card ($185 USD). Most major Chinese banks (CITIC, CMB, CCB) work. After payment you get a CGI number—use it to book the interview."
+        }
+      ]
+    },
+    "gb": {
+      "title": "United Kingdom Standard Visitor — Common Questions",
+      "intro": "Most-asked questions about the Standard Visitor visa — fees, processing, refusal.",
+      "items": [
+        {
+          "title": "How long does processing take?",
+          "desc": "Outside the UK, processing is normally 3 weeks from biometrics. Priority and super-priority services are available in many locations for additional fees.",
+          "url": "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa",
+          "notes": "Officially 3 weeks; in practice 2-4 weeks. Peak (summer) can stretch to 6 weeks. Start 2 months before departure."
+        },
+        {
+          "title": "Can I work or study on a Standard Visitor visa?",
+          "desc": "Short study up to 6 months is allowed. Paid or unpaid work is not, except for permitted paid engagements (a short list of expert activities).",
+          "url": "https://www.gov.uk/standard-visitor",
+          "notes": "Work: NO (except permitted paid engagement). Study: yes, but only short courses ≤ 6 months. Anything longer needs a Student Visa."
+        },
+        {
+          "title": "Do I need an invitation letter from the UK host?",
+          "desc": "No. GOV.UK does not require a formal invitation letter. You only need to show where you will stay (hotel booking or host's written confirmation).",
+          "url": "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa",
+          "notes": "Not mandatory, but a letter helps (clarifies purpose). Tourism / family visits can skip it."
+        },
+        {
+          "title": "What if my Standard Visitor visa is refused?",
+          "desc": "You may reapply at any time with stronger evidence, or apply for an Administrative Review within 28 days of the refusal if the decision was made under Appendix Visitor.",
+          "url": "https://www.gov.uk/immigration-asylum-tribunal",
+          "notes": "You can reapply—no waiting period. Read the refusal letter (usually: insufficient funds / weak ties to home country), strengthen the documents, and resubmit. High success rate."
+        },
+        {
+          "title": "Is tuberculosis (TB) testing mandatory?",
+          "desc": "Yes, if you have lived for 6+ months in a listed country including China within the last 12 months, before your visa application. Certificate from an approved clinic only.",
+          "url": "https://www.gov.uk/tb-test-visa",
+          "notes": "Yes, for applicants who have lived in China for ≥ 6 months. Residents of other countries have different rules—check by nationality."
+        },
+        {
+          "title": "How do I pay the visa fee?",
+          "desc": "Online via GOV.UK with a debit/credit card or online banking. Biometric collection is then booked at a UK Visa Application Centre (VAC).",
+          "url": "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa",
+          "notes": "Online via GOV.UK with Visa/Mastercard, £135 charged once. After payment, book a VFS centre appointment for biometrics."
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    },
+    "au": {
+      "title": "Australia Subclass 600 — Common Questions",
+      "intro": "Most-asked questions about the Australian Visitor visa — fees, refusal, processing.",
+      "items": [
+        {
+          "title": "How long does Subclass 600 processing take?",
+          "desc": "Most Tourist Stream applications are processed in 1–4 weeks when complete. Use Global Processing Times for the most recent estimate.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-processing-times",
+          "notes": "Most applications: 2-6 weeks. Check real-time status in ImmiAccount. Peak (Jul-Sep / Chinese New Year) can stretch to 8 weeks."
+        },
+        {
+          "title": "Can I switch to a student visa while holding 600?",
+          "desc": "No. Since 21 March 2025 all 600 grants include a No Further Stay condition. Apply for the student visa (Subclass 500) from outside Australia instead.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "No. The No Further Stay clause (effective 2025-03-21) prohibits switching to other visas while in Australia on a 600. You must leave and reapply offshore."
+        },
+        {
+          "title": "Can I get a 3-year or 5-year multiple-entry visa?",
+          "desc": "Some Sponsored Family Stream applicants and Frequent Traveller Stream applicants receive longer validity. Tourist Stream grants are typically 1 year for first-time applicants.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "Theoretically Tourist Stream maxes at 1 year per entry; in practice most get 3 months. For multi-year multi-entry, switch to Frequent Traveller Stream or Sponsored Family."
+        },
+        {
+          "title": "Can family members share one application?",
+          "desc": "No. Each applicant must be lodged as a separate application, even within one ImmiAccount. You may group them for review (Group processing) so the case officer considers files together.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "No, each person files a separate application. But you can manage multiple applicants in one ImmiAccount via a Family Group."
+        },
+        {
+          "title": "Do I need to do biometrics or a medical?",
+          "desc": "Most Tourist Stream applicants do not need biometrics. Stay of 3+ months in certain countries or for applicants aged 75+ may require medical examinations.",
+          "url": "https://immi.homeaffairs.gov.au/help-support/meeting-our-requirements/health",
+          "notes": "Fingerprints: required, at VFS centre. Health exam: officer's discretion—usually only for long stays or specific nationalities."
+        },
+        {
+          "title": "How do I pay the fee?",
+          "desc": "Online via ImmiAccount using credit card, PayPal, or BPAY (Australian bank accounts only). Service fee may apply for credit-card payments.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600/fees",
+          "notes": "Pay online in ImmiAccount via credit card (PayPal also works), from AUD $190."
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    },
+    "schengen": {
+      "title": "Schengen Short-Stay — Common Questions",
+      "intro": "Most-asked questions about the Schengen short-stay visa — fees, refusal, processing.",
+      "items": [
+        {
+          "title": "How long does Schengen processing take?",
+          "desc": "Standard 15 calendar days from admissibility; can extend to 30 or in some cases 60 days. Submit at least 15–30 days before travel; consulates may refuse earlier than 15 days.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "Legal max 15 calendar days; in practice 5-10 working days. Peak (Jun-Aug) can stretch to 30 days."
+        },
+        {
+          "title": "Do I need travel insurance?",
+          "desc": "Yes. Schengen requires €30,000 minimum coverage for the entire stay. Without it, your application is inadmissible.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "Yes, mandatory. Without insurance you will be refused. Minimum €30,000 medical + emergency rescue, covering the entire trip + all Schengen countries."
+        },
+        {
+          "title": "Can I visit multiple countries with one visa?",
+          "desc": "Yes. A Schengen visa issued by one state is valid across all 29 states (subject to the main-destination rule). You may split your stay across countries.",
+          "url": "https://home-affairs.ec.europa.eu/policies/schengen-borders-visa-policy_en",
+          "notes": "Yes, as long as you apply at the right country (main destination or first entry). One visa covers all Schengen countries."
+        },
+        {
+          "title": "What if my visa is refused?",
+          "desc": "You receive a standardised refusal form. You may appeal in the refusing country within the deadline set by that member state's law (often 15–30 days).",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "Appeals rarely succeed. Better path: read the refusal letter, strengthen weak points, and reapply. Common refusal reasons: insufficient insurance, vague itinerary, weak finances."
+        },
+        {
+          "title": "What is the 180/90 rule?",
+          "desc": "Maximum 90 days in any 180-day period across the whole Schengen area combined. After 90 days, you must leave; the 180 days is a rolling window.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "\"No more than 90 days in any rolling 180-day window\"—not a calendar year, a moving window. The EU has an official online calculator."
+        },
+        {
+          "title": "Are non-EU children subject to the same fee?",
+          "desc": "Children aged 6–12 pay €45. Children under 6 are free. Adult fee is €90. Some categories (researchers, students on official exchange) may be exempt.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32024R1415",
+          "notes": "Different. Children 6-12: €45. Under 6: free."
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    }
+  },
+  "disclaimer": "The following notes are Htex's supplementary commentary based on public sources, not the official positions of any immigration authority. Always defer to the official source.",
+  "notes_label": "Editor's note"
+}

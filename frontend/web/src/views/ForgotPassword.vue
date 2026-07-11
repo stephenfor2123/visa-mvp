@@ -1,4 +1,4 @@
-<!-- ForgotPassword.vue — 邮箱重置密码(去掉手机号+验证码) -->
+<!-- ForgotPassword.vue — 邮箱验证链接重置密码 -->
 <template>
   <div class="auth-page">
     <AppHeader scope="forgot-password" />
@@ -15,25 +15,24 @@
         </div>
       </AppCard>
 
-      <!-- Form -->
-      <AppCard v-else class="auth-card">
-        <h1 class="auth-title">{{ t('forgot.page_title') }}</h1>
-        <p class="auth-sub">{{ t('forgot.page_subtitle') }}</p>
+      <!-- Email sent (step 1 done) -->
+      <AppCard v-else-if="emailSent" class="auth-card">
+        <div class="success-panel">
+          <p class="success-panel__icon">📧</p>
+          <h2 class="success-panel__title">{{ t('forgot.email_sent_title') }}</h2>
+          <p class="success-panel__desc">{{ t('forgot.email_sent_desc') }}</p>
+          <AppButton variant="ghost" size="md" @click="$router.push('/login')">
+            {{ t('forgot.back_login') }}
+          </AppButton>
+        </div>
+      </AppCard>
 
-        <form class="auth-form" @submit.prevent="onSubmit" novalidate>
-          <!-- Email / Username -->
-          <AppInput
-            v-model="account"
-            :label="t('forgot.account_label')"
-            :placeholder="t('forgot.account_placeholder')"
-            maxlength="120"
-            required
-            :error="errors.account"
-            data-testid="forgot-account"
-            @blur="errors.account = validateAccount(account) || ''"
-          />
+      <!-- Step 2: set new password (token from email link) -->
+      <AppCard v-else-if="hasToken" class="auth-card">
+        <h1 class="auth-title">{{ t('forgot.set_pwd_title') }}</h1>
+        <p class="auth-sub">{{ t('forgot.set_pwd_subtitle') }}</p>
 
-          <!-- New Password -->
+        <form class="auth-form" @submit.prevent="onSubmitReset" novalidate>
           <AppInput
             v-model="newPwd"
             type="password"
@@ -42,11 +41,12 @@
             required
             :error="errors.newPwd"
             :hint="pwdHint"
+            autocomplete="new-password"
+            password-toggle
             data-testid="forgot-new-pwd"
-            @blur="errors.newPwd = validatePassword(newPwd) || ''"
+            @blur="errors.newPwd = validatePassword(newPwd) ? t(validatePassword(newPwd)) : ''"
           />
 
-          <!-- Confirm Password -->
           <AppInput
             v-model="confirmPwd"
             type="password"
@@ -54,11 +54,12 @@
             :placeholder="t('forgot.confirm_pwd_placeholder')"
             required
             :error="errors.confirmPwd"
+            autocomplete="new-password"
+            password-toggle
             data-testid="forgot-confirm-pwd"
-            @blur="errors.confirmPwd = (validateConfirmPassword(confirmPwd, newPwd) || '')"
+            @blur="errors.confirmPwd = validateConfirmPassword(confirmPwd, newPwd) ? t(validateConfirmPassword(confirmPwd, newPwd)) : ''"
           />
 
-          <!-- Global error -->
           <p v-if="globalError" class="form-error" data-testid="forgot-global-error">
             ❌ {{ globalError }}
           </p>
@@ -75,6 +76,41 @@
             {{ submitting ? t('forgot.submitting') : t('forgot.submit') }}
           </AppButton>
         </form>
+      </AppCard>
+
+      <!-- Step 1: request reset link -->
+      <AppCard v-else class="auth-card">
+        <h1 class="auth-title">{{ t('forgot.page_title') }}</h1>
+        <p class="auth-sub">{{ t('forgot.page_subtitle') }}</p>
+
+        <form class="auth-form" @submit.prevent="onSubmitRequest" novalidate>
+          <AppInput
+            v-model="account"
+            :label="t('forgot.account_label')"
+            :placeholder="t('forgot.account_placeholder')"
+            maxlength="120"
+            required
+            :error="errors.account"
+            data-testid="forgot-account"
+            @blur="errors.account = validateAccount(account) ? t(validateAccount(account)) : ''"
+          />
+
+          <p v-if="globalError" class="form-error" data-testid="forgot-global-error">
+            ❌ {{ globalError }}
+          </p>
+
+          <AppButton
+            type="submit"
+            variant="primary"
+            size="lg"
+            :loading="submitting"
+            :disabled="submitting"
+            class="auth-submit"
+            data-testid="forgot-request"
+          >
+            {{ submitting ? t('forgot.requesting') : t('forgot.request_link') }}
+          </AppButton>
+        </form>
 
         <div class="auth-foot">
           <router-link to="/login" class="auth-foot__link">
@@ -87,9 +123,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onUnmounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { resetPassword } from '@/api/auth'
+import { requestPasswordReset, resetPassword } from '@/api/auth'
 import AppCard from '@/components/AppCard.vue'
 import AppInput from '@/components/AppInput.vue'
 import AppButton from '@/components/AppButton.vue'
@@ -97,45 +134,74 @@ import AppHeader from '@/components/AppHeader.vue'
 import { validateAccount, validatePassword, validateConfirmPassword } from '@/utils/validation'
 
 const { t } = useI18n()
+const route = useRoute()
 
 const account = ref('')
 const newPwd = ref('')
 const confirmPwd = ref('')
+const resetToken = ref('')
 const errors = ref({ account: '', newPwd: '', confirmPwd: '' })
 const globalError = ref('')
 const submitting = ref(false)
 const success = ref(false)
+const emailSent = ref(false)
+
+const hasToken = computed(() => !!resetToken.value)
 
 const pwdHint = computed(() => {
   const v = newPwd.value
   if (!v) return ''
-  if (v.length < 8) return t('errors.pwd_too_short')
+  if (v.length < 8) return t('validation.pwd_too_short')
   if (v.length > 32) return t('errors.pwd_too_long')
   if (!/[A-Za-z]/.test(v) || !/\d/.test(v)) return t('errors.pwd_format')
   return ''
 })
 
-function validateForm() {
+onMounted(() => {
+  const token = route.query.token
+  if (typeof token === 'string' && token.length > 10) {
+    resetToken.value = token
+  }
+})
+
+function validateRequestForm() {
   const e = { account: '', newPwd: '', confirmPwd: '' }
   const accErr = validateAccount(account.value)
   if (accErr) e.account = t(accErr)
+  errors.value = e
+  return !e.account
+}
+
+function validateResetForm() {
+  const e = { account: '', newPwd: '', confirmPwd: '' }
   const pwdErr = validatePassword(newPwd.value)
   if (pwdErr) e.newPwd = t(pwdErr)
   const cErr = validateConfirmPassword(confirmPwd.value, newPwd.value)
   if (cErr) e.confirmPwd = t(cErr)
   errors.value = e
-  return !e.account && !e.newPwd && !e.confirmPwd
+  return !e.newPwd && !e.confirmPwd
 }
 
-async function onSubmit() {
+async function onSubmitRequest() {
   globalError.value = ''
-  if (!validateForm()) return
+  if (!validateRequestForm()) return
   submitting.value = true
   try {
-    await resetPassword({
-      account: account.value.trim(),
-      newPassword: newPwd.value
-    })
+    await requestPasswordReset({ account: account.value.trim() })
+    emailSent.value = true
+  } catch (e) {
+    globalError.value = e.message || 'Request failed'
+  } finally {
+    submitting.value = false
+  }
+}
+
+async function onSubmitReset() {
+  globalError.value = ''
+  if (!validateResetForm()) return
+  submitting.value = true
+  try {
+    await resetPassword({ token: resetToken.value, newPassword: newPwd.value })
     success.value = true
   } catch (e) {
     globalError.value = e.message || 'Reset failed'
@@ -143,8 +209,6 @@ async function onSubmit() {
     submitting.value = false
   }
 }
-
-onUnmounted(() => {})
 </script>
 
 <style scoped>

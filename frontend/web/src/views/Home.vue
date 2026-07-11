@@ -148,24 +148,27 @@
 
       <!-- W28 重构:Why choose us — 从"功能描述"改成"用户利益 + SVG icon" -->
       <section class="features">
-        <h2 class="section-title">{{ t('home.features.title') }}</h2>
-        <p class="section-sub">{{ t('home.features.subtitle') }}</p>
+        <div class="features__head">
+          <h2 class="section-title features__title">{{ t('home.features.title') }}</h2>
+          <p class="section-sub features__sub">{{ t('home.features.subtitle') }}</p>
+        </div>
         <div class="features__grid">
           <article
-            v-for="f in features"
+            v-for="(f, i) in features"
             :key="f.id"
             class="feature"
             :class="`feature--${f.id}`"
             :data-testid="`home-feature-${f.id}`"
           >
-            <span class="feature__icon" v-html="f.icon" aria-hidden="true" />
-            <div class="feature__body">
+            <div class="feature__head">
+              <span class="feature__num" aria-hidden="true">{{ i + 1 }}</span>
               <h3 class="feature__title">{{ t(f.titleKey) }}</h3>
-              <p class="feature__desc">{{ t(f.descKey) }}</p>
             </div>
+            <p class="feature__desc">{{ t(f.descKey) }}</p>
           </article>
         </div>
       </section>
+
     </main>
   </div>
 </template>
@@ -315,12 +318,14 @@ async function applyDestinationsMeta() {
       c.valid_days  = m.valid_days
       c.process_days = m.process_days
       c.eta_iso     = m.eta_iso
-      // visa type label: tourism 视为 E-VISA;work/student 为普通 VISA
-      const types = (m.visa_types || [])
-      if (types.includes('tourism')) {
+      // visa type label: 按 country_code 硬编码实际签发方式
+      // (不能用 tourism/work/student 关键词判断 —— 那只是签证用途,不是签发方式)
+      // 2026-02-25 起英国访问类签证已全面电子化,GB 也算 E-VISA
+      const STICKER_VISA_COUNTRIES = new Set(['US', 'SCHENGEN', 'FR', 'DE', 'IT', 'ES', 'NL', 'AT', 'BE', 'GR', 'PT', 'CZ', 'DK', 'FI', 'HU', 'IS', 'LU', 'NO', 'PL', 'SE', 'CH'])
+      if (STICKER_VISA_COUNTRIES.has(c.code)) {
+        c.visa_type_label = t('home.card.type_sticker')
+      } else {
         c.visa_type_label = t('home.card.type_evisa')
-      } else if (types.includes('work') || types.includes('student')) {
-        c.visa_type_label = t('home.card.type_visa')
       }
       // valid label
       if (m.valid_days) {
@@ -964,49 +969,70 @@ function onCountry(countryCode) {
   transform: translateX(4px);
 }
 
-/* ============== Features (Why us) — W28 重构 ============== */
+/* ============== Features (Why us) — W48 重设计 ============== */
+.features { margin-top: 8px; }
+.features__head {
+  max-width: 640px;
+  margin: 0 auto 34px;
+  text-align: center;
+}
+.features__eyebrow {
+  display: inline-block;
+  margin-bottom: 14px;
+  padding: 5px 13px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--el-color-primary);
+  background: var(--primary-bg);
+  border-radius: 999px;
+}
+.features__title {
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -.01em;
+  margin: 0 0 10px;
+}
+.features__sub {
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 0;
+}
+/* W60: 参照 mega menu 风格 — 深色圆形数字 + 加粗标题 + 灰色说明,去掉
+   渐变图标块和水印大数字,跟 Apply 页数字徽标保持全站一致。 */
 .features__grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  gap: 28px 32px;
 }
 .feature {
   display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  padding: 20px 20px;
-  background: #fff;
-  border: 1px solid #EEF2F7;
-  border-radius: 14px;
-  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
-  height: 100%;
+  flex-direction: column;
+  gap: 10px;
 }
-.feature:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 24px rgba(15, 23, 42, .08);
-  border-color: #DCE6F7;
+.feature__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
-.feature__icon {
+.feature__num {
   flex: 0 0 auto;
-  width: 48px;
-  height: 48px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #0f172a;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #F5F7FB 0%, #EEF2F7 100%);
-  /* 不同 feature 用不同色调,统一感由 background 给 */
+  font-variant-numeric: tabular-nums;
 }
-.feature--data-safety  .feature__icon { background: linear-gradient(135deg, #ECFDF5 0%, #CFFAFE 100%); }
-.feature--templates    .feature__icon { background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%); }
-.feature--smart-check  .feature__icon { background: linear-gradient(135deg, #EFF6FF 0%, #CFFAFE 100%); }
-.feature--pay-after    .feature__icon { background: linear-gradient(135deg, #FAE8FF 0%, #FCE7F3 100%); }
-.feature--system-check .feature__icon { background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%); }
-.feature--support-24h  .feature__icon { background: linear-gradient(135deg, #FFF7ED 0%, #FED7AA 100%); }
-.feature__icon svg { width: 36px; height: 36px; display: block; }
-.feature__body { min-width: 0; flex: 1; }
-.feature__title { margin: 0 0 4px; font-size: 15px; font-weight: 700; color: var(--ink-1); line-height: 1.3; }
-.feature__desc  { margin: 0; font-size: 12.5px; color: var(--ink-3); line-height: 1.55; }
+.feature__title { margin: 0; font-size: 16px; font-weight: 700; color: var(--ink-1); line-height: 1.3; }
+.feature__desc  { margin: 0; padding-left: 40px; font-size: 13px; color: var(--ink-3); line-height: 1.65; }
 
 /* ============== 响应式 ============== */
 @media (max-width: 1080px) {
@@ -1031,5 +1057,6 @@ function onCountry(countryCode) {
   .destinations__grid { grid-template-columns: 1fr; }
   .country-card { height: 360px; }
   .features__grid { grid-template-columns: 1fr; }
+  .features__title { font-size: 24px; }
 }
 </style>

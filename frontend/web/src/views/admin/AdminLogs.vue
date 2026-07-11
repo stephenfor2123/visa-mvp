@@ -3,13 +3,11 @@
 <main class="admin-main">
       <header class="admin-main__head">
         <h1>{{ t('admin.logs.page_title') }}</h1>
-        <p class="admin-main__sub">{{ t('admin.logs.page_subtitle') }}</p>
+        <p class="admin-main__sub">{{ t('admin.logs.page_subtitle_admin_only') }}</p>
       </header>
 
       <div class="filter-bar">
         <select v-model="filter.actor_type" class="form-input" @change="reload">
-          <option value="">{{ t('admin.logs.all_actor_types') }}</option>
-          <option value="user">user</option>
           <option value="admin">admin</option>
           <option value="system">system</option>
           <option value="rpa">rpa</option>
@@ -80,7 +78,7 @@ const actionList = ref([])
 const loading = ref(false)
 const error = ref('')
 const detail = ref(null)
-const filter = ref({ actor_type: '', action: '', target_type: '' })
+const filter = ref({ actor_type: 'admin', action: '', target_type: '' })
 
 const http = axios.create({ baseURL: import.meta.env.VITE_API_BASE || '/api' })
 http.interceptors.request.use((c) => {

@@ -1,0 +1,719 @@
+{
+  "verified_at_label": "更新日期: {date}",
+  "cta_open_source": "查看原文",
+  "back_to_resources": "返回资源中心",
+  "empty_country": "该国家尚未填充精选内容。",
+  "try_other_country": "请切换其他国家,或在资源中心搜索框直接提问。",
+  "country": {
+    "us": "美国",
+    "gb": "英国",
+    "au": "澳大利亚",
+    "schengen": "申根(欧盟)"
+  },
+  "wiki": {
+    "title": "签证百科",
+    "intro": "按国家整理:每种签证是什么、谁适用、能做什么。内容直接引用各移民局官方源。",
+    "us": {
+      "title": "美国 B1/B2 访客签证 — 百科",
+      "intro": "B-1 / B-2 / B1/B2 组合签证均属非移民签证,适用于短期赴美:商务(B-1)、旅游/探亲/就医(B-2),或两者合并。",
+      "_verified_at": "2026-07-03",
+      "items": [
+        {
+          "title": "B-1 / B-2 签证是什么",
+          "desc": "B-1 用于商务活动(会议、谈判、短期培训);B-2 用于旅游、探亲访友、医疗。多数申请人申请合并的 B1/B2 签证。",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
+          "notes": "最常见的美国短期签证就是这一张:探亲/旅游拿 B-2,出差/会议拿 B-1,大部分人合并申请 B1/B2 拿同一张。"
+        },
+        {
+          "title": "谁需要签证,谁能用 ESTA / 免签",
+          "desc": "欧洲多国及约 40 个国家的护照可走免签计划(VWP),需 ESTA 授权,2025-09-30 起 $40 USD。中国大陆护照持有人须申请 B1/B2 签证并完成 EVUS 登记。",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visa-waiver-program.html",
+          "notes": "美国对约 40 个国家免签(VWP),中国大陆护照不在名单内,必须走 B1/B2。即使有 10 年签证也还要 EVUS 登记,别忘了。"
+        },
+        {
+          "title": "B1/B2 有效期 vs. 停留期",
+          "desc": "签证有效期(对中国人最长 10 年多次)≠ 单次停留期。入境时由 CBP 决定停留天数,通常每次最长 6 个月。两个概念独立。",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
+          "notes": "签证有效期是\"能多次入境的最长有效期\",跟每次能待多久是两码事。10 年签证不等于能连续住 10 年——入境时 CBP 才决定给多少天。"
+        },
+        {
+          "title": "中国公民 EVUS 登记",
+          "desc": "持 10 年 B1/B2 签证的中国公民每次赴美前必须在 www.EVUS.gov 完成登记。每次登记费 $30 USD(2025-09-30 起生效),有效期 2 年,以护照或签证先到期者为准。",
+          "url": "https://www.cbp.gov/travel/international-visitors/electronic-visa-update-system",
+          "notes": "EVUS 登记是免费的提醒机制:2 年更新一次,或换护照/换签证时更新。忘了更新会被拒绝登机。"
+        },
+        {
+          "title": "214(b) — 最常见的拒签理由",
+          "desc": "依《移民与国籍法》Section 214(b),B-1/B-2 申请人默认有移民倾向,须自证与中国有强约束力。若情况有变可随时重新申请,无强制等待期。",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/visa-denials.html",
+          "notes": "214(b) 是\"你凭什么说会回来\"的法律依据——不是怀疑你说谎,而是默认你有移民倾向,你要用工作/家庭/财产证明反驳。被拒 214(b) 后没有\"必须等多久\"的说法,补强材料后再申请即可。"
+        },
+        {
+          "title": "222(g) — 逾期使签证自动作废",
+          "desc": "根据 INA 222(g) 条款,逾期停留者签证自动作废;任何因逾期被作废的多次往返签证不得用于未来入境美国。",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/visa-denials.html",
+          "notes": "222(g) 是最严重的逾期后果:即使你后来离境,那张签证也永久作废,以后拿新签证也难。出境前一定查好 I-94 给的停留期。"
+        }
+      ]
+    },
+    "gb": {
+      "title": "英国 Standard Visitor 签证 — 百科",
+      "intro": "Standard Visitor 是英国短期停留的主要签证类型,适用于旅游、商务访友、6 个月以内的短期学习、以及专家讲学等 permitted paid engagement 活动。一般最长停留 6 个月。",
+      "items": [
+        {
+          "title": "什么是 Standard Visitor 签证?",
+          "desc": "覆盖旅游、探亲访友、过境、会议、≤6 个月的短期学习、专家讲学(permitted paid engagement)等。审批以 GOV.UK 官网为准。",
+          "url": "https://www.gov.uk/standard-visitor",
+          "notes": "英国短期访问只有这一种,旅游/探亲/出差/短期学习(< 6 月)都走 Standard Visitor。审批完全看 GOV.UK 标准,旅行社加的\"加急\"都是噱头。"
+        },
+        {
+          "title": "谁需要签证,谁能用 ETA / 免签",
+          "desc": "多数欧盟、海湾国家护照持有人可申请 ETA 免签停留。英国官网 check-uk-visa 工具实时判断。中国大陆护照持有人必须申请 Standard Visitor 签证。",
+          "url": "https://www.gov.uk/check-uk-visa",
+          "notes": "ETA 不是签证,是给免签国的电子授权(类似美国 ESTA),跟签证是两套体系。中国大陆护照没资格用 ETA,必须走签证。"
+        },
+        {
+          "title": "Standard Visitor 与 Visitor in Transit 的区别",
+          "desc": "Standard Visitor 允许入境后停留并开展活动。Visitor in Transit(£74.50)是过境旅客使用,在 UK 边境短暂中转后转去第三国。",
+          "url": "https://www.gov.uk/transit-visa/visitor-in-transit-visa",
+          "notes": "Visitor in Transit 是给\"只在英国机场中转\"的旅客,不能入境市区。如果你想进伦敦玩几天再走,办 Standard Visitor。"
+        },
+        {
+          "title": "长期 Standard Visitor (2 / 5 / 10 年)",
+          "desc": "可申请 2 年、5 年、10 年的长期 Standard Visitor 签证,费用更高。每次入境仍 ≤ 6 个月。长期签证不等于可以在英国长期居住。",
+          "url": "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa",
+          "notes": "10 年签证听起来很香,但费用更贵、所需材料更多,而且每次入境仍只给 6 个月。普通申请人办 6 个月的就行。"
+        },
+        {
+          "title": "中国居住者的肺结核(TB)检测",
+          "desc": "在中国居住 ≥ 6 个月的申请人必须在英国内政部指定的医院进行 TB 检测,并提交证书。非指定机构的报告无效。",
+          "url": "https://www.gov.uk/tb-test-visa",
+          "notes": "TB 检测只认英国政府指定医院开的报告,普通三甲医院的不算。中国大陆共有 19 家指定医院,预约要排 1-2 周。"
+        },
+        {
+          "title": "Permitted activities — 可做与不可做",
+          "desc": "允许:旅游、探亲、过境、会议、专家讲学、≤ 6 个月短期学习。禁止:在英工作(permitted paid engagement 例外)、领取福利、通过频繁访问长期居留。",
+          "url": "https://www.gov.uk/standard-visitor",
+          "notes": "在英工作是被严令禁止的(permitted paid engagement 例外),违反会遣返+禁入 10 年。即使是远程给中国公司干活也算。"
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    },
+    "au": {
+      "title": "澳大利亚 Subclass 600 访客签证 — 百科",
+      "intro": "Subclass 600 是澳大利亚的访客签证,适用于旅游、探亲访友或短期商务访问。共 5 个 stream:Tourist / Business Visitor / Sponsored Family / Approved Destination / Frequent Traveller。请按访问目的选择对应 stream。",
+      "items": [
+        {
+          "title": "什么是 Subclass 600 访客签证?",
+          "desc": "短期临时签证,涵盖旅游、探亲、商务访问等短期非工作活动。每次停留时长由签证官决定,常见 3、6、12 个月。",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "600 是澳新通用短期签证,5 个 stream 对应不同目的——旅游选 Tourist,出差选 Business Visitor,亲属担保选 Sponsored Family。"
+        },
+        {
+          "title": "境内申请 vs. 境外申请",
+          "desc": "多数中国申请人在境外通过 ImmiAccount 申请;境内延期仅在特殊场景下可行,且“跳签”限制越来越严。",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "原则上要在境外申请,但如果你在澳洲境内且签证快到期,境内续签也可以。\"跳签\"(快到期再续 600)越来越难批。"
+        },
+        {
+          "title": "有效期 vs. 每次停留期",
+          "desc": "Subclass 600 通常签为 1 年多次。Tourist stream 每次最长停留 3 个月,签证官可酌情延长至 6 或 12 个月。",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "600 每次给 3 个月停留是常见情况,签证官可酌情给 6 或 12 个月,但不会因为你说\"我要待 6 个月\"就一定给。"
+        },
+        {
+          "title": "Sponsored Family Stream(担保类家庭访问)",
+          "desc": "由澳洲公民或 PR 亲属(父母、成年子女)担保。担保类申请可能获得更长有效期(18 个月到 5 年,视情况)。",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600/sponsored-family-stream",
+          "notes": "有澳洲亲属做担保可以获得更长的签证(18 个月到 5 年),但要提交担保人的财务和关系证明,流程更复杂。"
+        },
+        {
+          "title": "No Further Stay 条款(自 2025-03-21 起)",
+          "desc": "自 2025-03-21 起,所有 Subclass 600 准签信均添加 No Further Stay 条款,持有人在澳洲境内不能申请其他签证(部分特例除外)。请提前规划。",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "No Further Stay 条款意味着:拿 600 在澳期间不能转申学签/工签,只能按时回国。想留下来必须出境重新申请其他签证。"
+        },
+        {
+          "title": "Frequent Traveller Stream(常旅客)",
+          "desc": "专为频繁往返的中、东南亚等特定国家商务/旅游人士设立。有效期最长 10 年,每次停留 ≤ 3 个月。申请费较高。",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600/frequent-traveller-stream",
+          "notes": "Frequent Traveller 只对中、东南亚等特定国家护照开放,签 10 年,适合频繁出差的人。普通申请人办 Tourist Stream 即可。"
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    },
+    "schengen": {
+      "title": "申根短期签证(C 类)— 百科",
+      "intro": "申根 C 类短期签证由 29 个申根国家统一依据 EU 签证法典签发。任何 180 天内累计停留 ≤ 90 天,在整个申根区内合并计算。",
+      "items": [
+        {
+          "title": "什么是申根 C 类短期签证?",
+          "desc": "统一短期签证,任意 180 天内最多停留 90 天,适用于整个申根区。由首次入境国或主要目的地国签发。",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "申根是\"26 国共用一种签证\",办一次能去所有申根国。但要在主目的国(或首次入境国)申请,不能想去哪就办哪。"
+        },
+        {
+          "title": "29 个申根国家及统一规则",
+          "desc": "申根区包括 25 个欧盟成员国(奥地利、比利时、捷克、丹麦、爱沙尼亚、芬兰、法国、德国、希腊、匈牙利、意大利、拉脱维亚、立陶宛、卢森堡、马耳他、荷兰、波兰、葡萄牙、斯洛伐克、斯洛文尼亚、西班牙、瑞典)+ 4 个非欧盟成员国(冰岛、列支敦士登、挪威、瑞士)。",
+          "url": "https://home-affairs.ec.europa.eu/policies/schengen-borders-visa-policy_en",
+          "notes": "申根 29 国 ≠ 欧盟 27 国,例如冰岛/挪威/瑞士是申根但非欧盟。短期签证规则对所有申根国都适用。"
+        },
+        {
+          "title": "180/90 规则 — 计算方法",
+          "desc": "90 天是滚动计算:每在申根区待一天就用掉 180 天窗口中的 1 天。可用官方计算器或护照盖章核算。",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "180/90 算的是\"滚动 180 天内最多 90 天\",不是\"自然年内 90 天\"。欧盟官方有个在线计算器,自己搜 schengen calculator 算。"
+        },
+        {
+          "title": "应向哪个国家申请?",
+          "desc": "只访一国 → 该国;多国 → 主要目的地(停留最久);停留相同 → 首次入境国。",
+          "url": "https://www.schengenvisainfo.com/where-to-apply/",
+          "notes": "多国行程里\"主要目的地\"指停留最久的那国,不是去得最多的国家。行程单写错会被退回重交。"
+        },
+        {
+          "title": "生物识别与 VIS",
+          "desc": "首次申请采集 10 指指纹,在所有申根成员国 59 个月内有效。59 个月内再申请通常免重新采集。",
+          "url": "https://www.consilium.europa.eu/en/press/press-releases/2024/05/14/schengen-visa/",
+          "notes": "VIS 是申根的指纹数据库,5 年内再申请可以免重新录指纹——但你换护照/换国家有时仍要重录。"
+        },
+        {
+          "title": "即将实施的 EES 与 ETIAS",
+          "desc": "EES(出入境系统)以电子登记取代护照盖章。ETIAS(类似美国 ESTA)要求免签国旅客行前申请授权。这些都不替代申根签证本身。",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32018R1240",
+          "notes": "EES(出入境电子化)和 ETIAS(电子授权)都在 2025-2026 年陆续上线,前者针对所有非欧盟旅客,后者只针对免签国。中国大陆护照还是要办申根签证。"
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    }
+  },
+  "policy": {
+    "title": "政策查询",
+    "intro": "直达最新官方法规、费用表、签证公告牌等权威页面,均标注核对日期。",
+    "us": {
+      "title": "美国 — 法规与政策",
+      "intro": "来自美国国务院(travel.state.gov)和海关与边境保护局(CBP)的 B1/B2 政策权威页面。",
+      "_verified_at": "2026-07-03",
+      "items": [
+        {
+          "title": "MRV 申请费 — $185 USD",
+          "desc": "B1/B2 不可退还的 Machine-Readable Visa 申请费为 $185 USD,大部分国籍需在面谈前缴纳。签发费因国籍不同(见 Reciprocity Tables)。",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/fees/fees-reciprocity-tables.html",
+          "notes": "$185 是面签前必须缴的\"申请费\",不管拒签都退不了。所以面签没准备好别急着缴费,先去练练。"
+        },
+        {
+          "title": "Fees and Reciprocity Tables(费用与互惠表)",
+          "desc": "国务院官方发布的按签证类型/国籍的费用表,含双边协议下的签发费。定期更新。",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/fees/fees-reciprocity-tables.html",
+          "notes": "Reciprocity Tables 决定\"签发费\"——按你对等国的签证费用收。中国大陆护照对应的是 B1/B2 0 签发费,但其他国籍可能高达几百美元。"
+        },
+        {
+          "title": "签证公告牌(Visa Bulletin)",
+          "desc": "国务院月度公告。B1/B2 等非移民签证无排期,但公告牌涵盖所有签证类别的月度动态。",
+          "url": "https://travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin.html",
+          "notes": "B1/B2 没有排期,但 H-1B/绿卡有。Visa Bulletin 是给后者看的,你申请 B 签就当月报看即可。"
+        },
+        {
+          "title": "Designated NIV Locations(2025-09-06 生效)",
+          "desc": "自 2025-09-06 起,所有非移民签证申请人应在居住国或国籍国的美国大使馆/领事馆预约面谈。",
+          "url": "https://travel.state.gov/content/travel/en/News/visas-news/adjudicating-niv-applicants-in-their-country-of-residence.html",
+          "notes": "\"必须在居住国面签\"是新规——以前可以在第三国面谈,现在原则上不行。出国旅行时不要预约面签,会被退件。"
+        },
+        {
+          "title": "U.S. Visas News — 业务实时公告",
+          "desc": "签证业务实时状态,包含临时暂停、加强审查、政策变化等。频繁更新。",
+          "url": "https://travel.state.gov/content/travel/en/News/visas-news.html",
+          "notes": "Visas News 是公告牌:罢工、系统维护、政策调整都会第一时间发这里。面签前 1 周刷一下,避免踩雷。"
+        },
+        {
+          "title": "签证照片要求",
+          "desc": "DS-160 上传照片的构图、尺寸、背景与数字图像规范。",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/photos.html",
+          "notes": "照片要求严格:51x51mm 白底,6 个月内,无眼镜。建议去专业签证照相馆拍一次,不要用手机自拍。"
+        }
+      ]
+    },
+    "gb": {
+      "title": "英国 — 法规与政策",
+      "intro": "来自 GOV.UK 的 Standard Visitor 政策权威页面。",
+      "items": [
+        {
+          "title": "申请费 — £135 GBP(6 个月签证)",
+          "desc": "Standard Visitor 标准短期签证 £135 GBP。Visitor in Transit £74.50 GBP。长期签证费用更高。",
+          "url": "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa",
+          "notes": "£135 是 6 个月签证的标准价,长期签证(2/5/10 年)分别 £400/£771/£964。10 年最划算,前提是你真的能常去。"
+        },
+        {
+          "title": "通过 GOV.UK 在线申请",
+          "desc": "所有英国签证必须通过 GOV.UK 在线提交。中国大陆护照无落地签选项。",
+          "url": "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa",
+          "notes": "必须 GOV.UK 在线申请,不能去中介加急。线下签证中心(VFS)只负责录指纹和提交材料,申请主体仍是 GOV.UK 系统。"
+        },
+        {
+          "title": "Check if you need a UK visa 工具",
+          "desc": "官方工具,根据国籍自动判断是否需要签证、ETA 或完全免签。",
+          "url": "https://www.gov.uk/check-uk-visa",
+          "notes": "check-uk-visa 工具是给\"我到底要不要办签证\"用的——选国籍+目的地,5 秒出答案。"
+        },
+        {
+          "title": "资格要求",
+          "desc": "申请人必须能证明:访问结束会离开英国;能自行或由他人资助自己和家属费用;能支付回程或续程费用;不通过频繁访问在英长期居留。",
+          "url": "https://www.gov.uk/standard-visitor",
+          "notes": "\"会离开英国\"是核心:在职/在学/家庭/财产,任一两项能说服签证官你不会黑下来。空着提交就是拒签高危。"
+        },
+        {
+          "title": "电子旅行授权(ETA)",
+          "desc": "2025 年起,部分非签证国籍赴英前需申请 ETA。当前涵盖欧盟、海湾及亚太等多个国家的护照。",
+          "url": "https://www.gov.uk/guidance/apply-for-an-electronic-travel-authorisation-eta",
+          "notes": "ETA 是 2025 年新规:欧盟、海湾、新加坡、韩国等几十国护照赴英前要办 ETA。中国大陆护照仍是签证。"
+        },
+        {
+          "title": "拒签后申诉",
+          "desc": "若被拒签,可在拒签决定日起 28 天内申请 Administrative Review(若签证按 Appendix Visitor 审理)。",
+          "url": "https://www.gov.uk/immigration-asylum-tribunal",
+          "notes": "Administrative Review 不是\"重审一遍\",是\"看签证官是否犯了程序错误\",28 天内提交,基本不会改判。多数人选择重新申请。"
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    },
+    "au": {
+      "title": "澳大利亚 — 法规与政策",
+      "intro": "来自澳大利亚内政事务部(Department of Home Affairs)的 Subclass 600 政策权威页面。",
+      "items": [
+        {
+          "title": "申请费 — 从 AUD $190 起(Tourist Stream)",
+          "desc": "境外申请的 Tourist Stream 基础申请费为 AUD $190。其他 stream(Sponsored Family 等)费用可能不同,以最新官方价格表为准。",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "AUD $190 是 Tourist Stream 境外申请的基础价,实际缴费时还要加 ImmiAccount 服务费。建议用信用卡付,汇率友好。"
+        },
+        {
+          "title": "通过 ImmiAccount 在线申请",
+          "desc": "所有 Subclass 600 申请通过 ImmiAccount 在线提交。中国护照无纸质申请通道。",
+          "url": "https://online.immi.gov.au/",
+          "notes": "ImmiAccount 是澳洲内政部官方系统,所有材料上传、付款、查询进度都走这里。账号建议用常用邮箱注册,别用 163 之类容易进垃圾箱的。"
+        },
+        {
+          "title": "签证定价表(最新)",
+          "desc": "内政部官方发布、按签证子类/stream 列出的费用表,定期更新。",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600/fees",
+          "notes": "签证费用表会随政策调整,出发前 1 个月去查一次最新价格,避免被\"过时报价\"误导。"
+        },
+        {
+          "title": "签证全球审理时间",
+          "desc": "按子类、stream、申请人所在地划分的实时审理周期估算。",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-processing-times",
+          "notes": "审理时间因领区/季节波动大:中国大陆申请 600 通常 2-6 周,旺季(暑假/春节)可能 8 周。"
+        },
+        {
+          "title": "健康与品行要求",
+          "desc": "大多数短期访客签证需通过健康检查和品行审查;长期停留或特定国籍可能需要 panel physician 体检。",
+          "url": "https://immi.homeaffairs.gov.au/help-support/meeting-our-requirements/health",
+          "notes": "健康检查不一定每次都触发——签证官评估你的材料和国籍后觉得需要才会发体检信。"
+        },
+        {
+          "title": "Subclass 600 政策更新",
+          "desc": "内政部实时公告 — 费率变更、资格更新、审理时间调整。",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "Subclass 600 政策更新会发在内政部官网公告页。2025-03-21 起的 No Further Stay 条款就是从这里来的。"
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    },
+    "schengen": {
+      "title": "申根 — 法规与政策",
+      "intro": "欧盟委员会与欧盟理事会的申根签证政策权威来源。",
+      "items": [
+        {
+          "title": "申请费 — €90 EUR(成人)",
+          "desc": "依 Commission Delegated Regulation (EU) 2024/1415,自 2024-06-11 起:成人 €90,6-12 岁儿童 €45,6 岁以下免费。VFS Global / TLScontact 等外部服务商另收服务费。",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32024R1415",
+          "notes": "€90 是统一价,儿童 6-12 岁 €45,6 岁以下免费。VFS/TLScontact 还要收服务费(各国不同,€30-50 不等)。"
+        },
+        {
+          "title": "签证法典 — Council Reg. 810/2009",
+          "desc": "Reg. (EC) 810/2009 是申根短期签证的核心法律基础。经 2019/1155(编纂)与 2024/1415(费用与流程变更)修订。",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "Council Reg. 810/2009 是申根签证的\"宪法\",所有申根国都按它来——你可以直接搜 CELEX:32009R0810 看原文。"
+        },
+        {
+          "title": "旅行医疗保险 — €30,000 最低",
+          "desc": "医疗保险最低 €30,000,覆盖整个申根区、整个停留期。需含紧急住院、医疗运送与遣返。",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "€30,000 是最低保额,实际买 €50,000 也不贵,理赔时更宽松。注意:必须覆盖整个行程+全申根区。"
+        },
+        {
+          "title": "标准审理周期 — 15 个日历日",
+          "desc": "自申请合规起 15 个日历日内决定。可延长至 30 天,特殊情况下 60 天。",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "15 个日历日是法定上限,实际多数 5-10 个工作日出签。旺季可能延长到 30 天。"
+        },
+        {
+          "title": "拒签后申诉",
+          "desc": "拒签后你会收到一份标准化的拒签表格。可以在拒签国按该国法律规定的期限(通常 15-30 天)内申诉。",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "拒签后可以\"重新申请\"或\"申诉\",但申诉成功率极低。建议复盘拒签信原因,补强材料后重新申请。"
+        },
+        {
+          "title": "ETIAS(免签国旅客,2025 起)",
+          "desc": "ETIAS 要求美国、英国等免签国旅客行前取得授权。费用 €20,有效期 3 年或至护照到期。",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32018R1240",
+          "notes": "ETIAS 不是签证,是给免签国的\"电子签证\"——类似美国 ESTA。中国大陆护照不能享受,仍要办申根签证。"
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    }
+  },
+  "templates": {
+    "title": "材料模板",
+    "intro": "可直接下载的支持材料模板:在职证明、休假证明、银行流水说明等。",
+    "us": {
+      "title": "美国 B1/B2 — 辅助材料模板",
+      "intro": "美国签证面试常用的辅助材料。平台提供模板;具体要求以各使领馆公告为准。",
+      "_verified_at": "2026-07-03",
+      "items": [
+        {
+          "title": "在职证明(中英双语)",
+          "desc": "公司抬头纸:职位、薪资、在职年限、批假情况、签名盖章。美国领馆一般接受中英双语版本。",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
+          "notes": "在职证明要含:公司抬头、岗位、年薪、入职时间、批准假期、领导签名。中英双语,签证官看英文。"
+        },
+        {
+          "title": "银行流水 — 签证官关注点",
+          "desc": "近 3-6 个月银行盖章流水,余额稳定。本平台不直接生成流水,请到银行柜台申请。",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
+          "notes": "签证官看流水重点是\"余额\"和\"工资入账规律\",不是交易笔数。建议打印最近 6 个月,余额别突然大额进出。"
+        },
+        {
+          "title": "行程单",
+          "desc": "按天列出航班、酒店、景点。需与 DS-160 申请日期一致。平台提供 JSON / Excel 模板下载。",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
+          "notes": "行程单要写明每天的城市+交通+住宿,跟机票/酒店预订对得上。模板用 Htex 的\"行程单生成器\"自动出。"
+        },
+        {
+          "title": "DS-160 确认页",
+          "desc": "在线提交 DS-160 表后打印确认页,与护照、照片一起带去面谈。",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/forms/ds-160-online-nonimmigrant-visa-application.html",
+          "notes": "DS-160 是非移民签证的申请表,提交后生成确认页,面签必带条码。建议在线填写,不要用 PDF 离线版。"
+        },
+        {
+          "title": "旅行医疗保险 — B1/B2 非强制",
+          "desc": "与申根不同,美国 B1/B2 签证不强制旅行医疗保险。但鉴于美国医疗费用极高,强烈建议购买。",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
+          "notes": "B1/B2 法律上不强制保险,但带一份能体现\"我有安全意识\",推荐。保额 5-10 万美元即可。"
+        },
+        {
+          "title": "不要带的材料",
+          "desc": "美国使领馆明确说明:邀请函和 Affidavit of Support 不是必需材料,也不作为是否签发的因素。",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
+          "notes": "常见误区:不要带房产证、行驶证、户口本(签证官不关心);旧护照带上能显示旅行历史加分。"
+        }
+      ]
+    },
+    "gb": {
+      "title": "英国 Standard Visitor — 辅助材料模板",
+      "intro": "英国签证常见的辅助材料。具体要求以各签证中心公告为准。",
+      "items": [
+        {
+          "title": "在职证明(英文)",
+          "desc": "公司抬头:职位、薪资、在职年限、批假情况、签名盖章。英国接受英国公司开具的英文版,或国内开出附官方翻译件。",
+          "url": "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa",
+          "notes": "英国在职证明要全英文:写明职位、年薪、批准假期,落款领导签名+公司盖章。英国签证官对中国式证明格式有点挑剔。"
+        },
+        {
+          "title": "银行流水 — 签证官关注点",
+          "desc": "近 3-6 个月银行盖章流水,余额稳定,有持续的工资入账。需银行抬头纸打印。",
+          "url": "https://www.gov.uk/standard-visitor",
+          "notes": "英国签证官看流水:近 6 个月,月余额稳定> £50k(对应 6 个月行程的旅费),工资字样明确。"
+        },
+        {
+          "title": "行程单与酒店/机票预订",
+          "desc": "按天列出酒店预订或接待方证明,以及回程机票预订。注意行程与申请日期一致。",
+          "url": "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa",
+          "notes": "酒店+机票订单要\"可取消\"的预订(booking/携程可免费取消的那种),出签后再付款。"
+        },
+        {
+          "title": "TB 检测证书",
+          "desc": "在中国居住 ≥ 6 个月的申请人必须提供。证书由英国内政部指定的医院(GOV.UK 官网公布清单)出具。",
+          "url": "https://www.gov.uk/tb-test-visa",
+          "notes": "TB 证书有时效:6 个月内有效。如果签证审了 3 个月,证书可能过期,需要重做。"
+        },
+        {
+          "title": "旅行医疗保险 — 非强制",
+          "desc": "Standard Visitor 不要求强制保险,但鉴于英国医疗费高昂,强烈建议购买。",
+          "url": "https://www.gov.uk/standard-visitor",
+          "notes": "英国保险不是强制的,但带一份更稳。覆盖范围选\"全英+申根\"(万一你去欧洲玩)。"
+        },
+        {
+          "title": "不要带的材料",
+          "desc": "英国不要求邀请函,只需要住宿证明(酒店预订 或 接待方书面确认)。",
+          "url": "https://www.gov.uk/standard-visitor",
+          "notes": "不要带:房产证、行驶证、大额存单照片(英国签证官不太看这些);旧护照/旅行照片能加分。"
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    },
+    "au": {
+      "title": "澳大利亚 Subclass 600 — 辅助材料模板",
+      "intro": "Subclass 600 申请的常见辅助材料。提供模板;具体要求可能不同。",
+      "items": [
+        {
+          "title": "ImmiAccount 注册",
+          "desc": "免费注册。一个账号可管理多份申请(适用于家庭出行)。",
+          "url": "https://online.immi.gov.au/lusc/register",
+          "notes": "ImmiAccount 注册后,所有材料都上传到这里。建议一次性把材料分好类,不要中途改名。"
+        },
+        {
+          "title": "旅行历史和身份材料",
+          "desc": "扫描护照首页、中国身份证、户口本以及过往签证 / 入境章。多页户口本合并为单个 PDF 上传。",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "旅行历史:旧护照、机票订单、旅行照片。澳洲签证官对\"是否真的去旅行\"很敏感,材料堆够。"
+        },
+        {
+          "title": "在职与财力证明",
+          "desc": "雇主信、近 3-6 个月工资单和银行盖章流水。房产 / 车产证明作为可选补充。",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "财力证明:在职+流水+房本/车本(辅助)。建议三件都带,缺哪个签证官可能要求补件。"
+        },
+        {
+          "title": "行程单",
+          "desc": "详细到每一天的行程安排,清楚显示访问目的真实且为短期。",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "行程单要写每天在哪,跟申请表的\"访问目的\"对得上。如果写\"旅游\"但行程全是出差,会让人困惑。"
+        },
+        {
+          "title": "文件翻译说明",
+          "desc": "Immi 不要求英文文件附官方翻译;中文文件可与英文表格同时上传。",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "澳洲要求所有非英文材料翻译成英文,翻译件要含译者签字+日期+资质声明。公证翻译最稳。"
+        },
+        {
+          "title": "不建议提交的材料",
+          "desc": "不建议上传:公证邀请函(基本不需要)、宣传照片、社交媒体截图。上传真正能证明访客身份的材料即可。",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "不建议带:大额理财证明(签证官怀疑资金来源)、公司全套营业执照(无必要)、户口本(澳洲不查)。"
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    },
+    "schengen": {
+      "title": "申根短期签证 — 辅助材料模板",
+      "intro": "申根短期签证申请的常见辅助材料。提供模板;具体要求因领事馆而异。",
+      "items": [
+        {
+          "title": "旅行医疗保险证明",
+          "desc": "来自欧盟认可的保险公司或公认的中国保险公司。条款必须明确:申根区全覆盖 + 最低 €30,000 保额。",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "申根保险最严:最低 €30,000 医疗+紧急救援,覆盖整个行程+所有申根国。淘宝/支付宝有专门的申根险。"
+        },
+        {
+          "title": "在职证明(中德/中法双语)",
+          "desc": "公司抬头:职位、薪资、在职年限、批假情况、签名盖章。部分使馆接受双语,部分要求官方翻译件。",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "在职证明要中+德/法/西双语,具体看申请国。德国尤其严格,公司抬头纸必须有德文翻译。"
+        },
+        {
+          "title": "银行流水 — 签证官关注点",
+          "desc": "近 3-6 个月银行盖章流水,余额稳定,工资入账持续。银行抬头纸打印盖章。",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "申根签证官看流水:近 6 个月,日均余额覆盖每天 €60-100(总天数乘以这个数)。"
+        },
+        {
+          "title": "住宿证明",
+          "desc": "全部停留期的酒店预订,或接待方书面说明 + 接待方身份证/护照复印件。Booking.com 预订通常接受;免费住宿可能需公证证明。",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "住宿要覆盖整个行程:酒店订单/民宿确认函/朋友邀请信+护照(朋友邀请需要)。"
+        },
+        {
+          "title": "回程机票预订",
+          "desc": "确认的回程机票预订(不需付款)。拿到签证前不要购买机票。",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "回程机票建议出\"可退改\"的预订,出签后再付款。如果直接出真机票,拒签就亏大了。"
+        },
+        {
+          "title": "申根申请表(统一格式)",
+          "desc": "所有申根国家使用同一份申请表。可在 VFS / TLScontact 中心、各国大使馆、以及欧盟“Visa”页面领取。",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "申根申请表是统一格式,在线填后打印,签名+日期。建议用打字机填写,不要手写。"
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    }
+  },
+  "faq": {
+    "title": "常见问答",
+    "intro": "面签前后申请人最常问的真实问题,均引用美国国务院官方源。",
+    "us": {
+      "title": "美国 B1/B2 — 常见问题",
+      "intro": "B1/B2 办理过程中最常被问到的问题 — 费用、拒签、EVUS、停留期等。",
+      "_verified_at": "2026-07-03",
+      "items": [
+        {
+          "title": "需要邀请函或经济担保书吗?",
+          "desc": "不需要。美国国务院明确说明:邀请函(Invitation Letter)和 Affidavit of Support 均不属于必需材料,也不是签发决策因素,带来也不会被参考。",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
+          "notes": "不需要。B1/B2 是申请人的个人意向签,签证官不关心邀请人,只看你会不会按时回来。邀请函可有可无。"
+        },
+        {
+          "title": "面签预约要等多久?",
+          "desc": "不同使领馆、季节差异大。请预约前查看 Global Visa Wait Times 官方页面;暑期有使领馆可能排队数月。",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/global-visa-wait-times.html",
+          "notes": "淡季 1-2 周,旺季(5-8 月/春节)4-8 周。订机票时按\"面签后 4 周\"反推时间。"
+        },
+        {
+          "title": "214(b) 拒签后能再申请吗?",
+          "desc": "可以,随时。没有强制等待期。但只有情况有实质性变化(工作、家庭、财产等)且能提供新材料时才建议重新申请。",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/visa-denials.html",
+          "notes": "能,且没有等待期。补强材料(新工作/买房/结婚)后随时重申请。但不要在没变化的情况下反复申请,只会被同样理由拒。"
+        },
+        {
+          "title": "如果多停留一天会怎么样?",
+          "desc": "根据 INA 222(g),任何逾期者的签证自动作废。即便仍在签证贴纸的有效期内,该签证不能再用于下次入境美国。",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/visa-denials.html",
+          "notes": "一天也算逾期。后果是签证自动作废(222(g)),且这张作废的签证永久不能再用,后续申请也会受影响。"
+        },
+        {
+          "title": "需要买旅行保险吗?",
+          "desc": "B1/B2 不强制要求购买。但美国医疗费用极高,强烈建议购买。这与申根国家的要求不同。",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
+          "notes": "不强制,但建议带。意外、紧急医疗、紧急撤离都要钱。保额 5-10 万美元,2-3 周行程保费 ¥200-400。"
+        },
+        {
+          "title": "怎么付 MRV 费?",
+          "desc": "由各使领馆决定。大部分使领馆支持预约时信用卡/借记卡在线支付,部分需要银行转账或现场缴费。金额为 $185 USD。",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/fees/visafee/t-current-visa-mrv-fee.html",
+          "notes": "在线用信用卡缴($185 USD),中信/招行/建行都行。缴费后会生成 CGI 号码,凭这个预约面签。"
+        }
+      ]
+    },
+    "gb": {
+      "title": "英国 Standard Visitor — 常见问答",
+      "intro": "B1/B2 办理过程中最常被问到的问题 — 费用、拒签、处理周期等。",
+      "items": [
+        {
+          "title": "办理周期多长?",
+          "desc": "英国境外申请通常在按指纹后 3 周处理完成。很多签证中心提供 Priority(优先)与 Super-priority(超优先)加急服务。",
+          "url": "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa",
+          "notes": "官方说 3 周,实际多数 2-4 周。旺季(暑假)可能 6 周。建议出发前 2 个月开始办。"
+        },
+        {
+          "title": "Standard Visitor 可以工作或学习吗?",
+          "desc": "允许 ≤ 6 个月短期学习。除 permitted paid engagement 外不允许任何带薪或无薪工作。",
+          "url": "https://www.gov.uk/standard-visitor",
+          "notes": "工作:不能(permitted paid engagement 例外)。学习:可以,但 ≤ 6 个月的短期课程。超过 6 个月必须办 Student Visa。"
+        },
+        {
+          "title": "需要邀请函吗?",
+          "desc": "不需要。GOV.UK 不要求正式邀请函,只需能证明住宿即可(酒店预订或接待方书面确认)。",
+          "url": "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa",
+          "notes": "不强制,但有邀请函能加分(显示访问目的清晰)。旅游/探亲可以不提供。"
+        },
+        {
+          "title": "拒签后怎么办?",
+          "desc": "可在补强材料后重新申请;若决定是按 Appendix Visitor 做出,可在 28 天内申请 Administrative Review。",
+          "url": "https://www.gov.uk/immigration-asylum-tribunal",
+          "notes": "可以重新申请,无等待期。复盘拒签信(一般是资金/回国约束力不足),补强后重提,成功率高。"
+        },
+        {
+          "title": "TB 检测是必须的吗?",
+          "desc": "是。如在包括中国在内的特定国家居住过 ≥ 6 个月,申请前必须在英国内政部指定医院做 TB 检测。",
+          "url": "https://www.gov.uk/tb-test-visa",
+          "notes": "在中国居住 ≥ 6 个月的申请人必须做 TB 检测。其他国家居住者不需要(看具体国籍)。"
+        },
+        {
+          "title": "怎么付签证费?",
+          "desc": "GOV.UK 在线用借记卡/信用卡/网银支付。完成在线申请后,前往英国签证中心(VAC)采集生物信息。",
+          "url": "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa",
+          "notes": "在线 GOV.UK 用 Visa/Mastercard 缴,£135 一次性扣款。缴费后预约 VFS 中心录指纹。"
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    },
+    "au": {
+      "title": "澳大利亚 Subclass 600 — 常见问答",
+      "intro": "澳大利亚访客签证最常被问到的问题 — 费用、拒签、审理。",
+      "items": [
+        {
+          "title": "审理周期多长?",
+          "desc": "材料齐全的 Tourist Stream 多在 1-4 周内出签。以 Global Processing Times 实时数据为准。",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-processing-times",
+          "notes": "多数 2-6 周。ImmiAccount 上能实时查进度。旺季(7-9 月/春节)可能 8 周。"
+        },
+        {
+          "title": "持 600 期间能申请学签吗?",
+          "desc": "不能。自 2025-03-21 起所有 600 准签信均带 No Further Stay 条款。请改在境外申请学生签证(Subclass 500)。",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "不能。No Further Stay 条款(2025-03-21 起)禁止 600 持有人在澳境内转申其他签证。必须出境再办。"
+        },
+        {
+          "title": "能拿到 3 年 / 5 年多次签证吗?",
+          "desc": "部分 Sponsored Family Stream 与 Frequent Traveller Stream 申请人可获更长有效期。Tourist Stream 首次申请通常拿 1 年。",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "理论上 Tourist Stream 单次最长 1 年,但实际多数给 3 个月。想拿多年多次,需要 Frequent Traveller Stream 或 Sponsored Family。"
+        },
+        {
+          "title": "家人能共用一份申请吗?",
+          "desc": "不能。每人必须单独申请;但可在同一 ImmiAccount 下建组(Group processing)以便签证官综合审阅。",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "不能。每人单独申请,但可以在一个 ImmiAccount 下管理多个申请人(如父母+你)用 Family Group 一起上传。"
+        },
+        {
+          "title": "需要录指纹或体检吗?",
+          "desc": "多数 Tourist Stream 不需要指纹。3 个月以上停留或 75 岁以上申请人可能被要求体检。",
+          "url": "https://immi.homeaffairs.gov.au/help-support/meeting-our-requirements/health",
+          "notes": "指纹:必须,在 VFS 中心录。体检:看签证官决定,通常长期停留或特定国籍才需要。"
+        },
+        {
+          "title": "怎么付签证费?",
+          "desc": "ImmiAccount 在线支付 — 信用卡、PayPal、或 BPAY(澳洲银行账户)。信用卡可能收手续费。",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600/fees",
+          "notes": "ImmiAccount 在线付,信用卡(PayPal 也行),AUD $190 起。"
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    },
+    "schengen": {
+      "title": "申根短期签证 — 常见问答",
+      "intro": "申根短期签证最常被问到的问题 — 费用、拒签、审理。",
+      "items": [
+        {
+          "title": "审理周期多长?",
+          "desc": "标准 15 个日历日,可延长至 30 天,部分情况 60 天。建议出行前 15-30 天提交;早于 15 天可能被拒。",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "法定 15 个日历日,实际多数 5-10 个工作日。旺季(6-8 月)可能 30 天。"
+        },
+        {
+          "title": "需要旅行医疗保险吗?",
+          "desc": "需要。申根要求最低 €30,000 保额、覆盖全部停留期。无保险 = 申请不合规。",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "必须,没保险基本都拒。最低 €30,000 医疗+紧急救援,覆盖整个行程+所有申根国。"
+        },
+        {
+          "title": "一张签证可以访问多个国家吗?",
+          "desc": "可以。由一国签发的申根签证在整个 29 国通用(以主要目的地原则为准)。可在多国间分配停留。",
+          "url": "https://home-affairs.ec.europa.eu/policies/schengen-borders-visa-policy_en",
+          "notes": "可以,只要符合\"主目的国\"或\"首次入境国\"原则。一张签证走所有申根国。"
+        },
+        {
+          "title": "拒签后怎么办?",
+          "desc": "会收到标准化的拒签表格。可在拒签国按该国法律规定的期限(通常 15-30 天)内申诉。",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "申诉基本不成功。建议:复盘拒签信→补强材料→重新申请。常见拒签理由:保险不足、行程不明、资金不够。"
+        },
+        {
+          "title": "什么是 180/90 规则?",
+          "desc": "整个申根区 180 天内最多停留 90 天。180 天是滚动窗口,90 天用完即必须离开。",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "\"任何 180 天内累计停留 ≤ 90 天\"——不是自然年,是滚动窗口。欧盟官方有在线计算器。"
+        },
+        {
+          "title": "非欧盟儿童收费相同吗?",
+          "desc": "6-12 岁 €45,6 岁以下免费。成人 €90。研究者、学生交流等类别可豁免。",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32024R1415",
+          "notes": "不同。6-12 岁儿童 €45,6 岁以下免费。"
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    }
+  },
+  "disclaimer": "以下内容为 Htex 产品团队基于公开资料整理的补充说明,非各国移民局/使馆的官方意见。具体以官方源为准。",
+  "notes_label": "非官方解读"
+}

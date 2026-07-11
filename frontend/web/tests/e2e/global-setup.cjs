@@ -41,7 +41,15 @@ async function globalSetup() {
 
   const proc = spawn('npx', ['vite', '--host', '127.0.0.1', '--port', String(PORT)], {
     cwd: FRONTEND_DIR,
-    env: { ...process.env, FORCE_COLOR: '0' },
+    env: {
+      ...process.env,
+      FORCE_COLOR: '0',
+      // W48: inject a fake client id so Google OAuth e2e can render the
+      // placeholder button + GIS script load. The 'fake' value is only used
+      // by google-login.spec.js which intercepts accounts.google.com via
+      // page.route; other specs don't depend on its presence/absence.
+      VITE_GOOGLE_CLIENT_ID: 'fake-e2e-client-id.apps.googleusercontent.com'
+    },
     stdio: ['ignore', 'pipe', 'pipe']
   })
 

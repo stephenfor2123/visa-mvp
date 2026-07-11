@@ -39,6 +39,8 @@
             :error="errors.password"
             :hint="pwdHint"
             maxlength="32"
+            autocomplete="new-password"
+            password-toggle
             data-testid="reg-password"
             @blur="errors.password = validatePassword(password) ? t(validatePassword(password)) : ''"
           />
@@ -51,6 +53,8 @@
             required
             :error="errors.confirmPassword"
             maxlength="32"
+            autocomplete="new-password"
+            password-toggle
             data-testid="reg-confirm-password"
             @blur="errors.confirmPassword = validateConfirmPassword(confirmPassword, password) ? t(validateConfirmPassword(confirmPassword, password)) : ''"
           />
@@ -143,7 +147,7 @@ const errors = reactive({
 const pwdHint = computed(() => {
   const v = password.value
   if (!v) return ''
-  if (v.length < 8) return t('errors.pwd_too_short')
+  if (v.length < 8) return t('validation.pwd_too_short')
   if (v.length > 32) return t('errors.pwd_too_long')
   if (!/[A-Za-z]/.test(v) || !/\d/.test(v)) return t('errors.pwd_format')
   return ''
@@ -169,7 +173,9 @@ async function onSubmit() {
       email: email.value.trim(),
       password: password.value
     })
-    toast.success(t('toast.register_success'))
+    // W48: tell user the welcome email is on its way (best-effort — backend
+    // may still fail silently if email_service is down, but UI keeps a positive tone).
+    toast.success(t('toast.register_success_with_email', { email: email.value.trim() }))
     router.push('/login')
   } catch (e) {
     const msg = e?.response?.data?.message || e?.message || t('toast.register_fail')
@@ -184,10 +190,10 @@ async function onSubmit() {
 }
 
 function onOpenTerms() {
-  toast.info(t('common.w2_coming_soon', { feature: t('register.agreement_terms') }))
+  router.push({ path: '/agreement', query: { tab: 'terms' } })
 }
 function onOpenPrivacy() {
-  toast.info(t('common.w2_coming_soon', { feature: t('register.agreement_privacy') }))
+  router.push({ path: '/agreement', query: { tab: 'privacy' } })
 }
 function goLogin() {
   router.push('/login')

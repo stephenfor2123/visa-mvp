@@ -13,10 +13,11 @@
       :value="modelValue"
       type="date"
       class="ldi__native"
-      :class="{ 'is-empty': !modelValue }"
+      :class="{ 'is-empty': !modelValue, 'is-disabled': disabled }"
       :data-testid="testId"
       :min="min"
       :max="max"
+      :disabled="disabled"
       @input="onInput"
       @change="onInput"
     />
@@ -32,6 +33,7 @@
     <div v-else class="ldi__display" :aria-hidden="true">
       <span>{{ displayText }}</span>
       <button
+        v-if="!disabled"
         type="button"
         class="ldi__clear"
         :aria-label="clearLabel"
@@ -50,6 +52,7 @@ const props = defineProps({
   testId: { type: String, default: '' },
   min: { type: String, default: '' },
   max: { type: String, default: '' },
+  disabled: { type: Boolean, default: false },
 })
 const emit = defineEmits(['update:modelValue'])
 
@@ -57,10 +60,9 @@ const { t, locale } = useI18n()
 
 // placeholder 文案：depart / return 用各自 i18n key
 const hintText = computed(() => {
-  const k = props.min
-    ? 'wizard.travel_depart_date_ph'
-    : 'wizard.travel_return_date_ph'
-  return t(k)
+  if (props.min && (props.testId || '').includes('depart')) return t('wizard.travel_depart_date_ph')
+  if ((props.testId || '').includes('return')) return t('wizard.travel_return_date_ph')
+  return t('orders.placeholder_date') || 'YYYY-MM-DD'
 })
 
 // 已选日期：当前 locale 下的本地化格式

@@ -3,7 +3,7 @@
     <!-- 去程 -->
     <section class="tp-block">
       <h3 class="tp-block__title">
-        <span class="tp-block__icon">🛫</span> {{ t('wizard.travel_outbound_title') }}
+        {{ t('wizard.travel_outbound_title') }}
       </h3>
       <div class="tp-row">
         <label class="tp-field">
@@ -30,17 +30,16 @@
     <!-- 返程：出发/到达地独立可编辑（开口程——回程不一定飞回同一个城市） -->
     <section class="tp-block">
       <h3 class="tp-block__title">
-        <span class="tp-block__icon">🛬</span> {{ t('wizard.travel_return_title') }}
+        {{ t('wizard.travel_return_title') }}
       </h3>
-      <p class="tp-block__hint">{{ t('wizard.travel_return_openjaw_hint') }}</p>
       <div class="tp-row">
         <label class="tp-field">
           <span>{{ t('wizard.travel_return_origin_label') }}</span>
-          <CityInput v-model="plan.returnOrigin" :placeholder="plan.destination || destinationName" test-id="tp-return-origin" :country-code="countryCode" />
+          <CityInput v-model="plan.returnOrigin" :placeholder="plan.destination || destinationName" test-id="tp-return-origin" :country-code="countryCode" @update:modelValue="onReturnOriginEdit" />
         </label>
         <label class="tp-field">
           <span>{{ t('wizard.travel_return_destination_label') }}</span>
-          <CityInput v-model="plan.returnDestination" :placeholder="plan.origin" test-id="tp-return-destination" :country-code="countryCode" />
+          <CityInput v-model="plan.returnDestination" :placeholder="plan.origin" test-id="tp-return-destination" :country-code="countryCode" @update:modelValue="onReturnDestinationEdit" />
         </label>
       </div>
       <div class="tp-row">
@@ -57,8 +56,10 @@
 
     <!-- 行程单：日期一定就直接显示，逐格可编辑；"一键生成" 只补空白格 -->
     <section class="tp-block" v-if="plan.days.length">
-      <h3 class="tp-block__title"><span class="tp-block__icon">📅</span> {{ t('wizard.travel_days_title', { n: plan.days.length }) }}</h3>
-      <p class="tp-block__hint">{{ t('wizard.travel_days_hint') }}</p>
+      <h3 class="tp-block__title">{{ t('wizard.travel_days_title', { n: plan.days.length }) }}</h3>
+      <!-- W67: 删副标题 "为每一天填写所在城市、交通方式、住宿;行程/景点留空可用 AI 一键补全"
+           用户反馈: 标题+表头已经说明字段含义,副标题重复且"AI 一键补全"在按钮上已经表达 -->
+      <!-- <p class="tp-block__hint">{{ t('wizard.travel_days_hint') }}</p> -->
 
       <div class="tp-preview" data-testid="tp-itinerary-preview">
         <table class="tp-table">
@@ -87,20 +88,15 @@
                      - 中间飞行日: "上一站 →"（箭头指向当天）
                      这样返程当天即使是步行/活动也能看到 → 到达城市，不会漏。
                      数据源是 plan.origin / plan.returnDestination。 -->
+                <!-- 副标题：完整显示"从 → 到"行迹，跟 cell 里的 city 拼起来看
+                     是一段完整航线 (例如 cell="纽约" + 副标题="北京 → 纽约")。
+                     W54: 之前只渲染箭头一侧 (北京→ / →北京) 看着像缺一半。 -->
                 <div
                   v-if="i === 0 || i === plan.days.length - 1 || d.transport === 'flight'"
                   class="tp-city-from"
                   :data-testid="`tp-day-city-from-${i}`"
                 >
-                  <template v-if="i === 0">
-                    {{ plan.origin || '出发城市' }} →
-                  </template>
-                  <template v-else-if="i === plan.days.length - 1">
-                    → {{ plan.returnDestination || plan.origin || '返程目的地' }}
-                  </template>
-                  <template v-else>
-                    {{ dayCityDisplayFn(i).split('→')[0] }} →
-                  </template>
+                  {{ dayCityDisplayFn(i) }}
                 </div>
               </td>
               <td>
@@ -131,7 +127,11 @@
                 />
               </td>
               <td>
+                <!-- W67: 最后一天是返程日,不需要酒店。直接空着不显示输入框,
+                     AI 也不会补;用户真有过夜需求可以点输入框手动填 (cell 还在,只是 readonly) -->
+                <span v-if="i === plan.days.length - 1" class="tp-cell-empty" data-testid="tp-day-hotel-return">—</span>
                 <input
+                  v-else
                   v-model="d.hotel"
                   :placeholder="t('wizard.travel_day_hotel_ph')"
                   class="tp-input tp-cell-input"
@@ -157,7 +157,7 @@
         </div>
         <template v-else>
           <button type="button" class="tp-generate__btn" data-testid="tp-generate" @click="onGenerate">
-            ✨ {{ t('wizard.travel_mode_smart') }}
+            {{ t('wizard.travel_mode_smart', 'AI 填充') }}
           </button>
           <button
             v-if="canExportPdf"
@@ -166,7 +166,7 @@
             data-testid="tp-export-pdf"
             @click="onExportPdf"
           >
-            📄 {{ t('wizard.travel_export_pdf') }}
+            {{ t('wizard.travel_export_pdf', '导出 PDF') }}
           </button>
         </template>
       </div>
@@ -175,7 +175,7 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import jsPDF from 'jspdf'
@@ -217,6 +217,41 @@ watch(() => props.plan.days.length, (n) => {
   // 标记成"非手填"（系统兜底），避免用户后续看到后以为是 AI 填的
 }, { immediate: true })
 
+// 回程出发/到达地默认按"目的地→出发地",用户改过则保留用户选择。
+// _manual.returnOrigin / _manual.returnDestination 标记用户已手填,自愈逻辑尊重。
+watch(() => props.plan.destination, (newDest) => {
+  if (!newDest) return
+  if (props.plan._manual?.returnOrigin) return
+  props.plan.returnOrigin = newDest
+}, { immediate: true })
+
+watch(() => props.plan.origin, (newOrigin) => {
+  if (!newOrigin) return
+  if (props.plan._manual?.returnDestination) return
+  props.plan.returnDestination = newOrigin
+}, { immediate: true })
+
+// 返程日不应该带住宿（人都飞走了）—— 跟上面"transport=flight"兜底对称。
+// _manual.hotel=true 表示用户在最后一天手动填了酒店（比如真的有转机过夜的需求），
+// 这种情况尊重用户选择不强行清空。
+// 返程日不应该带住宿（人都飞走了）—— 跟上面"transport=flight"兜底对称。
+// _manual.hotel=true 表示用户在最后一天手动填了酒店（比如真的有转机过夜的需求），
+// 这种情况尊重用户选择不强行清空。
+function clearLastDayHotel() {
+  const days = props.plan.days
+  if (!days || !days.length) return
+  const last = days[days.length - 1]
+  if (!last) return
+  if (!last.hotel) return
+  if (last._manual?.hotel) return
+  last.hotel = ''
+  if (last._auto) last._auto.hotel = false
+}
+// W67: 同时 watch length(天数变化时)和 days 初始化(props.plan 整体加载完成时)
+// 不开 deep:true,避免 day 字段被清空时反过来触发 watch 形成调用堆栈。
+watch(() => props.plan.days.length, () => clearLastDayHotel(), { immediate: true })
+onMounted(() => clearLastDayHotel())
+
 // 出发/返回日期一变就重建逐日行程（保留已有城市/交通/住宿/景点，按日期对齐）
 watch(() => [props.plan.departDate, props.plan.returnDate], () => {
   props.onRebuildDays()
@@ -242,6 +277,16 @@ watch(() => props.plan.destination, (newVal, oldVal) => {
 // （否则会一直卡在上一次 AI 生成的内容，改了目的地/航班信息后也刷新不了）
 function onManualEdit(day, field) {
   props.onMarkDayFieldManual(day, field)
+}
+
+// 用户手动改返程出发/到达地 → 标记 _manual → 自愈逻辑不再覆盖
+function onReturnOriginEdit() {
+  if (!props.plan._manual) props.plan._manual = {}
+  props.plan._manual.returnOrigin = true
+}
+function onReturnDestinationEdit() {
+  if (!props.plan._manual) props.plan._manual = {}
+  props.plan._manual.returnDestination = true
 }
 
 function formatDate(dateStr) {
@@ -308,6 +353,28 @@ const TRANSPORT_EN = {
   other: 'Other',
 }
 
+// 常用城市中英映射 — PDF 双语副标题用。仅覆盖常见目的地，
+// 用户填的城市不在表里时 PDF 副标题留空（不阻塞导出）。
+const CITY_EN = {
+  '北京': 'Beijing', '上海': 'Shanghai', '广州': 'Guangzhou', '深圳': 'Shenzhen',
+  '成都': 'Chengdu', '杭州': 'Hangzhou', '香港': 'Hong Kong', '台北': 'Taipei',
+  '纽约': 'New York', '洛杉矶': 'Los Angeles', '旧金山': 'San Francisco',
+  '芝加哥': 'Chicago', '西雅图': 'Seattle', '波士顿': 'Boston', '华盛顿': 'Washington',
+  '拉斯维加斯': 'Las Vegas', '迈阿密': 'Miami', '休斯顿': 'Houston', '达拉斯': 'Dallas',
+  '伦敦': 'London', '巴黎': 'Paris', '柏林': 'Berlin', '罗马': 'Rome',
+  '马德里': 'Madrid', '巴塞罗那': 'Barcelona', '阿姆斯特丹': 'Amsterdam',
+  '悉尼': 'Sydney', '墨尔本': 'Melbourne', '布里斯班': 'Brisbane',
+  '东京': 'Tokyo', '大阪': 'Osaka', '京都': 'Kyoto', '首尔': 'Seoul',
+  '新加坡': 'Singapore', '曼谷': 'Bangkok', '吉隆坡': 'Kuala Lumpur',
+  '河内': 'Hanoi', '胡志明市': 'Ho Chi Minh City', '雅加达': 'Jakarta',
+  '巴厘岛': 'Bali', '普吉岛': 'Phuket',
+}
+function cityEn(name) {
+  if (!name) return ''
+  const trimmed = String(name).trim()
+  return CITY_EN[trimmed] || ''
+}
+
 function formatDateEn(dateStr) {
   if (!dateStr) return ''
   const d = new Date(dateStr + 'T00:00:00')
@@ -328,7 +395,7 @@ function bilingualCellHtml(target, en) {
   if (isEnglishLocale.value) return `<div>${ev || tv}</div>`
   const top = tv || ev
   const sub = tv && ev && tv !== ev
-    ? `<div style="color:#64748b;font-size:11px;margin-top:2px">${ev}</div>`
+    ? `<div style="color:#64748b;font-size:12px;margin-top:4px">${ev}</div>`
     : ''
   return `<div>${top}</div>${sub}`
 }
@@ -338,7 +405,7 @@ function bilingualHeaderHtml(target, en) {
   const tv = escapeHtml(String(target ?? '').trim())
   const ev = escapeHtml(String(en ?? '').trim())
   if (isEnglishLocale.value) return `<div>${ev || tv}</div>`
-  return `<div>${tv}</div><div style="font-size:10px;font-weight:600;opacity:.85;margin-top:1px">${ev}</div>`
+  return `<div>${tv}</div><div style="font-size:11px;font-weight:600;opacity:.85;margin-top:2px">${ev}</div>`
 }
 
 async function onExportPdf() {
@@ -367,7 +434,7 @@ async function onExportPdf() {
     //     3. canvas 物理宽度限制在 1400px（多余像素直接 trim）
     //   实测 7 天行程稳定 250~500KB；30 天最长约 800KB，远低于 1MB。
     const canvas = await renderBilingualPageOneCanvas()
-    const MAX_W = 1400
+    const MAX_W = 2400
     let exportCanvas = canvas
     if (canvas.width > MAX_W) {
       const ratio = MAX_W / canvas.width
@@ -381,7 +448,7 @@ async function onExportPdf() {
       ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height)
       ctx.drawImage(canvas, 0, 0, exportCanvas.width, exportCanvas.height)
     }
-    const imgData = exportCanvas.toDataURL('image/jpeg', 0.82)
+    const imgData = exportCanvas.toDataURL('image/jpeg', 0.92)
 
     // A4 尺寸 (pt)。分别算纵向/横向下能把整张表放到多大，取更大的那个方向。
     const A4 = { short: 595.28, long: 841.89 }
@@ -408,18 +475,17 @@ async function onExportPdf() {
     const x = marginX + (usableWidth - imgW) / 2 // 缩小后水平居中
     doc.addImage(imgData, 'JPEG', x, marginTop, imgW, imgH)
 
-    // 页脚 (英文，helvetica 能渲染)
-    doc.setFontSize(9)
-    doc.setTextColor(120)
-    const footer = `Generated by Htex · ${new Date().toISOString().slice(0, 10)}`
-    doc.text(footer, pageWidth / 2, pageHeight - 18, { align: 'center' })
-    doc.setTextColor(0)
-
-    // 文件名: 行程单_{countryCode}_{departDate}_{returnDate}.pdf
+    // 文件名按当前语言走: zh=行程单 / en=Itinerary / vi=Lịch trình / id=Rencana Perjalanan
     const cc = props.countryCode || 'XX'
     const dep = (props.plan.departDate || '').replace(/-/g, '')
     const ret = (props.plan.returnDate || '').replace(/-/g, '')
-    const filename = `\u884c\u7a0b\u5355_${cc}_${dep}_${ret}.pdf`
+    const label = ({
+      'zh-CN': '行程单',
+      en: 'Itinerary',
+      vi: 'Lịch trình',
+      id: 'Rencana Perjalanan',
+    }[locale.value] || 'Itinerary')
+    const filename = `${label}_${cc}_${dep}_${ret}.pdf`
     doc.save(filename)
     ElMessage?.success?.('PDF saved.')
   } catch (e) {
@@ -434,7 +500,7 @@ async function renderBilingualPageOneCanvas() {
   const wrapper = document.createElement('div')
   wrapper.style.cssText = `
     position: fixed; left: -10000px; top: 0;
-    width: 1100px; padding: 24px 28px; background: #fff;
+    width: 1800px; padding: 32px 36px; background: #fff;
     font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
     color: #0f172a;
   `
@@ -446,7 +512,7 @@ async function renderBilingualPageOneCanvas() {
   const titleTarget = t('wizard.travel_days_title', { n: days.length })
   const titleEn = `Itinerary (${days.length} ${days.length === 1 ? 'day' : 'days'})`
 
-  // 表头：目标语言在前 + 英文在后（英文写死，避免额外 i18n key）
+// 表头：目标语言在前 + 英文在后（英文写死，避免额外 i18n key）
   const headerDefs = [
     [t('wizard.itinerary_col_day'), 'Day'],
     [t('wizard.itinerary_col_date'), 'Date'],
@@ -455,49 +521,72 @@ async function renderBilingualPageOneCanvas() {
     [t('wizard.itinerary_col_attraction'), 'Itinerary'],
     [t('wizard.itinerary_col_hotel'), 'Hotel'],
   ]
-  const colWidths = [64, 132, 120, 104, 250, 174]  // 加起来 ≈ 844
-  const tableW = colWidths.reduce((a, b) => a + b, 0)
+  // 列宽用百分比(总 100%)自适应容器宽度 — 不管 1600px 离屏 DOM 还是
+  // 真实打印容器,表格都能撑满。Days 多时 attraction/hotel 按比例拉宽。
+  const colPercents = [6, 12, 15, 12, 30, 25]  // 共 100
 
   const headHtml = headerDefs.map(([tt, en], i) =>
-    `<th style="border:1px solid #3b6ef5;background:#3b6ef5;color:#fff;padding:6px 8px;text-align:left;font-size:12px;width:${colWidths[i]}px;font-weight:700">${bilingualHeaderHtml(tt, en)}</th>`
+    `<th style="border:1px solid #3b6ef5;background:#3b6ef5;color:#fff;padding:14px 12px;text-align:left;font-size:14px;width:${colPercents[i]}%;font-weight:700;line-height:1.5">${bilingualHeaderHtml(tt, en)}</th>`
   ).join('')
 
   let bodyHtml = ''
   days.forEach((d, i) => {
     const transportKey = d.transport || ''
+    const isLastDay = i === days.length - 1
+
+    // 交通方式：飞机时拼接当天航班号(d.flightNo)。
+    // d.flightNo 由 rebuildTravelDays 从 plan.flightOutNo/flightBackNo 同步到首末天，
+    // 中间天用户手填就保留,不填就空。
+    const flightNo = (transportKey === 'flight' && d.flightNo) ? d.flightNo : ''
+    const transportTarget = transportKey
+      ? (flightNo
+          ? `${t(`wizard.transport_${transportKey}`)} ${flightNo}`
+          : t(`wizard.transport_${transportKey}`))
+      : ''
+    const transportEn = TRANSPORT_EN[transportKey]
+      ? (flightNo
+          ? `${TRANSPORT_EN[transportKey]} ${flightNo}`
+          : TRANSPORT_EN[transportKey])
+      : ''
+
+    // 住宿：返程日（最后一天 + transport=flight）不带酒店
+    const hotelShow = isLastDay && transportKey === 'flight' ? '' : d.hotel
+    const hotelEnShow = isLastDay && transportKey === 'flight' ? '' : d.hotel_en
+
+// 城市：中文 "北京 → 纽约" → 英文 "Beijing → New York"
+    const cityTarget = props.dayCityDisplayFn(i)
+    const cityTargetEn = cityTarget
+      .split('→').map(s => cityEn(s.trim())).filter(Boolean).join(' → ')
+      || d.city_en // LLM 英文镜像 fallback
+
     const cells = [
       bilingualCellHtml(`Day ${d.day}`, ''),
       // 日期：目标语言格式在上、英文格式在下（修掉之前英文重复两遍的 bug）
       bilingualCellHtml(formatDate(d.date), formatDateEn(d.date)),
-      // 城市 / 景点 / 住宿：目标语言在上、LLM 给的英文镜像在下（W47）。
-      // 英文镜像缺失（用户手改过）时，bilingualCellHtml 自动只渲染一行。
-      bilingualCellHtml(props.dayCityDisplayFn(i), d.city_en),
-      bilingualCellHtml(
-        transportKey ? t(`wizard.transport_${transportKey}`) : '',
-        TRANSPORT_EN[transportKey] || ''
-      ),
+      // 城市 / 景点 / 住宿：目标语言在上、英文镜像在下。
+      // 英文优先用 cityEn() 实时翻译箭头两边；查不到再 fallback 到 LLM 给的 city_en。
+      bilingualCellHtml(cityTarget, cityTargetEn),
+      bilingualCellHtml(transportTarget, transportEn),
       bilingualCellHtml(d.attraction, d.attraction_en),
-      bilingualCellHtml(d.hotel, d.hotel_en),
+      bilingualCellHtml(hotelShow, hotelEnShow),
     ]
     bodyHtml += '<tr>' + cells.map((inner, ci) =>
-      `<td style="border:1px solid #e2e8f0;padding:6px 8px;vertical-align:top;font-size:12.5px;width:${colWidths[ci]}px">${inner}</td>`
+      `<td style="border:1px solid #e2e8f0;padding:14px 12px;vertical-align:top;font-size:14px;width:${colPercents[ci]}%;line-height:1.7">${inner}</td>`
     ).join('') + '</tr>'
   })
 
   wrapper.innerHTML = `
     <div style="text-align:center;margin-bottom:6px">
-      <div style="font-size:22px;font-weight:800">${escapeHtml(titleTarget)}</div>
-      ${isEnglishLocale.value ? '' : `<div style="font-size:12px;color:#64748b;margin-top:2px">${escapeHtml(titleEn)}</div>`}
-      <div style="font-size:13px;color:#475569;margin-top:6px">${escapeHtml(sub)}</div>
+      <div style="font-size:22px;font-weight:800">${escapeHtml(titleTarget)} · <span style="font-size:14px;color:#64748b;font-weight:600">${escapeHtml(titleEn)}</span></div>
     </div>
-    <table style="border-collapse:collapse;margin:16px auto 0;width:${tableW}px;table-layout:fixed">
+    <table style="border-collapse:collapse;margin:16px auto 0;width:100%;table-layout:fixed">
       <thead><tr>${headHtml}</tr></thead>
       <tbody>${bodyHtml}</tbody>
     </table>
   `
   document.body.appendChild(wrapper)
   try {
-    return await html2canvas(wrapper, { scale: 2, backgroundColor: '#ffffff', useCORS: true })
+    return await html2canvas(wrapper, { scale: 3, backgroundColor: '#ffffff', useCORS: true })
   } finally {
     wrapper.remove()
   }
@@ -539,6 +628,13 @@ function escapeHtml(s) {
 .tp-required-mark { color: #dc2626; font-weight: 700; margin-right: 2px; }
 .tp-cell-input { padding: 6px 8px; font-size: 12.5px; min-width: 90px; border-color: #e9edf5; }
 .tp-cell-input--wide { min-width: 180px; }
+// W67: 返程日 hotel 单元格里显示个 "—",不渲染 input,避免误填
+.tp-cell-empty {
+  display: inline-block;
+  color: #cbd5e1;
+  font-size: 12px;
+  padding: 0 4px;
+}
 // AI 填的格子给个淡紫底色提示"这是生成的，可以再点一次一键生成刷新，或者直接手改"
 .tp-cell-input.is-ai-filled { background: #f5f3ff; border-color: #ddd6fe; }
 // W47b: "从北京出发"提示 —— 放到 city 输入框下方一行（之前在框上方），

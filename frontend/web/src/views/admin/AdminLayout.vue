@@ -2,8 +2,7 @@
   <div class="admin-layout">
     <aside class="admin-sidebar">
       <div class="admin-sidebar__brand">
-        <span class="admin-sidebar__mark">A</span>
-        <span>{{ t('admin.dashboard') }}</span>
+        <HtexLogo :size="22" color="#F8FAFC" />
       </div>
       <nav class="admin-sidebar__nav">
         <router-link
@@ -32,30 +31,45 @@ import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAdminStore } from '@/stores/admin'
+import HtexLogo from '@/components/HtexLogo.vue'
 
 const { t } = useI18n()
 const router = useRouter()
 const admin = useAdminStore()
 
 const navItems = computed(() => {
+  // W63: navItems 计算前先 hydrate,避免刷新页面时 token 还没回到 store,
+  // permissions=[],hasPermission 全 false,菜单短暂没显示又被 push 的闪烁。
+  if (!admin.token) admin.hydrate()
+
+  // 调试日志: 第一次算菜单时打印,确认 perm 链路
+  if (!navItems.__logged) {
+    navItems.__logged = true
+    // eslint-disable-next-line no-console
+    console.log('[admin-nav] token present?', !!admin.token,
+      '| username:', admin.username,
+      '| role:', admin.role,
+      '| isSuperAdmin:', admin.isSuperAdmin,
+      '| perms count:', admin.permissions?.length,
+      '| perms:', admin.permissions)
+  }
+
   const items = [
-    { path: '/admin/dashboard', label: 'admin.menu_overview', perm: 'dashboard' },
-    { path: '/admin/orders', label: 'admin.menu_orders', perm: 'orders' },
-    { path: '/admin/payments', label: 'admin.menu_payments', perm: 'payments' },
+    { path: '/admin/dashboard', label: 'admin.menu_overview', perm: 'dashboard.view' },
+    { path: '/admin/orders', label: 'admin.menu_orders', perm: 'order.view' },
+    { path: '/admin/payments', label: 'admin.menu_payments', perm: 'payment.view' },
   ]
-  if (admin.hasPermission('users')) {
-    items.push({ path: '/admin/users', label: 'admin.menu_users', perm: 'users' })
-    items.push({ path: '/admin/c-users', label: 'admin.menu_c_users', perm: 'users' })
+  if (admin.hasPermission('user.view')) {
+    items.push({ path: '/admin/users', label: 'admin.menu_users', perm: 'user.view' })
   }
-  if (admin.hasPermission('countries')) items.push({ path: '/admin/countries', label: 'admin.menu_countries', perm: 'countries' })
-  if (admin.hasPermission('settings')) {
-    items.push({ path: '/admin/rate-limit', label: 'admin.menu_settings', perm: 'settings' })
-    items.push({ path: '/admin/ai-rules', label: 'admin.menu_ai_rules', perm: 'settings' })
-    items.push({ path: '/admin/rpa-strategy', label: 'admin.menu_rpa_strategy', perm: 'settings' })
-    items.push({ path: '/admin/i18n', label: 'admin.menu_i18n', perm: 'settings' })
-    items.push({ path: '/admin/cleanup', label: 'admin.menu_cleanup', perm: 'settings' })
-  }
-  if (admin.hasPermission('dashboard')) items.push({ path: '/admin/logs', label: 'admin.menu_logs', perm: 'dashboard' })
+  if (admin.hasPermission('country.manage')) items.push({ path: '/admin/countries', label: 'admin.menu_countries', perm: 'country.manage' })
+  if (admin.hasPermission('settings')) items.push({ path: '/admin/rate-limit', label: 'admin.menu_settings', perm: 'settings' })
+  if (admin.hasPermission('ai_rules.edit')) items.push({ path: '/admin/ai-rules', label: 'admin.menu_ai_rules', perm: 'ai_rules.edit' })
+  if (admin.hasPermission('rag.review')) items.push({ path: '/admin/rag-review', label: 'admin.menu_rag_review', perm: 'rag.review' })
+  // W63: system.cleanup 是独立 perm, 不跟 settings 嵌套
+  if (admin.hasPermission('system.cleanup')) items.push({ path: '/admin/cleanup', label: 'admin.menu_cleanup', perm: 'system.cleanup' })
+  if (admin.hasPermission('role.manage')) items.push({ path: '/admin/roles', label: 'admin.menu_roles', perm: 'role.manage' })
+  if (admin.hasPermission('dashboard.view')) items.push({ path: '/admin/logs', label: 'admin.menu_logs', perm: 'dashboard.view' })
   return items
 })
 
@@ -99,6 +113,7 @@ onMounted(() => {
   font-weight: 600;
   font-size: 15px;
   color: #F8FAFC;
+  letter-spacing: -.5px;
 }
 
 .admin-sidebar__mark {

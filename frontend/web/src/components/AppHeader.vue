@@ -1,5 +1,5 @@
 <template>
-  <header ref="headerEl" class="app-header app-container">
+  <header ref="headerEl" class="app-header">
     <router-link to="/home" class="app-header__brand">
       <HtexLogo :size="28" />
     </router-link>
@@ -55,7 +55,7 @@
         <h3 class="mega-menu__title">{{ t(m.titleKey) }}</h3>
         <p class="mega-menu__desc">{{ t(m.descKey) }}</p>
       </div>
-      <div class="mega-menu__grid">
+      <div class="mega-menu__grid" :class="m.gridClass">
         <router-link
           v-for="(item, i) in m.items"
           :key="i"
@@ -65,9 +65,10 @@
           :data-testid="`${props.scope}-mega-${m.id}-item-${i}`"
           @click="closeMega"
         >
-          <div class="mega-menu__icon" :class="`mega-menu__icon--${item.tone}`" v-html="item.icon" />
           <div class="mega-menu__item-body">
-            <div class="mega-menu__item-name">{{ t(item.nameKey) }}</div>
+            <div class="mega-menu__item-name">
+              <span class="mega-menu__item-num">{{ i + 1 }}</span>{{ t(item.nameKey) }}
+            </div>
             <div class="mega-menu__item-desc">{{ t(item.descKey) }}</div>
           </div>
         </router-link>
@@ -89,31 +90,8 @@
           <path d="M20 20 L16.5 16.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
       </button>
-      <!-- W28: Privacy First 蓝色锁徽章(强调不直接接触用户证件) -->
-      <div
-        class="trust-badge"
-        :title="t('trust.on_time_tip')"
-        :data-testid="`${props.scope}-trust-badge`"
-      >
-        <svg class="trust-badge__shield" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-          <defs>
-            <linearGradient id="trust-lock-grad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%"  stop-color="#3B6EF5"/>
-              <stop offset="100%" stop-color="#2553D6"/>
-            </linearGradient>
-          </defs>
-          <!-- 锁体 -->
-          <rect x="5" y="11" width="14" height="10" rx="2"
-                fill="url(#trust-lock-grad)" stroke="#1E40AF" stroke-width=".6"/>
-          <!-- 锁梁 -->
-          <path d="M8 11 V7.5 C8 5 9.8 3 12 3 C14.2 3 16 5 16 7.5 V11"
-                fill="none" stroke="#1E40AF" stroke-width="2" stroke-linecap="round"/>
-          <!-- 锁芯高光 -->
-          <circle cx="12" cy="15.5" r="1.4" fill="#fff"/>
-          <rect x="11.4" y="16" width="1.2" height="3" fill="#fff"/>
-        </svg>
-        <span class="trust-badge__text">{{ t('trust.on_time') }}</span>
-      </div>
+      <!-- W57: 加密隐私保护徽章 — 点击弹出 popover(简化:仅大锁+标题+副标题+CTA,W57b) -->
+      <TrustBadgePopover :scope="props.scope" learn-more-to="/resources?focus=policy" />
       <LangSwitch />
       <!-- W47: 人物头像下拉菜单(整合"我的申请" + profile + 退出登录) -->
       <div
@@ -146,36 +124,7 @@
           role="menu"
           :data-testid="`${props.scope}-user-panel`"
         >
-          <!-- 顶部申请人列表(继承自原 orders-menu,W41) -->
-          <div
-            v-if="applicantsLoading"
-            class="user-menu__empty"
-            :data-testid="`${props.scope}-user-applicants-loading`"
-          >
-            <span>{{ t('nav.orders_menu.applicants_loading') || '加载中…' }}</span>
-          </div>
-          <div
-            v-else-if="applicants.length === 0"
-            class="user-menu__empty"
-            :data-testid="`${props.scope}-user-applicants-empty`"
-          >
-            <span>{{ t('nav.orders_menu.applicants_empty') || '暂无申请人' }}</span>
-          </div>
-          <div
-            v-else
-            class="user-menu__applicants"
-            :data-testid="`${props.scope}-user-applicants`"
-          >
-            <div
-              v-for="a in applicants"
-              :key="a.id"
-              class="user-menu__applicant"
-              role="presentation"
-              :data-testid="`${props.scope}-user-applicant-${a.id}`"
-            >
-              {{ a.name }}
-            </div>
-          </div>
+          <!-- 顶部申请人列表已挪到 /profile 个人中心(W59) — 弹窗只保留 4 个工具入口 -->
 
           <div class="user-menu__divider" role="separator" />
 
@@ -257,9 +206,9 @@ import HtexLogo from '@/components/HtexLogo.vue'
 import LangSwitch from '@/components/LangSwitch.vue'
 import AppButton from '@/components/AppButton.vue'
 import CountrySearchModal from '@/components/CountrySearchModal.vue'
+import TrustBadgePopover from '@/components/TrustBadgePopover.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
-import { listMyApplicants } from '@/api/applicants'
 
 const props = defineProps({
   /**
@@ -276,41 +225,12 @@ const auth = useAuthStore()
 const toast = useToast()
 
 // ============== 用户菜单(W47:整合"我的申请" + profile + 退出登录) ==============
+// W59: 顶部申请人列表已挪到 /profile 个人中心,弹窗只保留 4 个工具入口
 const userMenuOpen = ref(false)
 const userMenuRef = ref(null)
 
-// W41: 申请人列表（按姓名+护照号去重,后端聚合 user 的所有订单）
-const applicants = ref([])
-const applicantsLoading = ref(false)
-
-async function fetchApplicants() {
-  if (!auth.isLoggedIn) {
-    applicants.value = []
-    return
-  }
-  applicantsLoading.value = true
-  try {
-    applicants.value = await listMyApplicants()
-  } catch (_) {
-    // 静默失败：菜单头部留空,不影响底部 3 个工具入口
-    applicants.value = []
-  } finally {
-    applicantsLoading.value = false
-  }
-}
-
-// 登录态变化时重新拉;菜单首次打开时也拉一次（懒加载）
-watch(() => auth.isLoggedIn, (v) => {
-  if (v) fetchApplicants()
-  else applicants.value = []
-}, { immediate: true })
-
 function toggleUserMenu() {
   userMenuOpen.value = !userMenuOpen.value
-  // 打开时如果从未拉过,触发一次（兜底登录态变化时 immediate 没跑的边界情况）
-  if (userMenuOpen.value && auth.isLoggedIn && applicants.value.length === 0 && !applicantsLoading.value) {
-    fetchApplicants()
-  }
 }
 function closeUserMenu() {
   userMenuOpen.value = false
@@ -402,10 +322,12 @@ const SVG_GLOBE = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circ
 const SVG_FILE = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 2h9l5 5v15H6z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M14 2v6h6" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 14h7M9 18h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`
 
 // W31: contact icons
+// W57: 商业合作 — 公文包图标
+const SVG_BRIEFCASE = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M3 12h18" stroke="currentColor" stroke-width="1.6"/></svg>`
+
 const SVG_MAIL = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 7l9 6 9-6" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`
 const SVG_PHONE = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 4h3l2 5-2 1a11 11 0 0 0 6 6l1-2 5 2v3a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`
 const SVG_WECHAT = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 4C5 4 2 6.7 2 10c0 1.7.8 3.3 2 4.3l-.5 2 2.2-1.1c.7.2 1.4.3 2.3.3.3 0 .5 0 .8-.1a5.4 5.4 0 0 1 5.4-5.4c.3 0 .6 0 .9.1C14.5 6.5 12 4 9 4z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="6.5" cy="9" r="0.8" fill="currentColor"/><circle cx="10" cy="9" r="0.8" fill="currentColor"/><path d="M22 14.5c0-2.8-2.5-5-5.5-5s-5.5 2.2-5.5 5 2.5 5 5.5 5c.6 0 1.2-.1 1.7-.2l1.8.9-.4-1.6c1.4-.9 2.4-2.4 2.4-4.1z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="14.5" cy="14" r="0.7" fill="currentColor"/><circle cx="17.5" cy="14" r="0.7" fill="currentColor"/></svg>`
-const SVG_WHATSAPP = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3.5 20.5l1-3.6A8.5 8.5 0 1 1 7 19.5l-3.5 1z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 9.5c.5-.5 1-.5 1.4 0l.7 1c.4.5.4.8 0 1.2l-.4.4c.5 1 1.3 1.8 2.3 2.3l.4-.4c.4-.4.7-.4 1.2 0l1 .7c.5.4.5.9 0 1.4l-.5.5c-.7.7-2 .5-3.5-.5-2-1.3-3.4-2.8-3.7-3.7-.4-1.2-.5-2.3 0-3z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`
 
 const megaMenus = [
   {
@@ -413,10 +335,18 @@ const megaMenus = [
     triggerKey: 'nav.mega.apply',
     titleKey: 'nav.mega.apply_title',
     descKey: 'nav.mega.apply_desc',
+    // W55: 6 大产品卖点 3×2 布局 — 替代原 1-3 步流程
+    gridClass: 'mega-menu__grid--3col',
     items: [
+      // W55: 6 大产品卖点 — 替代原 1-3 步流程
+      // 1. 材料清单(实时获取) 2. OCR 智能识别 3. 签证模版
+      // 4. 一键生成行程单   5. 母语填写     6. 智能审核
       { to: '/apply',           nameKey: 'nav.mega.apply_i1', descKey: 'nav.mega.apply_i1_d', icon: SVG_DOC,     tone: 'blue' },
       { to: '/apply?step=ocr',  nameKey: 'nav.mega.apply_i2', descKey: 'nav.mega.apply_i2_d', icon: SVG_SCAN,    tone: 'indigo' },
-      { to: '/apply?step=upload', nameKey: 'nav.mega.apply_i3', descKey: 'nav.mega.apply_i3_d', icon: SVG_UPLOAD,  tone: 'cyan' },
+      { to: '/resources?focus=template', nameKey: 'nav.mega.apply_i3', descKey: 'nav.mega.apply_i3_d', icon: SVG_FILE, tone: 'cyan' },
+      { to: '/apply?step=itinerary', nameKey: 'nav.mega.apply_i4', descKey: 'nav.mega.apply_i4_d', icon: SVG_GLOBE, tone: 'amber' },
+      { to: '/apply?step=lang',      nameKey: 'nav.mega.apply_i5', descKey: 'nav.mega.apply_i5_d', icon: SVG_BOOK, tone: 'emerald' },
+      { to: '/apply?step=review',    nameKey: 'nav.mega.apply_i6', descKey: 'nav.mega.apply_i6_d', icon: SVG_PULSE, tone: 'rose' },
     ],
   },
   {
@@ -448,10 +378,20 @@ const megaMenus = [
     titleKey: 'nav.mega.contact_title',
     descKey: 'nav.mega.contact_desc',
     items: [
-      { to: '/contact',         nameKey: 'nav.mega.contact_i1', descKey: 'nav.mega.contact_i1_d', icon: SVG_MAIL,     tone: 'blue' },
-      { to: '/contact?focus=phone',    nameKey: 'nav.mega.contact_i2', descKey: 'nav.mega.contact_i2_d', icon: SVG_PHONE,    tone: 'emerald' },
-      { to: '/contact?focus=wechat',   nameKey: 'nav.mega.contact_i3', descKey: 'nav.mega.contact_i3_d', icon: SVG_WECHAT,   tone: 'green' },
-      { to: '/contact?focus=whatsapp', nameKey: 'nav.mega.contact_i4', descKey: 'nav.mega.contact_i4_d', icon: SVG_WHATSAPP, tone: 'teal' },
+      // W56: 全平台只留邮件 — WhatsApp 已下线
+      // W57: 加「商业合作」入口 — 共用同一邮箱,按用途分流
+      { to: '/contact',         nameKey: 'nav.mega.contact_i1', descKey: 'nav.mega.contact_i1_d', icon: SVG_MAIL,        tone: 'blue' },
+      { to: '/contact?focus=partner', nameKey: 'nav.mega.contact_i2', descKey: 'nav.mega.contact_i2_d', icon: SVG_BRIEFCASE,  tone: 'indigo' },
+    ],
+  },
+  {
+    // W56: 产品定价升级为顶级 trigger — 和 Policies / Contact 平级
+    id: 'pricing',
+    triggerKey: 'nav.mega.pricing',
+    titleKey: 'nav.mega.pricing_title',
+    descKey: 'nav.mega.pricing_desc',
+    items: [
+      { to: '/pricing', nameKey: 'nav.mega.pricing_i1', descKey: 'nav.mega.pricing_i1_d', icon: SVG_FILE, tone: 'amber' },
     ],
   },
 ]
@@ -510,10 +450,18 @@ function onMegaDocKey(e) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 0;
+  padding: 14px 20px;
   background: #fff;
   gap: 24px;
   position: relative;  // W47c: 给 mega-menu__panel 提供绝对定位的锚点
+  // W48: 全站 header 统一 1200 居中（与 .app-container 对齐）.
+  // width: 100% 强制 flex 容器不收缩到子元素总宽; max-width 限制到 1200;
+  // margin: 0 auto 居中 — 避免 nav children 多的页面（登录后多"我的申请"下拉）
+  // 把 header 撑窄.
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  flex-shrink: 0;
 }
 
 // ============== W31: Mega menu (deel.com 风格) ==============
@@ -586,15 +534,21 @@ function onMegaDocKey(e) {
   }
   &__grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 4px;
+  }
+  // W55: 6 条产品卖点专用 3 列布局 (3×2) — 只对 apply mega 生效
+  // 其它 mega (diagnose 3 / resources 4 / contact 2) 继续走 auto-fit 自适应
+  &__grid--3col {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px 12px;
   }
   &__item {
     display: flex;
     align-items: flex-start;
-    gap: 10px;
-    padding: 10px 10px;
-    border-radius: 10px;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
     text-decoration: none;
     color: inherit;
     transition: background .12s ease;
@@ -627,15 +581,32 @@ function onMegaDocKey(e) {
     flex: 1;
   }
   &__item-name {
-    font-size: 13px;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: #334155;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  &__item-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    background: #0f172a;
+    color: #fff;
+    border-radius: 50%;
+    font-size: 10px;
     font-weight: 600;
-    color: #0f172a;
-    margin-bottom: 2px;
+    flex-shrink: 0;
   }
   &__item-desc {
-    font-size: 11.5px;
+    font-size: 11px;
     color: #64748b;
-    line-height: 1.45;
+    line-height: 1.4;
+    padding-left: 22px;
   }
 }
 @keyframes megaIn {
@@ -779,28 +750,7 @@ function onMegaDocKey(e) {
   background: var(--border, #E2E8F0);
 }
 
-/* W41: 申请人列表（顶部,纯姓名展示,无跳转/无 hover 反馈） */
-.user-menu__applicants {
-  display: flex;
-  flex-direction: column;
-  padding: 4px 0;
-}
-.user-menu__applicant {
-  font-size: 13px;
-  color: var(--ink-2, #334155);
-  padding: 6px 12px;
-  cursor: default;        /* 明确不是可点击 */
-  user-select: text;      /* 允许复制名字 */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.user-menu__empty {
-  font-size: 12px;
-  color: var(--ink-3, #64748B);
-  padding: 8px 12px;
-  font-style: italic;
-}
+/* W59: 顶部申请人列表已挪到 /profile 个人中心 — 弹窗里不再展示 */
 
 .app-header__right {
   display: flex;
@@ -837,40 +787,5 @@ function onMegaDocKey(e) {
 }
 .search-trigger svg { display: block; }
 
-/* ============== On Time Guaranteed 信任徽章(W28) ============== */
-.trust-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px 6px 8px;
-  background: linear-gradient(135deg, #EFF4FF 0%, #DBE6FE 100%);
-  border: 1px solid #BFD3FE;
-  border-radius: 999px;
-  color: #1E40AF;
-  font-size: 12.5px;
-  font-weight: 600;
-  letter-spacing: .2px;
-  white-space: nowrap;
-  box-shadow: 0 1px 3px rgba(30, 64, 175, .08);
-  transition: transform .15s ease, box-shadow .15s ease;
-}
-.trust-badge:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(30, 64, 175, .16);
-}
-.trust-badge__shield {
-  flex: 0 0 18px;
-  display: block;
-  filter: drop-shadow(0 1px 1px rgba(30, 64, 175, .25));
-}
-.trust-badge__text {
-  font-feature-settings: 'tnum';
-}
-@media (max-width: 768px) {
-  .trust-badge { padding: 5px 8px; }
-  .trust-badge__text { display: none; }  /* 小屏只显示锁 icon,省空间 */
-}
-@media (max-width: 480px) {
-  .trust-badge { display: none; }  /* 超小屏整组隐藏 */
-}
+/* W57: 信任徽章的样式已迁到 TrustBadgePopover.vue(组件 scoped) */
 </style>

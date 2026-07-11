@@ -14,7 +14,7 @@
         font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', 'PingFang SC', 'Inter', Arial, sans-serif"
         :font-size="vbH * 0.78"
         font-weight="900"
-        fill="#000"
+        :fill="color"
         :letter-spacing="vbH * -0.045"
       >Htex</text>
     </svg>

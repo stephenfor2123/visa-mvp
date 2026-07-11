@@ -154,7 +154,7 @@ Page({
     }
     if (this.data.activeTab === 'pwd') {
       if (!this.data.password || this.data.password.length < 6) {
-        errors.password = i18n.t('errors.pwd_too_short')
+        errors.password = i18n.t('validation.pwd_too_short')
       }
     } else {
       if (!/^\d{6}$/.test(this.data.smsCode)) {

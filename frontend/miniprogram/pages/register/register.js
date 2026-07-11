@@ -81,7 +81,7 @@ Page({
     const i18n = app.globalData.i18n
     let hint = ''
     if (!v) { this.setData({ pwdHint: '' }); return }
-    if (v.length < 8) hint = i18n.t('errors.pwd_too_short')
+    if (v.length < 8) hint = i18n.t('validation.pwd_too_short')
     else if (v.length > 32) hint = i18n.t('errors.pwd_too_long')
     else if (!/[A-Za-z]/.test(v) || !/\d/.test(v)) hint = i18n.t('errors.pwd_format')
     this.setData({ pwdHint: hint })
@@ -136,7 +136,7 @@ Page({
       errors.smsCode = i18n.t('errors.code_invalid'); ok = false
     }
     if (this.data.password.length < 8) {
-      errors.password = i18n.t('errors.pwd_too_short'); ok = false
+      errors.password = i18n.t('validation.pwd_too_short'); ok = false
     } else if (this.data.password.length > 32) {
       errors.password = i18n.t('errors.pwd_too_long'); ok = false
     } else if (!/[A-Za-z]/.test(this.data.password) || !/\d/.test(this.data.password)) {

@@ -2,6 +2,11 @@ import { createRouter, createWebHistory } from 'vue-router'
 import i18n from '@/i18n'
 import { useAuthStore } from '@/stores/auth'
 import { adminRoutes, adminGuard } from './admin'
+import { FEATURE_RPA } from '@/config/features'
+
+function rpaDisabledRedirect() {
+  return FEATURE_RPA ? true : { name: 'Orders' }
+}
 
 const routes = [
   {
@@ -31,6 +36,21 @@ const routes = [
     name: 'Profile',
     component: () => import('@/views/Profile.vue'),
     meta: { title: 'nav.profile', requiresAuth: true }
+  },
+  {
+    // W48: cross-device document hub — list + upload-from-PC + open-QR-for-phone
+    path: '/profile/documents',
+    name: 'ProfileDocuments',
+    component: () => import('@/views/Documents.vue'),
+    meta: { title: 'documents.page_title', requiresAuth: true }
+  },
+  {
+    // W48: H5 upload page reached by scanning the QR. Public — auth comes via
+    // session-bound X-Transfer-Token header that the phone keeps in memory.
+    path: '/transfer',
+    name: 'Transfer',
+    component: () => import('@/views/Transfer.vue'),
+    meta: { title: 'transfer.h5_title' }
   },
   {
     path: '/destinations',
@@ -103,6 +123,16 @@ const routes = [
     meta: { title: 'orderdetail.page_title', requiresAuth: true }
   },
   {
+    // W50: AI 拒签风险预审(美签专用,US-only)
+    // 插在 createOrder 之后 → 跳 RpaSubmit 之前。
+    // 全展示不阻断,用户点"继续提交 RPA"才走原 RpaSubmit 流程。
+    path: '/orders/:orderNo/precheck',
+    name: 'OrderPrecheck',
+    component: () => import('@/views/OrderPrecheck.vue'),
+    meta: { title: 'precheck.title', requiresAuth: true },
+    beforeEnter: rpaDisabledRedirect,
+  },
+  {
     // W12: 订单列表页
     path: '/orders',
     name: 'Orders',
@@ -124,11 +154,12 @@ const routes = [
     meta: { title: 'agreement.page_title' }
   },
   {
-    // W14: RPA 提交页 (材料校验通过后自动跳转)
+    // W14: RPA 提交页 — MVP 阶段关闭 (FEATURE_RPA=false)
     path: '/rpa/submit',
     name: 'RpaSubmit',
     component: () => import('@/views/RpaSubmit.vue'),
-    meta: { title: 'rpa.page_title', requiresAuth: true }
+    meta: { title: 'rpa.page_title', requiresAuth: true },
+    beforeEnter: rpaDisabledRedirect,
   },
   {
     // W31: 签证办理 — 选国家 → RAG 拉材料清单 → 上传/OCR → 跳 OrderNew
@@ -152,6 +183,37 @@ const routes = [
     meta: { title: 'nav.mega.resources' }
   },
   {
+    // W47d: 4 张子页(百科/政策/模板/FAQ)— Resources.vue 顶部 4 卡 → 各国家、各分类的精选内容。
+    // 共享 CuratedResourceView 渲染列表,i18n key 结构:
+    //   resources_curated.{wiki|policy|templates|faq}.{us|gb|au|schengen}.{title,intro,items[],_verified_at}
+    path: '/resources/wiki',
+    name: 'ResourcesWiki',
+    component: () => import('@/views/curated/ResourcesCuratedView.vue'),
+    meta: { title: 'nav.mega.resources_i1' },
+    props: { section: 'wiki' }
+  },
+  {
+    path: '/resources/policy',
+    name: 'ResourcesPolicy',
+    component: () => import('@/views/curated/ResourcesCuratedView.vue'),
+    meta: { title: 'nav.mega.resources_i2' },
+    props: { section: 'policy' }
+  },
+  {
+    path: '/resources/templates',
+    name: 'ResourcesTemplates',
+    component: () => import('@/views/curated/ResourcesCuratedView.vue'),
+    meta: { title: 'nav.mega.resources_i3' },
+    props: { section: 'templates' }
+  },
+  {
+    path: '/resources/faq',
+    name: 'ResourcesFaq',
+    component: () => import('@/views/curated/ResourcesCuratedView.vue'),
+    meta: { title: 'nav.mega.resources_i4' },
+    props: { section: 'faq' }
+  },
+  {
     // W31: 联系我们 — 邮箱/电话/微信/工作时间(纯静态展示)
     path: '/contact',
     name: 'Contact',
@@ -159,11 +221,26 @@ const routes = [
     meta: { title: 'nav.mega.contact' }
   },
   {
+    // W56: 产品定价页 — 从首页迁出来的 4 国使馆费 + 平台服务费 + 退款规则详情页
+    path: '/pricing',
+    name: 'Pricing',
+    component: () => import('@/views/PricingPage.vue'),
+    meta: { title: 'nav.mega.pricing' }
+  },
+  {
     // W14: RPA 状态查询页
     path: '/rpa/status',
     name: 'RpaStatus',
     component: () => import('@/views/RpaStatus.vue'),
-    meta: { title: 'rpa.status_page_title', requiresAuth: true }
+    meta: { title: 'rpa.status_page_title', requiresAuth: true },
+    beforeEnter: rpaDisabledRedirect,
+  },
+  {
+    // W74: 支付 checkout 页 — 创建支付单 + Mock 轮询 / Stripe Elements
+    path: '/payment/:orderNo',
+    name: 'PaymentCheckout',
+    component: () => import('@/views/PaymentCheckout.vue'),
+    meta: { title: 'payment.checkout_title', requiresAuth: true }
   },
   {
     // W14: 支付结果页 (4 状态:success/failed/pending/cancelled + 30s polling)
@@ -193,6 +270,11 @@ router.beforeEach((to, from, next) => {
   // independent from C-user JWT, so we don't pollute the C-user auth path.
   const adminRedirect = adminGuard(to)
   if (adminRedirect) return next(adminRedirect)
+
+  // W63: 业务端 auth guard 不接管 /admin/** 路径。
+  // 否则业务端已登录用户访问 /admin/login 时,会被业务端的
+  // guestOnly 拦截跳到 /home,而 /admin/** 应该完全由 adminGuard 决定。
+  if (to.path.startsWith('/admin')) return next()
 
   const auth = useAuthStore()
   auth.hydrate()

@@ -9,33 +9,19 @@
       <div v-if="loading" class="admin-loading">{{ t('admin.loading') }}</div>
       <div v-else-if="error" class="admin-error">{{ error }}</div>
       <div v-else-if="stats" class="cleanup-grid">
+        <!-- 2026-07-07: 临时文件 + 归档合并为一个"清理缓存"按钮, 阈值在后端配置 -->
         <div class="cleanup-card">
-          <h3>{{ t('admin.cleanup.temp_files') }}</h3>
+          <h3>{{ t('admin.cleanup.cache_files') }}</h3>
           <div class="cleanup-stat">
-            <span class="num">{{ stats.temp_candidates }}</span>
+            <span class="num">{{ (stats.temp_candidates || 0) + (stats.archive_candidates || 0) }}</span>
             <span class="lbl">{{ t('admin.cleanup.candidates') }}</span>
           </div>
-          <p class="muted">{{ t('admin.cleanup.temp_hint') }}</p>
-          <button class="btn-danger" :disabled="running.temp" @click="run('temp')">
-            {{ running.temp ? t('admin.saving') : t('admin.cleanup.run') }}
+          <p class="muted">{{ t('admin.cleanup.cache_hint') }}</p>
+          <button class="btn-danger" :disabled="running.cache" @click="run('cache')">
+            {{ running.cache ? t('admin.saving') : t('admin.cleanup.run') }}
           </button>
-          <div v-if="results.temp" class="result">
-            {{ t('admin.cleanup.result_deleted') }}: {{ results.temp.deleted_count }} ({{ Math.round((results.temp.freed_bytes || 0) / 1024) }} KB, {{ results.temp.duration_ms }} ms)
-          </div>
-        </div>
-
-        <div class="cleanup-card">
-          <h3>{{ t('admin.cleanup.archived_files') }}</h3>
-          <div class="cleanup-stat">
-            <span class="num">{{ stats.archive_candidates }}</span>
-            <span class="lbl">{{ t('admin.cleanup.candidates') }}</span>
-          </div>
-          <p class="muted">{{ t('admin.cleanup.archive_hint') }}</p>
-          <button class="btn-danger" :disabled="running.archive" @click="run('archive')">
-            {{ running.archive ? t('admin.saving') : t('admin.cleanup.run') }}
-          </button>
-          <div v-if="results.archive" class="result">
-            {{ t('admin.cleanup.result_deleted') }}: {{ results.archive.deleted_count }} ({{ Math.round((results.archive.freed_bytes || 0) / 1024) }} KB, {{ results.archive.duration_ms }} ms)
+          <div v-if="results.cache" class="result">
+            {{ t('admin.cleanup.result_deleted') }}: {{ results.cache.deleted_count }} ({{ Math.round((results.cache.freed_bytes || 0) / 1024) }} KB, {{ results.cache.duration_ms }} ms)
           </div>
         </div>
 
@@ -97,17 +83,16 @@ async function load() {
 
 async function run(kind) {
   if (!confirm(t('admin.cleanup.confirm_run', { kind: t(`admin.cleanup.${kind}`) }))) return
-  running.value[kind === 'temp' ? 'temp' : kind === 'archive' ? 'archive' : 'destroy'] = true
-  const url = kind === 'temp' ? '/v2/admin/cleanup/temp-files'
-    : kind === 'archive' ? '/v2/admin/cleanup/archived-files'
+  running.value[kind] = true
+  const url = kind === 'cache'
+    ? '/v2/admin/cleanup/cache-files'
     : '/v2/admin/cleanup/pending-destroys'
   try {
     const r = await http.post(url)
-    const k = kind === 'temp' ? 'temp' : kind === 'archive' ? 'archive' : 'destroy'
-    results.value[k] = r.data?.data
+    results.value[kind] = r.data?.data
     await load()
   } catch (e) { alert(e.response?.data?.message || e.message) }
-  finally { running.value[kind === 'temp' ? 'temp' : kind === 'archive' ? 'archive' : 'destroy'] = false }
+  finally { running.value[kind] = false }
 }
 
 
@@ -116,7 +101,7 @@ onMounted(load)
 
 <style scoped>
 .admin-main { padding: 24px; }
-.cleanup-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.cleanup-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
 .cleanup-card { background: #fff; border: 1px solid #e4e7ed; border-radius: 8px; padding: 20px; }
 .cleanup-card h3 { margin: 0 0 12px; font-size: 15px; }
 .cleanup-stat { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; }

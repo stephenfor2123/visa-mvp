@@ -1,8 +1,8 @@
 <template>
-  <div class="resources-page app-container">
+  <div class="resources-page">
     <AppHeader scope="resources" />
 
-    <main class="resources-main">
+    <main class="app-container app-page resources-main">
       <header class="resources-hero">
         <h1 class="resources-hero__title">{{ t('resources.title') }}</h1>
         <p class="resources-hero__sub">{{ t('resources.sub') }}</p>
@@ -35,6 +35,25 @@
           </button>
         </div>
       </header>
+
+      <!-- W47d: 4 张子页入口卡片(签证百科/政策查询/材料模板/常见问答) -->
+      <section class="resources-section resources-curated-entry">
+        <div class="resources-curated-entry__grid">
+          <router-link
+            v-for="card in curatedEntries"
+            :key="card.to"
+            :to="card.to"
+            class="resources-curated-entry__card"
+            :data-testid="`resources-curated-${card.section}`"
+          >
+            <span class="resources-curated-entry__num">{{ card.num }}</span>
+            <div class="resources-curated-entry__body">
+              <div class="resources-curated-entry__title">{{ t(card.titleKey) }}</div>
+              <div class="resources-curated-entry__desc">{{ t(card.descKey) }}</div>
+            </div>
+          </router-link>
+        </div>
+      </section>
 
       <!-- Curated 热门问题卡片 -->
       <section class="resources-section">
@@ -80,13 +99,13 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppHeader from '@/components/AppHeader.vue'
 import { listDestinations } from '@/api/destinations'
 import http from '@/api/http'
 
-const { t, locale } = useI18n()
+const { t, tm, locale } = useI18n()
 const q = ref('')
 const country = ref('')
 const loading = ref(false)
@@ -103,11 +122,16 @@ const flagMap = {
 function flagOf(cc) { return flagMap[cc] || '🌐' }
 
 // 4 个产品线:欧洲(GB) / 申根(FR 代理) / 美国(US) / 澳洲(AU)
-const popular = [
-  { q: '英国 Standard Visitor 签证 所需材料', cc: 'GB', tag: '欧洲 · 所需材料' },
-  { q: '申根 签证 旅行医疗保险 保额', cc: 'FR', tag: '申根 · 保险' },
-  { q: '美国 签证 所需材料 材料清单', cc: 'US', tag: '美国 · 材料清单' },
-  { q: '澳大利亚 签证 所需材料 在职 流水', cc: 'AU', tag: '澳洲 · 经济材料' },
+// 文案从 i18n 读,跟着 locale 切换 (4 国语言)
+// 用 tm() 拿原始 message 数组 (t() 会做 message format 编译,数组会被强制转字符串)
+const popular = computed(() => tm('resources.popular_questions') || [])
+
+// W47d: 4 张子页入口 — wiki / policy / templates / faq
+const curatedEntries = [
+  { num: 1, section: 'wiki',      to: '/resources/wiki',      titleKey: 'nav.mega.resources_i1', descKey: 'nav.mega.resources_i1_d' },
+  { num: 2, section: 'policy',    to: '/resources/policy',    titleKey: 'nav.mega.resources_i2', descKey: 'nav.mega.resources_i2_d' },
+  { num: 3, section: 'templates', to: '/resources/templates', titleKey: 'nav.mega.resources_i3', descKey: 'nav.mega.resources_i3_d' },
+  { num: 4, section: 'faq',       to: '/resources/faq',       titleKey: 'nav.mega.resources_i4', descKey: 'nav.mega.resources_i4_d' },
 ]
 
 // 把 country_code 映射为产品线标签 (前端展示用)
@@ -120,11 +144,17 @@ const REGION_LABEL = {
 
 const answerLines = computed(() => {
   if (!answer.value) return []
-  // 把 "（来源：xxx）" 包到独立 span,加 muted 样式
+  // 把 "(来源/Sumber/Nguồn/Source：xxx)" 包到独立 span,加 muted 样式
+  // 同时把后端 RAG 答案里 matched keywords 的 **markdown** 解析成 <strong>
   return answer.value.split('\n').filter(Boolean).map((line) => {
     const escaped = line
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    return escaped.replace(/\(来源[::]\s*([^)]+)\)/g, '<span class="resources-answer__cite">（来源：$1）</span>')
+    return escaped
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(
+        /\((来源|Sumber|Nguồn|Source)[::\s]+([^)]+)\)/g,
+        '<span class="resources-answer__cite">（来源：$2）</span>'
+      )
   })
 })
 
@@ -168,6 +198,7 @@ async function ask(query, cc) {
     const env = await http.post('/v2/rag/query', {
       query,
       country_code: cc || null,
+      user_lang: locale.value,
       top_k: 3,
     })
     if (env.code !== '1000') throw new Error(env.message || 'query failed')
@@ -181,6 +212,8 @@ async function ask(query, cc) {
 }
 
 onMounted(loadCountries)
+// W48 fix: 用户在主页切语言后再进 /resources,countries.value 还是旧 locale 翻译
+watch(locale, () => { loadCountries() })
 </script>
 
 <style scoped lang="scss">
@@ -189,6 +222,58 @@ onMounted(loadCountries)
   background: #fff;
   display: flex;
   flex-direction: column;
+}
+
+/* W47d: 4 张子页入口卡片(签证百科/政策查询/材料模板/常见问答) */
+.resources-curated-entry {
+  border-top: 1px solid #f3f4f6;
+  padding-top: 24px;
+  margin-top: 16px;
+}
+.resources-curated-entry__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+.resources-curated-entry__card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 20px 18px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  text-decoration: none;
+  color: inherit;
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, .06);
+    border-color: #93c5fd;
+  }
+}
+.resources-curated-entry__num {
+  flex: 0 0 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #111827;
+  color: #fff;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 13px;
+  margin-top: 2px;
+}
+.resources-curated-entry__body { flex: 1; min-width: 0; }
+.resources-curated-entry__title { font-size: 16px; font-weight: 600; color: #111827; margin: 0 0 4px; }
+.resources-curated-entry__desc  { font-size: 13px; color: #6b7280; line-height: 1.5; margin: 0; }
+@media (max-width: 768px) {
+  .resources-curated-entry__grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+  .resources-curated-entry__grid { grid-template-columns: 1fr; }
 }
 .resources-main {
   flex: 1;

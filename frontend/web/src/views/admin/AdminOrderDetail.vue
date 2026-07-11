@@ -141,12 +141,12 @@
           <template #header>
             <h3>{{ t('admin.order_detail.section_action') }}</h3>
           </template>
-          <div v-if="!allowed.length" class="admin-panel__placeholder">
+          <div v-if="!allowedVisible.length" class="admin-panel__placeholder">
             {{ t('admin.order_detail.transition_invalid') }}
           </div>
           <div v-else class="admin-actions">
             <button
-              v-for="s in allowed"
+              v-for="s in allowedVisible"
               :key="s"
               class="admin-action"
               :class="`admin-action--${s}`"
@@ -156,6 +156,9 @@
               {{ t(`admin.order_detail.status_${s}`) }}
             </button>
           </div>
+          <p v-if="allowed.length > allowedVisible.length" class="admin-actions__msg">
+            {{ t('admin.perm_hidden_count', { count: allowed.length - allowedVisible.length }) }}
+          </p>
           <p v-if="actionMessage" class="admin-actions__msg" :class="actionOk ? 'is-ok' : 'is-err'">
             {{ actionMessage }}
           </p>
@@ -218,6 +221,29 @@ const actionMessage = ref('')
 const actionOk = ref(true)
 
 const allowed = computed(() => order.value?.allowed_next_statuses || [])
+
+/**
+ * 把后端给的 next_status 映射到本地需要的 perm code。
+ * close / abnormal / failed → order.close
+ * 其它(approved / rejected / submitted / processing …) → order.edit_status
+ * rpa 重派 不在 transition 列表里,有自己的接口 + perm
+ */
+const ACTION_PERM = {
+  approved: 'order.edit_status',
+  rejected: 'order.edit_status',
+  submitted: 'order.edit_status',
+  processing: 'order.edit_status',
+  reviewing: 'order.edit_status',
+  closed: 'order.close',
+  abnormal: 'order.close',
+  failed: 'order.close',
+}
+const allowedVisible = computed(() =>
+  allowed.value.filter((s) => {
+    const perm = ACTION_PERM[s] || 'order.edit_status'
+    return admin.hasPermission(perm)
+  })
+)
 
 const applicantParsed = computed(() => {
   if (!order.value?.applicant_data) return null

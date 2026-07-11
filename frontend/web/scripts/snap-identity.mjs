@@ -1,0 +1,10 @@
+import { chromium } from 'playwright'
+const browser = await chromium.launch()
+const ctx = await browser.newContext({ viewport: { width: 1400, height: 1400 }, locale: 'zh-CN' })
+const page = await ctx.newPage()
+await page.goto('http://127.0.0.1:5173/materials-wizard?country=US&visa_type=tourism')
+await page.waitForTimeout(2500)
+const panel = page.locator('.mw-panel').first()
+await panel.screenshot({ path: '/tmp/identity.png' })
+console.log('saved /tmp/identity.png')
+await browser.close()

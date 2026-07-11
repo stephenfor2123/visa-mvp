@@ -1,0 +1,719 @@
+{
+  "verified_at_label": "Diperbarui {date}",
+  "cta_open_source": "Buka sumber resmi",
+  "back_to_resources": "Kembali ke Pusat Sumber Daya",
+  "empty_country": "Konten pilihan untuk negara ini belum tersedia.",
+  "try_other_country": "Coba pilih negara lain, atau gunakan kotak pencarian RAG di halaman Sumber Daya.",
+  "country": {
+    "us": "Amerika Serikat",
+    "gb": "Inggris",
+    "au": "Australia",
+    "schengen": "Schengen (UE)"
+  },
+  "wiki": {
+    "title": "Wiki Visa",
+    "intro": "Panduan per negara — apa itu visa, siapa yang membutuhkan, dan apa yang boleh dilakukan. Konten langsung dari sumber resmi otoritas imigrasi.",
+    "us": {
+      "title": "Visa Pengunjung AS B1/B2 — Wiki",
+      "intro": "Visa pengunjung (B-1 / B-2 / B1/B2 gabungan) adalah visa non-imigran untuk orang yang masuk ke Amerika Serikat sementara waktu untuk urusan bisnis (B-1), pariwisata (B-2), atau gabungan.",
+      "_verified_at": "2026-07-03",
+      "items": [
+        {
+          "title": "Apa itu visa B-1 / B-2?",
+          "desc": "B-1 untuk kegiatan bisnis (rapat, konferensi, pelatihan singkat, negosiasi kontrak). B-2 untuk pariwisata, mengunjungi keluarga/teman, atau perawatan medis. Sebagian besar pemohon mengajukan visa B1/B2 gabungan.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
+          "notes": "Ini adalah visa短期 AS yang paling umum: wisata/kunjungan keluarga = B-2, bisnis/rapat = B-1, kebanyakan orang menggabungkannya sebagai B1/B2 dalam satu dokumen."
+        },
+        {
+          "title": "Siapa yang butuh visa AS vs. siapa yang bisa pakai ESTA / Visa Waiver",
+          "desc": "Sebagian besar negara Eropa dan sekitar 40 negara lainnya bisa bepergian bebas visa lewat Program Visa Waiver (ESTA diperlukan, $40 USD sejak 2025-09-30). Pemegang paspor Republik Rakyat Tiongkok wajib mengajukan visa B1/B2 dan mendaftarkan EVUS.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visa-waiver-program.html",
+          "notes": "Sekitar 40 negara mendapat bebas visa ke AS (VWP). Paspor Daratan Tiongkok tidak masuk daftar—Anda harus mengajukan B1/B2, dan meskipun punya visa 10 tahun tetap harus mendaftar EVUS."
+        },
+        {
+          "title": "Masa berlaku B1/B2 vs. lama tinggal",
+          "desc": "Masa berlaku (kadaluarsa visa) dapat mencapai 10 tahun multi-entry untuk warga negara RRT. Lama tinggal setiap masuk ditentukan oleh CBP di pelabuhan — umumnya sampai 6 bulan. Kedua konsep ini terpisah.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
+          "notes": "Masa berlaku visa adalah \"berapa lama visa itu sendiri berlaku\"; BUKAN berapa lama Anda boleh tinggal. Visa 10 tahun bukan berarti tinggal 10 tahun berturut-turut—CBP di perbatasan yang menentukan lama tinggal Anda."
+        },
+        {
+          "title": "EVUS untuk pemegang paspor RRT",
+          "desc": "Warga RRT dengan visa B1/B2 (atau B-1 / B-2) 10 tahun wajib mendaftarkan EVUS di www.EVUS.gov sebelum setiap perjalanan. Biaya $30 USD per pendaftaran sejak 2025-09-30. Berlaku 2 tahun, sampai paspor atau visa kadaluarsa — yang lebih dulu.",
+          "url": "https://www.cbp.gov/travel/international-visitors/electronic-visa-update-system",
+          "notes": "EVUS adalah pendaftaran gratis tapi wajib bagi pemegang B1/B2 Daratan Tiongkok: perbarui setiap 2 tahun, atau setiap dapat paspor/visa baru. Lupa memperbarui = ditolak naik pesawat."
+        },
+        {
+          "title": "Section 214(b) — alasan penolakan paling umum",
+          "desc": "Section 214(b) (prasumsi niat imigran) adalah alasan penolakan yang paling umum. Jika ditolak, pemohon dapat mengajukan kapan saja jika keadaannya berubah — tidak ada masa tunggu wajib.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/visa-denials.html",
+          "notes": "214(b) adalah hukum yang mengatakan \"buktikan Anda akan kembali.\" Bukan tuduhan berbohong—itu asumsi bawaan, dan Anda melawannya dengan ikatan kuat (pekerjaan, keluarga, properti). Tidak ada masa tunggu wajib setelah penolakan 214(b); ajukan ulang dengan bukti lebih kuat kapan saja."
+        },
+        {
+          "title": "Section 222(g) — overstay otomatis membatalkan visa",
+          "desc": "Berdasarkan INA 222(g), jika Anda overstay, visa Anda otomatis dibatalkan. Visa multi-entry yang dibatalkan karena overstay tidak berlaku untuk perjalanan masa depan ke AS.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/visa-denials.html",
+          "notes": "222(g) adalah konsekuensi overstay terberat: bahkan jika Anda pergi, visa itu dibatalkan permanen, dan memengaruhi pengajuan berikutnya. Selalu periksa lama tinggal I-94 Anda sebelum terbang pulang."
+        }
+      ]
+    },
+    "gb": {
+      "title": "Visa Standard Visitor Inggris — Wiki",
+      "intro": "Standard Visitor adalah rute singkat utama untuk wisata, kunjungan bisnis, studi pendek (hingga 6 bulan), dan paid engagement yang diizinkan. Lama tinggal biasanya hingga 6 bulan; tinggal lebih lama memerlukan rute berbeda.",
+      "items": [
+        {
+          "title": "Apa itu visa Standard Visitor?",
+          "desc": "Satu rute jangka pendek yang mencakup wisata, kunjungan keluarga/teman, rapat bisnis, dan studi pendek (≤6 bulan). Paid engagement yang diizinkan diperbolehkan untuk ahli yang berkunjung.",
+          "url": "https://www.gov.uk/standard-visitor",
+          "notes": "Ini satu-satunya visa短期 Inggris yang Anda butuhkan. Wisata, kunjungan keluarga, bisnis, dan studi pendek (< 6 bulan) semuanya pakai Standard Visitor. GOV.UK adalah satu-satunya sumber kebenaran; layanan \"express\" agen perjalanan tidak nyata."
+        },
+        {
+          "title": "Siapa yang butuh visa vs. yang bisa pakai ETA / bebas visa",
+          "desc": "Sebagian besar pemegang paspor EU dan Teluk dapat menggunakan Electronic Travel Authorisation (ETA) untuk kunjungan singkat. Pemegang paspor RRT harus mengajukan visa Standard Visitor.",
+          "url": "https://www.gov.uk/check-uk-visa",
+          "notes": "ETA bukan visa—itu otorisasi elektronik untuk warga negara yang bebas visa (mirip ESTA AS). Paspor Daratan Tiongkok tidak memenuhi syarat untuk ETA; Anda harus mengajukan visa penuh."
+        },
+        {
+          "title": "Standard Visitor vs. Visitor in Transit",
+          "desc": "Standard Visitor memungkinkan masuk dan kegiatan di Inggris. Visitor in Transit (£74.50) adalah untuk penumpang yang melewati kontrol perbatasan Inggris dalam perjalanan ke negara lain.",
+          "url": "https://www.gov.uk/transit-visa/visitor-in-transit-visa",
+          "notes": "Visitor in Transit adalah untuk penumpang yang tetap di area udara bandara Inggris dan langsung terhubung ke tempat lain. Jika Anda ingin keluar ke London, Anda butuh Standard Visitor."
+        },
+        {
+          "title": "Standard Visitor jangka panjang (2 / 5 / 10 tahun)",
+          "desc": "Anda dapat mengajukan visa Standard Visitor 2, 5, atau 10 tahun dengan biaya lebih tinggi. Setiap kunjungan tetap hingga 6 bulan. Visa jangka panjang tidak memungkinkan tinggal lama di Inggris.",
+          "url": "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa",
+          "notes": "Visa 10 tahun terdengar bagus, tapi biayanya lebih mahal, butuh lebih banyak dokumen, dan setiap masuk masih hanya 6 bulan. Visa 6 bulan standar adalah pilihan tepat untuk sebagian besar pelancong."
+        },
+        {
+          "title": "Tes Tuberkulosis (TB) untuk pemohon yang tinggal di RRT",
+          "desc": "Pemohon yang telah tinggal di RRT (atau negara daftar lainnya) selama 6+ bulan harus menjalani tes TB di klinik yang disetujui UK Home Office dan menyerahkan sertifikat. Tes dari klinik yang tidak disetujui tidak diterima.",
+          "url": "https://www.gov.uk/tb-test-visa",
+          "notes": "Tes TB hanya berlaku dari rumah sakit yang ditunjuk Home Office Inggris. Ada 19 rumah sakit yang ditunjuk di Daratan Tiongkok; butuh 1-2 minggu untuk预约 janji temu."
+        },
+        {
+          "title": "Kegiatan yang diizinkan — apa yang boleh dan tidak",
+          "desc": "Boleh: wisata, kunjungan keluarga, transit, rapat bisnis, paid engagement sebagai ahli, studi ≤6 bulan. Tidak boleh: kerja berbayar/tidak di Inggris (kecuali paid engagement yang diizinkan), tunjangan, kunjungan sering berturut-turut untuk tinggal di Inggris.",
+          "url": "https://www.gov.uk/standard-visitor",
+          "notes": "Bekerja di Inggris dengan Standard Visitor sangat dilarang (kecuali permitted paid engagement). Pelanggaran = deportasi + larangan masuk 10 tahun. Bahkan kerja remote untuk perusahaan Tiongkok juga dihitung."
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    },
+    "au": {
+      "title": "Visa Pengunjung Australia (Subclass 600) — Wiki",
+      "intro": "Visitor visa (Subclass 600) adalah rute jangka pendek utama untuk wisata, mengunjungi keluarga/teman, atau kunjungan bisnis singkat. Terdapat 5 stream (Tourist, Business Visitor, Sponsored Family, Approved Destination, Frequent Traveller) — pilih stream yang sesuai dengan tujuan Anda.",
+      "items": [
+        {
+          "title": "Apa itu Subclass 600 (Visitor visa)?",
+          "desc": "Visa sementara jangka pendek yang mengizinkan wisata, kunjungan keluarga, kunjungan bisnis, dan kegiatan jangka pendek non-kerja. Lama tinggal ditetapkan oleh petugas; umum 3, 6, atau 12 bulan per kunjungan.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "Subclass 600 adalah visa短期 serba bisa Australia. 5 stream mencakup tujuan berbeda: wisata (Tourist), bisnis (Business Visitor), kunjungan keluarga bersponsor (Sponsored Family)."
+        },
+        {
+          "title": "Siapa yang bisa mengajukan di dalam vs. di luar Australia",
+          "desc": "Sebagian besar pemohon RRT mengajukan dari luar negeri melalui ImmiAccount. Perpanjangan di dalam Australia hanya mungkin dalam skenario spesifik dan semakin ketat karena aturan visa hopping.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "Aturannya adalah mengajukan di luar negeri, tapi perpanjangan di dalam negeri dimungkinkan jika visa Anda hampir habis. \"Visa hopping\" (memperbarui 600 tepat sebelum habis) semakin sulit disetujui."
+        },
+        {
+          "title": "Masa berlaku vs. lama tinggal",
+          "desc": "Subclass 600 biasanya diterbitkan sebagai multi-entry 1 tahun untuk Tourist Stream. Setiap kunjungan dapat hingga 3 bulan (terkadang 6 atau 12 bulan berdasarkan keputusan petugas).",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "Tinggal 3 bulan per masuk adalah默认值; petugas bisa memperpanjang ke 6 atau 12 bulan sesuai kebijakan, tapi mengatakan \"saya ingin tinggal 6 bulan\" tidak menjaminnya."
+        },
+        {
+          "title": "Sponsored Family Stream",
+          "desc": "Warga negara Australia atau PR (orang tua, anak dewasa) dapat mensponsori kerabat mereka. Pemohon bersponsor dapat mendapat masa berlaku lebih lama (18 bulan hingga 5 tahun tergantung kasus).",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600/sponsored-family-stream",
+          "notes": "Sponsor dari warga Australia atau PR (orang tua, anak dewasa) bisa memperpanjang masa berlaku ke 18 bulan-5 tahun. Lebih banyak kertas kerja, visa lebih panjang sebagai gantinya."
+        },
+        {
+          "title": "Klausul 'No Further Stay' (sejak 2025-03-21)",
+          "desc": "Sejak 21 Maret 2025, semua surat keputusan Subclass 600 memuat kondisi No Further Stay — pemegang tidak dapat mengajukan sebagian besar visa lain selama tinggal di Australia. Rencanakan dengan tepat.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "No Further Stay berarti Anda tidak bisa mengajukan visa lain dari dalam Australia (beberapa pengecualian). Jika ingin pindah ke visa pelajar/kerja, Anda harus keluar dan mengajukan ulang dari luar negeri."
+        },
+        {
+          "title": "Frequent Traveller Stream (pelancong rutin)",
+          "desc": "Stream terpisah untuk warga negara tertentu (termasuk RRT) yang sering bepergian. Masa berlaku hingga 10 tahun; setiap kunjungan hingga 3 bulan. Biaya lebih tinggi.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600/frequent-traveller-stream",
+          "notes": "Frequent Traveller disediakan untuk pemegang paspor tertentu (Daratan Tiongkok, Asia Tenggara dll.) dengan masa berlaku 10 tahun. Pemohon reguler harus pakai Tourist Stream."
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    },
+    "schengen": {
+      "title": "Visa Schengen Tinggal Singkat (Tipe C) — Wiki",
+      "intro": "Visa tinggal singkat Tipe C dikeluarkan oleh 29 negara Schengen berdasarkan Kode Visa UE tunggal. Aturan 180/90: dalam periode 180 hari kapan pun, Anda dapat tinggal hingga 90 hari di seluruh area Schengen.",
+      "items": [
+        {
+          "title": "Apa itu visa Schengen Tinggal Singkat (Tipe C)?",
+          "desc": "Visa tinggal singkat seragam yang berlaku hingga 90 hari dalam periode 180 hari di seluruh area Schengen. Diterbitkan oleh negara Schengen yang Anda kunjungi pertama atau yang paling lama dikunjungi.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "Schengen adalah \"satu visa, 26 negara.\" Ajukan di negara tujuan utama (atau negara masuk pertama)—Anda tidak bisa memilih konsulat mana saja yang terdekat."
+        },
+        {
+          "title": "29 negara Schengen dan aturan seragam",
+          "desc": "Schengen mencakup 25 negara anggota UE (Austria, Belgia, Ceko, Denmark, Estonia, Finlandia, Prancis, Jerman, Yunani, Hongaria, Italia, Latvia, Lithuania, Luksemburg, Malta, Belanda, Polandia, Portugal, Slovakia, Slovenia, Spanyol, Swedia) + 4 negara non-UE (Islandia, Liechtenstein, Norwegia, Swiss).",
+          "url": "https://home-affairs.ec.europa.eu/policies/schengen-borders-visa-policy_en",
+          "notes": "29 negara Schengen ≠ 27 negara UE. Islandia, Norwegia, Swiss adalah Schengen tapi bukan UE. Aturan短期 berlaku seragam di semuanya."
+        },
+        {
+          "title": "Aturan 180/90 — cara menghitungnya",
+          "desc": "90 hari dihitung bergulir: setiap hari Anda habiskan di area Schengen menggunakan 1 dari 90 hari dalam 180 hari sebelumnya. Gunakan kalkulator daring atau cap paspor.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "180/90 adalah jendela 180 hari bergulir, bukan tahun kalender. UE punya kalkulator online resmi—cari \"schengen calculator\" untuk cek sisa hari Anda."
+        },
+        {
+          "title": "Di mana mengajukan — aturan tujuan utama",
+          "desc": "Satu negara → negara itu. Banyak negara → tujuan utama (kunjungan terlama). Kunjungan sama lama → titik masuk pertama.",
+          "url": "https://www.schengenvisainfo.com/where-to-apply/",
+          "notes": "Dalam perjalanan multi-negara, \"tujuan utama\" = negara tempat Anda menghabiskan malam paling banyak, bukan yang paling sering dikunjungi. Salah menghitung = aplikasi dikirim balik."
+        },
+        {
+          "title": "Biometrik dan VIS",
+          "desc": "Aplikasi pertama mengambil 10 sidik jari; berlaku di semua negara Schengen selama 59 bulan. Aplikasi berikutnya dalam 59 bulan biasanya melewati biometrik.",
+          "url": "https://www.consilium.europa.eu/en/press/press-releases/2024/05/14/schengen-visa/",
+          "notes": "VIS adalah database sidik jari Schengen. Dalam 59 bulan, Anda biasanya melewati langkah sidik jari di pengajuan ulang—kecuali ganti paspor atau kewarganegaraan."
+        },
+        {
+          "title": "EES dan ETIAS — yang akan datang",
+          "desc": "EES (Entry/Exit System) menggantikan cap paspor dengan log elektronik. ETIAS (mirip ESTA AS) memperkenalkan otorisasi pra-perjalanan untuk pelancong bebas visa. Tidak menggantikan persyaratan visa itu sendiri.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32018R1240",
+          "notes": "EES (masuk/keluar elektronik) dan ETIAS (otorisasi elektronik) sedang digulirkan 2025-2026. EES memengaruhi semua pelancong non-UE; ETIAS untuk warga negara bebas visa. Paspor Daratan Tiongkok tetap butuh visa Schengen penuh."
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    }
+  },
+  "policy": {
+    "title": "Cek Kebijakan",
+    "intro": "Tautan langsung ke peraturan resmi terbaru, tabel biaya, dan bulletin visa. Diperbarui sesuai tanggal yang tertera.",
+    "us": {
+      "title": "Amerika Serikat — Kebijakan & Regulasi",
+      "intro": "Halaman resmi dari U.S. Department of State (travel.state.gov) dan CBP untuk kebijakan visa B1/B2.",
+      "_verified_at": "2026-07-03",
+      "items": [
+        {
+          "title": "Biaya aplikasi (MRV) — $185 USD",
+          "desc": "Biaya aplikasi Machine-Readable Visa B1/B2 yang tidak dapat dikembalikan adalah $185 USD, dibayar sebelum wawancara untuk kebanyakan kewarganegaraan. Biaya penerbitan bervariasi sesuai kewarganegaraan (lihat tabel resiprositas).",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/fees/fees-reciprocity-tables.html",
+          "notes": "$185 adalah biaya aplikasi yang tidak bisa dikembalikan. Tunggu sampai Anda siap untuk wawancara—jangan bayar dulu, lalu sadar dokumen Anda belum siap."
+        },
+        {
+          "title": "Tabel Biaya dan Resiprositas",
+          "desc": "Daftar resmi biaya visa berdasarkan kelas visa dan kewarganegaraan. Termasuk biaya penerbitan bilateral. Diperbarui oleh U.S. Department of State.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/fees/fees-reciprocity-tables.html",
+          "notes": "Reciprocity Tables menentukan \"biaya penerbitan\" tambahan berdasarkan kewarganegaraan. B1/B2 Daratan Tiongkok = $0 biaya penerbitan, tapi kewarganegaraan lain bisa bayar ratusan dolar ekstra."
+        },
+        {
+          "title": "Bulletin Visa",
+          "desc": "Publikasi bulanan Department of State. Untuk B1/B2 (non-imigran) tidak ada daftar tunggu — namun bulletin menjadi rujukan untuk semua kelas visa dan diperbarui setiap bulan.",
+          "url": "https://travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin.html",
+          "notes": "B1/B2 tidak ada daftar tunggu. Visa Bulletin penting untuk H-1B / kartu hijau. Sebagai pemohon B1/B2, cukup cek bulletin sekali untuk perubahan besar."
+        },
+        {
+          "title": "Lokasi Visa Non-imigran yang Ditunjuk (berlaku 2025-09-06)",
+          "desc": "Berlaku sejak 2025-09-06, semua pemohon visa non-imigran harus menjadwalkan wawancara di kedutaan atau konsulat AS di negara tempat tinggal atau kewarganegaraan mereka.",
+          "url": "https://travel.state.gov/content/travel/en/News/visas-news/adjudicating-niv-applicants-in-their-country-of-residence.html",
+          "notes": "Aturan baru: Anda harus wawancara di negara tempat tinggal (atau kewarganegaraan). Jangan pesan wawancara visa AS saat Anda bepergian ke luar negeri—itu akan ditolak."
+        },
+        {
+          "title": "Berita Visa AS — operasional terkini",
+          "desc": "Status langsung layanan visa, termasuk jeda sementara, pemeriksaan yang diperluas, dan perubahan kebijakan. Diperbarui secara berkala.",
+          "url": "https://travel.state.gov/content/travel/en/News/visas-news.html",
+          "notes": "Visas News adalah buletin operasi: mogok kerja, pemeliharaan sistem, perubahan kebijakan semuanya muncul di sini duluan. Cek seminggu sebelum wawancara Anda."
+        },
+        {
+          "title": "Persyaratan Foto Visa",
+          "desc": "Komposisi, ukuran, latar belakang, dan spesifikasi gambar digital untuk foto yang diunggah saat aplikasi DS-160.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/photos.html",
+          "notes": "Spesifikasi foto ketat: 51x51mm latar putih, diambil dalam 6 bulan, tanpa kacamata. Pergi ke toko foto visa profesional—jangan pakai selfie ponsel."
+        }
+      ]
+    },
+    "gb": {
+      "title": "Inggris — Kebijakan & Regulasi",
+      "intro": "Halaman resmi dari GOV.UK untuk kebijakan Standard Visitor.",
+      "items": [
+        {
+          "title": "Biaya aplikasi — £135 GBP (visa 6 bulan)",
+          "desc": "£135 untuk visa Standard Visitor jangka pendek standar (hingga 6 bulan). £74.50 untuk Visitor in Transit. Varian jangka panjang lebih tinggi.",
+          "url": "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa",
+          "notes": "£135 adalah harga visa standar 6 bulan. Varian jangka panjang (2/5/10 tahun) berharga £400/£771/£964. 10 tahun masuk akal hanya jika Anda benar-benar sering bepergian."
+        },
+        {
+          "title": "Ajukan secara online melalui GOV.UK",
+          "desc": "Semua aplikasi visa Inggris harus diajukan secara online melalui GOV.UK. Tidak ada opsi visa on-arrival untuk warga negara RRT.",
+          "url": "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa",
+          "notes": "Anda harus mengajukan online via GOV.UK. Pusat VFS hanya menangani biometrik (sidik jari) dan pengiriman dokumen—pengajuan itu sendiri ada di sistem GOV.UK."
+        },
+        {
+          "title": "Periksa apakah Anda butuh visa Inggris",
+          "desc": "Alat resmi untuk memeriksa apakah kebangsaan Anda memerlukan visa, ETA, atau tidak keduanya.",
+          "url": "https://www.gov.uk/check-uk-visa",
+          "notes": "Alat \"check if you need a UK visa\" menjawab \"apakah saya butuh visa sama sekali?\" dalam 5 detik—pilih kewarganegaraan dan tujuan Anda."
+        },
+        {
+          "title": "Persyaratan kelayakan",
+          "desc": "Anda harus dapat membuktikan akan meninggalkan Inggris pada akhir kunjungan, mampu menghidupi diri sendiri dan tanggungan, mendanai perjalanan kembali/lanjutan, dan tidak tinggal lama di Inggris melalui kunjungan berturut-turut.",
+          "url": "https://www.gov.uk/standard-visitor",
+          "notes": "\"Akan meninggalkan Inggris\" adalah tes sentral: pekerjaan, keluarga, properti—satu atau dua saja bisa meyakinkan petugas. Mengirimkan apa-apa = risiko penolakan tinggi."
+        },
+        {
+          "title": "Electronic Travel Authorisation (ETA)",
+          "desc": "Sejak 2025, beberapa kebangsaan non-visa harus mendapatkan ETA sebelum bepergian ke Inggris. Saat ini termasuk warga negara EU, Teluk, dan beberapa paspor Asia-Pasifik.",
+          "url": "https://www.gov.uk/guidance/apply-for-an-electronic-travel-authorisation-eta",
+          "notes": "ETA adalah aturan 2025: UE, Teluk, Singapura, Korea, dan puluhan paspor lain butuh ETA sebelum terbang ke Inggris. Paspor Daratan Tiongkok tetap butuh visa penuh."
+        },
+        {
+          "title": "Keputusan visa dan banding",
+          "desc": "Jika ditolak, Anda dapat mengajukan Administrative Review dalam 28 hari sejak tanggal penolakan jika visa diputuskan berdasarkan Appendix Visitor.",
+          "url": "https://www.gov.uk/immigration-asylum-tribunal",
+          "notes": "Administrative Review BUKAN evaluasi ulang kasus Anda—itu memeriksa apakah petugas membuat kesalahan prosedural. Jendela 28 hari, jarang berhasil. Kebanyakan orang mengajukan ulang dengan dokumen lebih baik."
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    },
+    "au": {
+      "title": "Australia — Kebijakan & Regulasi",
+      "intro": "Halaman resmi dari Department of Home Affairs Australia untuk Visitor visa 600.",
+      "items": [
+        {
+          "title": "Biaya aplikasi — mulai AUD $190 (Tourist Stream)",
+          "desc": "Biaya dasar Tourist Stream dari luar negeri adalah AUD $190. Stream lain (Sponsored Family, Approved Destination) mungkin berbeda. Periksa Tabel Harga Visa terbaru sebelum membayar.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "AUD $190 adalah biaya dasar Tourist Stream untuk pengajuan luar negeri. Ada juga biaya layanan ImmiAccount di atasnya. Gunakan kartu kredit—nilai tukarnya lebih ramah."
+        },
+        {
+          "title": "Ajukan via ImmiAccount",
+          "desc": "Semua aplikasi Subclass 600 diajukan melalui portal online ImmiAccount. Tidak ada aplikasi kertas untuk paspor RRT.",
+          "url": "https://online.immi.gov.au/",
+          "notes": "ImmiAccount adalah portal resmi Department of Home Affairs untuk semuanya: upload, pembayaran, status. Gunakan email stabil—hindari 163/qq dll. yang cenderung mengirim notifikasi ke spam."
+        },
+        {
+          "title": "Tabel harga visa (terbaru)",
+          "desc": "Harga resmi per subclass dan stream visa. Diperbarui oleh Department of Home Affairs. Gunakan sebagai sumber otoritatif untuk biaya terkini.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600/fees",
+          "notes": "Jadwal biaya diperbarui. Cek terbaru 1 bulan sebelum keberangkatan untuk menghindari kejutan \"harga kedaluwarsa\"."
+        },
+        {
+          "title": "Waktu pemrosesan visa global",
+          "desc": "Estimasi waktu pemrosesan terkini untuk setiap subclass visa, dirinci per stream dan lokasi pemohon.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-processing-times",
+          "notes": "Waktu pemrosesan bervariasi berdasarkan wilayah dan musim. Pengajuan 600 Daratan Tiongkok biasanya memakan waktu 2-6 minggu; puncak (musim panas/Tahun Baru Imlek) bisa mencapai 8 minggu."
+        },
+        {
+          "title": "Persyaratan kesehatan dan karakter",
+          "desc": "Sebagian besar visa pengunjung jangka pendek memerlukan pemeriksaan kesehatan dan pengecekan karakter; tinggal lama atau kewarganegaraan tertentu mungkin memerlukan kunjungan panel physician tambahan.",
+          "url": "https://immi.homeaffairs.gov.au/help-support/meeting-our-requirements/health",
+          "notes": "Pemeriksaan kesehatan tidak selalu dipicu. Petugas memutuskan berdasarkan kewarganegaraan, lama tinggal yang dimaksud, dan dokumen—lalu mengeluarkan surat rujukan medis jika diperlukan."
+        },
+        {
+          "title": "Berita dan perubahan kebijakan Visitor visa 600",
+          "desc": "Pembaruan terkini dari Department of Home Affairs — perubahan biaya, perubahan kelayakan, perubahan waktu pemrosesan.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "Pembaruan kebijakan Subclass 600 muncul di halaman berita Departemen. Klausul No Further Stay 2025-03-21 datang dari sini."
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    },
+    "schengen": {
+      "title": "Schengen — Kebijakan & Regulasi",
+      "intro": "Sumber otoritatif dari European Commission dan EU Council untuk kebijakan visa Schengen.",
+      "items": [
+        {
+          "title": "Biaya aplikasi — €90 EUR (dewasa)",
+          "desc": "Dari Commission Delegated Regulation (EU) 2024/1415, efektif 2024-06-11: biaya visa €90 untuk dewasa dan €45 untuk anak 6–12 tahun. Anak di bawah 6 gratis. Penyedia layanan eksternal (VFS, TLScontact) mengenakan biaya layanan sendiri.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32024R1415",
+          "notes": "€90 adalah biaya terpadu; anak 6-12 bayar €45, di bawah 6 gratis. VFS/TLScontact juga mengenakan biaya layanan (bervariasi per negara, €30-50)."
+        },
+        {
+          "title": "Kode Visa — Council Regulation 810/2009",
+          "desc": "Kode Visa (Reg. (EC) 810/2009) adalah dasar hukum inti untuk visa tinggal singkat Schengen. Diamandemen oleh 2019/1155 (kodifikasi) dan 2024/1415 (perubahan biaya dan pemrosesan).",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "Council Reg. 810/2009 adalah \"konstitusi\" visa Schengen. Anda bisa menemukan aslinya via CELEX:32009R0810."
+        },
+        {
+          "title": "Asuransi medis perjalanan — minimal €30.000",
+          "desc": "Asuransi medis harus mencakup setidaknya €30.000 dan berlaku di semua negara Schengen selama seluruh masa tinggal. Harus mencakup rawat inap darurat, evakuasi medis, dan repatriasi jenazah.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "€30.000 adalah minimum. Membeli pertanggungan €50.000 harganya hanya sedikit lebih dan memberi Anda lebih banyak ruang untuk klaim. Harus menutupi seluruh perjalanan + semua negara Schengen."
+        },
+        {
+          "title": "Waktu keputusan standar — 15 hari kalender",
+          "desc": "Sejak dapat diterima, konsulat memutuskan dalam 15 hari kalender. Dapat diperpanjang menjadi 30 hari (dan dalam kasus luar biasa 60 hari).",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "15 hari kalender adalah maksimum hukum; dalam praktik kebanyakan keputusan keluar dalam 5-10 hari kerja. Musim puncak bisa mencapai 30 hari."
+        },
+        {
+          "title": "Hak untuk mengajukan banding atas penolakan",
+          "desc": "Jika ditolak, Anda menerima formulir standar yang mengutip alasan penolakan. Anda dapat banding di negara anggota penolak dalam tenggat yang ditetapkan oleh hukum nasionalnya (sering 15 sampai 30 hari).",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "Anda bisa banding atau mengajukan ulang, tapi banding jarang berhasil. Jalur yang lebih baik: baca surat penolakan, perkuat poin lemah (asuransi, rencana perjalanan, dana), dan ajukan ulang."
+        },
+        {
+          "title": "ETIAS untuk pelancong bebas visa (dari 2025)",
+          "desc": "ETIAS akan mewajibkan pelancong bebas visa (AS, Inggris, dan sebagian besar paspor non-UE lainnya) mendapatkan otorisasi pra-perjalanan. Biaya €20, berlaku 3 tahun atau hingga paspor kedaluwarsa.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32018R1240",
+          "notes": "ETIAS BUKAN visa—itu adalah \"pengabaian visa elektronik\" untuk warga negara bebas visa (seperti ESTA AS). Paspor Daratan Tiongkok tidak bisa menggunakannya; Anda tetap butuh visa Schengen penuh."
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    }
+  },
+  "templates": {
+    "title": "Template Dokumen",
+    "intro": "Template siap unduh untuk dokumen pendukung yang umumnya diminta petugas visa: surat keterangan kerja, surat cuti, penjelasan rekening koran, dll.",
+    "us": {
+      "title": "AS B1/B2 — Template Dokumen Pendukung",
+      "intro": "Dokumen pendukung yang umum diminta saat wawancara visa AS. Platform menyediakan template; persyaratan spesifik bervariasi tergantung Kedutaan atau Konsulat AS.",
+      "_verified_at": "2026-07-03",
+      "items": [
+        {
+          "title": "Surat keterangan kerja — Inggris + dwibahasa",
+          "desc": "Di atas kop surat perusahaan: jabatan, gaji, lama bekerja, persetujuan cuti, dan tanda tangan. Sebagian besar konsulat AS menerima versi dwibahasa Tionghoa/Inggris.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
+          "notes": "Surat keterangan kerja butuh: kop surat perusahaan, jabatan, gaji, tanggal mulai, cuti yang disetujui, tanda tangan manajer. Dwibahasa Tionghoa-Inggris; petugas membaca versi Inggris."
+        },
+        {
+          "title": "Rekening koran — yang dilihat petugas",
+          "desc": "Mutasi 3-6 bulan terakhir di atas kop bank, dengan saldo yang konsisten. Kami tidak menyediakan rekening koran cetak — mintalah dari bank Anda.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
+          "notes": "Petugas fokus pada \"saldo\" dan \"setoran gaji rutin\", bukan jumlah transaksi. Cetak 6 bulan terakhir, hindari aliran masuk/keluar besar mendadak."
+        },
+        {
+          "title": "Rencana perjalanan",
+          "desc": "Rencana harian dengan penerbangan, pemesanan hotel, dan tempat tujuan. Harus konsisten dengan tanggal di aplikasi visa. Platform menyediakan template JSON / Excel.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
+          "notes": "Rencana perjalanan harus menunjukkan kota, transportasi, dan penginapan setiap hari—cocok dengan pemesanan penerbangan/hotel Anda. Gunakan \"Generator Rencana Perjalanan\" Htex untuk template gratis."
+        },
+        {
+          "title": "Halaman konfirmasi DS-160",
+          "desc": "Cetak halaman konfirmasi setelah mengajukan Formulir DS-160 secara daring. Wajib dibawa saat wawancara bersama paspor dan foto.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/forms/ds-160-online-nonimmigrant-visa-application.html",
+          "notes": "DS-160 adalah formulir aplikasi visa non-imigran universal. Setelah pengiriman Anda mendapat halaman konfirmasi dengan kode batang—bawa ke wawancara. Isi online, bukan PDF offline."
+        },
+        {
+          "title": "Asuransi perjalanan — tidak wajib untuk B1/B2",
+          "desc": "Berbeda dengan Schengen, Amerika Serikat tidak mensyaratkan asuransi medis perjalanan untuk pemohon visa B1/B2. Sangat disarankan untuk perjalanan.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
+          "notes": "B1/B2 secara hukum tidak memerlukan asuransi, tapi membawa satu menunjukkan \"Saya pelancong yang bertanggung jawab.\" Pertanggungan $50.000-$100.000 sudah cukup."
+        },
+        {
+          "title": "Yang TIDAK boleh dibawa",
+          "desc": "Konsulat AS secara tegas menyatakan bahwa surat undangan dan Affidavit of Support tidak diperlukan dan tidak digunakan sebagai faktor keputusan. Membawanya tidak akan memperbaiki aplikasi Anda.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
+          "notes": "Kesalahan umum: JANGAN bawa sertifikat properti, registrasi kendaraan, atau kartu keluarga (petugas tidak peduli). BAWA paspor lama—itu menunjukkan riwayat perjalanan dan membantu."
+        }
+      ]
+    },
+    "gb": {
+      "title": "Standard Visitor Inggris — Template Dokumen Pendukung",
+      "intro": "Dokumen pendukung umum di tahap keputusan visa Inggris. Template disediakan; persyaratan spesifik dapat bervariasi.",
+      "items": [
+        {
+          "title": "Surat keterangan kerja — Bahasa Inggris",
+          "desc": "Di atas kop surat perusahaan: jabatan, gaji, lama bekerja, cuti yang disetujui, dan tanda tangan. UKVI menerima versi yang dikeluarkan kantor Inggris atau versi RRT dengan terjemahan resmi.",
+          "url": "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa",
+          "notes": "Surat keterangan kerja Inggris: sepenuhnya dalam bahasa Inggris, dengan jabatan, gaji, cuti yang disetujui, tanda tangan manajer + stempel perusahaan. Petugas Inggris pilih-pilih tentang format sertifikat gaya Tionghoa."
+        },
+        {
+          "title": "Rekening koran — apa yang dilihat petugas",
+          "desc": "Mutasi 3-6 bulan terakhir yang menunjukkan saldo konsisten dan arus masuk rutin (gaji). Cetak di atas kop bank dengan cap.",
+          "url": "https://www.gov.uk/standard-visitor",
+          "notes": "Petugas Inggris mencari: 6 bulan terakhir laporan bank, saldo bulanan stabil > £50k (untuk biaya perjalanan 6 bulan), label gaji yang jelas."
+        },
+        {
+          "title": "Rencana perjalanan dan pemesanan akomodasi",
+          "desc": "Rencana harian dengan reservasi hotel atau undangan host dan pemesanan penerbangan kembali. Harus konsisten dengan aplikasi.",
+          "url": "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa",
+          "notes": "Pemesanan hotel + penerbangan harus berupa reservasi \"pembatalan gratis\" (opsi pembatalan gratis booking.com / Trip.com). Bayar hanya setelah visa disetujui."
+        },
+        {
+          "title": "Sertifikat tes tuberkulosis",
+          "desc": "Diperlukan untuk pemohon yang tinggal di RRT selama 6+ bulan. Dikeluarkan hanya oleh klinik yang disetujui UK Home Office (daftar klinik dipublikasikan di GOV.UK).",
+          "url": "https://www.gov.uk/tb-test-visa",
+          "notes": "Sertifikat TB memiliki masa berlaku 6 bulan. Jika pemrosesan visa memakan waktu 3 bulan, sertifikat bisa kedaluwarsa—Anda perlu tes ulang."
+        },
+        {
+          "title": "Asuransi perjalanan — tidak secara ketat diperlukan",
+          "desc": "Visa Standard Visitor tidak memerlukan asuransi perjalanan sebagai syarat formal. Sangat direkomendasikan — layanan kesehatan Inggris tidak gratis untuk non-penduduk.",
+          "url": "https://www.gov.uk/standard-visitor",
+          "notes": "Asuransi Inggris tidak wajib, tapi memiliki satu membantu. Pilih pertanggungan yang mencakup \"seluruh Inggris + Schengen\" jika Anda menambahkan perjalanan samping ke Eropa."
+        },
+        {
+          "title": "Yang TIDAK boleh dibawa",
+          "desc": "Tidak seperti Schengen, Inggris tidak meminta 'Surat Undangan' terpisah. Bawa undangan host hanya jika Anda tidak bisa menunjukkan akomodasi.",
+          "url": "https://www.gov.uk/standard-visitor",
+          "notes": "Jangan bawa: sertifikat properti, registrasi kendaraan, foto deposito besar (petugas Inggris tidak menimbang ini). BAWA: paspor lama, foto perjalanan—ini membantu."
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    },
+    "au": {
+      "title": "Australia Subclass 600 — Template Dokumen Pendukung",
+      "intro": "Dokumen pendukung umum untuk aplikasi Subclass 600. Template disediakan; persyaratan spesifik dapat bervariasi.",
+      "items": [
+        {
+          "title": "Pendaftaran ImmiAccount",
+          "desc": "Buat ImmiAccount gratis sebelum mulai. Satu akun dapat menampung beberapa aplikasi (berguna untuk grup keluarga).",
+          "url": "https://online.immi.gov.au/lusc/register",
+          "notes": "Setelah mendaftar ImmiAccount, semua upload masuk ke sini. Urutkan dokumen Anda ke dalam folder bersih sebelum upload; jangan ganti nama di tengah jalan."
+        },
+        {
+          "title": "Riwayat perjalanan dan identitas",
+          "desc": "Pindai halaman bio paspor, KTP RRT saat ini, registrasi rumah tangga (hukou ben) dan visa / cap imigrasi sebelumnya. Gabungkan halaman registrasi rumah tangga multi-halaman menjadi satu PDF.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "Riwayat perjalanan: paspor lama, pesanan penerbangan, foto perjalanan. Petugas Australia sensitif terhadap \"apakah orang ini benar-benar bepergian?\"—tumpuk buktinya."
+        },
+        {
+          "title": "Bukti pekerjaan dan keuangan",
+          "desc": "Surat dari pemberi kerja, slip gaji terbaru, dan rekening koran 3–6 bulan di atas kop bank. Sertifikat properti / kendaraan bersifat opsional namun membantu.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "Keuangan: surat keterangan kerja + laporan bank + sertifikat properti/kendaraan (pendukung). Bawa ketiganya—hilang satu bisa memicu permintaan dokumen lebih."
+        },
+        {
+          "title": "Rencana perjalanan",
+          "desc": "Rencana harian dengan pemesanan — untuk Subclass 600, rencana harus jelas menunjukkan perjalanan itu asli dan sementara.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "Rencana perjalanan harus mencantumkan lokasi harian yang cocok dengan tujuan yang dinyatakan dalam aplikasi. Jika Anda bilang \"wisata\" tapi rencana perjalanan semua rapat bisnis, harapkan kebingungan."
+        },
+        {
+          "title": "Panduan terjemahan dokumen",
+          "desc": "Immi tidak memerlukan terjemahan resmi untuk dokumen berbahasa Inggris. Dokumen RRT dapat diunggah apa adanya di samping formulir berbahasa Inggris.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "Australia требует все bukan документов非 bahasa Inggris diterjemahkan ke bahasa Inggris. Terjemahan harus包括 tanda tangan penerjemah, tanggal, dan pernyataan kredensial. Terjemahan notaris是最 aman."
+        },
+        {
+          "title": "Yang TIDAK boleh diserahkan",
+          "desc": "Hindari mengunggah: surat undangan yang dilegalisir (jarang diperlukan), foto promosi, tangkapan layar media sosial. Unggah apa yang mendukung profil pengunjung asli Anda.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "Lewati: sertifikat manajemen kekayaan besar (petugas bisa mempertanyakan sumber), lisensi bisnis lengkap (tidak perlu), kartu keluarga (Australia tidak memeriksanya)."
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    },
+    "schengen": {
+      "title": "Schengen Tinggal Singkat — Template Dokumen Pendukung",
+      "intro": "Dokumen pendukung umum untuk aplikasi visa tinggal singkat Schengen. Template disediakan; persyaratan spesifik dapat bervariasi per konsulat.",
+      "items": [
+        {
+          "title": "Sertifikat asuransi medis perjalanan",
+          "desc": "Dari perusahaan asuransi yang disetujui UE atau perusahaan asuransi RRT yang diakui. Ketentuan cakupan harus secara eksplisit menyatakan cakupan di seluruh Schengen dan minimum €30.000.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "Asuransi Schengen adalah yang paling ketat: minimum €30.000 medis + penyelamatan darurat, mencakup seluruh perjalanan + semua negara Schengen. Taobao/Alipay punya polis Schengen khusus."
+        },
+        {
+          "title": "Surat keterangan kerja (Tionghoa + Jerman/Prancis)",
+          "desc": "Kop surat perusahaan: jabatan, gaji, lama bekerja, cuti yang disetujui, dan tanda tangan. Beberapa konsulat menerima dwibahasa, yang lain memerlukan terjemahan resmi.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "Surat keterangan kerja harus dwibahasa: Tionghoa + Jerman/Prancis/Spanyol, tergantung negara pengajuan. Jerman sangat ketat—kop surat perusahaan butuh terjemahan Jerman."
+        },
+        {
+          "title": "Rekening koran — apa yang dilihat petugas",
+          "desc": "Mutasi 3–6 bulan terakhir yang menunjukkan saldo konsisten dan arus masuk rutin (gaji). Cetak di atas kop bank dengan cap. Beberapa konsulat meminta rekening koran yang diberi cap dari bank.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "Petugas Schengen mencari: 6 bulan laporan, saldo harian rata-rata mencakup €60-100/hari (kalikan dengan total hari perjalanan)."
+        },
+        {
+          "title": "Bukti akomodasi",
+          "desc": "Pemesanan hotel untuk seluruh masa tinggal atau konfirmasi tertulis host + salinan KTP/paspor host. Konfirmasi Booking.com biasanya diterima; akomodasi gratis mungkin memerlukan atestasi notaris.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "Akomodasi harus mencakup seluruh perjalanan: pesanan hotel / konfirmasi Airbnb / surat undangan teman + paspor mereka (untuk undangan teman)."
+        },
+        {
+          "title": "Reservasi penerbangan pulang-pergi",
+          "desc": "Pemesanan penerbangan pulang yang dikonfirmasi (belum dibayar, hanya dipesan). Jangan beli tiket sampai visa disetujui.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "Penerbangan pulang: pesan reservasi \"dapat dikembalikan\" dulu, bayar setelah visa disetujui. Membeli tiket sungguhan sebelum persetujuan = risiko tinggi kehilangan uang saat penolakan."
+        },
+        {
+          "title": "Formulir aplikasi Schengen (format seragam)",
+          "desc": "Formulir yang sama digunakan di semua negara Schengen. Tersedia di pusat VFS / TLScontact, kedutaan, dan halaman 'Visa' UE.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "Formulir aplikasi Schengen adalah format terpadu. Isi online, lalu cetak, tandatangani, dan beri tanggal. Ketikan lebih disukai daripada tulisan tangan."
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    }
+  },
+  "faq": {
+    "title": "Pertanyaan Umum",
+    "intro": "Pertanyaan nyata yang diajukan pemohon sebelum dan sesudah wawancara — dijawab dengan kutipan dari sumber resmi U.S. Department of State.",
+    "us": {
+      "title": "AS B1/B2 — Pertanyaan Umum",
+      "intro": "Pertanyaan yang paling sering diajukan tentang proses B1/B2 AS — biaya, penolakan, EVUS, lama tinggal.",
+      "_verified_at": "2026-07-03",
+      "items": [
+        {
+          "title": "Apakah saya butuh surat undangan atau Affidavit of Support?",
+          "desc": "Tidak. U.S. Department of State secara tegas menyatakan bahwa surat undangan atau Affidavit of Support TIDAK diperlukan dan TIDAK menjadi faktor keputusan. Jika Anda membawanya, itu diabaikan.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
+          "notes": "Tidak. B1/B2 tentang NIAT Anda untuk kembali, bukan tentang pengundang. Surat undangan opsional dan jarang memengaruhi keputusan."
+        },
+        {
+          "title": "Berapa lama menunggu wawancara?",
+          "desc": "Waktu tunggu bervariasi menurut Kedutaan/Konsulat AS dan musim. Periksa halaman Global Visa Wait Times resmi sebelum menjadwalkan — beberapa pos memiliki antrian beberapa bulan di musim panas.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/global-visa-wait-times.html",
+          "notes": "Musim sepi: 1-2 minggu. Puncak (Mei-Agustus / Tahun Baru Imlek): 4-8 minggu. Kerja mundur dari penerbangan Anda: pesan wawancara 4 minggu sebelum keberangkatan."
+        },
+        {
+          "title": "Bisakah saya mengajukan ulang setelah penolakan 214(b)?",
+          "desc": "Ya, kapan saja. Tidak ada masa tunggu wajib. Ajukan ulang hanya jika keadaan Anda berubah secara berarti (pekerjaan, status keluarga, properti, dll.) dan Anda dapat menunjukkan bukti baru.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/visa-denials.html",
+          "notes": "Ya, dan tidak ada masa tunggu. Tambahkan bukti baru (pekerjaan baru / properti / pernikahan) dan ajukan ulang. Jangan mengajukan ulang tanpa perubahan—Anda akan ditolak dengan alasan yang sama."
+        },
+        {
+          "title": "Apa yang terjadi jika saya overstay walau satu hari?",
+          "desc": "Berdasarkan Section 222(g) INA, visa siapa pun yang overstay otomatis dibatalkan. Perjalanan masa depan ke AS dengan visa itu menjadi mustahil, bahkan jika masih dalam masa berlaku yang tercetak.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/visa-denials.html",
+          "notes": "Bahkan satu hari lewat = overstay. Konsekuensi: pembatalan visa otomatis (222(g)), dan visa yang dibatalkan itu tidak bisa digunakan secara permanen. Aplikasi berikutnya juga terpengaruh."
+        },
+        {
+          "title": "Apakah asuransi perjalanan diwajibkan?",
+          "desc": "Tidak diwajibkan untuk B1/B2. Sangat disarankan karena biaya kesehatan AS sangat tinggi. Persyaratan Schengen tidak berlaku di sini.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
+          "notes": "Tidak wajib, tapi direkomendasikan. Kecelakaan, medis darurat, evakuasi darurat semua butuh uang. Pertanggungan $50k-$100k, premi perjalanan 2-3 minggu: ¥200-400."
+        },
+        {
+          "title": "Bagaimana cara membayar biaya MRV?",
+          "desc": "Metode pembayaran tergantung Kedutaan atau Konsulat AS spesifik. Sebagian besar pos menerima kartu kredit/debit saat penjadwalan, sebagian memerlukan transfer bank atau pembayaran langsung. Jumlahnya $185 USD.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/fees/visafee/t-current-visa-mrv-fee.html",
+          "notes": "Online dengan kartu kredit ($185 USD). Bank besar Tionghoa (CITIC, CMB, CCB) berfungsi. Setelah pembayaran Anda mendapat nomor CGI—gunakan untuk memesan wawancara."
+        }
+      ]
+    },
+    "gb": {
+      "title": "Standard Visitor Inggris — Pertanyaan Umum",
+      "intro": "Pertanyaan yang paling sering diajukan tentang visa Standard Visitor — biaya, pemrosesan, penolakan.",
+      "items": [
+        {
+          "title": "Berapa lama pemrosesan?",
+          "desc": "Di luar Inggris, pemrosesan biasanya 3 minggu dari biometrik. Layanan Priority dan Super-priority tersedia di banyak lokasi dengan biaya tambahan.",
+          "url": "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa",
+          "notes": "Secara resmi 3 minggu; dalam praktik 2-4 minggu. Puncak (musim panas) bisa mencapai 6 minggu. Mulai 2 bulan sebelum keberangkatan."
+        },
+        {
+          "title": "Bisakah saya bekerja atau belajar dengan visa Standard Visitor?",
+          "desc": "Studi pendek hingga 6 bulan diperbolehkan. Kerja berbayar atau tidak berbayar tidak, kecuali permitted paid engagement (daftar singkat kegiatan ahli).",
+          "url": "https://www.gov.uk/standard-visitor",
+          "notes": "Kerja: TIDAK (kecuali permitted paid engagement). Studi: ya, tapi hanya kursus pendek ≤ 6 bulan. Yang lebih lama butuh Student Visa."
+        },
+        {
+          "title": "Apakah saya butuh surat undangan dari host Inggris?",
+          "desc": "Tidak. GOV.UK tidak mewajibkan surat undangan formal. Anda hanya perlu menunjukkan tempat menginap (pemesanan hotel atau konfirmasi tertulis dari host).",
+          "url": "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa",
+          "notes": "Tidak wajib, tapi surat membantu (memperjelas tujuan). Wisata / kunjungan keluarga bisa lewatkan."
+        },
+        {
+          "title": "Apa jika visa Standard Visitor saya ditolak?",
+          "desc": "Anda dapat mengajukan ulang kapan saja dengan bukti yang lebih kuat, atau mengajukan Administrative Review dalam 28 hari sejak penolakan.",
+          "url": "https://www.gov.uk/immigration-asylum-tribunal",
+          "notes": "Anda bisa mengajukan ulang—tidak ada masa tunggu. Baca surat penolakan (biasanya: dana tidak cukup / ikatan lemah ke negara asal), perkuat dokumen, dan kirim ulang. Tingkat keberhasilan tinggi."
+        },
+        {
+          "title": "Apakah tes TB wajib?",
+          "desc": "Ya, jika Anda tinggal 6+ bulan di negara yang terdaftar termasuk RRT dalam 12 bulan terakhir, sebelum aplikasi visa. Sertifikat hanya dari klinik yang disetujui.",
+          "url": "https://www.gov.uk/tb-test-visa",
+          "notes": "Ya, untuk pemohon yang tinggal di Tiongkok ≥ 6 bulan. Penduduk negara lain punya aturan berbeda—cek berdasarkan kewarganegaraan."
+        },
+        {
+          "title": "Bagaimana cara membayar biaya visa?",
+          "desc": "Online melalui GOV.UK dengan kartu debit/kredit atau perbankan online. Pengumpulan biometrik kemudian dipesan di UK Visa Application Centre (VAC).",
+          "url": "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa",
+          "notes": "Online via GOV.UK dengan Visa/Mastercard, £135 dibebankan sekali. Setelah pembayaran, pesan janji pusat VFS untuk biometrik."
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    },
+    "au": {
+      "title": "Australia Subclass 600 — Pertanyaan Umum",
+      "intro": "Pertanyaan yang paling sering diajukan tentang Australian Visitor visa — biaya, penolakan, pemrosesan.",
+      "items": [
+        {
+          "title": "Berapa lama pemrosesan Subclass 600?",
+          "desc": "Sebagian besar aplikasi Tourist Stream diproses dalam 1–4 minggu bila lengkap. Gunakan Global Processing Times untuk estimasi terkini.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-processing-times",
+          "notes": "Kebanyakan aplikasi: 2-6 minggu. Cek status real-time di ImmiAccount. Puncak (Jul-Sep / Tahun Baru Imlek) bisa mencapai 8 minggu."
+        },
+        {
+          "title": "Bisakah saya beralih ke visa pelajar saat memegang 600?",
+          "desc": "Tidak. Sejak 21 Maret 2025 semua keputusan 600 memuat kondisi No Further Stay. Ajukan visa pelajar (Subclass 500) dari luar Australia.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "Tidak. Klausul No Further Stay (berlaku 2025-03-21) melarang pindah ke visa lain saat di Australia dengan 600. Anda harus keluar dan mengajukan ulang dari luar negeri."
+        },
+        {
+          "title": "Bisakah saya dapat visa multi-entry 3 atau 5 tahun?",
+          "desc": "Beberapa pemohon Sponsored Family Stream dan Frequent Traveller Stream mendapat masa berlaku lebih lama. Tourist Stream pertama biasanya 1 tahun.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "Secara teoritis Tourist Stream maksimal 1 tahun per masuk; dalam praktik kebanyakan dapat 3 bulan. Untuk multi-tahun multi-masuk, pindah ke Frequent Traveller Stream atau Sponsored Family."
+        },
+        {
+          "title": "Bisakah anggota keluarga berbagi satu aplikasi?",
+          "desc": "Tidak. Setiap pemohon harus diajukan sebagai aplikasi terpisah, bahkan dalam satu ImmiAccount. Anda dapat mengelompokkannya untuk tinjauan (Group processing) agar petugas mempertimbangkan file bersama.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "Tidak, setiap orang mengajukan aplikasi terpisah. Tapi Anda bisa mengelola beberapa pemohon dalam satu ImmiAccount via Family Group."
+        },
+        {
+          "title": "Apakah saya perlu biometrik atau medis?",
+          "desc": "Sebagian besar pemohon Tourist Stream tidak memerlukan biometrik. Tinggal 3+ bulan di negara tertentu atau pemohon berusia 75+ mungkin memerlukan pemeriksaan medis.",
+          "url": "https://immi.homeaffairs.gov.au/help-support/meeting-our-requirements/health",
+          "notes": "Sidik jari: wajib, di pusat VFS. Pemeriksaan kesehatan: kebijakan petugas—biasanya hanya untuk tinggal lama atau kewarganegaraan tertentu."
+        },
+        {
+          "title": "Bagaimana cara membayar biaya?",
+          "desc": "Online via ImmiAccount menggunakan kartu kredit, PayPal, atau BPAY (rekening bank Australia saja). Biaya layanan mungkin berlaku untuk pembayaran kartu kredit.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600/fees",
+          "notes": "Bayar online di ImmiAccount via kartu kredit (PayPal juga berfungsi), dari AUD $190."
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    },
+    "schengen": {
+      "title": "Schengen Tinggal Singkat — Pertanyaan Umum",
+      "intro": "Pertanyaan yang paling sering diajukan tentang visa tinggal singkat Schengen — biaya, penolakan, pemrosesan.",
+      "items": [
+        {
+          "title": "Berapa lama pemrosesan Schengen?",
+          "desc": "Standar 15 hari kalender sejak dapat diterima; dapat diperpanjang menjadi 30 atau dalam beberapa kasus 60 hari. Ajukan minimal 15–30 hari sebelum perjalanan; konsulat dapat menolak lebih awal dari 15 hari.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "Maks hukum 15 hari kalender; dalam praktik 5-10 hari kerja. Puncak (Jun-Agustus) bisa mencapai 30 hari."
+        },
+        {
+          "title": "Apakah saya butuh asuransi perjalanan?",
+          "desc": "Ya. Schengen mewajibkan cakupan minimum €30.000 untuk seluruh masa tinggal. Tanpa itu, aplikasi Anda tidak dapat diterima.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "Ya, wajib. Tanpa asuransi Anda akan ditolak. Minimum €30.000 medis + penyelamatan darurat, mencakup seluruh perjalanan + semua negara Schengen."
+        },
+        {
+          "title": "Bisakah saya mengunjungi banyak negara dengan satu visa?",
+          "desc": "Ya. Visa Schengen yang dikeluarkan oleh satu negara berlaku di semua 29 negara (tunduk pada aturan tujuan utama). Anda dapat membagi tinggal di beberapa negara.",
+          "url": "https://home-affairs.ec.europa.eu/policies/schengen-borders-visa-policy_en",
+          "notes": "Ya, selama Anda mengajukan di negara yang tepat (tujuan utama atau masuk pertama). Satu visa mencakup semua negara Schengen."
+        },
+        {
+          "title": "Apa jika visa saya ditolak?",
+          "desc": "Anda menerima formulir penolakan standar. Anda dapat banding di negara penolak dalam tenggat yang ditetapkan oleh hukum negara anggota tersebut (sering 15–30 hari).",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "Banding jarang berhasil. Jalur yang lebih baik: baca surat penolakan, perkuat poin lemah, dan ajukan ulang. Alasan penolakan umum: asuransi tidak cukup, rencana perjalanan kabur, keuangan lemah."
+        },
+        {
+          "title": "Apa aturan 180/90?",
+          "desc": "Maksimal 90 hari dalam periode 180 hari di seluruh area Schengen digabungkan. Setelah 90 hari, Anda harus keluar; 180 hari adalah jendela bergulir.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "\"Tidak lebih dari 90 hari dalam jendela 180 hari bergulir\"—bukan tahun kalender, jendela bergerak. UE punya kalkulator online resmi."
+        },
+        {
+          "title": "Apakah anak non-UE dikenai biaya yang sama?",
+          "desc": "Anak usia 6–12 membayar €45. Anak di bawah 6 gratis. Biaya dewasa €90. Beberapa kategori (peneliti, siswa exchange resmi) mungkin dikecualikan.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32024R1415",
+          "notes": "Berbeda. Anak 6-12: €45. Di bawah 6: gratis."
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    }
+  },
+  "disclaimer": "Catatan di bawah ini adalah komentar tambahan Htex berdasarkan sumber publik, bukan posisi resmi otoritas imigrasi mana pun. Selalu rujuk ke sumber resmi.",
+  "notes_label": "Catatan editor"
+}

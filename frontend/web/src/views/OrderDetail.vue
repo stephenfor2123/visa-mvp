@@ -24,8 +24,12 @@
         <span class="spinner" aria-hidden="true"></span> {{ t('common.loading') }}
       </div>
       <div v-else-if="loadError" class="state-block state-block--err" data-testid="orderdetail-error">
-        <p>❌ {{ loadError }}</p>
-        <AppButton ref="retryBtnRef" variant="outline" size="md">{{ t('orderdetail.retry_btn') }}</AppButton>
+        <p v-if="isAuthExpiredState">🔒 {{ t('orderdetail.session_expired_msg') }}</p>
+        <p v-else>❌ {{ loadError }}</p>
+        <div class="state-block__actions" v-if="isAuthExpiredState">
+          <AppButton ref="reloginBtnRef" variant="primary" size="md">{{ t('common.relogin') }}</AppButton>
+        </div>
+        <AppButton v-else ref="retryBtnRef" variant="outline" size="md">{{ t('orderdetail.retry_btn') }}</AppButton>
       </div>
 
       <template v-else-if="order">
@@ -39,11 +43,11 @@
           <div class="hero__right">
             <span
               class="status-badge"
-              :class="`status-badge--${order.status}`"
+              :class="`status-badge--${userStatus.tone}`"
               data-testid="orderdetail-status-badge"
             >
-              <span class="status-badge__icon">{{ statusIcon(order.status) }}</span>
-              <span>{{ statusLabel(order.status) }}</span>
+              <span class="status-badge__icon">{{ userStatusIcon(userStatus.key) }}</span>
+              <span>{{ userStatus.label }}</span>
             </span>
             <p class="hero__updated" data-testid="orderdetail-updated">
               {{ t('orderdetail.updated_at_label') }}: {{ formatDateTime(order.updated_at) }}
@@ -219,7 +223,7 @@
             <AppButton
               v-if="order.status === 'created'"
               ref="cancelBtnRef"
-              variant="danger"
+              variant="outline"
               size="md"
               :loading="cancelling"
               data-testid="orderdetail-cancel-btn"
@@ -230,6 +234,18 @@
               data-testid="orderdetail-cancel-hint"
             >{{ t('orderdetail.cancel_blocked') }}</span>
 
+            <!-- W67: Delete draft — only available when status='created'.
+                 Distinct from cancel: this is a hard-delete (order row gone,
+                 materials soft-deleted); cancel preserves the row. -->
+            <AppButton
+              v-if="order.status === 'created'"
+              ref="deleteBtnRef"
+              variant="danger"
+              size="md"
+              :loading="deleting"
+              data-testid="orderdetail-delete-btn"
+            >🗑 {{ t('orderdetail.delete_btn') }}</AppButton>
+
             <!-- Visa issued PDF download -->
             <AppButton
               v-if="order.status === 'approved' && order.visa_pdf_url"
@@ -239,6 +255,28 @@
               data-testid="orderdetail-pdf-btn"
             >⬇ {{ t('orderdetail.visa_pdf_btn') }}</AppButton>
 
+            <!-- W48 v0.2: DS-160 辅助填充 — 改成"生成 12 位 code" + 复制粘贴到插件
+                 流程。点击后 App 调 POST /api/v2/ds160/code 拿 code + fingerprint,
+                 展示给用户复制 → 用户打开 Chrome 插件粘贴 → 插件 redeem 拿档案 →
+                 在 ceac.state.gov 看填充面板。 -->
+            <AppButton
+              v-if="['created', 'submitted', 'reviewing', 'approved'].includes(order.status)"
+              ref="exportDs160BtnRef"
+              variant="outline"
+              size="md"
+              :loading="exportingDs160"
+              data-testid="orderdetail-ds160-get-code-btn"
+              @click="onGetDs160Code"
+            >🧩 {{ ds160Code ? t('orderdetail.ds160_refresh_code_btn') : t('orderdetail.ds160_get_code_btn') }}</AppButton>
+            <AppButton
+              v-if="order.status === 'approved'"
+              ref="downloadExtBtnRef"
+              variant="ghost"
+              size="md"
+              data-testid="orderdetail-ext-download-btn"
+              @click="onDownloadExtension"
+            >📦 {{ t('orderdetail.ext_download_btn') }}</AppButton>
+
             <!-- Re-apply after rejection -->
             <AppButton
               v-if="order.status === 'rejected'"
@@ -247,6 +285,101 @@
               size="md"
               data-testid="orderdetail-reapply-btn"
             >↻ {{ t('orderdetail.reapply_btn') }}</AppButton>
+
+            <!-- W48 v0.2: DS-160 code 展示面板 — 拿到 code 后展开,
+                 展示 code + 复制按钮 + 重置按钮 + 档案指纹 -->
+            <div
+              v-if="ds160PanelOpen && ds160Code"
+              class="ds160-code-panel"
+              data-testid="orderdetail-ds160-code-panel"
+              style="
+                grid-column: 1 / -1;
+                margin-top: 12px;
+                padding: 14px 16px;
+                background: #f0f9ff;
+                border: 1px solid #bae6fd;
+                border-radius: 12px;
+                font-size: 13px;
+              "
+            >
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                <div style="font-weight:600;color:#0c4a6e;">
+                  🔑 {{ t('orderdetail.ds160_code_panel_title') }}
+                </div>
+                <span
+                  v-if="ds160LastUnchanged"
+                  style="font-size:11px;color:#0369a1;background:#e0f2fe;padding:2px 8px;border-radius:10px;"
+                  data-testid="orderdetail-ds160-unchanged-badge"
+                >{{ t('orderdetail.ds160_unchanged_badge') }}</span>
+              </div>
+              <div
+                style="
+                  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+                  font-size: 22px;
+                  font-weight: 600;
+                  letter-spacing: 3px;
+                  color: #0c4a6e;
+                  background: #fff;
+                  border: 1px dashed #7dd3fc;
+                  border-radius: 8px;
+                  padding: 10px 14px;
+                  text-align: center;
+                  user-select: all;
+                  cursor: text;
+                "
+                data-testid="orderdetail-ds160-code-value"
+              >{{ formatDs160Code(ds160Code) }}</div>
+              <div style="display:flex;gap:8px;margin-top:10px;">
+                <button
+                  type="button"
+                  class="ds160-copy-btn"
+                  data-testid="orderdetail-ds160-copy-btn"
+                  style="
+                    flex: 1; padding: 8px 12px;
+                    border: 0; border-radius: 8px; cursor: pointer;
+                    background: #0ea5e9; color: #fff;
+                    font-size: 13px; font-weight: 500;
+                  "
+                  @click="onCopyDs160Code"
+                >📋 {{ t('orderdetail.ds160_copy_btn') }}</button>
+                <button
+                  type="button"
+                  class="ds160-open-btn"
+                  data-testid="orderdetail-ds160-open-btn"
+                  style="
+                    flex: 1; padding: 8px 12px;
+                    border: 0; border-radius: 8px; cursor: pointer;
+                    background: #111; color: #fff;
+                    font-size: 13px; font-weight: 500;
+                  "
+                  @click="onOpenDs160Website"
+                >🚀 {{ t('orderdetail.ds160_open_website_btn') }}</button>
+                <button
+                  type="button"
+                  class="ds160-rotate-btn"
+                  data-testid="orderdetail-ds160-rotate-btn"
+                  style="
+                    padding: 8px 12px;
+                    border: 1px solid #fca5a5; border-radius: 8px; cursor: pointer;
+                    background: #fff; color: #b91c1c;
+                    font-size: 12px;
+                  "
+                  @click="onRotateDs160Code"
+                >↻ {{ t('orderdetail.ds160_rotate_btn') }}</button>
+              </div>
+              <div style="font-size:11px;color:#475569;margin-top:10px;line-height:1.5;">
+                <div>{{ t('orderdetail.ds160_panel_hint_1') }}</div>
+                <div style="margin-top:4px;">
+                  {{ t('orderdetail.ds160_panel_hint_2') }}
+                  <code style="background:#e0f2fe;padding:1px 6px;border-radius:4px;font-family:ui-monospace,monospace;">
+                    {{ ds160Fingerprint }}{{ t('orderdetail.ds160_fingerprint_more') }}
+                  </code>
+                </div>
+                <div v-if="ds160IssuedAt" style="margin-top:4px;color:#64748b;">
+                  {{ t('orderdetail.ds160_issued_at') }}: {{ formatLocalTime(ds160IssuedAt) }}
+                </div>
+              </div>
+            </div>
 
             <!-- Back -->
             <AppButton
@@ -275,6 +408,25 @@
         </div>
       </div>
     </div>
+
+    <!-- W67: Delete-draft confirmation modal.
+         Distinct from cancel modal — title is more explicit about the
+         cascade, body lists what gets cleared, OK button uses danger
+         variant + trash icon to make the action obviously destructive. -->
+    <div v-if="deleteModal" class="modal-mask" @click.self="deleteModal = false" data-testid="orderdetail-delete-modal">
+      <div class="modal-box modal-box--danger">
+        <h3 class="modal-box__title">{{ t('orderdetail.delete_confirm_title') }}</h3>
+        <p class="modal-box__body">{{ t('orderdetail.delete_confirm_body', { n: (order.material_ids || []).length }) }}</p>
+        <div class="modal-box__actions">
+          <AppButton ref="deleteNoRef" variant="ghost" size="md" data-testid="orderdetail-delete-no">
+            {{ t('orderdetail.delete_confirm_no') }}
+          </AppButton>
+          <AppButton ref="deleteYesRef" variant="danger" size="md" :loading="deleting" data-testid="orderdetail-delete-yes">
+            🗑 {{ t('orderdetail.delete_confirm_ok') }}
+          </AppButton>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -289,12 +441,16 @@ import { useToast } from '@/composables/useToast'
 import {
   getOrder,
   cancelOrder,
+  deleteOrder,
   pollOrderStatus,
   TIMELINE_STEPS,
   BRANCH_STEPS
 } from '@/api/orders'
+import { useOrderUserStatus } from '@/composables/useOrderUserStatus'
 // A-W9-2: query order commission, detail page shows "Affiliate source: PARTNER001 (5% commission)"
 import { getCommission } from '@/api/affiliate'
+// W48 v0.2: DS-160 辅助填充 — 改成后端 12 位 code 兑换流程
+import { issueDs160Code, formatDs160Code, describeDs160Error } from '@/api/ds160'
 import AppHeader from '@/components/AppHeader.vue'
 
 const { t, te, locale } = useI18n()
@@ -302,19 +458,39 @@ const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
 const toast = useToast()
+const { statusOf: userStatusOf } = useOrderUserStatus()
+
+// W2: user-facing status (single source of truth via composable)
+const userStatus = computed(() => userStatusOf(order.value || {}))
 
 // ============== State ==============
 const order = ref(null)
 const loading = ref(false)
 const loadError = ref('')
+// W56: 401 → 页面内「会话过期」错误态,隐藏 retry 按钮,换成「重新登录」跳 /login
+const isAuthExpiredState = ref(false)
 const cancelling = ref(false)
 const cancelModal = ref(false)
+// W67: delete-draft modal state — distinct from cancelModal because the
+// confirm action and the success side-effect (router push to /orders) are
+// different. Keeping them separate avoids accidental re-use and makes the
+// test IDs / handlers cleanly partitioned.
+const deleting = ref(false)
+const deleteModal = ref(false)
 const wsState = ref('connecting')  // connecting | connected | fallback
 const countdownSec = ref(30)
 const imgErrors = reactive(new Set())
 // A-W9-2: commission data { partner_id, commission_rate, commission_amount_cents, currency }
 // null means no affiliate source (404 silent) or Loading
 const commission = ref(null)
+
+// W48 v0.2: DS-160 辅助填充 — 12 位 code 兑换流程
+const exportingDs160 = ref(false)   // 拉 code 时按钮的 loading
+const ds160Code = ref('')           // 当前 code (raw 12 chars)
+const ds160Fingerprint = ref('')    // 档案指纹前缀 (前 8 位 + ...)
+const ds160IssuedAt = ref('')       // code 签发时间 (ISO)
+const ds160PanelOpen = ref(false)   // 是否展开 code 展示面板
+const ds160LastUnchanged = ref(false) // 上次是否幂等 (true=复用旧 code)
 
 let cancelPoll = null
 let countdownTimer = null
@@ -331,6 +507,22 @@ const TIMELINE_BRANCHES = [
 function statusLabel(s) {
   const k = `orderdetail.status_${s}`
   return te(k) ? t(k) : s
+}
+// W2: user-facing status icon (5 keys)
+const USER_STATUS_ICONS = {
+  draft: '✎',
+  pending_payment: '⏱',
+  paid: '✓',
+  processing: '⏳',
+  approved: '🎉',
+  rejected: '✗',
+  refunding: '↻',
+  refunded: '↩',
+  cancelled: '—',
+  error: '!',
+}
+function userStatusIcon(key) {
+  return USER_STATUS_ICONS[key] || '•'
 }
 function statusIcon(s) {
   const k = `orderdetail.icon_${s}`
@@ -430,6 +622,7 @@ async function loadInitial() {
   }
   loading.value = true
   loadError.value = ''
+  isAuthExpiredState.value = false
   try {
     const r = await getOrder(orderNo.value, { etag: null })
     if (r.data) {
@@ -438,7 +631,12 @@ async function loadInitial() {
       // Rare: first is 304, keep current
     }
   } catch (e) {
-    if (e?.code === '4004' || e?.status === 404) {
+    // W56: 401 / 1005 → "会话过期"分支,不弹顶部 toast(顶部统一由 App.vue 提示条显示),
+    // 在页面内显示「重新登录」按钮引导用户回到 /login
+    if (e?.isAuthExpired || e?.code === '1005') {
+      isAuthExpiredState.value = true
+      loadError.value = ''  // 用 isAuthExpiredState 区分,不让 message 干扰模板
+    } else if (e?.code === '4004' || e?.status === 404) {
       loadError.value = t('orderdetail.not_found')
     } else {
       loadError.value = e?.message || t('orderdetail.load_failed')
@@ -448,9 +646,11 @@ async function loadInitial() {
     loading.value = false
   }
   // A-W9-2: load commission (silent, failure as no source)
-  loadCommission()
-  // Start pollOrderStatus (WebSocket primary + polling fallback)
-  startRealtime()
+  // W56: 已 expired 时不再启动 realtime(避免无谓 WS / polling + 噪声日志)
+  if (!isAuthExpiredState.value) {
+    loadCommission()
+    startRealtime()
+  }
 }
 
 // A-W9-2: load commission - call /api/v2/affiliate/commission/{order_id}
@@ -548,6 +748,40 @@ async function doCancel() {
   }
 }
 
+// ============== W67: Delete-draft handlers ==============
+function onDelete() {
+  deleteModal.value = true
+}
+async function doDelete() {
+  if (!order.value) return
+  deleting.value = true
+  try {
+    const r = await deleteOrder(order.value.order_no)
+    deleteModal.value = false
+    // Toast: if backend reported soft-deleted material count > 0, surface it
+    // so the user knows exactly what got cleared (matters for the "I want to
+    // see what was lost" recovery path).
+    const count = r?.soft_deleted_materials ?? 0
+    if (count > 0) {
+      toast.success(t('orderdetail.delete_success_with_materials', { n: count }))
+    } else {
+      toast.success(t('orderdetail.delete_success'))
+    }
+    // After delete, the order row is gone server-side; bounce to /orders
+    // list so the user sees the updated state. Use replace() so back-button
+    // doesn't take them into a 404.
+    router.replace('/orders')
+  } catch (e) {
+    if (e?.code === '4010') {
+      toast.error(t('orderdetail.delete_blocked'))
+    } else {
+      toast.error(e?.message || t('orderdetail.delete_failed'))
+    }
+  } finally {
+    deleting.value = false
+  }
+}
+
 function onDownloadPdf() {
   if (order.value?.visa_pdf_url) {
     window.open(order.value.visa_pdf_url, '_blank', 'noopener,noreferrer')
@@ -556,6 +790,108 @@ function onDownloadPdf() {
 function onReapply() {
   // Jump back to /destinations to re-select
   router.push('/destinations')
+}
+
+// W48 v0.2: DS-160 辅助填充 — 后端发 12 位 code + 复制粘贴到插件的流程。
+// 拿到 code → 弹窗展示 → 用户复制 → 打开插件 → 粘贴 → 插件 redeem。
+async function onGetDs160Code() {
+  if (!order.value || !order.value.id) return
+  exportingDs160.value = true
+  try {
+    const data = await issueDs160Code(order.value.id, { forceRotate: false })
+    ds160Code.value = data.code || ''
+    ds160Fingerprint.value = (data.fingerprint || '').slice(0, 8) || ''
+    ds160IssuedAt.value = data.issued_at || ''
+    ds160LastUnchanged.value = !!data.unchanged
+    ds160PanelOpen.value = true
+    if (!data.unchanged) {
+      toast.success(t('orderdetail.ds160_get_code_ok'))
+    } else {
+      // 幂等:档案没变 → 复用旧 code
+      toast.info(t('orderdetail.ds160_unchanged_hint'))
+    }
+  } catch (err) {
+    const code = err && err.code
+    toast.error(describeDs160Error(code) + (err && err.message ? ` · ${err.message}` : ''))
+    console.error('[ds160-get-code]', err)
+  } finally {
+    exportingDs160.value = false
+  }
+}
+
+// 复制 code 到剪贴板 (优先用 Clipboard API,降级用 execCommand)
+async function onCopyDs160Code() {
+  if (!ds160Code.value) return
+  const text = formatDs160Code(ds160Code.value)  // 带中划线的可读形式
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text)
+    } else {
+      // 老浏览器兜底
+      const ta = document.createElement('textarea')
+      ta.value = text
+      ta.style.position = 'fixed'
+      ta.style.opacity = '0'
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+    }
+    toast.success(t('orderdetail.ds160_copy_ok'))
+  } catch (err) {
+    toast.error(t('orderdetail.ds160_copy_fail') + ': ' + (err && err.message || ''))
+  }
+}
+
+// 重置 code (force_rotate) — 旧 code 进黑名单,新 code 重新生成
+async function onRotateDs160Code() {
+  if (!order.value || !order.value.id) return
+  if (!confirm(t('orderdetail.ds160_rotate_confirm'))) return
+  exportingDs160.value = true
+  try {
+    const data = await issueDs160Code(order.value.id, { forceRotate: true })
+    ds160Code.value = data.code || ''
+    ds160Fingerprint.value = (data.fingerprint || '').slice(0, 8) || ''
+    ds160IssuedAt.value = data.issued_at || ''
+    ds160LastUnchanged.value = false
+    toast.success(t('orderdetail.ds160_rotate_ok'))
+  } catch (err) {
+    const code = err && err.code
+    toast.error(describeDs160Error(code) + (err && err.message ? ` · ${err.message}` : ''))
+  } finally {
+    exportingDs160.value = false
+  }
+}
+
+// W48 v0.2 UX1: 一键打开 ceac.state.gov (新标签页)
+function onOpenDs160Website() {
+  window.open('https://ceac.state.gov/genniv/', '_blank', 'noopener,noreferrer')
+  toast.info(t('orderdetail.ds160_open_website_hint'))
+}
+
+// 简单的时间格式化 (本地化)
+function formatLocalTime(iso) {
+  if (!iso) return ''
+  try {
+    const d = new Date(iso)
+    return d.toLocaleString(locale.value || 'zh-CN', {
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit',
+    })
+  } catch (e) {
+    return iso
+  }
+}
+
+// W47: 下载浏览器插件 zip —— 直接给个下载链接(后端静态资源),用户解压加载
+function onDownloadExtension() {
+  const url = '/downloads/htex-browser-extension.zip'
+  window.open(url, '_blank', 'noopener,noreferrer')
+  toast.info(t('orderdetail.ext_download_started'))
+}
+// W56: 401 → 跳登录页,带 redirect 回当前订单详情
+function onRelogin() {
+  router.push({ name: 'Login', query: { redirect: route.fullPath } })
 }
 function goBack() {
   // Back via history stack, else go /home
@@ -579,12 +915,16 @@ watch(orderNo, (v, prev) => {
 // 6 persistent: logout / retry / cancel / pdf / reapply / back
 // 2 modal: cancelNo / cancelYes (v-if controlled, nextTick inject on open)
 const retryBtnRef = ref(null)
+const reloginBtnRef = ref(null)
 const cancelBtnRef = ref(null)
+const deleteBtnRef = ref(null)
 const pdfBtnRef = ref(null)
 const reapplyBtnRef = ref(null)
 const backBtnRef = ref(null)
 const cancelNoRef = ref(null)
 const cancelYesRef = ref(null)
+const deleteNoRef = ref(null)
+const deleteYesRef = ref(null)
 
 // Inject 2 button triggers on modal open (v-if mount after ref has value)
 watch(cancelModal, async (val) => {
@@ -595,12 +935,23 @@ watch(cancelModal, async (val) => {
   }
 })
 
+// W67: same pattern for delete-draft modal
+watch(deleteModal, async (val) => {
+  if (val) {
+    await nextTick()
+    if (deleteNoRef.value) deleteNoRef.value.setOnTrigger(() => { deleteModal.value = false })
+    if (deleteYesRef.value) deleteYesRef.value.setOnTrigger(doDelete)
+  }
+})
+
 onMounted(async () => {
   auth.hydrate()
   await loadInitial()
   // Inject 5 persistent AppButton click callbacks (W3 root-fix AppButton + setOnTrigger pattern)
   if (retryBtnRef.value) retryBtnRef.value.setOnTrigger(loadInitial)
+  if (reloginBtnRef.value) reloginBtnRef.value.setOnTrigger(onRelogin)
   if (cancelBtnRef.value) cancelBtnRef.value.setOnTrigger(onCancel)
+  if (deleteBtnRef.value) deleteBtnRef.value.setOnTrigger(onDelete)
   if (pdfBtnRef.value) pdfBtnRef.value.setOnTrigger(onDownloadPdf)
   if (reapplyBtnRef.value) reapplyBtnRef.value.setOnTrigger(onReapply)
   if (backBtnRef.value) backBtnRef.value.setOnTrigger(goBack)
@@ -843,5 +1194,15 @@ onBeforeUnmount(() => {
   &__title { margin: 0 0 8px; font-size: 17px; font-weight: 700; color: #0F172A; }
   &__body  { margin: 0 0 18px; font-size: 14px; color: #475569; line-height: 1.55; }
   &__actions { display: flex; justify-content: flex-end; gap: 8px; }
+  // W67: delete-draft modal uses a thin red top border to subtly emphasise
+  // the destructive nature without screaming at the user. Action button is
+  // already variant="danger"; this is purely a visual hint that this is
+  // not the same modal as cancel.
+  &--danger {
+    border-top: 3px solid #DC2626;
+  }
+  &--danger .modal-box__title {
+    color: #991B1B;
+  }
 }
 </style>

@@ -1,7 +1,8 @@
 // /api/v2/materials 前端 wrapper
 //
 // B 1.1.1a 端点 (real 模式):
-//   POST   /api/v2/materials/upload      - multipart: file + material_type + order_no
+//   POST   /api/v2/materials/process     - ephemeral OCR (no storage)
+//   POST   /api/v2/materials/upload      - [disabled] use /process
 //   POST   /api/v2/materials/upload/chunk  - 分片: upload_id + chunk_index + total_chunks + data
 //   POST   /api/v2/materials/upload/complete - 合并: upload_id + material_type + order_no
 //   GET    /api/v2/materials              - list (?order_no=&material_type=)
@@ -51,7 +52,8 @@ function makeMockMaterial(materialType = 'passport') {
     file_size: 1024 * (200 + Math.floor(Math.random() * 600)),
     mime_type: 'image/jpeg',
     thumbnail_url: `https://placehold.co/200x240/EAF0FE/2D5BFF?text=${materialType.toUpperCase()}`,
-    download_url: null,
+    // Lightbox 预览:demo 模式下复用 thumbnail(已经是 placehold 大图),保证 Lightbox 不会空
+    download_url: `https://placehold.co/800x960/EAF0FE/2D5BFF?text=${materialType.toUpperCase()}+DEMO`,
     ocr_status: ['pending', 'processing', 'done'][Math.floor(Math.random() * 3)],
     classification: null,
     created_at: new Date().toISOString()
@@ -83,6 +85,78 @@ export function getMaxBytes() {
   return MAX_BYTES
 }
 
+/**
+ * Process a file in memory — OCR / bank parse, no server-side storage.
+ * @param {File} file
+ * @param {string} materialType
+ * @param {{ countryCode?: string, lang?: string, onProgress?: function(number): void }} opts
+ */
+export async function processMaterial(file, materialType = 'passport', opts = {}) {
+  if (!file) throw new Error('file is required')
+  const { countryCode = '', lang = 'en', onProgress } = opts
+
+  if (file.size > MAX_BYTES) {
+    const err = new Error('file_too_big')
+    err.code = 'FILE_TOO_BIG'
+    throw err
+  }
+  if (file.type && !ACCEPT_TYPES.includes(file.type)) {
+    const err = new Error('file_type_invalid')
+    err.code = 'FILE_TYPE_INVALID'
+    throw err
+  }
+
+  if (MOCK_MODE) {
+    await delay(400)
+    onProgress && onProgress(100)
+    const fields = materialType === 'passport'
+      ? {
+          passport_no: 'E12345678',
+          surname: 'DEMO',
+          given_name: 'USER',
+          sex: 'M',
+          dob: '1990-01-01',
+          nationality: 'ID',
+          expiry: '2031-12-31',
+        }
+      : {}
+    return {
+      material_type: materialType,
+      fields,
+      is_blurry: false,
+      is_complete: true,
+      ocr_status: 'done',
+      pages_processed: 1,
+      bank_analysis: materialType === 'bank' ? { warnings: [] } : null,
+    }
+  }
+
+  const form = new FormData()
+  form.append('file', file)
+  form.append('material_type', materialType)
+  form.append('lang', lang)
+  if (countryCode) form.append('country_code', countryCode)
+
+  const { status, text } = await _xhrPostMultipartWithRefresh(
+    '/api/v2/materials/process',
+    form,
+    onProgress,
+  )
+  if (status < 200 || status >= 300) {
+    throw new Error(`process failed: ${status}`)
+  }
+  let env
+  try {
+    env = JSON.parse(text)
+  } catch {
+    return { _raw: text }
+  }
+  if (env?.code && env.code !== '1000') {
+    throw new Error(env.message || 'process failed')
+  }
+  return env?.data || env
+}
+
 export async function uploadMaterial(file, materialType = 'passport', orderNo = null) {
   if (!file) throw new Error('file is required')
 
@@ -107,20 +181,9 @@ export async function uploadMaterial(file, materialType = 'passport', orderNo = 
     return m
   }
 
-  const form = new FormData()
-  form.append('file', file)
-  form.append('material_type', materialType)
-  if (orderNo) form.append('order_no', orderNo)
-
-  const envelope = await http.post('/v2/materials/upload', form, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  })
-  if (envelope?.code && envelope.code !== '1000') {
-    throw new Error(envelope.message || 'upload failed')
-  }
-  // W19: backend UploadResponse wraps the material in `material` field —
-  // unwrap so callers get the MaterialOut directly (matches the GET /{id} shape)
-  return envelope?.data?.material || envelope?.data || envelope
+  const err = new Error('file_upload_disabled')
+  err.code = 'UPLOAD_DISABLED'
+  throw err
 }
 
 // --------------------------------------------------------------------------- //
@@ -275,37 +338,9 @@ export async function uploadMaterialWithProgress(file, materialType = 'passport'
     return m
   }
 
-  // Chunked path for large files
-  if (file.size > CHUNK_THRESHOLD) {
-    return _uploadChunked(file, materialType, orderNo, onProgress)
-  }
-
-  // Small file: single XHR with upload.onprogress
-  const form = new FormData()
-  form.append('file', file)
-  form.append('material_type', materialType)
-  if (orderNo) form.append('order_no', orderNo)
-
-  const { status, text } = await _xhrPostMultipartWithRefresh(
-    '/api/v2/materials/upload', form, onProgress
-  )
-  if (status < 200 || status >= 300) {
-    throw new Error(`upload failed: ${status}`)
-  }
-  let env
-  try {
-    env = JSON.parse(text)
-  } catch {
-    return { _raw: text }
-  }
-  if (env?.code && env.code !== '1000') {
-    throw new Error(env.message || 'upload failed')
-  }
-  // W36 fix: real upload response wraps the material under `data.material`
-  // (same UploadResponse envelope as uploadMaterial()/_uploadChunked()) —
-  // this path was resolving with the whole envelope, leaving callers reading
-  // `.id`/`.material_id` with undefined.
-  return env?.data?.material || env?.data || env
+  const err = new Error('file_upload_disabled')
+  err.code = 'UPLOAD_DISABLED'
+  throw err
 }
 
 // W37: 走原生 XHR 的上传（为了拿 upload.onprogress 真实进度）完全绕开了
@@ -624,9 +659,11 @@ export async function confirmClassification(materialId, materialType, confirmed 
  * @returns { overall_risk, risk_score, summary, issues, positives, policy_refs, rule_count }
  */
 export async function diagnoseMaterials(args) {
+  const snapshot = args.materials_snapshot || []
+  const materialIds = args.material_ids || []
   if (MOCK_MODE) {
     await delay(500)
-    const materialCount = args.material_ids?.length || 0
+    const materialCount = snapshot.length || materialIds.length || 0
     const hasExpiryIssue = Math.random() > 0.5
     const issues = []
     const positives = []
@@ -638,7 +675,8 @@ export async function diagnoseMaterials(args) {
         title: '护照有效期不足 6 个月',
         detail: '剩余约 3 个月,大多数国家要求 ≥6 个月',
         fix_suggestion: '出发前必须续期护照,否则会被直接拒签。',
-        related_material_id: args.material_ids[0],
+        related_material_id: materialIds[0] || null,
+        related_item_key: snapshot[0]?.item_key || null,
       })
     } else {
       positives.push('护照有效期充足')
@@ -665,7 +703,8 @@ export async function diagnoseMaterials(args) {
     }
   }
   const env = await http.post('/v2/materials/diagnose', {
-    material_ids: args.material_ids,
+    material_ids: materialIds,
+    materials_snapshot: snapshot,
     country_code: args.country_code,
     visa_type: args.visa_type,
     fields: args.fields || {},
@@ -683,12 +722,19 @@ export async function generateItineraryAttractions({ countryName, lang, days, fl
   if (MOCK_MODE) {
     await delay(600)
     return {
-      days: days.map((d, i) => ({
-        ...d,
-        transport: d.transport || (i === 0 || i === days.length - 1 ? 'flight' : 'walk'),
-        hotel: d.hotel || `Hotel ${d.city || countryName || ''}`.trim(),
-        attraction: d.attraction || `${d.city || countryName || ''} · 自由行`.trim(),
-      })),
+      days: days.map((d, i) => {
+        // W47c: 最后一天是返程日（飞机），不需要住宿。已有值保留（尊重用户手填），
+        // 只对"完全空"的最后一天做兜底 → 空字符串（前端会显示 placeholder）。
+        const isLast = i === days.length - 1
+        return {
+          ...d,
+          transport: d.transport || (i === 0 || isLast ? 'flight' : 'walk'),
+          hotel: d.hotel || (isLast ? '' : `Hotel ${d.city || countryName || ''}`.trim()),
+          attraction: d.attraction || (isLast
+            ? ''
+            : `${d.city || countryName || ''} · 自由行`.trim()),
+        }
+      }),
     }
   }
   try {

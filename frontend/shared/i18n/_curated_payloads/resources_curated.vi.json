@@ -1,0 +1,719 @@
+{
+  "verified_at_label": "Cập nhật: {date}",
+  "cta_open_source": "Mở nguồn chính thức",
+  "back_to_resources": "Quay lại Trung tâm Tư liệu",
+  "empty_country": "Chưa có nội dung chọn lọc cho quốc gia này.",
+  "try_other_country": "Vui lòng chọn quốc gia khác, hoặc dùng ô tìm kiếm RAG trong trang Tư liệu.",
+  "country": {
+    "us": "Hoa Kỳ",
+    "gb": "Vương quốc Anh",
+    "au": "Úc",
+    "schengen": "Schengen (EU)"
+  },
+  "wiki": {
+    "title": "Bách khoa Visa",
+    "intro": "Hướng dẫn theo từng quốc gia — visa là gì, áp dụng cho ai, được phép làm gì. Nội dung trích từ cơ quan xuất nhập cảnh chính thức.",
+    "us": {
+      "title": "Visa thăm Hoa Kỳ B1/B2 — Bách khoa",
+      "intro": "Visa thăm (B-1 / B-2 / B1/B2 kết hợp) là visa không định cư cho người vào Hoa Kỳ tạm thời với mục đích kinh doanh (B-1), du lịch (B-2), hoặc kết hợp.",
+      "_verified_at": "2026-07-03",
+      "items": [
+        {
+          "title": "Visa B-1 / B-2 là gì?",
+          "desc": "B-1 dành cho hoạt động kinh doanh (họp, hội nghị, đào tạo ngắn hạn, đàm phán hợp đồng). B-2 dành cho du lịch, thăm thân nhân/bạn bè, hoặc khám chữa bệnh. Hầu hết người xin visa kết hợp B1/B2.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
+          "notes": "Đây là loại thị thực ngắn hạn Mỹ phổ biến nhất: du lịch/thăm thân = B-2, công tác/họp = B-1, hầu hết mọi người xin gộp thành B1/B2 trên cùng một giấy."
+        },
+        {
+          "title": "Ai cần visa Mỹ, ai dùng được ESTA / Visa Waiver",
+          "desc": "Hầu hết các nước Châu Âu và khoảng 40 quốc gia khác có thể đi miễn thị thực theo Chương trình Miễn thị thực (cần ESTA, $40 USD từ 2025-09-30). Người mang hộ chiếu Cộng hòa Nhân dân Trung Hoa phải xin visa B1/B2 và đăng ký EVUS.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visa-waiver-program.html",
+          "notes": "Khoảng 40 quốc gia được miễn thị thực Mỹ (VWP). Hộ chiếu Trung Quốc đại lục không nằm trong danh sách—bạn phải xin B1/B2, và dù có thị thực 10 năm vẫn phải đăng ký EVUS."
+        },
+        {
+          "title": "Thời hạn B1/B2 vs. thời gian lưu trú",
+          "desc": "Thời hạn visa (ngày hết hạn) có thể đến 10 năm nhiều lần cho công dân Trung Quốc. Thời gian lưu trú mỗi lần nhập cảnh do CBP quyết định tại cửa khẩu — thường tối đa 6 tháng. Hai khái niệm này độc lập.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
+          "notes": "Thời hạn thị thực là \"thị thực đó có hiệu lực bao lâu\"; KHÔNG phải bạn được ở bao lâu. Thị thực 10 năm không có nghĩa là ở liên tục 10 năm—CBP tại cửa khẩu quyết định thời gian lưu trú thực tế mỗi lần."
+        },
+        {
+          "title": "EVUS cho người mang hộ chiếu Trung Quốc",
+          "desc": "Công dân Trung Quốc có visa B1/B2 (hoặc B-1 / B-2) 10 năm phải đăng ký EVUS tại www.EVUS.gov trước mỗi chuyến đi. Phí $30 USD mỗi lần đăng ký từ 2025-09-30. Hiệu lực 2 năm, hoặc đến khi hộ chiếu/visa hết hạn — cái nào đến trước.",
+          "url": "https://www.cbp.gov/travel/international-visitors/electronic-visa-update-system",
+          "notes": "EVUS là đăng ký miễn phí nhưng bắt buộc cho người giữ B1/B2 Trung Quốc đại lục: gia hạn mỗi 2 năm, hoặc khi có hộ chiếu mới/thị thực mới. Quên cập nhật = bị từ chối lên máy bay."
+        },
+        {
+          "title": "Section 214(b) — lý do từ chối phổ biến nhất",
+          "desc": "Section 214(b) (giả định ý định nhập cư) là lý do từ chối phổ biến nhất. Nếu bị từ chối, người xin có thể nộp đơn lại bất cứ lúc nào nếu hoàn cảnh đã thay đổi — không có thời gian chờ bắt buộc.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/visa-denials.html",
+          "notes": "214(b) là điều luật nói \"chứng minh bạn sẽ quay lại.\" Không phải cáo buộc nói dối—đó là giả định mặc định, và bạn phản bác bằng các ràng buộc mạnh (công việc, gia đình, tài sản). Không có thời gian chờ bắt buộc sau khi bị từ chối 214(b); nộp lại với bằng chứng mạnh hơn bất kỳ lúc nào."
+        },
+        {
+          "title": "Section 222(g) — quá hạn tự động làm visa hết hiệu lực",
+          "desc": "Theo INA 222(g), nếu bạn quá hạn lưu trú, visa của bạn tự động bị hủy. Bất kỳ visa nhiều lần nào bị hủy do quá hạn đều không còn giá trị cho các chuyến đi sau vào Hoa Kỳ.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/visa-denials.html",
+          "notes": "222(g) là hậu quả nặng nề nhất của việc quá hạn: ngay cả khi bạn rời đi, thị thực đó bị hủy vĩnh viễn và ảnh hưởng đến các đơn sau. Luôn kiểm tra thời gian lưu trú I-94 trước khi bay về."
+        }
+      ]
+    },
+    "gb": {
+      "title": "Visa Thăm Chuẩn (Standard Visitor) Anh Quốc — Bách khoa",
+      "intro": "Standard Visitor là tuyến chính cho lưu trú ngắn hạn tại Anh: du lịch, thăm viếng kinh doanh, học ngắn hạn (đến 6 tháng) và các hoạt động được trả phép (permitted paid engagement). Thời gian lưu trú thường đến 6 tháng.",
+      "items": [
+        {
+          "title": "Visa Standard Visitor là gì?",
+          "desc": "Một tuyến ngắn hạn bao gồm du lịch, thăm thân nhân/bạn bè, họp kinh doanh, và học ngắn hạn (≤6 tháng). Các chuyên gia được phép thực hiện paid engagement.",
+          "url": "https://www.gov.uk/standard-visitor",
+          "notes": "Đây là thị thực ngắn hạn Anh duy nhất bạn cần. Du lịch, thăm thân, công tác, và học ngắn hạn (< 6 tháng) đều dùng Standard Visitor. GOV.UK là nguồn sự thật duy nhất; dịch vụ \"nhanh\" của đại lý du lịch là không thật."
+        },
+        {
+          "title": "Ai cần visa, ai dùng ETA / miễn thị thực",
+          "desc": "Hầu hết hộ chiếu EU và Vịnh có thể dùng Electronic Travel Authorisation (ETA) cho lưu trú ngắn. Người mang hộ chiếu Trung Quốc phải xin visa Standard Visitor.",
+          "url": "https://www.gov.uk/check-uk-visa",
+          "notes": "ETA không phải thị thực—đó là ủy quyền điện tử cho công dân được miễn thị thực (tương tự ESTA của Mỹ). Hộ chiếu Trung Quốc đại lục không đủ điều kiện xin ETA; bạn phải xin thị thực đầy đủ."
+        },
+        {
+          "title": "Standard Visitor vs. Visitor in Transit",
+          "desc": "Standard Visitor cho phép nhập cảnh và hoạt động tại Anh. Visitor in Transit (£74.50) dành cho hành khách đi qua Anh để sang nước thứ ba.",
+          "url": "https://www.gov.uk/transit-visa/visitor-in-transit-visa",
+          "notes": "Visitor in Transit dành cho hành khách ở khu vực sân bay Anh và nối chuyến đi nơi khác. Nếu bạn muốn bước ra London, bạn cần Standard Visitor."
+        },
+        {
+          "title": "Standard Visitor dài hạn (2 / 5 / 10 năm)",
+          "desc": "Có thể xin visa Standard Visitor 2 năm, 5 năm hoặc 10 năm với phí cao hơn. Mỗi lần nhập cảnh vẫn ≤6 tháng. Visa dài hạn không cho phép cư trú lâu tại Anh.",
+          "url": "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa",
+          "notes": "Thị thực 10 năm nghe hay, nhưng đắt hơn, cần nhiều tài liệu hơn, và mỗi lần nhập cảnh vẫn chỉ cho 6 tháng. Thị thực 6 tháng tiêu chuẩn là lựa chọn đúng cho hầu hết du khách."
+        },
+        {
+          "title": "Xét nghiệm lao (TB) cho người cư trú tại Trung Quốc",
+          "desc": "Người xin đã sống tại Trung Quốc (hoặc các nước trong danh sách) 6+ tháng phải xét nghiệm TB tại phòng khám được UK Home Office chấp thuận và nộp giấy chứng nhận. Xét nghiệm từ nơi không được chấp thuận sẽ bị từ chối.",
+          "url": "https://www.gov.uk/tb-test-visa",
+          "notes": "Xét nghiệm lao chỉ hợp lệ từ các bệnh viện được Bộ Nội vụ Anh chỉ định. Có 19 bệnh viện được chỉ định ở Trung Quốc đại lục; mất 1-2 tuần để đặt lịch hẹn."
+        },
+        {
+          "title": "Hoạt động được phép — được và không được",
+          "desc": "Được: du lịch, thăm thân, transit, họp kinh doanh, paid engagement với tư cách chuyên gia, học ≤6 tháng. Không được: làm việc có lương/không lương (trừ paid engagement), nhận trợ cấp, qua nhiều chuyến liên tiếp để cư trú.",
+          "url": "https://www.gov.uk/standard-visitor",
+          "notes": "Làm việc tại Anh với Standard Visitor bị cấm nghiêm ngặt (trừ permitted paid engagement). Vi phạm = trục xuất + cấm nhập cảnh 10 năm. Ngay cả làm việc từ xa cho công ty Trung Quốc cũng tính."
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    },
+    "au": {
+      "title": "Visa Khách Úc (Subclass 600) — Bách khoa",
+      "intro": "Visitor visa (Subclass 600) là tuyến chính cho lưu trú ngắn hạn với mục đích du lịch, thăm thân nhân/bạn bè, hoặc thăm viếng kinh doanh ngắn. Có 5 stream (Tourist, Business Visitor, Sponsored Family, Approved Destination, Frequent Traveller) — chọn stream phù hợp với mục đích của bạn.",
+      "items": [
+        {
+          "title": "Subclass 600 (Visitor visa) là gì?",
+          "desc": "Visa tạm thời ngắn hạn cho phép du lịch, thăm thân, thăm viếng kinh doanh và các hoạt động ngắn hạn không làm việc. Thời gian lưu trú do viên chức quyết định; thường 3, 6 hoặc 12 tháng mỗi lần.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "Subclass 600 là thị thực ngắn hạn đa dụng của Úc. 5 stream bao gồm các mục đích khác nhau: du lịch (Tourist), công tác (Business Visitor), thăm thân có bảo lãnh (Sponsored Family)."
+        },
+        {
+          "title": "Ai nộp trong nước vs. ngoài nước",
+          "desc": "Hầu hết người xin Trung Quốc nộp ngoài nước qua ImmiAccount. Gia hạn trong nước chỉ khả thi trong một số tình huống cụ thể và ngày càng chặt với quy định visa hopping.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "Nguyên tắc là nộp đơn ở nước ngoài, nhưng gia hạn trong nước có thể nếu thị thực sắp hết. \"Visa hopping\" (gia hạn 600 ngay trước khi hết hạn) ngày càng khó được chấp thuận."
+        },
+        {
+          "title": "Thời hạn so với thời gian lưu trú",
+          "desc": "Subclass 600 thường cấp dưới dạng nhiều lần 1 năm cho Tourist Stream. Mỗi lần có thể lưu trú đến 3 tháng (đôi khi 6 hoặc 12 tháng tùy quyết định của viên chức).",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "Lưu trú 3 tháng mỗi lần nhập cảnh là mặc định; nhân viên có thể gia hạn lên 6 hoặc 12 tháng theo quyết định, nhưng nói \"tôi muốn ở 6 tháng\" không đảm bảo được."
+        },
+        {
+          "title": "Sponsored Family Stream",
+          "desc": "Thân nhân là công dân Úc hoặc PR (cha mẹ, con trưởng thành) có thể bảo lãnh. Người được bảo lãnh có thể được cấp thời hạn dài hơn (18 tháng đến 5 năm tùy trường hợp).",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600/sponsored-family-stream",
+          "notes": "Bảo lãnh từ công dân Úc hoặc thường trú nhân (cha mẹ, con trưởng thành) có thể kéo dài thời hạn lên 18 tháng–5 năm. Thêm giấy tờ, đổi lại thị thực dài hơn."
+        },
+        {
+          "title": "Điều khoản 'No Further Stay' (từ 2025-03-21)",
+          "desc": "Từ 21/03/2025, mọi quyết định Subclass 600 đều có điều khoản No Further Stay — người giữ visa không thể nộp đơn visa khác trong khi ở Úc (trừ một số ngoại lệ). Hãy lên kế hoạch trước.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "No Further Stay có nghĩa là bạn không thể nộp đơn xin thị thực khác từ trong nước Úc (một số ngoại lệ). Nếu muốn chuyển sang thị thực du học/lao động, bạn phải rời đi và nộp lại từ nước ngoài."
+        },
+        {
+          "title": "Frequent Traveller Stream (khách thường xuyên)",
+          "desc": "Stream riêng cho công dân một số quốc gia nhất định (bao gồm Trung Quốc) đi lại thường xuyên. Thời hạn đến 10 năm; mỗi lần lưu trú ≤ 3 tháng. Phí cao hơn.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600/frequent-traveller-stream",
+          "notes": "Frequent Traveller dành riêng cho người giữ hộ chiếu cụ thể (Trung Quốc đại lục, Đông Nam Á v.v.) với thời hạn 10 năm. Người nộp đơn thông thường nên dùng Tourist Stream."
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    },
+    "schengen": {
+      "title": "Visa Schengen Lưu trú Ngắn hạn (Loại C) — Bách khoa",
+      "intro": "Visa lưu trú ngắn hạn Loại C do 29 quốc gia Schengen cấp theo một Bộ luật Visa EU duy nhất. Quy tắc 180/90: trong bất kỳ chu kỳ 180 ngày, bạn có thể lưu trú đến 90 ngày trong toàn bộ khu vực Schengen.",
+      "items": [
+        {
+          "title": "Visa Schengen Lưu trú Ngắn hạn (Loại C) là gì?",
+          "desc": "Visa lưu trú ngắn hạn thống nhất có giá trị đến 90 ngày trong bất kỳ chu kỳ 180 ngày trên toàn khu vực Schengen. Do quốc gia Schengen bạn đến đầu tiên hoặc lưu trú lâu nhất cấp.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "Schengen là \"một thị thực, 26 quốc gia.\" Nộp đơn tại quốc gia điểm đến chính (hoặc quốc gia nhập cảnh đầu tiên)—bạn không thể chọn bất kỳ lãnh sự quán nào gần nhất."
+        },
+        {
+          "title": "29 quốc gia Schengen và quy tắc thống nhất",
+          "desc": "Schengen gồm 25 quốc gia thành viên EU (Áo, Bỉ, Séc, Đan Mạch, Estonia, Phần Lan, Pháp, Đức, Hy Lạp, Hungary, Ý, Latvia, Litva, Luxembourg, Malta, Hà Lan, Ba Lan, Bồ Đào Nha, Slovakia, Slovenia, Tây Ban Nha, Thụy Điển) + 4 quốc gia ngoài EU (Iceland, Liechtenstein, Na Uy, Thụy Sĩ).",
+          "url": "https://home-affairs.ec.europa.eu/policies/schengen-borders-visa-policy_en",
+          "notes": "29 quốc gia Schengen ≠ 27 quốc gia EU. Iceland, Na Uy, Thụy Sĩ là Schengen nhưng không phải EU. Quy tắc ngắn hạn áp dụng thống nhất cho tất cả."
+        },
+        {
+          "title": "Quy tắc 180/90 — cách tính",
+          "desc": "90 ngày tính trượt: mỗi ngày bạn ở khu vực Schengen dùng 1 trong 90 ngày trong 180 ngày trước đó. Dùng máy tính trực tuyến hoặc con dấu hộ chiếu.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "180/90 là cửa sổ 180 ngày cuốn chiếu, không phải năm dương lịch. EU có máy tính trực tuyến chính thức—tìm \"schengen calculator\" để kiểm tra số ngày còn lại."
+        },
+        {
+          "title": "Nộp đơn ở đâu — quy tắc điểm đến chính",
+          "desc": "Một nước → nước đó. Nhiều nước → điểm đến chính (lưu trú lâu nhất). Lưu trú bằng nhau → điểm nhập cảnh đầu tiên.",
+          "url": "https://www.schengenvisainfo.com/where-to-apply/",
+          "notes": "Trong chuyến đi nhiều quốc gia, \"điểm đến chính\" = quốc gia bạn ở nhiều đêm nhất, không phải quốc gia bạn ghé thăm nhiều nhất. Tính sai = đơn bị gửi trả."
+        },
+        {
+          "title": "Sinh trắc học và VIS",
+          "desc": "Đơn đầu tiên lấy 10 dấu vân tay; có giá trị trên tất cả quốc gia Schengen trong 59 tháng. Đơn tiếp theo trong 59 tháng thường bỏ qua sinh trắc.",
+          "url": "https://www.consilium.europa.eu/en/press/press-releases/2024/05/14/schengen-visa/",
+          "notes": "VIS là cơ sở dữ liệu vân tay Schengen. Trong vòng 59 tháng, bạn thường bỏ qua bước lấy vân tay ở các đơn tiếp theo—trừ khi đổi hộ chiếu hoặc quốc tịch."
+        },
+        {
+          "title": "EES và ETIAS — sắp tới",
+          "desc": "EES (Entry/Exit System) thay thế con dấu hộ chiếu bằng nhật ký điện tử. ETIAS (tương tự ESTA Hoa Kỳ) giới thiệu ủy quyền trước chuyến cho khách miễn thị thực. Không thay thế yêu cầu visa.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32018R1240",
+          "notes": "EES (nhập/xuất điện tử) và ETIAS (ủy quyền điện tử) đang được triển khai 2025-2026. EES ảnh hưởng đến tất cả du khách ngoài EU; ETIAS dành cho công dân được miễn thị thực. Hộ chiếu Trung Quốc đại lục vẫn cần thị thực Schengen đầy đủ."
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    }
+  },
+  "policy": {
+    "title": "Tra cứu Chính sách",
+    "intro": "Liên kết trực tiếp đến các điều luật chính thức mới nhất, bảng phí, và bulletin visa. Cập nhật theo ngày ghi trên trang.",
+    "us": {
+      "title": "Hoa Kỳ — Chính sách & Điều luật",
+      "intro": "Các trang chính thức từ Bộ Ngoại giao Hoa Kỳ (travel.state.gov) và CBP cho chính sách visa B1/B2.",
+      "_verified_at": "2026-07-03",
+      "items": [
+        {
+          "title": "Phí nộp đơn (MRV) — $185 USD",
+          "desc": "Phí nộp đơn Machine-Readable Visa cho B1/B2 là $185 USD, không hoàn lại, trả trước buổi phỏng vấn cho hầu hết các quốc tịch. Phí cấp visa khác nhau theo quốc tịch (xem bảng reciprocity).",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/fees/fees-reciprocity-tables.html",
+          "notes": "$185 là phí nộp đơn không hoàn lại. Đợi đến khi bạn sẵn sàng phỏng vấn—đừng trả tiền rồi mới nhận ra giấy tờ chưa đâu vào đâu."
+        },
+        {
+          "title": "Bảng Phí và Reciprocity",
+          "desc": "Danh sách phí visa chính thức theo loại visa và quốc tịch. Bao gồm mọi phí cấp visa song phương. Cập nhật bởi Bộ Ngoại giao Hoa Kỳ.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/fees/fees-reciprocity-tables.html",
+          "notes": "Reciprocity Tables quyết định \"phí cấp thị thực\" bổ sung theo quốc tịch. B1/B2 Trung Quốc đại lục = $0 phí cấp, nhưng quốc tịch khác có thể trả thêm hàng trăm đô la."
+        },
+        {
+          "title": "Bulletin Visa",
+          "desc": "Bản tin hàng tháng của Bộ Ngoại giao. B1/B2 (không định cư) không có danh sách chờ — nhưng bulletin là tham chiếu cho tất cả các loại visa và được cập nhật mỗi tháng.",
+          "url": "https://travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin.html",
+          "notes": "B1/B2 không có danh sách chờ. Visa Bulletin quan trọng cho H-1B / thẻ xanh. Là người nộp đơn B1/B2, chỉ cần kiểm tra bulletin một lần để biết thay đổi lớn."
+        },
+        {
+          "title": "Địa điểm Visa Không định cư được Chỉ định (có hiệu lực 2025-09-06)",
+          "desc": "Có hiệu lực từ 2025-09-06, tất cả người xin visa không định cư nên đặt lịch phỏng vấn tại Đại sứ quán hoặc Lãnh sự quán Hoa Kỳ ở nước cư trú hoặc quốc tịch của họ.",
+          "url": "https://travel.state.gov/content/travel/en/News/visas-news/adjudicating-niv-applicants-in-their-country-of-residence.html",
+          "notes": "Quy tắc mới: bạn phải phỏng vấn tại quốc gia cư trú (hoặc quốc tịch). Đừng đặt lịch phỏng vấn thị thực Mỹ khi đang du lịch nước ngoài—sẽ bị từ chối."
+        },
+        {
+          "title": "Tin tức Visa Hoa Kỳ — hoạt động hiện tại",
+          "desc": "Trạng thái trực tiếp của dịch vụ visa, bao gồm tạm dừng, mở rộng sàng lọc, và thay đổi chính sách. Cập nhật thường xuyên.",
+          "url": "https://travel.state.gov/content/travel/en/News/visas-news.html",
+          "notes": "Visas News là bản tin vận hành: đình công, bảo trì hệ thống, thay đổi chính sách đều đăng ở đây trước. Kiểm tra một tuần trước buổi phỏng vấn."
+        },
+        {
+          "title": "Yêu cầu ảnh Visa",
+          "desc": "Thành phần, kích thước, nền, và thông số ảnh số cho ảnh tải lên khi nộp đơn DS-160.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/photos.html",
+          "notes": "Thông số ảnh nghiêm ngặt: 51x51mm nền trắng, chụp trong vòng 6 tháng, không đeo kính. Đến tiệm ảnh thị thực chuyên nghiệp—đừng dùng ảnh tự chụp."
+        }
+      ]
+    },
+    "gb": {
+      "title": "Anh Quốc — Chính sách & Điều luật",
+      "intro": "Các trang chính thức từ GOV.UK cho chính sách Standard Visitor.",
+      "items": [
+        {
+          "title": "Phí nộp đơn — £135 GBP (visa 6 tháng)",
+          "desc": "£135 cho visa Standard Visitor ngắn hạn tiêu chuẩn (đến 6 tháng). £74.50 cho Visitor in Transit. Biến thể dài hạn cao hơn.",
+          "url": "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa",
+          "notes": "£135 là giá thị thực tiêu chuẩn 6 tháng. Các biến thể dài hạn (2/5/10 năm) có giá £400/£771/£964. 10 năm chỉ hợp lý nếu bạn thực sự đi lại thường xuyên."
+        },
+        {
+          "title": "Nộp đơn trực tuyến qua GOV.UK",
+          "desc": "Mọi đơn xin visa Anh phải nộp trực tuyến qua GOV.UK. Không có visa-on-arrival cho công dân Trung Quốc.",
+          "url": "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa",
+          "notes": "Bạn phải nộp đơn online qua GOV.UK. Các trung tâm VFS chỉ xử lý sinh trắc học (vân tay) và nộp tài liệu—bản thân đơn nằm trong hệ thống GOV.UK."
+        },
+        {
+          "title": "Check if you need a UK visa",
+          "desc": "Công cụ chính thức kiểm tra quốc tịch của bạn cần visa, ETA, hay không cần gì cả.",
+          "url": "https://www.gov.uk/check-uk-visa",
+          "notes": "Công cụ \"check if you need a UK visa\" trả lời \"tôi có cần thị thực không?\" trong 5 giây—chọn quốc tịch và điểm đến của bạn."
+        },
+        {
+          "title": "Yêu cầu hội đủ điều kiện",
+          "desc": "Phải chứng minh sẽ rời Anh khi kết thúc thăm, có khả năng tự nuôi sống bản thân và người phụ thuộc, có khả năng chi trả chuyến về/tiếp theo, không cư trú lâu tại Anh qua nhiều chuyến liên tiếp.",
+          "url": "https://www.gov.uk/standard-visitor",
+          "notes": "\"Sẽ rời khỏi Anh\" là bài kiểm tra trung tâm: công việc, gia đình, tài sản—một hoặc hai mục có thể thuyết phục nhân viên. Nộp không có gì = rủi ro từ chối cao."
+        },
+        {
+          "title": "Electronic Travel Authorisation (ETA)",
+          "desc": "Từ 2025, một số quốc tịch không cần visa phải có ETA trước khi đến Anh. Hiện bao gồm EU, Vịnh và một số hộ chiếu châu Á – Thái Bình Dương.",
+          "url": "https://www.gov.uk/guidance/apply-for-an-electronic-travel-authorisation-eta",
+          "notes": "ETA là quy tắc 2025: EU, Vùng Vịnh, Singapore, Hàn Quốc và hàng chục hộ chiếu khác cần ETA trước khi bay đến Anh. Hộ chiếu Trung Quốc đại lục vẫn cần thị thực đầy đủ."
+        },
+        {
+          "title": "Quyết định visa và kháng cáo",
+          "desc": "Nếu bị từ chối, bạn có thể nộp đơn Administrative Review trong 28 ngày kể từ ngày từ chối nếu visa được quyết theo Appendix Visitor.",
+          "url": "https://www.gov.uk/immigration-asylum-tribunal",
+          "notes": "Administrative Review KHÔNG phải đánh giá lại hồ sơ của bạn—nó kiểm tra xem nhân viên có mắc lỗi thủ tục không. Cửa sổ 28 ngày, hiếm khi thành công. Hầu hết mọi người chỉ nộp lại với tài liệu tốt hơn."
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    },
+    "au": {
+      "title": "Úc — Chính sách & Điều luật",
+      "intro": "Các trang chính thức từ Department of Home Affairs Úc cho Visitor visa 600.",
+      "items": [
+        {
+          "title": "Phí nộp đơn — từ AUD $190 (Tourist Stream)",
+          "desc": "Phí cơ bản Tourist Stream từ ngoài nước là AUD $190. Stream khác (Sponsored Family, Approved Destination) có thể khác. Kiểm tra Bảng Giá Visa mới nhất trước khi thanh toán.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "AUD $190 là phí cơ bản Tourist Stream cho đơn ngoài nước. Còn có phí dịch vụ ImmiAccount cộng thêm. Dùng thẻ tín dụng—tỷ giá thân thiện hơn."
+        },
+        {
+          "title": "Nộp đơn qua ImmiAccount",
+          "desc": "Mọi đơn Subclass 600 nộp qua cổng trực tuyến ImmiAccount. Không có đơn giấy cho hộ chiếu Trung Quốc.",
+          "url": "https://online.immi.gov.au/",
+          "notes": "ImmiAccount là cổng chính thức của Bộ Nội vụ cho mọi thứ: tải lên, thanh toán, trạng thái. Dùng email ổn định—tránh 163/qq v.v. có xu hướng gửi thông báo vào spam."
+        },
+        {
+          "title": "Bảng giá visa (mới nhất)",
+          "desc": "Bảng giá chính thức theo subclass và stream visa. Cập nhật bởi Department of Home Affairs. Dùng làm nguồn tham khảo cho phí hiện hành.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600/fees",
+          "notes": "Bảng phí được cập nhật. Kiểm tra mới nhất 1 tháng trước khi khởi hành để tránh bất ngờ \"giá cũ\"."
+        },
+        {
+          "title": "Thời gian xử lý visa toàn cầu",
+          "desc": "Ước tính thời gian xử lý theo từng subclass, chi tiết theo stream và vị trí của người xin.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-processing-times",
+          "notes": "Thời gian xử lý thay đổi theo khu vực và mùa. Đơn 600 Trung Quốc đại lục thường mất 2-6 tuần; cao điểm (mùa hè/Tết Nguyên đán) có thể kéo dài 8 tuần."
+        },
+        {
+          "title": "Yêu cầu sức khỏe và nhân phẩm",
+          "desc": "Hầu hết visa khách ngắn hạn yêu cầu khám sức khỏe và kiểm tra nhân phẩm; lưu trú dài hoặc một số quốc tịch có thể cần khám với panel physician.",
+          "url": "https://immi.homeaffairs.gov.au/help-support/meeting-our-requirements/health",
+          "notes": "Khám sức khỏe không phải lúc nào cũng được kích hoạt. Nhân viên quyết định dựa trên quốc tịch, thời gian lưu trú dự kiến và tài liệu—sau đó cấp thư giới thiệu y tế nếu cần."
+        },
+        {
+          "title": "Tin tức và thay đổi chính sách Visitor visa 600",
+          "desc": "Cập nhật trực tiếp từ Department of Home Affairs — thay đổi phí, thay đổi điều kiện, thay đổi thời gian xử lý.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "Cập nhật chính sách Subclass 600 xuất hiện trên trang tin tức của Bộ. Điều khoản No Further Stay ngày 2025-03-21 đến từ đây."
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    },
+    "schengen": {
+      "title": "Schengen — Chính sách & Điều luật",
+      "intro": "Nguồn chính thức từ European Commission và EU Council cho chính sách visa Schengen.",
+      "items": [
+        {
+          "title": "Phí nộp đơn — €90 EUR (người lớn)",
+          "desc": "Theo Commission Delegated Regulation (EU) 2024/1415, có hiệu lực 2024-06-11: phí visa €90 cho người lớn và €45 cho trẻ 6–12 tuổi. Trẻ dưới 6 miễn phí. Nhà cung cấp dịch vụ bên ngoài (VFS, TLScontact) thu phí dịch vụ riêng.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32024R1415",
+          "notes": "€90 là phí thống nhất; trẻ em 6-12 tuổi trả €45, dưới 6 tuổi miễn phí. VFS/TLScontact cũng thu phí dịch vụ (khác nhau theo quốc gia, €30-50)."
+        },
+        {
+          "title": "Bộ luật Visa — Council Regulation 810/2009",
+          "desc": "Bộ luật Visa (Reg. (EC) 810/2009) là cơ sở pháp lý cốt lõi cho visa lưu trú ngắn Schengen. Sửa đổi bởi 2019/1155 (codification) và 2024/1415 (thay đổi phí và xử lý).",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "Council Reg. 810/2009 là \"hiến pháp\" của thị thực Schengen. Bạn có thể tìm bản gốc qua CELEX:32009R0810."
+        },
+        {
+          "title": "Bảo hiểm y tế du lịch — tối thiểu €30.000",
+          "desc": "Bảo hiểm y tế phải bao gồm ít nhất €30.000 và có hiệu lực tại tất cả quốc gia Schengen trong toàn bộ thời gian lưu trú. Phải bao gồm nhập viện khẩn cấp, sơ tán y tế và hồi hương thi hài.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "€30.000 là mức tối thiểu. Mua bảo hiểm €50.000 chỉ đắt hơn một chút và cho bạn nhiều không gian hơn để yêu cầu bồi thường. Phải bao gồm toàn bộ chuyến đi + tất cả các quốc gia Schengen."
+        },
+        {
+          "title": "Thời gian quyết định tiêu chuẩn — 15 ngày lịch",
+          "desc": "Từ khi hợp lệ, lãnh sự quán quyết định trong 15 ngày lịch. Có thể kéo dài 30 ngày (và trong trường hợp đặc biệt 60 ngày).",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "15 ngày lịch là mức tối đa hợp pháp; trong thực tế hầu hết quyết định đưa ra trong 5-10 ngày làm việc. Mùa cao điểm có thể kéo dài 30 ngày."
+        },
+        {
+          "title": "Quyền kháng cáo khi bị từ chối",
+          "desc": "Nếu bị từ chối, bạn nhận được biểu mẫu tiêu chuẩn nêu lý do từ chối. Bạn có thể kháng cáo tại quốc gia thành viên từ chối trong thời hạn luật pháp quốc gia đó quy định (thường 15 đến 30 ngày).",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "Bạn có thể kháng cáo hoặc nộp lại, nhưng kháng cáo hiếm khi thành công. Cách tốt hơn: đọc thư từ chối, củng cố điểm yếu (bảo hiểm, lịch trình, tài chính) và nộp lại."
+        },
+        {
+          "title": "ETIAS cho khách miễn thị thực (từ 2025)",
+          "desc": "ETIAS sẽ yêu cầu khách miễn thị thực (Hoa Kỳ, Anh và hầu hết hộ chiếu ngoài EU khác) có ủy quyền trước chuyến. Phí €20, hiệu lực 3 năm hoặc đến khi hộ chiếu hết hạn.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32018R1240",
+          "notes": "ETIAS KHÔNG phải thị thực—đó là \"miễn thị thực điện tử\" cho công dân được miễn thị thực (như ESTA của Mỹ). Hộ chiếu Trung Quốc đại lục không thể sử dụng; bạn vẫn cần thị thực Schengen đầy đủ."
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    }
+  },
+  "templates": {
+    "title": "Mẫu Tài liệu",
+    "intro": "Mẫu tải xuống cho các giấy tờ hỗ trợ mà viên chức lãnh sự thường yêu cầu: giấy xác nhận công việc, đơn xin nghỉ phép, giải thích sao kê ngân hàng, v.v.",
+    "us": {
+      "title": "Hoa Kỳ B1/B2 — Mẫu Tài liệu Hỗ trợ",
+      "intro": "Tài liệu hỗ trợ phổ biến tại buổi phỏng vấn visa Hoa Kỳ. Nền tảng cung cấp mẫu; yêu cầu cụ thể tùy theo Đại sứ quán hoặc Lãnh sự quán Hoa Kỳ.",
+      "_verified_at": "2026-07-03",
+      "items": [
+        {
+          "title": "Giấy xác nhận công việc — Tiếng Anh + song ngữ",
+          "desc": "Trên giấy tiêu đề công ty: chức vụ, mức lương, thời gian làm việc, nghỉ phép được duyệt, và chữ ký. Hầu hết lãnh sự quán Hoa Kỳ chấp nhận bản song ngữ Trung/Anh.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
+          "notes": "Thư xác nhận việc làm cần: tiêu đề thư công ty, chức vụ, mức lương, ngày bắt đầu, nghỉ phép được chấp thuận, chữ ký quản lý. Song ngữ Trung-Anh; nhân viên đọc tiếng Anh."
+        },
+        {
+          "title": "Sao kê ngân hàng — điều nhân viên lãnh sự xem",
+          "desc": "Sao kê 3-6 tháng gần nhất trên giấy tiêu đề ngân hàng, với số dư ổn định. Chúng tôi không cung cấp sao kê in sẵn — vui lòng yêu cầu ngân hàng của bạn.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
+          "notes": "Nhân viên tập trung vào \"số dư\" và \"tiền lương gửi đều đặn\", không phải số lượng giao dịch. In 6 tháng gần nhất, tránh dòng tiền vào/ra lớn đột ngột."
+        },
+        {
+          "title": "Lịch trình chuyến đi",
+          "desc": "Kế hoạch theo từng ngày với chuyến bay, đặt phòng khách sạn và điểm tham quan. Phải nhất quán với ngày trong đơn xin visa. Nền tảng cung cấp mẫu JSON / Excel.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
+          "notes": "Lịch trình phải hiển thị thành phố, phương tiện, chỗ ở mỗi ngày—khớp với đặt vé máy bay/khách sạn. Dùng \"Trình tạo lịch trình\" của Htex để có mẫu miễn phí."
+        },
+        {
+          "title": "Trang xác nhận DS-160",
+          "desc": "In trang xác nhận sau khi nộp Mẫu DS-160 trực tuyến. Bắt buộc mang theo khi phỏng vấn cùng hộ chiếu và ảnh.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/forms/ds-160-online-nonimmigrant-visa-application.html",
+          "notes": "DS-160 là mẫu đơn xin thị thực không di dân phổ quát. Sau khi gửi bạn nhận trang xác nhận có mã vạch—mang theo đến phỏng vấn. Điền online, không dùng PDF ngoại tuyến."
+        },
+        {
+          "title": "Bảo hiểm du lịch — không bắt buộc với B1/B2",
+          "desc": "Khác với Schengen, Hoa Kỳ không yêu cầu bảo hiểm y tế du lịch cho người xin visa B1/B2. Nên mua cho chuyến đi.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
+          "notes": "B1/B2 không bắt buộc bảo hiểm theo luật, nhưng mang theo một cái thể hiện \"Tôi là khách du lịch có trách nhiệm.\" Bảo hiểm $50.000-$100.000 là đủ."
+        },
+        {
+          "title": "KHÔNG nên mang theo",
+          "desc": "Lãnh sự quán Hoa Kỳ nêu rõ rằng thư mời và Affidavit of Support không bắt buộc và không được dùng làm yếu tố quyết định. Mang theo sẽ không cải thiện hồ sơ.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
+          "notes": "Sai lầm phổ biến: KHÔNG mang giấy chứng nhận tài sản, đăng ký xe, hay sổ hộ khẩu (nhân viên không quan tâm). NÊN mang hộ chiếu cũ—chúng thể hiện lịch sử du lịch và có ích."
+        }
+      ]
+    },
+    "gb": {
+      "title": "Standard Visitor Anh — Mẫu Tài liệu Hỗ trợ",
+      "intro": "Tài liệu hỗ trợ thường gặp ở giai đoạn quyết định visa Anh. Có mẫu; yêu cầu cụ thể có thể thay đổi theo trung tâm visa.",
+      "items": [
+        {
+          "title": "Thư xác nhận việc làm — tiếng Anh",
+          "desc": "Trên giấy tiêu đề công ty: chức vụ, lương, thời gian làm việc, nghỉ phép được duyệt, chữ ký. UKVI chấp nhận phiên bản tiếng Anh hoặc phiên bản Trung Quốc kèm bản dịch chính thức.",
+          "url": "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa",
+          "notes": "Thư xác nhận việc làm Vương quốc Anh: hoàn toàn bằng tiếng Anh, có chức vụ, mức lương, nghỉ phép được chấp thuận, chữ ký quản lý + con dấu công ty. Nhân viên Anh kén chọn về định dạng chứng nhận kiểu Trung Quốc."
+        },
+        {
+          "title": "Sao kê ngân hàng — điều nhân viên xem",
+          "desc": "Sao kê 3–6 tháng gần nhất cho thấy số dư ổn định và dòng tiền vào đều đặn (lương). In trên giấy tiêu đề ngân hàng có đóng dấu.",
+          "url": "https://www.gov.uk/standard-visitor",
+          "notes": "Nhân viên Anh tìm kiếm: 6 tháng sao kê gần nhất, số dư hàng tháng ổn định > £50k (cho chi phí chuyến đi 6 tháng), nhãn lương rõ ràng."
+        },
+        {
+          "title": "Lịch trình và đặt chỗ ở / vé máy bay",
+          "desc": "Kế hoạch theo từng ngày với đặt phòng khách sạn hoặc thư mời của host cùng đặt vé khứ hồi. Phải nhất quán với đơn xin.",
+          "url": "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa",
+          "notes": "Đặt phòng khách sạn + vé máy bay phải là đặt chỗ \"hủy miễn phí\" (tùy chọn hủy miễn phí của booking.com / Trip.com). Chỉ thanh toán sau khi thị thực được chấp thuận."
+        },
+        {
+          "title": "Giấy chứng nhận xét nghiệm lao",
+          "desc": "Bắt buộc cho người xin cư trú tại Trung Quốc 6+ tháng. Chỉ được cấp bởi phòng khám được UK Home Office chấp thuận (danh sách công bố trên GOV.UK).",
+          "url": "https://www.gov.uk/tb-test-visa",
+          "notes": "Giấy chứng nhận lao có hiệu lực 6 tháng. Nếu xử lý thị thực mất 3 tháng, giấy chứng nhận có thể hết hạn—bạn sẽ cần xét nghiệm lại."
+        },
+        {
+          "title": "Bảo hiểm du lịch — không bắt buộc",
+          "desc": "Visa Standard Visitor không yêu cầu bảo hiểm du lịch như điều kiện chính thức. Rất khuyến nghị — y tế Anh không miễn phí cho người không cư trú.",
+          "url": "https://www.gov.uk/standard-visitor",
+          "notes": "Bảo hiểm Vương quốc Anh không bắt buộc, nhưng có một cái giúp ích. Chọn bảo hiểm bao gồm \"toàn bộ Vương quốc Anh + Schengen\" phòng trường hợp bạn thêm chuyến phụ đến châu Âu."
+        },
+        {
+          "title": "KHÔNG nên mang theo",
+          "desc": "Không như Schengen, Anh không yêu cầu 'Thư mời' riêng. Chỉ mang theo thư mời của host nếu bạn không chứng minh được chỗ ở.",
+          "url": "https://www.gov.uk/standard-visitor",
+          "notes": "Đừng mang: giấy chứng nhận tài sản, đăng ký xe, ảnh tiền gửi lớn (nhân viên Anh không cân nhắc những thứ này). NÊN mang: hộ chiếu cũ, ảnh du lịch—những thứ này giúp ích."
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    },
+    "au": {
+      "title": "Úc Subclass 600 — Mẫu Tài liệu Hỗ trợ",
+      "intro": "Tài liệu hỗ trợ thường gặp cho đơn Subclass 600. Có mẫu; yêu cầu cụ thể có thể khác.",
+      "items": [
+        {
+          "title": "Đăng ký ImmiAccount",
+          "desc": "Tạo ImmiAccount miễn phí trước khi bắt đầu. Một tài khoản có thể quản lý nhiều đơn (tiện cho nhóm gia đình).",
+          "url": "https://online.immi.gov.au/lusc/register",
+          "notes": "Sau khi đăng ký ImmiAccount, mọi tải lên đều vào đây. Sắp xếp tài liệu của bạn vào các thư mục gọn gàng trước khi tải lên; đừng đổi tên giữa chừng."
+        },
+        {
+          "title": "Lịch sử đi lại và giấy tờ tùy thân",
+          "desc": "Quét trang hộ chiếu, CCCD Trung Quốc hiện tại, sổ hộ khẩu và visa / tem nhập cảnh trước đây. Gộp sổ hộ khẩu nhiều trang thành một PDF.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "Lịch sử du lịch: hộ chiếu cũ, đơn đặt vé máy bay, ảnh du lịch. Nhân viên Úc nhạy cảm với \"người này có thực sự đi du lịch không?\"—xếp chồng bằng chứng."
+        },
+        {
+          "title": "Việc làm và tài chính",
+          "desc": "Thư từ nhà tuyển dụng, phiếu lương gần đây, sao kê ngân hàng 3–6 tháng trên giấy tiêu đề ngân hàng. Giấy chứng nhận nhà/xe là tùy chọn nhưng có ích.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "Tài chính: thư xác nhận việc làm + sao kê ngân hàng + giấy chứng nhận tài sản/xe (hỗ trợ). Mang cả ba—thiếu một có thể kích hoạt yêu cầu thêm tài liệu."
+        },
+        {
+          "title": "Lịch trình",
+          "desc": "Kế hoạch chi tiết theo từng ngày kèm đặt chỗ — đối với Subclass 600, lịch trình phải cho thấy chuyến đi thật sự và tạm thời.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "Lịch trình phải liệt kê địa điểm hàng ngày khớp với mục đích đã nêu trong đơn. Nếu bạn nói \"du lịch\" nhưng lịch trình toàn cuộc họp kinh doanh, hãy mong đợi sự nhầm lẫn."
+        },
+        {
+          "title": "Hướng dẫn dịch tài liệu",
+          "desc": "Immi không yêu cầu dịch công chứng cho tài liệu tiếng Anh. Tài liệu tiếng Trung có thể tải lên cùng biểu mẫu tiếng Anh.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "Úc yêu cầu tất cả tài liệu không phải tiếng Anh phải được dịch sang tiếng Anh. Bản dịch phải bao gồm chữ ký người dịch, ngày, và tuyên bố năng lực. Bản dịch công chứng là an toàn nhất."
+        },
+        {
+          "title": "Không nên nộp",
+          "desc": "Tránh tải lên: thư mời có công chứng (hiếm khi cần), ảnh quảng cáo, ảnh chụp màn hình mạng xã hội. Chỉ tải lên những gì hỗ trợ hồ sơ khách thật sự.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "Bỏ qua: giấy chứng nhận quản lý tài sản lớn (nhân viên có thể đặt câu hỏi về nguồn), giấy phép kinh doanh đầy đủ (không cần), sổ hộ khẩu (Úc không kiểm tra cái này)."
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    },
+    "schengen": {
+      "title": "Schengen Lưu trú Ngắn — Mẫu Tài liệu Hỗ trợ",
+      "intro": "Tài liệu hỗ trợ thường gặp cho đơn visa Schengen lưu trú ngắn hạn. Có mẫu; yêu cầu cụ thể có thể khác theo lãnh sự quán.",
+      "items": [
+        {
+          "title": "Giấy chứng nhận bảo hiểm y tế du lịch",
+          "desc": "Từ công ty bảo hiểm được EU chấp thuận hoặc công ty bảo hiểm Trung Quốc được công nhận. Điều khoản phải nêu rõ: bao trùm toàn Schengen và tối thiểu €30.000.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "Bảo hiểm Schengen nghiêm ngặt nhất: tối thiểu €30.000 y tế + cứu hộ khẩn cấp, bao gồm toàn bộ chuyến đi + tất cả quốc gia Schengen. Taobao/Alipay có chính sách Schengen chuyên dụng."
+        },
+        {
+          "title": "Thư xác nhận việc làm (Trung + Đức/Pháp song ngữ)",
+          "desc": "Trên giấy tiêu đề công ty: chức vụ, lương, thời gian làm việc, nghỉ phép được duyệt, chữ ký. Một số lãnh sự quán chấp nhận song ngữ, một số yêu cầu bản dịch chính thức.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "Thư xác nhận việc làm phải song ngữ: Trung + Đức/Pháp/Tây Ban Nha, tùy theo quốc gia nộp đơn. Đức đặc biệt nghiêm ngặt—tiêu đề thư công ty cần bản dịch tiếng Đức."
+        },
+        {
+          "title": "Sao kê ngân hàng — điều nhân viên xem",
+          "desc": "Sao kê 3–6 tháng gần nhất cho thấy số dư ổn định và dòng lương vào đều. In trên giấy tiêu đề ngân hàng với đóng dấu. Một số lãnh sự quán yêu cầu sao kê được đóng dấu từ ngân hàng.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "Nhân viên Schengen tìm kiếm: 6 tháng sao kê, số dư trung bình hàng ngày bao gồm €60-100/ngày (nhân với tổng số ngày chuyến đi)."
+        },
+        {
+          "title": "Bằng chứng chỗ ở",
+          "desc": "Đặt phòng khách sạn cho toàn bộ thời gian lưu trú, hoặc xác nhận bằng văn bản của host + bản sao CCCD/hộ chiếu host. Xác nhận Booking.com thường được chấp nhận; chỗ ở miễn phí có thể cần giấy chứng nhận công chứng.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "Chỗ ở phải bao gồm toàn bộ chuyến đi: đơn đặt khách sạn / xác nhận Airbnb / thư mời bạn bè + hộ chiếu của họ (cho lời mời của bạn bè)."
+        },
+        {
+          "title": "Đặt vé khứ hồi",
+          "desc": "Đặt vé khứ hồi đã xác nhận (chưa thanh toán, chỉ đặt). Đừng mua vé cho đến khi visa được cấp.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "Chuyến bay về: đặt chỗ \"có thể hoàn lại\" trước, thanh toán sau khi thị thực được chấp thuận. Mua vé thật trước khi được chấp thuận = rủi ro cao mất tiền khi bị từ chối."
+        },
+        {
+          "title": "Đơn xin Schengen (định dạng thống nhất)",
+          "desc": "Cùng một mẫu được dùng trên tất cả quốc gia Schengen. Có sẵn tại các trung tâm VFS / TLScontact, đại sứ quán và trang 'Visa' của EU.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "Mẫu đơn Schengen là định dạng thống nhất. Điền online, sau đó in, ký, và ghi ngày. Đánh máy được ưa chuộng hơn viết tay."
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    }
+  },
+  "faq": {
+    "title": "Câu hỏi Thường gặp",
+    "intro": "Các câu hỏi thực mà người xin visa đặt ra trước và sau buổi phỏng vấn — trả lời kèm trích dẫn từ các nguồn chính thức của Bộ Ngoại giao Hoa Kỳ.",
+    "us": {
+      "title": "Hoa Kỳ B1/B2 — Câu hỏi Thường gặp",
+      "intro": "Các câu hỏi thường gặp nhất về quy trình B1/B2 Hoa Kỳ — phí, từ chối, EVUS, thời gian lưu trú.",
+      "_verified_at": "2026-07-03",
+      "items": [
+        {
+          "title": "Tôi có cần thư mời hoặc Affidavit of Support không?",
+          "desc": "Không. Bộ Ngoại giao Hoa Kỳ nêu rõ rằng thư mời hoặc Affidavit of Support KHÔNG cần thiết và KHÔNG phải yếu tố quyết định. Nếu bạn mang theo, chúng sẽ bị bỏ qua.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
+          "notes": "Không. B1/B2 liên quan đến Ý ĐỊNH quay lại của BẠN, không phải người mời. Thư mời là tùy chọn và hiếm khi ảnh hưởng đến quyết định."
+        },
+        {
+          "title": "Mất bao lâu để có lịch phỏng vấn?",
+          "desc": "Thời gian chờ khác nhau giữa các Đại sứ quán/Lãnh sự quán Hoa Kỳ và theo mùa. Hãy kiểm tra trang Global Visa Wait Times chính thức trước khi đặt lịch — một số nơi có thể chờ vài tháng vào mùa hè.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/global-visa-wait-times.html",
+          "notes": "Mùa thấp điểm: 1-2 tuần. Cao điểm (Tháng 5-8 / Tết Nguyên đán): 4-8 tuần. Làm ngược từ chuyến bay: đặt phỏng vấn 4 tuần trước khi khởi hành."
+        },
+        {
+          "title": "Có thể nộp lại sau khi bị từ chối 214(b) không?",
+          "desc": "Có, bất cứ lúc nào. Không có thời gian chờ bắt buộc. Chỉ nên nộp lại khi hoàn cảnh của bạn đã thay đổi đáng kể (công việc, gia đình, tài sản, v.v.) và bạn có thể đưa ra bằng chứng mới.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/visa-denials.html",
+          "notes": "Có, và không có thời gian chờ. Thêm bằng chứng mới (công việc mới / tài sản / kết hôn) và nộp lại. Đừng nộp lại mà không thay đổi—bạn sẽ bị từ chối với cùng lý do."
+        },
+        {
+          "title": "Nếu quá hạn dù chỉ một ngày thì sao?",
+          "desc": "Theo INA 222(g), visa của bất kỳ ai quá hạn tự động bị hủy. Du lịch Hoa Kỳ sau đó với visa đó trở nên không thể, ngay cả khi vẫn còn trong thời hạn in trên visa.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/visa-denials.html",
+          "notes": "Ngay cả một ngày quá = quá hạn. Hậu quả: thị thực tự động bị hủy (222(g)), và thị thực bị hủy đó không thể sử dụng vĩnh viễn. Các đơn sau cũng bị ảnh hưởng."
+        },
+        {
+          "title": "Có cần mua bảo hiểm du lịch không?",
+          "desc": "Không bắt buộc với B1/B2. Rất nên mua vì chi phí y tế Hoa Kỳ rất cao. Yêu cầu của Schengen không áp dụng ở đây.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
+          "notes": "Không bắt buộc, nhưng được khuyến nghị. Tai nạn, y tế khẩn cấp, sơ tán khẩn cấp đều tốn tiền. Bảo hiểm $50k-$100k, phí bảo hiểm chuyến đi 2-3 tuần: ¥200-400."
+        },
+        {
+          "title": "Trả phí MRV bằng cách nào?",
+          "desc": "Phương thức thanh toán tùy theo từng Đại sứ quán/Lãnh sự quán. Hầu hết chấp nhận thẻ tín dụng/thẻ ghi nợ khi đặt lịch, một số yêu cầu chuyển khoản ngân hàng hoặc nộp trực tiếp. Số tiền là $185 USD.",
+          "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/fees/visafee/t-current-visa-mrv-fee.html",
+          "notes": "Online bằng thẻ tín dụng ($185 USD). Các ngân hàng lớn Trung Quốc (CITIC, CMB, CCB) đều hoạt động. Sau khi thanh toán bạn nhận số CGI—dùng nó để đặt phỏng vấn."
+        }
+      ]
+    },
+    "gb": {
+      "title": "Standard Visitor Anh — Câu hỏi Thường gặp",
+      "intro": "Các câu hỏi thường gặp nhất về visa Standard Visitor — phí, xử lý, từ chối.",
+      "items": [
+        {
+          "title": "Thời gian xử lý là bao lâu?",
+          "desc": "Bên ngoài Anh, xử lý thường 3 tuần kể từ khi lấy sinh trắc. Dịch vụ Priority và Super-priority có tại nhiều địa điểm với phí bổ sung.",
+          "url": "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa",
+          "notes": "Chính thức 3 tuần; trong thực tế 2-4 tuần. Cao điểm (mùa hè) có thể kéo dài 6 tuần. Bắt đầu 2 tháng trước khi khởi hành."
+        },
+        {
+          "title": "Có thể làm việc hoặc học với visa Standard Visitor không?",
+          "desc": "Học ngắn hạn đến 6 tháng được phép. Làm việc có lương hoặc không lương không được, trừ permitted paid engagement (danh sách ngắn các hoạt động chuyên gia).",
+          "url": "https://www.gov.uk/standard-visitor",
+          "notes": "Làm việc: KHÔNG (trừ permitted paid engagement). Học: có, nhưng chỉ khóa học ngắn ≤ 6 tháng. Bất cứ thứ gì dài hơn cần Student Visa."
+        },
+        {
+          "title": "Có cần thư mời từ host tại Anh không?",
+          "desc": "Không. GOV.UK không yêu cầu thư mời chính thức. Bạn chỉ cần chứng minh nơi ở (đặt phòng khách sạn hoặc xác nhận bằng văn bản từ host).",
+          "url": "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa",
+          "notes": "Không bắt buộc, nhưng có thư giúp ích (làm rõ mục đích). Du lịch / thăm thân có thể bỏ qua."
+        },
+        {
+          "title": "Nếu visa Standard Visitor bị từ chối thì sao?",
+          "desc": "Có thể nộp đơn lại bất kỳ lúc nào với bằng chứng mạnh hơn, hoặc nộp Administrative Review trong 28 ngày kể từ ngày từ chối.",
+          "url": "https://www.gov.uk/immigration-asylum-tribunal",
+          "notes": "Bạn có thể nộp lại—không có thời gian chờ. Đọc thư từ chối (thường là: thiếu tiền / ràng buộc yếu với quê hương), củng cố tài liệu, và gửi lại. Tỷ lệ thành công cao."
+        },
+        {
+          "title": "Xét nghiệm TB có bắt buộc không?",
+          "desc": "Có. Nếu bạn đã sống 6+ tháng tại một quốc gia trong danh sách bao gồm Trung Quốc trong 12 tháng qua, trước khi nộp đơn visa. Chỉ chấp nhận từ phòng khám được chấp thuận.",
+          "url": "https://www.gov.uk/tb-test-visa",
+          "notes": "Có, cho người nộp đơn đã sống ở Trung Quốc ≥ 6 tháng. Cư dân các quốc gia khác có quy tắc khác—kiểm tra theo quốc tịch."
+        },
+        {
+          "title": "Làm sao để trả phí visa?",
+          "desc": "Trực tuyến qua GOV.UK bằng thẻ ghi nợ/tín dụng hoặc ngân hàng trực tuyến. Sau đó đặt lịch lấy sinh trắc tại Trung tâm Visa Anh (VAC).",
+          "url": "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa",
+          "notes": "Online qua GOV.UK bằng Visa/Mastercard, £135 bị trừ một lần. Sau khi thanh toán, đặt lịch trung tâm VFS cho sinh trắc học."
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    },
+    "au": {
+      "title": "Úc Subclass 600 — Câu hỏi Thường gặp",
+      "intro": "Các câu hỏi thường gặp nhất về Australian Visitor visa — phí, từ chối, xử lý.",
+      "items": [
+        {
+          "title": "Subclass 600 xử lý mất bao lâu?",
+          "desc": "Hầu hết đơn Tourist Stream xử lý trong 1–4 tuần nếu đầy đủ. Xem Global Processing Times để biết ước tính mới nhất.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-processing-times",
+          "notes": "Hầu hết đơn: 2-6 tuần. Kiểm tra trạng thái thời gian thực trong ImmiAccount. Cao điểm (Tháng 7-9 / Tết Nguyên đán) có thể kéo dài 8 tuần."
+        },
+        {
+          "title": "Có thể chuyển sang visa sinh viên khi đang cầm 600 không?",
+          "desc": "Không. Từ 21/03/2025 mọi quyết định 600 đều có điều khoản No Further Stay. Hãy nộp visa sinh viên (Subclass 500) từ ngoài nước Úc.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "Không. Điều khoản No Further Stay (có hiệu lực từ 2025-03-21) cấm chuyển sang thị thực khác khi đang ở Úc với 600. Bạn phải rời đi và nộp lại từ nước ngoài."
+        },
+        {
+          "title": "Có được visa nhiều lần 3 hoặc 5 năm không?",
+          "desc": "Một số người xin Sponsored Family Stream và Frequent Traveller Stream có thể nhận thời hạn dài hơn. Tourist Stream lần đầu thường là 1 năm.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "Về lý thuyết Tourist Stream tối đa 1 năm mỗi lần nhập cảnh; trong thực tế hầu hết được 3 tháng. Để có nhiều năm nhiều lần nhập cảnh, chuyển sang Frequent Traveller Stream hoặc Sponsored Family."
+        },
+        {
+          "title": "Người nhà có thể dùng chung một đơn không?",
+          "desc": "Không. Mỗi người phải nộp đơn riêng, kể cả trong cùng ImmiAccount. Có thể nhóm (Group processing) để viên chức xét duyệt cùng nhau.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
+          "notes": "Không, mỗi người nộp đơn riêng. Nhưng bạn có thể quản lý nhiều người nộp đơn trong một ImmiAccount qua Family Group."
+        },
+        {
+          "title": "Có cần sinh trắc hay khám sức khỏe không?",
+          "desc": "Hầu hết người xin Tourist Stream không cần sinh trắc. Lưu trú 3+ tháng ở một số quốc gia hoặc người xin từ 75 tuổi trở lên có thể cần khám sức khỏe.",
+          "url": "https://immi.homeaffairs.gov.au/help-support/meeting-our-requirements/health",
+          "notes": "Vân tay: bắt buộc, tại trung tâm VFS. Khám sức khỏe: tùy quyết định nhân viên—thường chỉ cho lưu trú dài hoặc quốc tịch cụ thể."
+        },
+        {
+          "title": "Cách thanh toán phí?",
+          "desc": "Trực tuyến qua ImmiAccount bằng thẻ tín dụng, PayPal hoặc BPAY (chỉ tài khoản ngân hàng Úc). Có thể có phí dịch vụ cho thanh toán thẻ tín dụng.",
+          "url": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600/fees",
+          "notes": "Thanh toán online trong ImmiAccount qua thẻ tín dụng (PayPal cũng hoạt động), từ AUD $190."
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    },
+    "schengen": {
+      "title": "Schengen Lưu trú Ngắn — Câu hỏi Thường gặp",
+      "intro": "Các câu hỏi thường gặp nhất về visa Schengen lưu trú ngắn hạn — phí, từ chối, xử lý.",
+      "items": [
+        {
+          "title": "Thời gian xử lý Schengen mất bao lâu?",
+          "desc": "Tiêu chuẩn 15 ngày lịch kể từ khi hợp lệ; có thể kéo dài đến 30 hoặc trong một số trường hợp 60 ngày. Nộp đơn ít nhất 15–30 ngày trước chuyến đi; lãnh sự quán có thể từ chối nếu sớm hơn 15 ngày.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "Tối đa hợp pháp 15 ngày lịch; trong thực tế 5-10 ngày làm việc. Cao điểm (Tháng 6-8) có thể kéo dài 30 ngày."
+        },
+        {
+          "title": "Có cần bảo hiểm du lịch không?",
+          "desc": "Có. Schengen yêu cầu bảo hiểm tối thiểu €30.000 cho toàn bộ thời gian lưu trú. Không có thì đơn của bạn không hợp lệ.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "Có, bắt buộc. Không có bảo hiểm bạn sẽ bị từ chối. Tối thiểu €30.000 y tế + cứu hộ khẩn cấp, bao gồm toàn bộ chuyến đi + tất cả quốc gia Schengen."
+        },
+        {
+          "title": "Có thể thăm nhiều nước với một visa không?",
+          "desc": "Có. Visa Schengen do một nước cấp có hiệu lực trên tất cả 29 nước (tuân theo quy tắc điểm đến chính). Bạn có thể chia thời gian lưu trú giữa các nước.",
+          "url": "https://home-affairs.ec.europa.eu/policies/schengen-borders-visa-policy_en",
+          "notes": "Có, miễn là bạn nộp đơn ở quốc gia đúng (điểm đến chính hoặc nhập cảnh đầu tiên). Một thị thực bao gồm tất cả quốc gia Schengen."
+        },
+        {
+          "title": "Nếu visa bị từ chối thì sao?",
+          "desc": "Bạn nhận biểu mẫu từ chối tiêu chuẩn. Có thể kháng cáo tại nước từ chối trong thời hạn luật pháp nước đó quy định (thường 15–30 ngày).",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "Kháng cáo hiếm khi thành công. Cách tốt hơn: đọc thư từ chối, củng cố điểm yếu, và nộp lại. Lý do từ chối phổ biến: bảo hiểm không đủ, lịch trình mơ hồ, tài chính yếu."
+        },
+        {
+          "title": "Quy tắc 180/90 là gì?",
+          "desc": "Tối đa 90 ngày trong bất kỳ chu kỳ 180 ngày nào trên toàn khu vực Schengen. Sau 90 ngày, bạn phải rời đi; 180 ngày là cửa sổ trượt.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32009R0810",
+          "notes": "\"Không quá 90 ngày trong bất kỳ cửa sổ 180 ngày cuốn chiếu nào\"—không phải năm dương lịch, là cửa sổ di chuyển. EU có máy tính trực tuyến chính thức."
+        },
+        {
+          "title": "Trẻ em ngoài EU có cùng phí không?",
+          "desc": "Trẻ 6–12 tuổi trả €45. Trẻ dưới 6 miễn phí. Phí người lớn là €90. Một số loại (nhà nghiên cứu, sinh viên trao đổi chính thức) có thể được miễn.",
+          "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32024R1415",
+          "notes": "Khác. Trẻ em 6-12: €45. Dưới 6: miễn phí."
+        }
+      ],
+      "_verified_at": "2026-07-03"
+    }
+  },
+  "disclaimer": "Các ghi chú dưới đây là bình luận bổ sung của Htex dựa trên các nguồn công khai, không phải quan điểm chính thức của bất kỳ cơ quan quản lý xuất nhập cảnh nào. Luôn tham khảo nguồn chính thức.",
+  "notes_label": "Ghi chú biên tập"
+}

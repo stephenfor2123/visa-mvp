@@ -58,6 +58,9 @@ export async function fetchMaterialsForForm(materialIds = []) {
     // list 接口在 B 1.1.1a 之前是空,直接逐个 getMaterial
     const cache = _wizardOcrCache()
     const results = []
+    const missing = []   // W68: 收集 stale (404 / soft-deleted) 的 ids,
+                         // 让上层 wizard 拿到并清理 localStorage 里的悬挂引用,
+                         // 避免提交订单时 400 "material X is deleted"。
     for (const id of materialIds) {
       try {
         const m = await getMaterial(id)
@@ -66,7 +69,9 @@ export async function fetchMaterialsForForm(materialIds = []) {
         }
         results.push(m)
       } catch (_) {
-        // 单个失败不影响其他
+        // 404 / 400 — 后端认为 material 不存在或已 soft-delete。
+        // 记录到 missing,callers 可以用这个 list 清理 stale 引用。
+        missing.push(id)
       }
     }
     // mock 模式:若没拿到任何材料(测试/演示场景),塞一份 demo passport
@@ -74,15 +79,20 @@ export async function fetchMaterialsForForm(materialIds = []) {
     if (MOCK_MODE && results.length === 0) {
       return [makeDemoPassportMaterial()]
     }
-    return results
+    return { items: results, missing }
   } catch (e) {
     // 兜底:listMaterials 拿一把
     try {
       const all = await listMaterials({})
-      if (MOCK_MODE && (!all || all.length === 0)) return [makeDemoPassportMaterial()]
-      return all || []
+      if (MOCK_MODE && (!all || all.length === 0)) {
+        const demo = [makeDemoPassportMaterial()]
+        return { items: demo, missing: [] }
+      }
+      return { items: all || [], missing: [] }
     } catch {
-      return MOCK_MODE ? [makeDemoPassportMaterial()] : []
+      return MOCK_MODE
+        ? { items: [makeDemoPassportMaterial()], missing: [] }
+        : { items: [], missing: [] }
     }
   }
 }
@@ -97,6 +107,8 @@ function makeDemoPassportMaterial() {
     file_size: 412 * 1024,
     mime_type: 'image/jpeg',
     thumbnail_url: 'https://placehold.co/200x240/EAF0FE/2D5BFF?text=PASSPORT',
+    // Lightbox 预览:demo 模式下回退到 thumbnail_url 即可
+    download_url: 'https://placehold.co/800x960/EAF0FE/2D5BFF?text=PASSPORT+DEMO',
     ocr_status: 'done',
     ocr_result: {
       passport_no: 'E12345678',
@@ -199,9 +211,9 @@ export async function createOrder({
 }) {
   if (!destination_id) throw new Error('destination_id required')
   if (!visa_type) throw new Error('visa_type required')
-  if (!Array.isArray(material_ids) || material_ids.length === 0) {
-    const e = new Error('material_ids required')
-    e.code = 'MATERIALS_REQUIRED'
+  if (!Array.isArray(material_ids)) {
+    const e = new Error('material_ids must be an array')
+    e.code = 'INVALID_PARAMS'
     throw e
   }
 
@@ -368,6 +380,63 @@ export async function cancelOrder(orderNo) {
     return resp?.data || resp
   } catch (err) {
     const e = new Error(err?.response?.data?.message || err.message || 'cancel failed')
+    e.code = err?.response?.data?.code || err?.code
+    e.status = err?.response?.status
+    throw e
+  }
+}
+
+// ============== DELETE /api/v2/orders/{order_no}  (W67 删除草稿) ==============
+// 仅 `created` 状态可删;非 created 返 4010 ORDER_NOT_EDITABLE。
+// 与 cancel 区别:delete 物理删除订单行 + 软删关联 material,订单回到不存在状态;
+// cancel 保留订单行,status → closed。
+// 返回 {order_no, deleted, soft_deleted_materials, deleted_at}
+export async function deleteOrder(orderNo) {
+  if (!orderNo) throw new Error('orderNo required')
+  if (MOCK_MODE) {
+    await delay(220)
+    try {
+      const raw = localStorage.getItem('visa.orders') || '{}'
+      const map = JSON.parse(raw)
+      if (map[orderNo]) {
+        if (map[orderNo].status !== 'created') {
+          const e = new Error('Only draft orders can be deleted')
+          e.code = '4010'
+          throw e
+        }
+        const softDeletedCount = Array.isArray(map[orderNo].material_ids)
+          ? map[orderNo].material_ids.length
+          : 0
+        // 从 localStorage 抹掉这一行
+        delete map[orderNo]
+        localStorage.setItem('visa.orders', JSON.stringify(map))
+        // 软删 material(materials 单独 key;这里只是模拟接口约定,不影响后续流程)
+        return {
+          order_no: orderNo,
+          deleted: true,
+          soft_deleted_materials: softDeletedCount,
+          deleted_at: new Date().toISOString()
+        }
+      }
+    } catch (e) {
+      if (e.code === '4010') throw e
+    }
+    // 没找到记录 → 4010 兜底(避免泄露存在性)
+    const e = new Error('Order not found or not a draft')
+    e.code = '4010'
+    throw e
+  }
+  // 真实模式:DELETE /api/v2/orders/{order_no}
+  try {
+    const resp = await http.delete(`/v2/orders/${encodeURIComponent(orderNo)}`, { __silent: true })
+    if (resp?.code && resp.code !== '1000') {
+      const e = new Error(resp.message || 'delete draft failed')
+      e.code = resp.code
+      throw e
+    }
+    return resp?.data || resp
+  } catch (err) {
+    const e = new Error(err?.response?.data?.message || err.message || 'delete draft failed')
     e.code = err?.response?.data?.code || err?.code
     e.status = err?.response?.status
     throw e

@@ -104,7 +104,8 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { uploadMaterial, preprocessImage, getAcceptTypes, getMaxBytes } from '@/api/materials'
+import { processMaterial, preprocessImage, getAcceptTypes, getMaxBytes } from '@/api/materials'
+import { addLocalDocument, fileToDataUrl } from '@/utils/localPrivacyStorage'
 
 const emit = defineEmits(['uploaded'])
 
@@ -229,14 +230,26 @@ async function doUpload(file) {
   progress.value = 0
 
   try {
-    // simulate progress (real xhr would use upload.onprogress)
     const ticker = setInterval(() => {
       if (progress.value < 88) progress.value += 12
     }, 100)
 
-    const m = await uploadMaterial(file)
+    const result = await processMaterial(file, 'other', {
+      onProgress: (pct) => { progress.value = pct },
+    })
     clearInterval(ticker)
     progress.value = 100
+
+    const thumbUrl = file.type.startsWith('image/') ? await fileToDataUrl(file) : ''
+    const m = addLocalDocument({
+      localId: `up_${Date.now()}`,
+      file_name: file.name,
+      file_size: file.size,
+      material_type: 'other',
+      ocr_result: result?.fields || {},
+      thumbUrl,
+      fileUrl: thumbUrl,
+    })
 
     doneName.value = m.file_name
     previewUrl.value = m.thumbnail_url || ''

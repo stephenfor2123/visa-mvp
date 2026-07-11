@@ -110,11 +110,12 @@ export async function adminLogin({ username, password }) {
 
   if (MOCK_MODE) {
     await delay()
-    // Mock contract: admin / Admin@2024 succeeds
+    // Mock contract: admin / HtexAd@26 succeeds (8-char demo password, see
+    // backend/scripts/seed_demo_data.py + backend/.env ADMIN_PASSWORD_SECRET)
     if (username === 'lockedadmin') {
       throw Object.assign(new Error('账号已被锁定'), { code: 'ACCOUNT_LOCKED' })
     }
-    if (username !== 'admin' || password !== 'Admin@2024') {
+    if (username !== 'admin' || password !== 'HtexAd@26') {
       throw Object.assign(new Error('账号或密码错误'), { code: 'INVALID_CREDENTIALS' })
     }
     const token = mockToken(username)
@@ -230,6 +231,7 @@ function persistToken(token) {
       username: token.username,
       role_name: token.role_name,
       permissions: token.permissions || [],
+      schema_version: 2,  // W63: 配套 stores/admin.js TOKEN_SCHEMA_VERSION
     }))
   } catch {}
 }
@@ -429,6 +431,186 @@ export async function getDashboardStats() {
       throw Object.assign(new Error(envelope.message || 'fetch stats failed'), { code: envelope.code })
     }
     return envelope?.data || {}
+  } catch (err) {
+    throw normalizeError(err)
+  }
+}
+
+// --------------------------------------------------------------------------- //
+// V2 Dashboard — KPI / trend / funnel / top countries / alerts (W37)            //
+// --------------------------------------------------------------------------- //
+//
+// Wrap the 5 new endpoints under /api/v2/admin/stats/dashboard/*
+// Mock mode returns deterministic plausible data so the UI can be demoed
+// without a backend hit (consistent with getDashboardStats / getRpaStats).
+
+const _delay = (ms = 100) => new Promise((r) => setTimeout(r, ms))
+
+async function _unwrap(promise) {
+  const envelope = await promise
+  if (envelope?.code && envelope.code !== '1000') {
+    throw Object.assign(new Error(envelope.message || 'fetch failed'), { code: envelope.code })
+  }
+  return envelope?.data || {}
+}
+
+/**
+ * GET /api/v2/admin/stats/dashboard/summary
+ * 4 张 KPI 大卡 + 与上周同期对比 (orders / revenue / new_users / success_rate).
+ * @returns {Promise<{today_orders, today_revenue_usd, today_new_users, today_success_rate,
+ *   delta_orders_pct, delta_revenue_pct, delta_users_pct,
+ *   month_orders, total_users, pending_orders, generated_at, cached}>}
+ */
+export async function getDashboardSummary() {
+  if (MOCK_MODE) {
+    await _delay(80)
+    return {
+      today_orders: 12,
+      today_revenue_usd: 1845.5,
+      today_new_users: 7,
+      today_success_rate: 0.83,
+      delta_orders_pct: 0.2,
+      delta_revenue_pct: 0.35,
+      delta_users_pct: -0.1,
+      month_orders: 312,
+      total_users: 487,
+      pending_orders: 18,
+      generated_at: new Date().toISOString(),
+      cached: false,
+    }
+  }
+  try {
+    return await _unwrap(adminHttp.get('/v2/admin/stats/dashboard/summary'))
+  } catch (err) {
+    throw normalizeError(err)
+  }
+}
+
+/**
+ * GET /api/v2/admin/stats/dashboard/trend?metric=orders|revenue|users&range=7d|30d|90d
+ * N 天每日序列. 同时返回 total_orders / total_revenue / total_new_users.
+ */
+export async function getDashboardTrend({ metric = 'orders', range = '7d' } = {}) {
+  if (MOCK_MODE) {
+    await _delay(100)
+    const days = range === '30d' ? 30 : range === '90d' ? 90 : 7
+    const today = new Date()
+    const points = []
+    let total_orders = 0, total_revenue = 0, total_users = 0
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date(today)
+      d.setDate(today.getDate() - i)
+      const orders = Math.max(0, Math.round(8 + 6 * Math.sin(i / 3)))
+      const revenue = +(orders * (40 + (i % 5) * 5)).toFixed(2)
+      const users = Math.max(0, Math.round(4 + 3 * Math.cos(i / 4)))
+      total_orders += orders; total_revenue += revenue; total_users += users
+      points.push({
+        date: d.toISOString().slice(0, 10),
+        orders, revenue_usd: revenue, new_users: users,
+      })
+    }
+    return {
+      metric, range, points,
+      total_orders, total_revenue_usd: +total_revenue.toFixed(2), total_new_users: total_users,
+      generated_at: new Date().toISOString(),
+    }
+  }
+  try {
+    return await _unwrap(
+      adminHttp.get('/v2/admin/stats/dashboard/trend', { params: { metric, range } })
+    )
+  } catch (err) {
+    throw normalizeError(err)
+  }
+}
+
+/**
+ * GET /api/v2/admin/stats/dashboard/funnel?range=7d|30d
+ * 4 步转化漏斗 + overall_conversion_pct.
+ */
+export async function getDashboardFunnel({ range = '7d' } = {}) {
+  if (MOCK_MODE) {
+    await _delay(80)
+    const steps = [
+      { key: 'register',       label: '注册',          count: 320, conversion_pct: 100 },
+      { key: 'order_create',   label: '创建订单',      count: 240, conversion_pct: 75 },
+      { key: 'order_submit',   label: '提交订单',      count: 168, conversion_pct: 70 },
+      { key: 'order_finish',   label: '完成 (approved/closed)', count: 96, conversion_pct: 57.14 },
+    ]
+    return { range, steps, overall_conversion_pct: 30, generated_at: new Date().toISOString() }
+  }
+  try {
+    return await _unwrap(
+      adminHttp.get('/v2/admin/stats/dashboard/funnel', { params: { range } })
+    )
+  } catch (err) {
+    throw normalizeError(err)
+  }
+}
+
+/**
+ * GET /api/v2/admin/stats/dashboard/top-countries?range=7d|30d&limit=10
+ * 热门目的地 Top N: country_code / country_name / order_count / revenue_usd / conversion_pct.
+ */
+export async function getDashboardTopCountries({ range = '7d', limit = 10 } = {}) {
+  if (MOCK_MODE) {
+    await _delay(80)
+    return {
+      range,
+      items: [
+        { destination_id: 1, country_code: 'US', country_name: '美国',   order_count: 38, revenue_usd: 7600,  conversion_pct: 28.8 },
+        { destination_id: 2, country_code: 'JP', country_name: '日本',   order_count: 24, revenue_usd: 4800,  conversion_pct: 18.2 },
+        { destination_id: 3, country_code: 'GB', country_name: '英国',   order_count: 18, revenue_usd: 3600,  conversion_pct: 13.6 },
+        { destination_id: 4, country_code: 'TH', country_name: '泰国',   order_count: 14, revenue_usd: 2240,  conversion_pct: 10.6 },
+        { destination_id: 5, country_code: 'SG', country_name: '新加坡', order_count: 12, revenue_usd: 1920,  conversion_pct: 9.1 },
+        { destination_id: 6, country_code: 'AU', country_name: '澳大利亚', order_count:  9, revenue_usd: 1440, conversion_pct: 6.8 },
+        { destination_id: 7, country_code: 'DE', country_name: '德国',   order_count:  7, revenue_usd: 1120,  conversion_pct: 5.3 },
+        { destination_id: 8, country_code: 'FR', country_name: '法国',   order_count:  5, revenue_usd: 800,   conversion_pct: 3.8 },
+      ],
+      generated_at: new Date().toISOString(),
+    }
+  }
+  try {
+    return await _unwrap(
+      adminHttp.get('/v2/admin/stats/dashboard/top-countries', { params: { range, limit } })
+    )
+  } catch (err) {
+    throw normalizeError(err)
+  }
+}
+
+/**
+ * GET /api/v2/admin/stats/dashboard/alerts
+ * 异常告警列表; 无事则 items=[].
+ * @returns {Promise<{items: Array<{severity, code, title, detail, metric_value, threshold}>, generated_at}>}
+ */
+export async function getDashboardAlerts() {
+  if (MOCK_MODE) {
+    await _delay(60)
+    return {
+      items: [
+        {
+          severity: 'warning',
+          code: 'pending_orders_high',
+          title: '待处理订单积压 (42)',
+          detail: '待处理订单超过 30, 建议检查 RPA 队列与人工坐席',
+          metric_value: 42,
+          threshold: 30,
+        },
+        {
+          severity: 'info',
+          code: 'zero_order_country',
+          title: '5 个启用的目的地 24h 零订单',
+          detail: 'VN, ID, MY, PH, KH 过去 24 小时没有任何新订单',
+          metric_value: 5,
+          threshold: 0,
+        },
+      ],
+      generated_at: new Date().toISOString(),
+    }
+  }
+  try {
+    return await _unwrap(adminHttp.get('/v2/admin/stats/dashboard/alerts'))
   } catch (err) {
     throw normalizeError(err)
   }
@@ -1055,4 +1237,471 @@ export default {
   restoreUser,
   updateCUser,
   resetUserPassword,
+  // W62 — RAG content review
+  listAdminRagSources,
+  getAdminRagSource,
+  getAdminRagSourceDiff,
+  triggerAdminRagRefresh,
+  triggerAdminRagRefreshForce,
+  approveAdminRagSnapshot,
+  rejectAdminRagSnapshot,
+  retransAdminRagSource,
+  getAdminRagTranslationStats,
+  // W47 — permission registry
+  listPermissions,
+}
+
+// --------------------------------------------------------------------------- //
+// W62 — RAG content review API                                                 //
+// --------------------------------------------------------------------------- //
+// Mock 模式下的 fixture —— 4 国 (US/GB/AU/FR) + 1 个 curated,覆盖 synced /
+// pending_review / approved 3 态,这样前端能在不接后端时演示完整流程。
+const MOCK_RAG_SOURCES = [
+  {
+    id: 1,
+    name: '美国 B1/B2 签证官方信息 (curated FAQ)',
+    country_code: 'US',
+    language: 'en',
+    url: 'https://travel.state.gov',
+    content_type: 'curated',
+    enabled: true,
+    last_refresh_at: '2026-07-01T03:00:00Z',
+    last_status: 'ok',
+    last_error: null,
+    last_content_hash: 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0',
+    review_status: 'synced',
+    reviewed_by: 1,
+    reviewed_at: '2026-07-01T03:05:00Z',
+    review_note: '上次审核确认材料清单无误',
+    pending_snapshots: 0,
+    translation_coverage: { 'zh-CN': true, id: true, vi: true },
+  },
+  {
+    id: 2,
+    name: '英国 Standard Visitor 签证 (curated FAQ)',
+    country_code: 'GB',
+    language: 'en',
+    url: 'https://www.gov.uk/standard-visitor',
+    content_type: 'curated',
+    enabled: true,
+    last_refresh_at: '2026-07-06T18:00:00Z',
+    last_status: 'ok',
+    last_error: null,
+    last_content_hash: 'b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1',
+    review_status: 'pending_review',
+    reviewed_by: null,
+    reviewed_at: null,
+    review_note: null,
+    pending_snapshots: 1,
+    translation_coverage: { 'zh-CN': false, id: true, vi: false },
+  },
+  {
+    id: 3,
+    name: '澳大利亚旅游签证 subclass 600 (curated FAQ)',
+    country_code: 'AU',
+    language: 'en',
+    url: 'https://immi.homeaffairs.gov.au',
+    content_type: 'curated',
+    enabled: true,
+    last_refresh_at: '2026-06-28T12:00:00Z',
+    last_status: 'ok',
+    last_error: null,
+    last_content_hash: 'c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2',
+    review_status: 'synced',
+    reviewed_by: 1,
+    reviewed_at: '2026-06-28T12:10:00Z',
+    review_note: null,
+    pending_snapshots: 0,
+    translation_coverage: { 'zh-CN': true, id: true, vi: true },
+  },
+  {
+    id: 4,
+    name: '申根 (Schengen) 短期签证 (curated FAQ)',
+    country_code: 'FR',
+    language: 'en',
+    url: 'https://france-visas.gouv.fr',
+    content_type: 'curated',
+    enabled: true,
+    last_refresh_at: '2026-07-07T02:00:00Z',
+    last_status: 'ok',
+    last_error: null,
+    last_content_hash: 'd4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3',
+    review_status: 'pending_review',
+    reviewed_by: null,
+    reviewed_at: null,
+    review_note: null,
+    pending_snapshots: 1,
+    translation_coverage: { 'zh-CN': false, id: false, vi: false },
+  },
+]
+
+// mock 详情 —— 一个 GB pending_review 的真实示例,带 chunks + diff
+const MOCK_RAG_GB_DETAIL = {
+  source: MOCK_RAG_SOURCES[1],
+  chunks: [
+    {
+      chunk_id: 11, chunk_index: 0,
+      content: '英国 Standard Visitor 签证申请要求 (欧洲签证产品线)。中国公民可在线申请, 6个月内有效, 单次或多次入境, 每次停留最多6个月。',
+      content_hash: 'old-hash-1', topic: 'overview', visa_type: '*',
+      source_url: null, effective_date: '2025-09-01',
+    },
+    {
+      chunk_id: 12, chunk_index: 1,
+      content: '签证费: 127英镑 (约 1200 元人民币), 加急服务另收费。审理时间: 标准 3 周, 加急 5个工作日。',
+      content_hash: 'old-hash-2', topic: 'fees', visa_type: '*',
+      source_url: null, effective_date: null,
+    },
+    {
+      chunk_id: 13, chunk_index: 2,
+      content: '所需材料: 护照原件 (有效期6个月以上), 近6个月白底彩色照片 (35x45mm), 在线申请表, 往返机票预订单, 酒店预订确认。',
+      content_hash: 'old-hash-3', topic: 'materials', visa_type: '*',
+      source_url: null, effective_date: null,
+    },
+  ],
+  translation_stats: [
+    { target_lang: 'zh-CN', translated_chunks: 0, total_chunks: 3, coverage_pct: 0, last_translated_at: null },
+    { target_lang: 'id', translated_chunks: 3, total_chunks: 3, coverage_pct: 100, last_translated_at: '2026-07-01T10:00:00Z' },
+    { target_lang: 'vi', translated_chunks: 0, total_chunks: 3, coverage_pct: 0, last_translated_at: null },
+  ],
+  pending_snapshot: {
+    id: 101,
+    content_hash: 'NEW-pending-hash-b3c4d5',
+    created_at: '2026-07-06T18:00:05Z',
+    expires_at: '2026-07-13T18:00:05Z',
+    raw_text_chars: 842,
+    new_chunk_count: 4,
+    new_chunks: [
+      { chunk_index: 0, content: '英国 Standard Visitor 签证申请要求 (欧洲签证产品线)。中国公民可在线申请, 6个月内有效, 单次或多次入境, 每次停留最多6个月。' },
+      { chunk_index: 1, content: '签证费: 127英镑 (约 1200 元人民币), 加急服务另收费。审理时间: 标准 3 周, 加急 5个工作日。' },
+      { chunk_index: 2, content: '所需材料: 护照原件 (有效期6个月以上), 近6个月白底彩色照片 (35x45mm), 在线申请表, 往返机票预订单, 酒店预订确认, 邀请函 (可选)。' },
+      { chunk_index: 3, content: '【新增】UK ETA 自 2025 年起对免签国公民实施, 中国公民暂不适用,但需注意使领馆政策变化。' },
+    ],
+    diff: {
+      added: [
+        { chunk_index: 3, content: '【新增】UK ETA 自 2025 年起对免签国公民实施, 中国公民暂不适用,但需注意使领馆政策变化。' },
+      ],
+      removed: [],
+      changed: [
+        {
+          chunk_index: 2,
+          old: '所需材料: 护照原件 (有效期6个月以上), 近6个月白底彩色照片 (35x45mm), 在线申请表, 往返机票预订单, 酒店预订确认。',
+          new: '所需材料: 护照原件 (有效期6个月以上), 近6个月白底彩色照片 (35x45mm), 在线申请表, 往返机票预订单, 酒店预订确认, 邀请函 (可选)。',
+        },
+      ],
+    },
+    fetch_meta: { extractor: 'curated', status_code: null, fetched_chars: 842 },
+  },
+  recent_decisions: [
+    {
+      snapshot_id: 99, decision: 'approved', decided_by: 1,
+      decided_at: '2026-07-01T03:05:00Z', note: '材料清单校对无误',
+    },
+  ],
+}
+
+const MOCK_RAG_GB_DIFF = {
+  source_id: 2,
+  snapshot_id: 101,
+  current_hash: MOCK_RAG_GB_DETAIL.source.last_content_hash,
+  pending_hash: MOCK_RAG_GB_DETAIL.pending_snapshot.content_hash,
+  diff: MOCK_RAG_GB_DETAIL.pending_snapshot.diff,
+  content_changed: true,
+}
+
+const MOCK_RAG_TRANSLATION_STATS = {
+  by_lang: [
+    { target_lang: 'en', translated_chunks: 12, total_chunks: 12, coverage_pct: 100, last_translated_at: '2026-07-01T03:00:00Z' },
+    { target_lang: 'zh-CN', translated_chunks: 9, total_chunks: 12, coverage_pct: 75, last_translated_at: '2026-07-06T15:00:00Z' },
+    { target_lang: 'id', translated_chunks: 12, total_chunks: 12, coverage_pct: 100, last_translated_at: '2026-07-01T10:00:00Z' },
+    { target_lang: 'vi', translated_chunks: 6, total_chunks: 12, coverage_pct: 50, last_translated_at: '2026-06-28T08:00:00Z' },
+  ],
+  overall_coverage_pct: 75,
+  generated_at: '2026-07-07T09:50:00Z',
+}
+
+/**
+ * GET /api/v2/admin/rag/sources — list all RAG sources with review status.
+ * @param {{ status?: string }} [params]  filter by review_status
+ */
+export async function listAdminRagSources(params = {}) {
+  if (MOCK_MODE) {
+    await delay(120)
+    let items = [...MOCK_RAG_SOURCES]
+    if (params.status) items = items.filter((s) => s.review_status === params.status)
+    return items
+  }
+  try {
+    const qp = new URLSearchParams()
+    if (params.status) qp.set('status', params.status)
+    const qs = qp.toString() ? `?${qp.toString()}` : ''
+    const envelope = await adminHttp.get(`/v2/admin/rag/sources${qs}`)
+    if (envelope?.code && envelope.code !== '1000') {
+      throw Object.assign(new Error(envelope.message || 'list RAG sources failed'), { code: envelope.code })
+    }
+    return envelope?.data || []
+  } catch (err) {
+    throw normalizeError(err)
+  }
+}
+
+/**
+ * GET /api/v2/admin/rag/sources/{id} — full detail incl. chunks + translation stats.
+ * @param {number} sourceId
+ */
+export async function getAdminRagSource(sourceId) {
+  if (MOCK_MODE) {
+    await delay(150)
+    const found = MOCK_RAG_SOURCES.find((s) => s.id === sourceId)
+    if (!found) throw Object.assign(new Error('Source not found'), { code: '2404' })
+    // GB (id=2) 和 FR (id=4) 都有 pending detail; 别的只回 source
+    if (sourceId === 2) return MOCK_RAG_GB_DETAIL
+    if (sourceId === 4) {
+      // FR 简单复用 GB 的模板,改 source + 翻译 stats 全 0
+      return {
+        ...MOCK_RAG_GB_DETAIL,
+        source: MOCK_RAG_SOURCES[3],
+        translation_stats: MOCK_RAG_GB_DETAIL.translation_stats.map((s) => ({
+          ...s, translated_chunks: 0, coverage_pct: 0, last_translated_at: null,
+        })),
+      }
+    }
+    return { source: found, chunks: [], translation_stats: [], pending_snapshot: null, recent_decisions: [] }
+  }
+  try {
+    const envelope = await adminHttp.get(`/v2/admin/rag/sources/${sourceId}`)
+    if (envelope?.code && envelope.code !== '1000') {
+      throw Object.assign(new Error(envelope.message || 'get RAG source failed'), { code: envelope.code })
+    }
+    return envelope?.data || null
+  } catch (err) {
+    throw normalizeError(err)
+  }
+}
+
+/**
+ * GET /api/v2/admin/rag/sources/{id}/diff — diff vs current chunks.
+ * @param {number} sourceId
+ */
+export async function getAdminRagSourceDiff(sourceId) {
+  if (MOCK_MODE) {
+    await delay(120)
+    const found = MOCK_RAG_SOURCES.find((s) => s.id === sourceId)
+    if (!found) throw Object.assign(new Error('Source not found'), { code: '2404' })
+    if (sourceId === 2) return MOCK_RAG_GB_DIFF
+    return {
+      source_id: sourceId,
+      snapshot_id: null,
+      current_hash: found.last_content_hash,
+      pending_hash: null,
+      diff: { added: [], removed: [], changed: [] },
+      content_changed: false,
+    }
+  }
+  try {
+    const envelope = await adminHttp.get(`/v2/admin/rag/sources/${sourceId}/diff`)
+    if (envelope?.code && envelope.code !== '1000') {
+      throw Object.assign(new Error(envelope.message || 'get diff failed'), { code: envelope.code })
+    }
+    return envelope?.data || null
+  } catch (err) {
+    throw normalizeError(err)
+  }
+}
+
+/**
+ * POST /api/v2/admin/rag/refresh — trigger refresh (走 review 流程,会建 snapshot)。
+ * @param {{ country_code?: string }} [params]
+ */
+export async function triggerAdminRagRefresh(params = {}) {
+  if (MOCK_MODE) {
+    await delay(800)
+    return {
+      refreshed: 4, errors: 0, content_changed: 2, snapshots_created: 2,
+      items: MOCK_RAG_SOURCES.map((s) => ({
+        id: s.id, status: 'ok', mode: 'review',
+        content_changed: s.review_status === 'pending_review',
+        snapshot_id: s.review_status === 'pending_review' ? 100 + s.id : null,
+        diff: s.review_status === 'pending_review' ? { added: [], removed: [], changed: [] } : undefined,
+      })),
+    }
+  }
+  try {
+    const qp = new URLSearchParams()
+    if (params.country_code) qp.set('country_code', params.country_code)
+    const qs = qp.toString() ? `?${qp.toString()}` : ''
+    const envelope = await adminHttp.post(`/v2/admin/rag/refresh${qs}`)
+    if (envelope?.code && envelope.code !== '1000') {
+      throw Object.assign(new Error(envelope.message || 'refresh failed'), { code: envelope.code })
+    }
+    return envelope?.data || null
+  } catch (err) {
+    throw normalizeError(err)
+  }
+}
+
+/**
+ * POST /api/v2/admin/rag/refresh/force — 强制覆盖 (绕过审核)。
+ * @param {{ country_code?: string }} [params]
+ */
+export async function triggerAdminRagRefreshForce(params = {}) {
+  if (MOCK_MODE) {
+    await delay(800)
+    return { refreshed: 4, errors: 0, content_changed: 0, snapshots_created: 0, items: [] }
+  }
+  try {
+    const qp = new URLSearchParams()
+    if (params.country_code) qp.set('country_code', params.country_code)
+    const qs = qp.toString() ? `?${qp.toString()}` : ''
+    const envelope = await adminHttp.post(`/v2/admin/rag/refresh/force${qs}`)
+    if (envelope?.code && envelope.code !== '1000') {
+      throw Object.assign(new Error(envelope.message || 'force refresh failed'), { code: envelope.code })
+    }
+    return envelope?.data || null
+  } catch (err) {
+    throw normalizeError(err)
+  }
+}
+
+/**
+ * POST /api/v2/admin/rag/snapshots/{id}/approve
+ * @param {number} snapshotId
+ * @param {{ note?: string }} [body]
+ */
+export async function approveAdminRagSnapshot(snapshotId, body = {}) {
+  if (MOCK_MODE) {
+    await delay(400)
+    return { snapshot_id: snapshotId, source_id: 2, status: 'approved', chunk_count: 4 }
+  }
+  try {
+    const envelope = await adminHttp.post(`/v2/admin/rag/snapshots/${snapshotId}/approve`, body)
+    if (envelope?.code && envelope.code !== '1000') {
+      throw Object.assign(new Error(envelope.message || 'approve failed'), { code: envelope.code })
+    }
+    return envelope?.data || null
+  } catch (err) {
+    throw normalizeError(err)
+  }
+}
+
+/**
+ * POST /api/v2/admin/rag/snapshots/{id}/reject
+ * @param {number} snapshotId
+ * @param {{ note?: string }} [body]
+ */
+export async function rejectAdminRagSnapshot(snapshotId, body = {}) {
+  if (MOCK_MODE) {
+    await delay(400)
+    return { snapshot_id: snapshotId, source_id: 2, status: 'rejected' }
+  }
+  try {
+    const envelope = await adminHttp.post(`/v2/admin/rag/snapshots/${snapshotId}/reject`, body)
+    if (envelope?.code && envelope.code !== '1000') {
+      throw Object.assign(new Error(envelope.message || 'reject failed'), { code: envelope.code })
+    }
+    return envelope?.data || null
+  } catch (err) {
+    throw normalizeError(err)
+  }
+}
+
+/**
+ * POST /api/v2/admin/rag/sources/{id}/retrans — 清空该 source 的翻译缓存,强制重译
+ * @param {number} sourceId
+ */
+export async function retransAdminRagSource(sourceId) {
+  if (MOCK_MODE) {
+    await delay(300)
+    return { source_id: sourceId, cleared: 6 }
+  }
+  try {
+    const envelope = await adminHttp.post(`/v2/admin/rag/sources/${sourceId}/retrans`)
+    if (envelope?.code && envelope.code !== '1000') {
+      throw Object.assign(new Error(envelope.message || 'retrans failed'), { code: envelope.code })
+    }
+    return envelope?.data || null
+  } catch (err) {
+    throw normalizeError(err)
+  }
+}
+
+/**
+ * GET /api/v2/admin/rag/translation-stats — 4 国翻译覆盖率 (dashboard 用)
+ */
+export async function getAdminRagTranslationStats() {
+  if (MOCK_MODE) {
+    await delay(120)
+    return MOCK_RAG_TRANSLATION_STATS
+  }
+  try {
+    const envelope = await adminHttp.get('/v2/admin/rag/translation-stats')
+    if (envelope?.code && envelope.code !== '1000') {
+      throw Object.assign(new Error(envelope.message || 'get translation stats failed'), { code: envelope.code })
+    }
+    return envelope?.data || null
+  } catch (err) {
+    throw normalizeError(err)
+  }
+}
+
+// --------------------------------------------------------------------------- //
+// W47 — Permission registry                                                   //
+// --------------------------------------------------------------------------- //
+
+/**
+ * GET /api/v2/admin/permissions
+ * 拉取后端 PERMISSIONS 注册表(单一权威源),前端 perm grid 用此渲染。
+ * @returns {Promise<{groups: {[group]: Array<{code, label_key, description}>, groups_order: string[]}>}
+ */
+export async function listPermissions() {
+  if (MOCK_MODE) {
+    await _delay(80)
+    // 与后端 app/core/permissions.py PERMISSIONS 同步
+    return {
+      groups: {
+        menu: [
+          { code: 'dashboard', label_key: 'admin.perms.dashboard', description: '总览看板' },
+          { code: 'orders', label_key: 'admin.perms.orders', description: '订单管理菜单' },
+          { code: 'payments', label_key: 'admin.perms.payments', description: '支付流水菜单' },
+          { code: 'users', label_key: 'admin.perms.users', description: '用户管理菜单' },
+          { code: 'countries', label_key: 'admin.perms.countries', description: '国家配置菜单' },
+          { code: 'settings', label_key: 'admin.perms.settings', description: '系统设置菜单' },
+        ],
+        order: [
+          { code: 'order.view', label_key: 'admin.perms.order.view', description: '查看订单' },
+          { code: 'order.edit_status', label_key: 'admin.perms.order.edit_status', description: '审核订单状态' },
+          { code: 'order.close', label_key: 'admin.perms.order.close', description: '关闭订单' },
+          { code: 'order.edit_field', label_key: 'admin.perms.order.edit_field', description: '修改订单字段' },
+          { code: 'order.rerun_rpa', label_key: 'admin.perms.order.rerun_rpa', description: '重派 RPA' },
+          { code: 'order.export', label_key: 'admin.perms.order.export', description: '导出订单' },
+        ],
+        payment: [
+          { code: 'payment.view', label_key: 'admin.perms.payment.view', description: '查看支付' },
+          { code: 'payment.refund', label_key: 'admin.perms.payment.refund', description: '退款' },
+        ],
+        user: [
+          { code: 'user.view', label_key: 'admin.perms.user.view', description: '查看用户' },
+          { code: 'user.edit', label_key: 'admin.perms.user.edit', description: '修改用户' },
+          { code: 'user.disable', label_key: 'admin.perms.user.disable', description: '禁用账号' },
+          { code: 'user.reset_password', label_key: 'admin.perms.user.reset_password', description: '重置密码' },
+        ],
+        dashboard: [
+          { code: 'dashboard.view', label_key: 'admin.perms.dashboard.view', description: '查看看板' },
+          { code: 'dashboard.export', label_key: 'admin.perms.dashboard.export', description: '导出看板' },
+        ],
+        system: [
+          { code: 'country.manage', label_key: 'admin.perms.country.manage', description: '国家配置' },
+          { code: 'rag.review', label_key: 'admin.perms.rag.review', description: 'RAG 审核' },
+          { code: 'ai_rules.edit', label_key: 'admin.perms.ai_rules.edit', description: 'AI 规则' },
+          { code: 'role.manage', label_key: 'admin.perms.role.manage', description: '角色管理' },
+          { code: 'system.cleanup', label_key: 'admin.perms.system.cleanup', description: '数据清理' },
+        ],
+      },
+      groups_order: ['menu', 'order', 'payment', 'user', 'dashboard', 'system'],
+    }
+  }
+  try {
+    return await _unwrap(adminHttp.get('/v2/admin/permissions'))
+  } catch (err) {
+    throw normalizeError(err)
+  }
 }

@@ -176,14 +176,31 @@ export function markUserLocaleChoice() {
 // Other locales are loaded on-demand when the user switches language.
 const detectedLocale = detectLocale()
 
+// W67: 同步拿到 detected locale 的 messages — 之前 fire-and-forget 导致首次
+// 渲染时 i18n messages 还没载入,v-for MaterialTemplatePreview 这种高频组件
+// 会触发一堆 "Not found 'mtp.month_label' key in 'zh' locale messages" warning。
+// 同步拿到的代价是首屏等一个 JSON import,但 JSON 已经被 vite 静态 import 缓存,几毫秒。
+const _initialMod = (() => {
+  try {
+    // 直接用静态 import 拿到的模块(已经载入),不再走 LOCALE_MODULES 异步
+    if (detectedLocale === 'zh-CN') return zhCN
+    if (detectedLocale === 'en')     return enUS
+    if (detectedLocale === 'id-ID')  return idID
+    if (detectedLocale === 'vi-VN')  return viVN
+    return enUS
+  } catch {
+    return {}
+  }
+})()
+
 const i18n = createI18n({
   legacy: false,
   globalInjection: true,
   locale: detectedLocale,
   fallbackLocale: 'en',
   messages: {
-    // Minimal placeholder — real messages loaded via loadLocale below
-    [detectedLocale]: {}
+    // W67: 同步载入 detected locale 的 messages,避免首次 t() 触发 intlify warning。
+    [detectedLocale]: _initialMod || {}
   }
 })
 
@@ -194,8 +211,6 @@ const _pending = []
 export async function loadLocale(lang) {
   if (!SUPPORTED_LOCALES.includes(lang)) return
   // Guard: only skip if locale messages are ACTUALLY loaded (not just an empty placeholder).
-  // createI18n() below starts with `messages: { [detectedLocale]: {} }` which is truthy,
-  // so naive `if (i18n.global.messages.value[lang]) return` skips real loading.
   const existing = i18n.global.messages.value[lang]
   if (existing && Object.keys(existing).length > 0) return
 
@@ -206,10 +221,6 @@ export async function loadLocale(lang) {
     console.error(`[i18n] Failed to load locale ${lang}:`, e)
   }
 }
-
-// Load detected locale synchronously on startup (no await — fire and forget).
-// Pages that need the content immediately can await loadLocale(detectedLocale).
-loadLocale(detectedLocale)
 
 export async function setLocale(lang, { markUser = true, source = 'manual' } = {}) {
   if (!SUPPORTED_LOCALES.includes(lang)) return

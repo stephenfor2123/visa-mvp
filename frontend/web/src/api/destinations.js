@@ -3,31 +3,46 @@ import http from './http'
 
 const MOCK_MODE = import.meta.env.VITE_MOCK !== 'false' // 默认 mock
 
-// V2 首批 9 国(W1 已落库,B 端 destinations 端点暂未上线时用)
+// W37: 收紧到真实产品只在 4 国 + 申根 2 国代表.
+// 之前 W57 加了 JP/CA/SG/NZ/VN 是给 Diagnose 页 footer 兜底用的,
+// 但一直留在 FALLBACK 里 → /apply 页在 MOCK 模式下也会显示这些国家,
+// 用户会误以为是产品实际在做的目的地. 已下架.
 const FALLBACK_DESTINATIONS = [
-  { id: 1, country_code: 'US', country_name: '美国', visa_types: ['tourism'], enabled: true },
-  { id: 2, country_code: 'JP', country_name: '日本', visa_types: ['tourism'], enabled: false },
-  { id: 3, country_code: 'UK', country_name: '英国', visa_types: ['tourism'], enabled: false },
-  { id: 4, country_code: 'AU', country_name: '澳大利亚', visa_types: ['tourism'], enabled: false },
-  { id: 5, country_code: 'CA', country_name: '加拿大', visa_types: ['tourism'], enabled: false },
-  { id: 6, country_code: 'DE', country_name: '德国(申根)', visa_types: ['tourism'], enabled: false },
-  { id: 7, country_code: 'FR', country_name: '法国(申根)', visa_types: ['tourism'], enabled: false },
-  { id: 8, country_code: 'SG', country_name: '新加坡', visa_types: ['tourism'], enabled: false },
-  { id: 9, country_code: 'NZ', country_name: '新西兰', visa_types: ['tourism'], enabled: false }
+  { id: 1,  country_code: 'US', country_name: '美国',      visa_types: ['tourism'], enabled: true },
+  { id: 3,  country_code: 'GB', country_name: '英国',      visa_types: ['tourism'], enabled: true },
+  { id: 4,  country_code: 'AU', country_name: '澳大利亚', visa_types: ['tourism'], enabled: true },
+  { id: 6,  country_code: 'DE', country_name: '德国(申根)', visa_types: ['tourism'], enabled: true },
+  { id: 7,  country_code: 'FR', country_name: '法国(申根)', visa_types: ['tourism'], enabled: true },
 ]
 
 // 翻译国家名(用 lang 切)
 function localizeName(d, lang) {
-  if (lang && lang.startsWith('en')) {
+  if (!lang) return d.country_name
+
+  if (lang.startsWith('en')) {
     const enMap = {
-      US: 'United States', JP: 'Japan', UK: 'United Kingdom',
-      AU: 'Australia', CA: 'Canada', DE: 'Germany (Schengen)',
-      FR: 'France (Schengen)', SG: 'Singapore', NZ: 'New Zealand'
+      US: 'United States',
+      GB: 'United Kingdom',
+      AU: 'Australia',
+      DE: 'Germany (Schengen)', FR: 'France (Schengen)',
     }
     return enMap[d.country_code] || d.country_name
   }
-  if (lang && lang.startsWith('id')) {
-    const idMap = { US: 'Amerika Serikat', JP: 'Jepang', UK: 'Inggris', AU: 'Australia', CA: 'Kanada', DE: 'Jerman', FR: 'Prancis', SG: 'Singapura', NZ: 'Selandia Baru' }
+  if (lang.startsWith('vi')) {
+    const viMap = {
+      US: 'Hoa Kỳ',
+      GB: 'Vương quốc Anh', AU: 'Úc',
+      DE: 'Đức (Schengen)', FR: 'Pháp (Schengen)',
+    }
+    return viMap[d.country_code] || d.country_name
+  }
+  if (lang.startsWith('id')) {
+    const idMap = {
+      US: 'Amerika Serikat',
+      GB: 'Inggris',
+      AU: 'Australia',
+      DE: 'Jerman (Schengen)', FR: 'Prancis (Schengen)',
+    }
     return idMap[d.country_code] || d.country_name
   }
   return d.country_name

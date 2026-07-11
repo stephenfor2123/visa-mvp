@@ -1,8 +1,8 @@
 <template>
-  <div class="diagnose-page app-container">
+  <div class="diagnose-page">
     <AppHeader scope="diagnose" />
 
-    <main class="diagnose-main">
+    <main class="app-container app-page diagnose-main">
       <header class="diagnose-hero">
         <h1 class="diagnose-hero__title">{{ t('diagnose.title') }}</h1>
         <p class="diagnose-hero__sub">{{ t('diagnose.sub') }}</p>
@@ -33,7 +33,7 @@
                 @click="selectCountry(c.country_code)"
               >
                 <span class="diagnose-country__flag">{{ flagOf(c.country_code) }}</span>
-                <span class="diagnose-country__name">{{ c.country_name }}</span>
+                <span class="diagnose-country__name">{{ countryName(c.country_code) }}</span>
               </button>
             </div>
           </div>
@@ -68,7 +68,7 @@
 
           <!-- 收入 -->
           <div class="diagnose-field">
-            <label class="diagnose-field__label">{{ t('diagnose.income') }}</label>
+            <label class="diagnose-field__label">{{ t('diagnose.income', { cur: t('diagnose.cur') }) }}</label>
             <div class="diagnose-pills">
               <button
                 v-for="opt in INCOME_OPTS"
@@ -78,7 +78,7 @@
                 :class="{ 'is-selected': form.income_bucket === opt.value }"
                 :data-testid="`diagnose-income-${opt.value}`"
                 @click="form.income_bucket = opt.value"
-              >{{ t(`diagnose.income_${opt.value}`) }}</button>
+              >{{ incomeLabel(opt.value) }}</button>
             </div>
           </div>
 
@@ -245,7 +245,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import AppHeader from '@/components/AppHeader.vue'
@@ -302,10 +302,39 @@ const flagMap = {
 }
 function flagOf(cc) { return flagMap[cc] || '🌐' }
 
+// W57: 国家名优先用 i18n 的 country.<code>, 避免 lang=vi 但 mock 返回中文 "澳大利亚"。
 const selectedCountryName = computed(() => {
-  const c = countries.value.find(x => x.country_code === form.country_code)
-  return c?.country_name || form.country_code
+  const code = form.country_code
+  if (!code) return ''
+  const i18nName = t(`country.${code.toLowerCase()}`, { default: '' })
+  if (i18nName) return i18nName
+  // fallback: Backend 返回的 country_name（已过 localizeName,可能仍是中文）
+  const c = countries.value.find(x => x.country_code === code)
+  return c?.country_name || code
 })
+
+// W57: 收入档 — 单位跟 cur 一起 i18n,每档文案随 locale 数字量级调整。
+//            zh-CN   en       vi                 id
+// below_5k    5k 以下  Below 1k  Dưới 5 triệu    Di bawah 5 juta
+// 5k_15k      5k-15k  1k-3k    5-15 triệu       5-15 juta
+// 15k_30k     15k-30k 3k-5k   15-30 triệu      15-30 juta
+// 30k_100k    30k-100k 5k-10k 30-100 triệu     30-100 juta
+// above_100k  100k+   10k+     100 triệu+       100 juta+
+//   i18n text already carries the magnitude; we just append the {cur}
+// 收入档 chip 不带单位 — 文字已经隐含 magnitude(例 "5 - 15 triệu"),单位只在 label 上展示一次
+function incomeLabel(value) {
+  return t(`diagnose.income_${value}`)
+}
+
+// W57: 国家名 lookup — 优先 vue-i18n country.<code>, fallback 到 backend 已 localize 的字段。
+//              这样即便后端 lang=vi 的多语言没就绪,前端也能按 locale 兜底翻译。
+function countryName(code) {
+  if (!code) return ''
+  const i18nName = t(`country.${code.toLowerCase()}`, { default: '' })
+  if (i18nName) return i18nName
+  const c = countries.value.find(x => x.country_code === code)
+  return c?.country_name || code
+}
 
 // 按签证体系分组 (W27): 国别签证 / 申根签证
 const groupedCountries = computed(() => {
@@ -359,6 +388,8 @@ async function loadCountries() {
 }
 
 onMounted(loadCountries)
+// W57: 语言切换时重新拉国家 — 之前只 onMounted 时拉,后续 setLocale 没刷新
+watch(() => locale.value, () => loadCountries())
 </script>
 
 <style scoped lang="scss">

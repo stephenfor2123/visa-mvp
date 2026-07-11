@@ -129,14 +129,27 @@ export async function loginWithGoogle(credential) {
   })
 }
 
-export async function resetPassword({ account, newPassword }) {
+export async function requestPasswordReset({ account }) {
+  if (MOCK_MODE) {
+    await delay()
+    if (!account) throw new Error('请输入账号')
+    return { message: 'If the account exists, a reset link has been sent' }
+  }
+  const envelope = await http.post('/v2/auth/password-reset-request', { account })
+  if (envelope.code !== '1000') {
+    throw new Error(envelope.message || 'Request failed')
+  }
+  return envelope.data || {}
+}
+
+export async function resetPassword({ token, newPassword }) {
   if (MOCK_MODE) {
     await delay()
     if (!newPassword || newPassword.length < 8) throw new Error('密码至少 8 位')
     return { success: true, message: 'Password updated successfully' }
   }
   const envelope = await http.post('/v2/auth/reset-password', {
-    account,
+    token,
     new_password: newPassword
   })
   if (envelope.code !== '1000') {

@@ -64,7 +64,7 @@
           </div>
 
           <p class="admin-login-mock-hint" data-testid="admin-login-mock-hint">
-            测试账号: admin / Admin@2024
+            测试账号: admin / HtexAd@26
           </p>
         </form>
       </AppCard>
@@ -156,7 +156,7 @@ onMounted(async () => {
   // Test/demo mode: pre-fill mock credentials so screenshots show a populated form
   if (route.query.demo !== undefined) {
     username.value = 'admin'
-    password.value = 'Admin@2024'
+    password.value = 'HtexAd@26'
   }
 })
 </script>

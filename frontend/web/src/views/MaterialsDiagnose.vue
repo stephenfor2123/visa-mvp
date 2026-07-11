@@ -30,20 +30,21 @@
         <h2>{{ t('diagnose.pick_materials', '选择要诊断的材料') }} <span class="diag-mat-count">{{ selectedIds.length }}/{{ materials.length }}</span></h2>
         <div v-if="loadingMats" class="state-loading">⏳ {{ t('common.loading') }}</div>
         <div v-else-if="materials.length === 0" class="diag-empty">
-          <p>{{ t('diagnose.no_materials', '你还没有上传任何材料,先去材料收集向导上传吧。') }}</p>
+          <p>{{ t('diagnose.no_local_materials', '本机还没有可诊断的材料。请先在材料向导中上传并识别。') }}</p>
           <router-link :to="{ name: 'MaterialWizard', query: { country: countryCode, visa_type: visaType || 'tourism' } }" class="diag-cta">{{ t('diagnose.go_upload', '去上传材料') }}</router-link>
         </div>
         <div v-else class="diag-mat-list">
+          <p class="diag-local-hint">{{ t('diagnose.local_materials_hint', '以下材料仅保存在本机浏览器，不会上传到服务器。') }}</p>
           <label
             v-for="m in materials"
-            :key="m.id || m.material_id"
+            :key="m.localId || m.id"
             class="diag-mat-card"
-            :class="{ selected: selectedIds.includes(m.id || m.material_id) }"
-            :data-testid="`diag-mat-card-${m.id || m.material_id}`"
+            :class="{ selected: selectedIds.includes(m.localId || m.id) }"
+            :data-testid="`diag-mat-card-${m.localId || m.id}`"
           >
             <input
               type="checkbox"
-              :value="m.id || m.material_id"
+              :value="m.localId || m.id"
               v-model="selectedIds"
               class="diag-mat-card__cb"
             />
@@ -51,7 +52,7 @@
               <div class="diag-mat-card__name">{{ m.file_name || m.original_filename }}</div>
               <div class="diag-mat-card__meta">
                 <span class="badge badge-type">{{ m.material_type }}</span>
-                <span v-if="m.ocr_status" :class="`badge badge-ocr badge-ocr--${m.ocr_status}`">{{ m.ocr_status }}</span>
+                <span class="badge badge-ocr badge-ocr--done">{{ t('diagnose.local_badge', '本机') }}</span>
               </div>
             </div>
           </label>
@@ -136,7 +137,8 @@
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
-import { listMaterials, diagnoseMaterials } from '@/api/materials'
+import { diagnoseMaterials } from '@/api/materials'
+import { listDiagnosableMaterials } from '@/utils/localPrivacyStorage'
 import AppButton from '@/components/AppButton.vue'
 import LangSwitch from '@/components/LangSwitch.vue'
 import AppHeader from '@/components/AppHeader.vue'
@@ -232,9 +234,8 @@ function translateIssue(issue) {
 
 onMounted(async () => {
   try {
-    materials.value = await listMaterials({})
-    // 默认全选
-    selectedIds.value = materials.value.map((m) => m.id || m.material_id)
+    materials.value = listDiagnosableMaterials()
+    selectedIds.value = materials.value.map((m) => m.localId || m.id)
   } catch (e) {
     errorMsg.value = `加载材料列表失败: ${e.message || e}`
   } finally {
@@ -247,9 +248,16 @@ async function runDiagnose() {
   running.value = true
   result.value = null
   errorMsg.value = ''
+  const snapshot = materials.value
+    .filter((m) => selectedIds.value.includes(m.localId || m.id))
+    .map((m) => ({
+      item_key: m.item_key || m.localId || m.id,
+      material_type: m.material_type,
+      ocr_result: m.ocr_result || {},
+    }))
   try {
     const data = await diagnoseMaterials({
-      material_ids: selectedIds.value,
+      materials_snapshot: snapshot,
       country_code: countryCode.value,
       visa_type: visaType.value || undefined,
     })
@@ -316,6 +324,12 @@ async function runDiagnose() {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 10px;
+}
+.diag-local-hint {
+  grid-column: 1 / -1;
+  margin: 0 0 4px;
+  font-size: 13px;
+  color: #64748B;
 }
 .diag-mat-card {
   display: flex;

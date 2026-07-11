@@ -13,7 +13,6 @@
                 <span class="hero__visa">{{ visaTypeLabel }}</span>
               </h1>
               <p v-if="prefillPercent > 0" class="hero__ocr" data-testid="ordernew-ocr-pct">
-                <span class="hero__ocr-icon">⚡</span>
                 <span>{{ t('orders.ocr_prefilled', { percent: prefillPercent }) }}</span>
               </p>
             </div>
@@ -337,9 +336,15 @@
             </div>
           </div>
 
-          <div v-if="itineraryText" class="itinerary-preview" data-testid="ordernew-itinerary-preview">
+          <div v-if="travelPlan.days.length" class="itinerary-preview" data-testid="ordernew-itinerary-preview">
             <div class="itinerary-preview__title">{{ t('orders.itinerary_generated_title') }}</div>
-            <pre class="itinerary-preview__text">{{ itineraryText }}</pre>
+            <ItineraryPreviewTable
+              :days="travelPlan.days"
+              :origin="travelPlan.origin"
+              :destination="travelPlan.destination"
+              :return-origin="travelPlan.returnOrigin"
+              :return-destination="travelPlan.returnDestination"
+            />
           </div>
         </section>
 
@@ -487,15 +492,20 @@ import LangSwitch from '@/components/LangSwitch.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import {
-  fetchMaterialsForForm,
   extractApplicantDraft,
   createOrder
 } from '@/api/orders'
+import {
+  buildDiagnosableSnapshotFromOcrCache,
+  savePrecheckSnapshot,
+} from '@/utils/localPrivacyStorage'
 import { listMyApplicants } from '@/api/applicants'
 import { listDestinations } from '@/api/destinations'
 // A-W9-2: affiliate wrapper - affiliate link auto-fill + submit-time attribute
 import { trackClick, attributeOrder, loadPendingClick, savePendingClick } from '@/api/affiliate'
+import { FEATURE_RPA } from '@/config/features'
 import AppHeader from '@/components/AppHeader.vue'
+import ItineraryPreviewTable from '@/components/ItineraryPreviewTable.vue'
 
 const { t, te, locale } = useI18n()
 const router = useRouter()
@@ -570,13 +580,16 @@ const wizardSteps = computed(() => {
   const order = ['country', 'visa', 'fill', 'pay', 'rpa']
   // Fill step 副标根据 sub tab 完成度动态显示
   const fillSub = `${subDoneCount.value}/${subTotal} ${t('orders.wz_fill_sub_count', 'sections done')}`
-  return [
+  const steps = [
     { key: 'country', titleKey: 'orders.wz_country', subKey: 'orders.wz_country_sub', status: 'done' },
     { key: 'visa',    titleKey: 'orders.wz_visa',    subKey: 'orders.wz_visa_sub',    status: 'done' },
     { key: 'fill',    titleKey: 'orders.wz_fill',    subKey: current === 'fill' ? 'orders.wz_fill_sub_active' : 'orders.wz_fill_sub',    status: 'active', subOverride: fillSub },
     { key: 'pay',     titleKey: 'orders.wz_pay',     subKey: 'orders.wz_pay_sub',     status: 'pending' },
-    { key: 'rpa',     titleKey: 'orders.wz_rpa',     subKey: 'orders.wz_rpa_sub',     status: 'pending' },
   ]
+  if (FEATURE_RPA) {
+    steps.push({ key: 'rpa', titleKey: 'orders.wz_rpa', subKey: 'orders.wz_rpa_sub', status: 'pending' })
+  }
+  return steps
 })
 
 // Sub tab 完成进度
@@ -596,7 +609,8 @@ function onWizardStepClick(step) {
   // Only "done" or "active" steps are clickable; locked/pending are no-op
   if (step.status === 'pending' || step.status === 'locked') return
   // In this MVP, only "fill" is interactive on this page.
-  // Future: wire up "country" → /destinations, "pay" → payment, "rpa" → /rpa/submit
+  // Future: wire up "country" → /destinations, "rpa" → /rpa/submit
+  // pay step wired in W74 → PaymentCheckout after order submit
   if (step.key === 'country') {
     router.push('/destinations')
   } else if (step.key === 'fill') {
@@ -649,6 +663,9 @@ const ocrMarked = reactive({
 const prefillPercent = ref(0)
 // W36: 材料向导(MaterialWizard)里生成的行程单文本 — 只读展示，供签证官/申请人核对
 const itineraryText = ref('')
+// W47c: 结构化行程数据(wizard compileItineraryText 写进 localStorage 的 days),
+// 用于渲染真表格预览(OrderNew 持有本地 ref,保持跟原 pipe 文本并行).
+const travelPlan = ref({ days: [], origin: '', destination: '', returnOrigin: '', returnDestination: '' })
 
 // ============== A-W9-2: affiliate source ==============
 // click_id (from affiliate link /?aff=AFF001&click=cid_xxx or LS) - bind attribute on order submit
@@ -870,13 +887,13 @@ async function loadAll() {
       form.destination_id = (us || destinations.value[0]).id
     }
 
-    // 2) materials -> OCR prefill
-    const ids = materialIds.value
-    let mats = []
-    if (ids.length > 0) {
-      mats = await fetchMaterialsForForm(ids)
-    }
-    const { draft, percent } = extractApplicantDraft(mats)
+    // 2) OCR 预填 — 从本机 wizard OCR 缓存（不再拉服务端 material）
+    const snapshot = buildDiagnosableSnapshotFromOcrCache()
+    const pseudoMats = snapshot.map((s) => ({
+      material_type: s.material_type,
+      ocr_result: s.ocr_result,
+    }))
+    const { draft, percent } = extractApplicantDraft(pseudoMats)
     prefillPercent.value = percent
     for (const k of Object.keys(draft)) {
       if (draft[k]) {
@@ -895,6 +912,16 @@ async function loadAll() {
         if (plan.flight_no) form.flight_no = plan.flight_no
         if (plan.hotel_name) form.hotel_name = plan.hotel_name
         if (plan.itinerary_text) itineraryText.value = plan.itinerary_text
+        // W47c: 读结构化 days, 渲染真表格预览
+        if (Array.isArray(plan.days)) {
+          travelPlan.value = {
+            days: plan.days,
+            origin: plan.origin || '',
+            destination: plan.destination || '',
+            returnOrigin: plan.return_origin || '',
+            returnDestination: plan.return_destination || '',
+          }
+        }
       }
     } catch { /* best-effort */ }
 
@@ -966,7 +993,7 @@ async function onSubmit() {
       localStorage.setItem('ordernew_draft', JSON.stringify({
         destination_id: form.destination_id,
         visa_type: form.visa_type,
-        material_ids: materialIds.value.filter(Boolean),
+        material_ids: [],
         form: { ...form },
         countryCode: countryCode.value,
         savedAt: Date.now()
@@ -987,7 +1014,7 @@ async function onSubmit() {
     const payload = {
       destination_id: Number(form.destination_id),
       visa_type: form.visa_type,
-      material_ids: materialIds.value.filter(Boolean),
+      material_ids: [],
       applicant_data: {
         surname: form.surname.trim().toUpperCase(),
         given_name: form.given_name.trim().toUpperCase(),
@@ -1024,8 +1051,6 @@ async function onSubmit() {
     // W29: 提交成功后清掉 draft(避免下次误恢复)
     try { localStorage.removeItem('ordernew_draft') } catch (e) {}
     setTimeout(() => {
-      // W19: rpa submit needs country_code + visa_type + passport_data (align with backend Pydantic schema).
-      // Look up country_code from the resolved destination.
       const destCountry = (destination.value && destination.value.country_code) || ''
       const visa = form.visa_type || 'tourism'
       const passportData = {
@@ -1037,19 +1062,41 @@ async function onSubmit() {
         passport_no: form.passport_no.toUpperCase(),
         passport_expiry: form.passport_expiry
       }
-      // Stash passport data in sessionStorage so RpaSubmit can pick it up
-      // (URL query is too long; history.state is not always preserved across
-      // router.push when the target page is a separate chunk).
       try {
         sessionStorage.setItem(`rpa_passport_${order.order_no}`, JSON.stringify(passportData))
       } catch (e) { /* sessionStorage may be unavailable */ }
-      router.push({
-        name: 'RpaSubmit',
-        query: {
-          orderNo: order.order_no,
-          countryCode: destCountry,
-          visaType: visa
+
+      // W74: 提交后走支付 checkout；RPA 关闭时支付完成进订单详情
+      const payQuery = { next: FEATURE_RPA ? 'rpa' : 'detail', countryCode: destCountry, visaType: visa }
+      if (FEATURE_RPA && destCountry === 'US') {
+        const fieldsPayload = {
+          surname: form.surname.trim().toUpperCase(),
+          given_name: form.given_name.trim().toUpperCase(),
+          sex: form.sex,
+          dob: form.dob,
+          nationality: form.nationality,
+          passport_no: form.passport_no.toUpperCase(),
+          passport_expiry: form.passport_expiry,
+          arrival_date: form.arrival_date,
+          departure_date: form.departure_date,
+          stay_days: Number(form.stay_days),
+          flight_no: form.flight_no.trim(),
+          hotel_name: form.hotel_name.trim(),
+          itinerary_text: itineraryText.value,
+          emergency_contact_name: form.emergency_name.trim(),
+          emergency_contact_phone: form.emergency_phone.trim(),
+          emergency_contact_relation: form.emergency_relation,
         }
+        try {
+          savePrecheckSnapshot(order.order_no, buildDiagnosableSnapshotFromOcrCache())
+        } catch (e) { /* ignore */ }
+        payQuery.next = 'precheck'
+        payQuery.fields = btoa(unescape(encodeURIComponent(JSON.stringify(fieldsPayload))))
+      }
+      router.push({
+        name: 'PaymentCheckout',
+        params: { orderNo: order.order_no },
+        query: payQuery
       }).catch(() => {
         router.push({ name: 'OrderDetail', params: { orderNo: order.order_no } })
       })

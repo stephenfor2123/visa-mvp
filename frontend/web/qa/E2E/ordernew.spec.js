@@ -230,7 +230,7 @@ test.describe('C-test-1.2.1b  OrderNew 申请表填写页 E2E', () => {
     // 3) 顶部 hero__ocr 百分比徽章(data-testid='ordernew-ocr-pct')
     const ocrPct = page.getByTestId('ordernew-ocr-pct')
     await expect(ocrPct).toBeVisible()
-    await expect(ocrPct).toContainText('OCR 已预填')
+    await expect(ocrPct).toContainText('系统已预填')
     await expect(ocrPct).toContainText('%')
 
     // 4) material endpoint 真的被调(route 没漏接)

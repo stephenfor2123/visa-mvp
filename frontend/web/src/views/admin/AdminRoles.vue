@@ -98,19 +98,30 @@
             </div>
             <div class="form-field">
               <label>{{ t('admin.roles.form_perms') }}</label>
-              <div class="perm-grid">
-                <label
-                  v-for="perm in ALL_PERMISSIONS"
-                  :key="perm"
-                  class="perm-check"
+              <div class="perm-groups">
+                <div
+                  v-for="groupKey in permRegistry.groups_order"
+                  :key="groupKey"
+                  class="perm-group"
+                  v-show="permRegistry.groups[groupKey]?.length"
                 >
-                  <input
-                    type="checkbox"
-                    :value="perm"
-                    v-model="form.permissions"
-                  />
-                  <span>{{ t(`admin.perms.${perm}`) || perm }}</span>
-                </label>
+                  <div class="perm-group__title">{{ t(`admin.perm_group.${groupKey}`) }}</div>
+                  <div class="perm-group__list">
+                    <label
+                      v-for="perm in permRegistry.groups[groupKey]"
+                      :key="perm.code"
+                      class="perm-check"
+                      :title="perm.description"
+                    >
+                      <input
+                        type="checkbox"
+                        :value="perm.code"
+                        v-model="form.permissions"
+                      />
+                      <span>{{ t(perm.label_key) || perm.code }}</span>
+                    </label>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -165,11 +176,15 @@ const editingRole = ref(null)
 const deletingRole = ref(null)
 const submitting = ref(false)
 
-const ALL_PERMISSIONS = ['dashboard', 'orders', 'payments', 'users', 'countries', 'settings']
+// W47: perm 列表从后端注册表拉,分 group 渲染
+const permRegistry = computed(() => admin.permRegistry || { groups: {}, groups_order: [] })
 
 const form = ref({ name: '', code: '', description: '', permissions: [] })
 
-onMounted(fetchRoles)
+onMounted(async () => {
+  await admin.loadPermRegistry()
+  fetchRoles()
+})
 
 async function fetchRoles() {
   loading.value = true
@@ -267,6 +282,11 @@ async function doDelete() {
 .perm-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .perm-check { display: flex; align-items: center; gap: 6px; font-size: 14px; cursor: pointer; }
 .perm-check input { width: auto; }
+
+.perm-groups { display: flex; flex-direction: column; gap: 12px; max-height: 320px; overflow-y: auto; padding-right: 4px; }
+.perm-group { background: #f8fafc; border: 1px solid #e4e7ed; border-radius: 6px; padding: 8px 12px; }
+.perm-group__title { font-size: 12px; color: #475569; font-weight: 600; margin-bottom: 6px; letter-spacing: .3px; }
+.perm-group__list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 12px; }
 
 .btn-primary { background: #409eff; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; }
 .btn-secondary { background: #fff; color: #606266; border: 1px solid #dcdfe6; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; }

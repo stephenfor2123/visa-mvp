@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Htex · 黑灰科技风设计方案</title>
+<style>
+:root{
+  /* ===== 黑灰科技体系（源自 agent-team-dashboard 基调，收敛为产品 token）===== */
+  --bg:#0F1115;          /* 画布：近黑 */
+  --panel:#161922;       /* 一级面板/卡片 */
+  --panel-2:#1B1F2A;     /* 卡中卡 / 输入底 */
+  --elevated:#232836;    /* 悬浮层 / 边框强 */
+  --border:#232836;      /* 细边 */
+  --border-soft:#1E222D; /* 更弱的分隔 */
+
+  --text:#E6E8EE;        /* 主文字 */
+  --muted:#8A93A6;       /* 次文字 */
+  --faint:#5A6275;       /* 三级/占位 */
+
+  --accent:#4F8CFF;      /* 科技蓝（比营销蓝 3B6EF5 更冷更亮）*/
+  --accent-soft:rgba(79,140,255,.14);
+  --green:#36C08A;
+  --yellow:#E2B14A;
+  --red:#E9606B;
+  --purple:#C084FC;
+
+  --grad:linear-gradient(135deg,#4F8CFF 0%,#8B5CF6 100%);
+  --radius:8px;          /* 卡片 */
+  --radius-sm:6px;       /* 控件/chip */
+  --radius-pill:999px;
+  --mono:'SF Mono',ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Segoe UI',sans-serif;
+  -webkit-font-smoothing:antialiased; font-size:13px;
+}
+.wrap{max-width:1080px; margin:0 auto; padding:24px 22px 80px;}
+
+/* 顶部控制条 */
+.toolbar{
+  display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+  background:var(--panel); border:1px solid var(--border);
+  border-radius:var(--radius); padding:14px 18px; margin-bottom:22px;
+}
+.toolbar h1{font-size:15px; margin:0; font-weight:600; letter-spacing:.2px;}
+.toolbar .sub{font-size:11.5px; color:var(--muted); margin-top:3px;}
+.seg{display:inline-flex; gap:4px; margin-left:auto; background:#0C0E13; padding:4px; border-radius:var(--radius-sm); border:1px solid var(--border);}
+.seg button{border:0; background:transparent; cursor:pointer; font-size:12px; font-weight:600; color:var(--muted); padding:6px 14px; border-radius:5px; transition:all .15s;}
+.seg button.on{background:var(--accent); color:#fff;}
+
+.sec-label{font-size:11px; font-weight:700; letter-spacing:1.5px; color:var(--faint); text-transform:uppercase; margin:28px 0 12px; font-family:var(--mono);}
+
+/* ===== token 速查 ===== */
+.tokens{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px;}
+.tok{background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:12px;}
+.tok .swatch{height:38px; border-radius:var(--radius-sm); margin-bottom:9px; border:1px solid rgba(255,255,255,.05);}
+.tok .name{font-size:12.5px; font-weight:600;}
+.tok .val{font-size:10.5px; color:var(--muted); font-family:var(--mono); margin-top:2px;}
+
+/* ===== 舞台（画布）===== */
+.stage{background:var(--bg); border-radius:var(--radius); padding:30px 26px; position:relative; overflow:hidden; border:1px solid var(--border-soft);}
+.stage::before{content:''; position:absolute; top:-120px; left:50%; transform:translateX(-50%); width:520px; height:240px; background:radial-gradient(ellipse at center, rgba(79,140,255,.16), transparent 70%); pointer-events:none;}
+
+/* 现状=浅色 */
+.stage.legacy{background:#FFFFFF; border-color:#EEF2F7;}
+.stage.legacy::before{display:none;}
+
+.hero{text-align:center; margin-bottom:20px; position:relative;}
+.hero h2{font-size:28px; font-weight:700; margin:0 0 6px; letter-spacing:-.4px; background:linear-gradient(120deg,#E6E8EE 20%,#4F8CFF 120%); -webkit-background-clip:text; background-clip:text; color:transparent;}
+.hero .tag{font-family:var(--mono); font-size:11px; color:var(--muted); letter-spacing:1px;}
+.stage.legacy .hero h2{background:linear-gradient(135deg,#0f172a,#3B6EF5); -webkit-background-clip:text; background-clip:text;}
+.stage.legacy .hero .tag{color:#94a3b8;}
+
+.progress{max-width:720px; margin:0 auto 20px;}
+.progress .bar{height:6px; background:var(--elevated); border-radius:var(--radius-pill); overflow:hidden;}
+.stage.legacy .progress .bar{background:#e2e8f0;}
+.progress .fill{height:100%; width:80%; background:var(--grad); border-radius:var(--radius-pill); box-shadow:0 0 12px rgba(79,140,255,.5);}
+.stage.legacy .progress .fill{box-shadow:none; background:linear-gradient(90deg,#3B6EF5,#6E59F0);}
+.progress .txt{font-family:var(--mono); font-size:11px; letter-spacing:1px; color:var(--faint); text-align:center; margin-top:8px;}
+.stage.legacy .progress .txt{color:#94a3b8;}
+
+/* 步骤条 */
+.steps{display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:20px; max-width:720px; margin-left:auto; margin-right:auto;}
+.step{display:flex; flex-direction:column; align-items:center; gap:6px; padding:12px 6px; border-radius:var(--radius); border:1px solid transparent; position:relative; transition:all .15s;}
+.step.active{background:var(--accent-soft); border-color:rgba(79,140,255,.4);}
+.step .ico{width:30px; height:30px; border-radius:8px; background:var(--elevated); color:var(--muted); display:flex; align-items:center; justify-content:center; font-size:14px;}
+.step.done .ico{background:rgba(54,192,138,.16); color:var(--green);}
+.step.active .ico{color:var(--accent);}
+.step .lb{font-size:11px; font-weight:600; color:var(--muted);}
+.step.active .lb,.step.done .lb{color:var(--text);}
+.step .ck{position:absolute; top:5px; right:12px; width:15px; height:15px; border-radius:50%; background:var(--green); color:#0F1115; font-size:9px; font-weight:800; display:flex; align-items:center; justify-content:center;}
+/* legacy 步骤 */
+.stage.legacy .step.active{background:#eff6ff; border-color:#3b6ef5;}
+.stage.legacy .step .ico{background:#f1f5f9; color:#64748b;}
+.stage.legacy .step.done .ico{background:#ecfdf3; color:#16a34a;}
+.stage.legacy .step .lb{color:#475569;}
+.stage.legacy .step .ck{background:#16a34a; color:#fff;}
+
+/* 主面板 */
+.panel{background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:24px 26px; position:relative;}
+.stage.legacy .panel{background:#fff; border-color:#e9edf5; box-shadow:0 8px 28px rgba(15,23,42,.06);}
+.panel h3{font-size:17px; font-weight:600; margin:0 0 16px; display:flex; align-items:center; gap:9px;}
+.panel h3::before{content:''; width:3px; height:16px; background:var(--accent); border-radius:2px;}
+.stage.legacy .panel h3{color:#0f172a;}
+
+/* tab 页签（科技风：底部彩条）*/
+.tabs{display:flex; gap:6px; margin-bottom:16px; flex-wrap:wrap; border-bottom:1px solid var(--border); padding-bottom:0;}
+.tab{padding:8px 14px; font-size:12.5px; font-weight:500; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; display:inline-flex; gap:6px; align-items:center;}
+.tab:hover{color:var(--text);}
+.tab.on{color:var(--text); border-bottom-color:var(--accent);}
+.tab.done{color:var(--green);}
+.stage.legacy .tabs{border-bottom-color:#e2e8f0;}
+.stage.legacy .tab{color:#64748b;}
+.stage.legacy .tab.on{color:#0f172a; border-bottom-color:#3B6EF5;}
+.stage.legacy .tab.done{color:#16a34a;}
+
+/* 上传卡（卡中卡）*/
+.upcard{background:var(--panel-2); border:1px solid var(--border); border-left:3px solid var(--green); border-radius:var(--radius); padding:16px 18px;}
+.stage.legacy .upcard{background:#fff; border:1px solid #dcfce7; border-left:1px solid #dcfce7;}
+.upcard .top{display:flex; justify-content:space-between; align-items:flex-start;}
+.upcard .ttl{font-size:14px; font-weight:600;}
+.upcard .desc{font-size:12px; color:var(--muted); margin:4px 0 2px; line-height:1.5;}
+.upcard .hint{font-size:11px; color:var(--faint); font-family:var(--mono);}
+.stage.legacy .upcard .ttl{color:#0f172a;} .stage.legacy .upcard .desc{color:#64748b;} .stage.legacy .upcard .hint{color:#94a3b8; font-family:inherit;}
+.upcard .ok{width:22px; height:22px; border-radius:50%; background:var(--green); color:#0F1115; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800;}
+.stage.legacy .upcard .ok{background:#16a34a; color:#fff;}
+.file{display:flex; align-items:center; gap:10px; margin:14px 0;}
+.file .thumb{width:40px; height:40px; border-radius:6px; background:var(--elevated);}
+.stage.legacy .file .thumb{background:#f1f5f9;}
+.file .fn{font-size:13px; font-weight:500;}
+.file .fnval{font-family:var(--mono);}
+.file .fmt{font-size:10px; font-weight:700; color:var(--muted); background:var(--elevated); padding:2px 7px; border-radius:4px; letter-spacing:.05em; font-family:var(--mono);}
+.stage.legacy .file .fmt{background:#f1f5f9; color:#64748b;}
+
+/* 状态 chip（统一：暗底 + 左彩条 + 彩字）*/
+.chip{display:flex; gap:8px; align-items:flex-start; font-size:12px; padding:9px 12px; border-radius:var(--radius-sm); margin-top:8px; line-height:1.5; border:1px solid transparent;}
+.chip .i{flex:0 0 auto;}
+.chip.warn{background:rgba(226,177,74,.10); color:#E2B14A; border-color:rgba(226,177,74,.28);}
+.chip.info{background:rgba(79,140,255,.10); color:#7BA9FF; border-color:rgba(79,140,255,.28);}
+.chip.err{background:rgba(233,96,107,.10); color:#E9606B; border-color:rgba(233,96,107,.28);}
+.stage.legacy .chip.warn{background:#FFFBEB; color:#B45309; border-color:#FDE68A;}
+.stage.legacy .chip.info{background:#EFF6FF; color:#1E40AF; border-color:#BFDBFE;}
+.legacy-note{font-size:12px; color:#b45309; margin-top:8px;}
+
+.reupload{margin-top:14px; background:transparent; border:1px solid var(--border); color:var(--muted); padding:8px 16px; border-radius:var(--radius-sm); font-size:12.5px; font-weight:600; cursor:pointer;}
+.stage.legacy .reupload{border-color:#cbd5e1; color:#64748b;}
+
+/* footer */
+.foot{display:flex; gap:10px; justify-content:flex-end; margin-top:20px;}
+.btn-skip{background:transparent; border:1px solid var(--border); color:var(--muted); padding:11px 20px; border-radius:var(--radius-sm); font-size:13px; font-weight:600; cursor:pointer;}
+.btn-next{background:var(--grad); color:#fff; border:0; padding:11px 26px; border-radius:var(--radius-sm); font-size:13.5px; font-weight:700; cursor:pointer; box-shadow:0 6px 18px rgba(79,140,255,.35);}
+.stage.legacy .btn-skip{border-color:#cbd5e1; color:#64748b;}
+.stage.legacy .btn-next{background:linear-gradient(135deg,#3B6EF5,#6E59F0); box-shadow:0 8px 20px rgba(59,110,245,.25);}
+
+/* DS-160 表单卡 */
+.form-card{background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:22px 24px; margin-top:14px;}
+.stage.legacy .form-card{background:#fff; border-color:#e2e8f0; box-shadow:0 1px 3px rgba(15,23,42,.04);}
+.form-card .ct{font-size:16px; font-weight:600; display:flex; align-items:center; gap:8px; margin:0 0 18px;}
+.form-card .ct::before{content:''; width:3px; height:15px; background:var(--accent); border-radius:2px;}
+.stage.legacy .form-card .ct{color:#0f172a;} .stage.legacy .form-card .ct::before{background:#3B6EF5;}
+.grid{display:grid; grid-template-columns:1fr 1fr; gap:14px 18px;}
+.cell{position:relative; display:flex; flex-direction:column;}
+.cell label{font-size:12.5px; font-weight:500; color:var(--muted); margin-bottom:6px;}
+.cell input,.cell select{height:38px; border:1px solid var(--border); border-radius:var(--radius-sm); padding:0 12px; font-size:13.5px; background:var(--panel-2); color:var(--text); font-family:var(--mono);}
+.cell input:focus,.cell select:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft);}
+.stage.legacy .cell label{color:#334155;}
+.stage.legacy .cell input,.stage.legacy .cell select{background:#fff; border-color:#e2e8f0; color:#0f172a; font-family:inherit;}
+.cell .ocr{position:absolute; right:0; top:0; font-size:10px; font-weight:600; color:var(--accent); background:var(--accent-soft); padding:1px 8px; border-radius:var(--radius-pill); letter-spacing:.04em; font-family:var(--mono);}
+.stage.legacy .cell .ocr{color:#2D5BFF; background:#EAF0FE; font-family:inherit;}
+.req{color:var(--red); margin-left:2px;}
+.stage.legacy .req{color:#DC2626;}
+
+.diff-badge{display:inline-block; font-size:10.5px; font-weight:700; padding:3px 10px; border-radius:var(--radius-pill); margin-left:8px; font-family:var(--mono);}
+.diff-badge.legacy{background:#F1F5F9; color:#64748B;}
+.diff-badge.new{background:var(--accent-soft); color:var(--accent);}
+.only-legacy,.only-new{display:none;}
+.mode-legacy .only-legacy{display:block;}
+.mode-new .only-new{display:block;}
+</style>
+</head>
+<body class="mode-new">
+<div class="wrap">
+
+  <div class="toolbar">
+    <div>
+      <h1>Htex 设计方案 · 黑灰科技风<span class="diff-badge new" id="badge">科技版</span></h1>
+      <div class="sub">近黑画布 #0F1115 → 面板 #161922 → 悬浮 #232836 · 蓝/绿/黄低饱和点缀 · 紧凑 6–8px 圆角</div>
+    </div>
+    <div class="seg">
+      <button id="b-legacy" onclick="setMode('legacy')">现状(浅色)</button>
+      <button id="b-new" class="on" onclick="setMode('new')">黑灰科技版</button>
+    </div>
+  </div>
+
+  <div class="sec-label">// design tokens</div>
+  <div class="tokens">
+    <div class="tok"><div class="swatch" style="background:#0F1115"></div><div class="name">画布 bg</div><div class="val">#0F1115</div></div>
+    <div class="tok"><div class="swatch" style="background:#161922"></div><div class="name">面板 panel</div><div class="val">#161922</div></div>
+    <div class="tok"><div class="swatch" style="background:#232836"></div><div class="name">悬浮/边框</div><div class="val">#232836</div></div>
+    <div class="tok"><div class="swatch" style="background:#4F8CFF"></div><div class="name">科技蓝 accent</div><div class="val">#4F8CFF</div></div>
+    <div class="tok"><div class="swatch" style="background:#36C08A"></div><div class="name">完成 green</div><div class="val">#36C08A</div></div>
+    <div class="tok"><div class="swatch" style="background:#E2B14A"></div><div class="name">警告 yellow</div><div class="val">#E2B14A</div></div>
+    <div class="tok"><div class="swatch" style="background:#E9606B"></div><div class="name">错误 red</div><div class="val">#E9606B</div></div>
+    <div class="tok"><div class="swatch" style="background:linear-gradient(135deg,#4F8CFF,#8B5CF6)"></div><div class="name">主渐变 CTA</div><div class="val">4F8CFF→8B5CF6</div></div>
+  </div>
+
+  <div class="sec-label">// 材料收集页 · 身份证明</div>
+  <div class="stage" id="stage">
+    <div class="hero"><h2>材料收集</h2><div class="tag">MATERIALS · US · 80% COMPLETE</div></div>
+    <div class="progress"><div class="bar"><div class="fill"></div></div><div class="txt">80% 完成</div></div>
+    <div class="steps">
+      <div class="step active"><div class="ico">🪪</div><div class="lb">身份证明</div><div class="ck">✓</div></div>
+      <div class="step done"><div class="ico">💲</div><div class="lb">财务证明</div><div class="ck">✓</div></div>
+      <div class="step done"><div class="ico">💼</div><div class="lb">工作 / 在职</div><div class="ck">✓</div></div>
+      <div class="step done"><div class="ico">✈️</div><div class="lb">行程 / 住宿</div><div class="ck">✓</div></div>
+      <div class="step"><div class="ico">📄</div><div class="lb">签证表格</div></div>
+    </div>
+
+    <div class="panel">
+      <h3>身份证明</h3>
+      <div class="tabs"><div class="tab on">护照</div><div class="tab done">✓ 证件照片</div></div>
+      <div class="upcard">
+        <div class="top">
+          <div>
+            <div class="ttl">护照</div>
+            <div class="desc">护照资料页（含照片、姓名、护照号、有效期）</div>
+            <div class="hint">JPG / PNG / WebP / PDF · ≤ 10MB</div>
+          </div>
+          <div class="ok">✓</div>
+        </div>
+        <div class="file"><div class="thumb"></div><div class="fn fnval">05_processed_passport.jpg</div><div class="fmt">JPEG</div></div>
+
+        <div class="only-new">
+          <div class="chip warn"><span class="i">⚠</span><span>检测到证件边缘可能被裁切，建议重新拍摄确保四角完整</span></div>
+          <div class="chip err"><span class="i">✕</span><span><b>护照号格式异常</b> · 识别到 CHNZHANG 不符合常见格式（1 字母 + 7–8 位数字）</span></div>
+          <div class="chip info"><span class="i">›</span><span>SAN ZHANG · 护照号 CHNZHANG · 有效期至 2030-12-31</span></div>
+        </div>
+        <div class="only-legacy">
+          <div class="legacy-note">⚠ 检测到证件边缘可能被裁切，建议重新拍摄确保四角完整</div>
+          <div class="legacy-note">⚠ 护照号格式异常 · 识别到的护照号 CHNZHANG 不符合常见格式（1 字母 + 7-8 位数字）。</div>
+        </div>
+
+        <button class="reupload">重新上传</button>
+      </div>
+
+      <div class="foot"><button class="btn-skip">跳过</button><button class="btn-next">下一步 →</button></div>
+    </div>
+  </div>
+
+  <div class="sec-label">// 签证表格 · DS-160 基本信息</div>
+  <div class="stage" id="stage2" style="padding-top:18px;">
+    <div class="tabs"><div class="tab on">基本信息 1</div><div class="tab">基本信息 2</div><div class="tab">地址电话</div><div class="tab">护照</div><div class="tab done">✓ 旅行</div></div>
+    <div class="form-card">
+      <div class="ct">基本信息 1 — 姓名 / 出生 / 婚姻</div>
+      <div class="grid">
+        <div class="cell"><span class="ocr">⚡ OCR</span><label>姓(拼音)<span class="req">*</span></label><input value="ZHANG"></div>
+        <div class="cell"><span class="ocr">⚡ OCR</span><label>名(拼音)<span class="req">*</span></label><input value="SAN"></div>
+        <div class="cell"><label>婚姻状态<span class="req">*</span></label><select><option>— 请选择 —</option></select></div>
+        <div class="cell"><label>出生日期<span class="req">*</span></label><input value="1990-01-15" type="date"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function setMode(m){
+  document.body.className='mode-'+m;
+  document.getElementById('stage').classList.toggle('legacy',m==='legacy');
+  document.getElementById('stage2').classList.toggle('legacy',m==='legacy');
+  document.getElementById('b-legacy').classList.toggle('on',m==='legacy');
+  document.getElementById('b-new').classList.toggle('on',m==='new');
+  var b=document.getElementById('badge');
+  b.textContent=m==='legacy'?'现状':'科技版';
+  b.className='diff-badge '+m;
+}
+</script>
+</body>
+</html>
