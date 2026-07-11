@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Htex · DS-160</title>
+  <style>
+    body {
+      width: 340px; margin: 0; padding: 14px 16px 12px;
+      font: 13px/1.5 -apple-system, "Segoe UI", Roboto, "PingFang SC", sans-serif;
+      color: #111;
+      background: #fafafa;
+    }
+    .hd { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .hd strong { font-size: 14px; }
+    .badge { font-size: 11px; padding: 2px 6px; border-radius: 6px; background: #e0f2fe; color: #0369a1; }
+    .bd { display: flex; flex-direction: column; gap: 10px; }
+    .row { display: flex; flex-direction: column; gap: 4px; }
+    .row label { font-size: 12px; color: #374151; font-weight: 500; }
+    .row .hint { font-size: 11px; color: #6b7280; }
+    input[type=text] {
+      width: 100%; padding: 10px 11px; border: 1px solid #d1d5db; border-radius: 8px;
+      font: 600 18px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+      letter-spacing: 2px; text-transform: uppercase; box-sizing: border-box;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    input[type=text]:focus { outline: none; border-color: #111; box-shadow: 0 0 0 3px rgba(0,0,0,.08); }
+    input[type=text].invalid { border-color: #dc2626; box-shadow: 0 0 0 3px rgba(220,38,38,.12); }
+    button {
+      width: 100%; padding: 10px; border: 0; border-radius: 8px; cursor: pointer;
+      font-size: 13px; font-weight: 500;
+    }
+    button.primary { background: #111; color: #fff; }
+    button.primary:hover { background: #1f2937; }
+    button.primary:disabled { background: #d1d5db; cursor: not-allowed; }
+    button.ghost { background: #f3f4f6; color: #111; }
+    button.ghost:hover { background: #e5e7eb; }
+    button.danger { background: transparent; color: #b91c1c; font-size: 12px; padding: 6px; }
+    button.danger:hover { background: #fef2f2; }
+    .status { font-size: 12px; padding: 8px 10px; border-radius: 8px; }
+    .status.idle { background: #f3f4f6; color: #4b5563; }
+    .status.ok   { background: #ecfdf5; color: #065f46; }
+    .status.warn { background: #fef3c7; color: #92400e; }
+    .status.err  { background: #fef2f2; color: #991b1b; }
+    .status.info { background: #eff6ff; color: #1e40af; }
+    .meta { font-size: 11px; color: #6b7280; }
+    .meta code { background: #f3f4f6; padding: 1px 5px; border-radius: 4px; font-family: ui-monospace, monospace; }
+    hr { border: 0; border-top: 1px solid #e5e7eb; margin: 4px 0; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="hd">
+    <strong>Htex · DS-160 辅助填充</strong>
+    <span class="badge">v0.2</span>
+  </div>
+
+  <!-- ===================== IDLE STATE: ask for the code ===================== -->
+  <div id="view-idle" class="bd">
+    <div class="row">
+      <label for="code">12 位 code</label>
+      <input id="code" type="text" inputmode="latin" autocomplete="off"
+             placeholder="ABCD-EFGH-JKLM" maxlength="20"
+             aria-describedby="code-hint">
+      <div id="code-hint" class="hint">
+        在 Htex 订单详情页点 "去 DS-160 填表" 拿 code, 粘贴这里。
+        code 自动忽略中划线/空格/大小写。
+      </div>
+    </div>
+    <button id="redeem" class="primary" disabled>Redeem</button>
+    <div class="row" style="margin-top:4px;">
+      <label for="apiBase">API 地址 (dev)</label>
+      <input id="apiBase" type="text" placeholder="http://localhost:8000" style="font-size:12px;letter-spacing:0;">
+      <div class="hint">默认 localhost:8000; 生产填 https://api.htexvisa.com</div>
+    </div>
+    <div id="status" class="status idle" role="status">等待输入 code…</div>
+  </div>
+
+  <!-- ===================== READY STATE: show what's loaded ===================== -->
+  <div id="view-ready" class="bd hidden">
+    <div class="status ok">✅ 已就绪</div>
+    <div class="row">
+      <div class="hint">本次填表对应的订单</div>
+      <div id="ready-name" style="font-size:15px;font-weight:600;"></div>
+      <div class="meta">订单 #<span id="ready-order-id"></span> · 档案指纹 <code id="ready-fp"></code></div>
+      <div class="meta">mapping <code id="ready-mapping-v"></code> · verified <code id="ready-mapping-vd">null</code></div>
+    </div>
+    <hr>
+    <button id="openDs160" class="primary" style="margin-bottom:8px;">
+      🚀 立刻去 ceac.state.gov (新标签页)
+    </button>
+    <div class="hint">
+      打开后:
+      <ol style="margin:6px 0 0 16px;padding:0;">
+        <li>登录自己的 DS-160 账号 (插件不替你登)</li>
+        <li>走到带填表的页面, 右上角 Htex 面板自动激活</li>
+        <li>点 "填充本页" → 核对 → 自己点 Next</li>
+      </ol>
+    </div>
+    <button id="clear" class="danger" style="margin-top:10px;">清除已存档案 (登出)</button>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

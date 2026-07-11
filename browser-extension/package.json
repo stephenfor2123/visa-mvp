@@ -1,0 +1,15 @@
+{
+  "name": "htex-browser-extension",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Htex DS-160 辅助填充浏览器扩展",
+  "scripts": {
+    "test:mapping": "node test/unit/run-mapping-test.mjs",
+    "test:fill-engine": "node test/unit/run-fill-engine-test.mjs",
+    "test": "npm run test:mapping && npm run test:fill-engine"
+  },
+  "devDependencies": {
+    "jsdom": "^29.1.1"
+  }
+}

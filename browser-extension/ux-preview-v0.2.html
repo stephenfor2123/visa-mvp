@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Htex DS-160 v0.2 · UX 预览 (W48)</title>
+<style>
+  :root { --bg:#f8fafc; --panel:#fff; --border:#e5e7eb; --accent:#0ea5e9; --warn:#fef3c7; --warn-text:#92400e; --ok:#ecfdf5; --ok-text:#065f46; --danger:#fef2f2; --danger-text:#991b1b; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 32px; background: var(--bg); font: 14px/1.55 -apple-system, "PingFang SC", "Segoe UI", Roboto, sans-serif; color: #111; }
+  h1 { margin: 0 0 8px; font-size: 22px; }
+  .lead { color: #6b7280; margin: 0 0 28px; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 1400px; }
+  .screen { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 18px; box-shadow: 0 4px 18px rgba(0,0,0,.06); display: flex; flex-direction: column; }
+  .screen h2 { margin: 0 0 4px; font-size: 15px; }
+  .screen .sub { color: #6b7280; font-size: 12px; margin-bottom: 14px; }
+  .mock { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 18px; flex: 1; }
+  .mock-title { font-size: 13px; color: #6b7280; margin-bottom: 10px; }
+  /* popup */
+  .popup { width: 340px; margin: 0 auto; background: #fafafa; border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px 14px; box-shadow: 0 12px 28px rgba(0,0,0,.10); }
+  .popup .hd { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .popup .hd strong { font-size: 14px; }
+  .popup .badge { font-size: 11px; padding: 2px 6px; border-radius: 6px; background: #e0f2fe; color: #0369a1; }
+  .popup .row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+  .popup .row label { font-size: 12px; color: #374151; font-weight: 500; }
+  .popup .row .hint { font-size: 11px; color: #6b7280; }
+  .popup input[type=text] { width: 100%; padding: 10px 11px; border: 1px solid #d1d5db; border-radius: 8px; font: 600 18px/1 ui-monospace, monospace; letter-spacing: 2px; text-align: center; }
+  .popup button { width: 100%; padding: 10px; border: 0; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; margin-top: 4px; }
+  .popup button.primary { background: #111; color: #fff; }
+  .popup .status { font-size: 12px; padding: 8px 10px; border-radius: 8px; margin-top: 10px; }
+  .popup .status.ok { background: var(--ok); color: var(--ok-text); }
+  /* ready view */
+  .ready-name { font-size: 15px; font-weight: 600; }
+  .ready-meta { font-size: 11px; color: #6b7280; margin-top: 2px; }
+  .ready-meta code { background: #f3f4f6; padding: 1px 5px; border-radius: 4px; font-family: ui-monospace, monospace; }
+  .ready-hint { font-size: 11px; color: #374151; margin: 10px 0; }
+  .ready-hint ol { margin: 4px 0 0 16px; padding: 0; }
+  /* hint banner variants */
+  .hint-banner { position: relative; padding: 12px 32px 12px 14px; border-radius: 12px; font: 13px/1.5 -apple-system, "PingFang SC", "Segoe UI", Roboto, sans-serif; box-shadow: 0 4px 14px rgba(0,0,0,.18); max-width: 360px; margin-bottom: 12px; }
+  .hint-banner .icon { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+  .hint-banner .x { position: absolute; top: 6px; right: 10px; cursor: pointer; font-size: 18px; }
+  .hint-banner.setup { background: var(--warn); color: var(--warn-text); }
+  .hint-banner.login { background: var(--warn); color: var(--warn-text); }
+  .hint-banner.email { background: var(--warn); color: var(--warn-text); }
+  .hint-banner.form { background: var(--ok); color: var(--ok-text); }
+  /* fake DS-160 page mock */
+  .fake-page { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 22px; max-width: 360px; }
+  .fake-page h3 { margin: 0 0 6px; font-size: 14px; color: #0c4a6e; }
+  .fake-page .lead { color: #6b7280; font-size: 12px; margin-bottom: 14px; }
+  .fake-page .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; font-size: 12px; }
+  .fake-page .field label { color: #374151; font-weight: 500; }
+  .fake-page .field input, .fake-page .field select { padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 6px; font: 13px -apple-system, sans-serif; }
+  .fake-page .nav { display: flex; gap: 8px; margin-top: 16px; }
+  .fake-page .nav button { padding: 6px 14px; border-radius: 6px; border: 1px solid #cbd5e1; background: #fff; cursor: pointer; font-size: 12px; }
+  .fake-page .nav button.primary { background: #0c4a6e; color: #fff; border-color: #0c4a6e; }
+  /* htex panel */
+  .htex-panel { width: 320px; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,.18); font: 13px/1.5 -apple-system, "PingFang SC", sans-serif; color: #111; }
+  .htex-panel .hd { padding: 12px 14px; border-bottom: 1px solid #f0f0f0; }
+  .htex-panel .hd strong { font-size: 14px; display: block; }
+  .htex-panel .hd .sub { color: #6b7280; font-size: 11px; margin-top: 2px; }
+  .htex-panel .hd .meta { color: #9ca3af; font-size: 10px; margin-top: 3px; font-family: ui-monospace, monospace; }
+  .htex-panel .body { padding: 12px 14px; }
+  .htex-panel .sec { display: flex; align-items: center; gap: 6px; padding: 6px 0; border-bottom: 1px dashed #e5e7eb; font-size: 12px; }
+  .htex-panel .sec .badge { min-width: 18px; padding: 1px 6px; border-radius: 10px; font-size: 10px; color: #fff; text-align: center; }
+  .htex-panel .sec .badge.done { background: #16a34a; }
+  .htex-panel .sec .badge.todo { background: #9ca3af; }
+  .htex-panel .sec .title { flex: 1; }
+  .htex-panel .sec .btn { padding: 3px 8px; border: 0; border-radius: 6px; background: #f3f4f6; color: #111; font-size: 11px; cursor: pointer; }
+  /* column layout for screen 3 (DS-160 mock with hint + panel) */
+  .ds160-mock-wrap { position: relative; padding: 18px; background: #f1f5f9; border-radius: 10px; min-height: 420px; }
+  .ds160-mock-wrap .hint-banner { position: absolute; left: 18px; top: 18px; }
+  .ds160-mock-wrap .htex-panel { position: absolute; right: 18px; top: 18px; }
+  .ds160-mock-wrap .fake-page { margin: 76px auto 0; }
+  .footer-note { max-width: 1400px; margin: 32px auto 0; padding: 16px 18px; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; font-size: 13px; color: #0c4a6e; line-height: 1.6; }
+  .footer-note code { background: #e0f2fe; padding: 1px 6px; border-radius: 4px; font-family: ui-monospace, monospace; }
+</style>
+</head>
+<body>
+
+<h1>Htex DS-160 v0.2 · UX 预览</h1>
+<p class="lead">W48 v0.2 的两个 UX 增强：UX1 弹窗跳转美签网站 · UX2 插件按页面模式只在该出手时出手。</p>
+
+<div class="grid">
+
+  <!-- ============== SCREEN 1: 插件弹窗 idle → 输入 code ============== -->
+  <div class="screen">
+    <h2>① 插件弹窗 · 输入 12 位 code</h2>
+    <div class="sub">用户从 Htex 订单详情页复制 code，粘贴到这里</div>
+    <div class="mock">
+      <div class="popup">
+        <div class="hd"><strong>Htex · DS-160 辅助填充</strong><span class="badge">v0.2</span></div>
+        <div class="row">
+          <label>12 位 code</label>
+          <input type="text" value="GD6Z-5QG3-XRN6" readonly>
+          <div class="hint">在 Htex 订单详情页点"生成 DS-160 code"拿 code, 粘贴这里。</div>
+        </div>
+        <button class="primary" style="background:#0ea5e9;">Redeem</button>
+        <div class="status ok">✅ 已就绪 · NGUYEN Van An</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============== SCREEN 2: 弹窗 ready + UX1 跳转按钮 ============== -->
+  <div class="screen">
+    <h2>② 弹窗 ready · UX1 跳转美签网站</h2>
+    <div class="sub">Redeem 成功后, 弹窗给出档案摘要 + 一键跳转</div>
+    <div class="mock">
+      <div class="popup">
+        <div class="hd"><strong>Htex · DS-160 辅助填充</strong><span class="badge">v0.2</span></div>
+        <div class="status ok">✅ 已就绪</div>
+        <div class="ready-name">NGUYEN Van An</div>
+        <div class="ready-meta">订单 #1 · 档案指纹 <code>9fc827c6…</code></div>
+        <div class="ready-meta">mapping <code>2026.2</code> · verified <code>null (待核对真表)</code></div>
+        <hr style="border:0;border-top:1px solid #e5e7eb;margin:10px 0;">
+        <button class="primary" style="background:#111;color:#fff;">🚀 立刻去 ceac.state.gov (新标签页)</button>
+        <div class="ready-hint">
+          打开后:
+          <ol>
+            <li>登录自己的 DS-160 账号 (插件不替你登)</li>
+            <li>走到带填表的页面, 右上角 Htex 面板自动激活</li>
+            <li>点"填充本页" → 核对 → 自己点 Next</li>
+          </ol>
+        </div>
+        <button style="background:transparent;color:#b91c1c;font-size:12px;padding:6px;">清除已存档案 (登出)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============== SCREEN 3: UX2 setup/login/email 三屏提示 ============== -->
+  <div class="screen" style="grid-column: span 3;">
+    <h2>③ UX2 · 插件按页面模式只在该出手时出手</h2>
+    <div class="sub">DS-160 流程里有 4 种页面, 插件对每种展示不同提示 / 操作</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;">
+
+      <!-- 3a: Setup -->
+      <div>
+        <h3 style="margin:0 0 6px;font-size:13px;">🆕 Getting Started</h3>
+        <div class="ds160-mock-wrap">
+          <div class="hint-banner setup">
+            <span class="x">×</span>
+            <div class="icon">🆕 这是 Getting Started 页 (创建新申请)</div>
+            <div>选申请地点、创建 Application ID、设安全问题 — 这些步骤必须由你在 DS-160 官网上自己完成。<br>填完创建后, 进到第一个填表页 (Personal Info 1) 时 Htex 面板会自动激活。</div>
+          </div>
+          <div class="fake-page">
+            <h3>Getting Started</h3>
+            <div class="lead">Choose a Location to Apply</div>
+            <div class="field"><label>Location (City) where you will apply</label><select><option>— select —</option><option>HO CHI MINH</option></select></div>
+            <div class="field"><label>Security Question</label><select><option>— select —</option></select></div>
+            <div class="nav"><button>Back</button><button class="primary">Create New Application</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3b: Login -->
+      <div>
+        <h3 style="margin:0 0 6px;font-size:13px;">🔒 Sign In</h3>
+        <div class="ds160-mock-wrap">
+          <div class="hint-banner login">
+            <span class="x">×</span>
+            <div class="icon">🔒 Htex 不替你登录</div>
+            <div>请用你自己的 DS-160 Application ID + 密码登录。插件只填字段, 不碰密码。</div>
+          </div>
+          <div class="fake-page">
+            <h3>Sign In to Your Application</h3>
+            <div class="lead">Forgot your Application ID?</div>
+            <div class="field"><label>Application ID</label><input type="text" placeholder="AA12345678"></div>
+            <div class="field"><label>Password</label><input type="password"></div>
+            <div class="nav"><button>Forgot ID</button><button class="primary">Sign In</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3c: Email collection -->
+      <div>
+        <h3 style="margin:0 0 6px;font-size:13px;">📧 Email 收集页</h3>
+        <div class="ds160-mock-wrap">
+          <div class="hint-banner email">
+            <span class="x">×</span>
+            <div class="icon">📧 这是邮箱收集页</div>
+            <div>请输入你要关联 DS-160 的邮箱地址 — 这一步你自己填, 插件不代填邮箱 (隐私 + 安全)。<br>填完后点 Continue, 进到 Personal Info 1 时 Htex 面板会自动激活。</div>
+          </div>
+          <div class="fake-page">
+            <h3>Personal Information 1</h3>
+            <div class="lead">Please provide an email address to continue</div>
+            <div class="field"><label>Email Address</label><input type="email" placeholder="name@example.com"></div>
+            <div class="field"><label>Confirm Email Address</label><input type="email"></div>
+            <div class="nav"><button class="primary">Continue</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3d: Form page (panel active) -->
+      <div>
+        <h3 style="margin:0 0 6px;font-size:13px;">✅ 填表页 · 插件激活</h3>
+        <div class="ds160-mock-wrap" style="min-height: 480px;">
+          <div class="htex-panel">
+            <div class="hd">
+              <strong>Htex · DS-160 辅助填充</strong>
+              <div class="sub">NGUYEN Van An · VN · DS-160 v2026.2 · 未核对</div>
+              <div class="meta">订单 #1 · 指纹 9fc827c6…</div>
+            </div>
+            <div class="body">
+              <div class="sec"><span class="badge done">✓</span><span class="title">Personal Information 1</span><button class="btn">填充这节</button></div>
+              <div class="sec"><span class="badge done">✓</span><span class="title">Personal Information 2</span><button class="btn">填充这节</button></div>
+              <div class="sec"><span class="badge todo">○</span><span class="title">Address and Phone</span><button class="btn">填充这节</button></div>
+              <div class="sec"><span class="badge todo">○</span><span class="title">Passport</span><button class="btn">填充这节</button></div>
+              <div class="sec"><span class="badge todo">○</span><span class="title">Travel</span><button class="btn">填充这节</button></div>
+            </div>
+          </div>
+          <div class="fake-page">
+            <h3>Personal Information 1</h3>
+            <div class="lead">Surnames *</div>
+            <div class="field"><label>Surnames</label><input type="text" value="NGUYEN"></div>
+            <div class="field"><label>Given Names</label><input type="text" value="VAN AN"></div>
+            <div class="field"><label>Sex</label><select><option>MALE</option></select></div>
+            <div class="field"><label>Date of Birth (Day-Month-Year)</label><div style="display:flex;gap:4px;"><select style="flex:0 0 70px;"><option>14</option></select><select style="flex:0 0 90px;"><option>MAY</option></select><input type="text" value="1992" style="flex:1;"></div></div>
+            <div class="nav"><button>Back</button><button class="primary">Next</button></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<div class="footer-note">
+  <strong>3 个新增 UX 行为 (W48 v0.2)</strong><br>
+  <strong>①</strong> 插件弹窗输入 code → Redeem → 看到 <strong>🚀 立刻去 ceac.state.gov</strong> 按钮 → 一键新标签页打开 (popup 关闭)。<br>
+  <strong>②</strong> DS-160 流程里 <strong>setup / login / email</strong> 三种页只显示黄色提示条, 插件不出手 — 用户自己完成。<br>
+  <strong>③</strong> 到了真正的填表页 (检测到 <code>Surnames / Given Names / Sex / DOB</code> 等标签), 右上角 <strong>Htex 填充面板激活</strong>。<br><br>
+  <em>红线和约束：插件不替你登录 DS-160, 不替你点 Submit/支付, 不替你填邮箱 (隐私), 任何字段必填缺值都老实标"待补",绝不瞎填。</em>
+</div>
+
+</body>
+</html>

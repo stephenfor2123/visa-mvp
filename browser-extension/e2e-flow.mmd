@@ -1,0 +1,117 @@
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor':'#e0f2fe','actorBkg':'#fef3c7','actorBorder':'#f59e0b','noteBkgColor':'#fef2f2','noteBorderColor':'#ef4444'}}}%%
+sequenceDiagram
+    autonumber
+    actor User as 👤 用户
+    participant Htex as 💻 Htex Web<br/>(Vue)
+    participant API as 🖥️ Htex 后端<br/>(FastAPI)
+    participant DB as 💾 DB<br/>(orders)
+    participant Ext as 🧩 Chrome 插件<br/>(popup.html)
+    participant Bg as 🧩 background.js
+    participant DS160 as 🌐 ceac.state.gov<br/>(DS-160 官网)
+
+    rect rgb(240, 249, 255)
+    Note over User, API: ── 阶段 1: 签发 code ──
+    User->>Htex: 1. 订单详情页 → 点 "去 DS-160 填表"
+    Htex->>API: 2. POST /api/v2/ds160/code {order_id}
+    API->>API: 3. auth: 用户 = order owner ✓
+    API->>DB: 4. 查 order.applicants
+    DB-->>API: 5. 返回档案
+    API->>API: 6. fp_new = compute_fingerprint(profile)
+    alt 档案未变 (order.ds160_fingerprint == fp_new)
+        API-->>Htex: 7a. {code: 旧, unchanged: true}
+        Note right of Htex: 幂等路径,<br/>不刷新 code
+    else 档案变了 或 首次签发
+        API->>API: 7b. generate_code() 12 位 base30
+        API->>DB: 8. UPDATE orders SET ds160_code, ds160_fingerprint, ds160_code_issued_at
+        DB-->>API: 9. OK
+        API-->>Htex: 10. {code: 新, unchanged: false}
+    end
+    Htex->>User: 11. 展示 code + "复制"按钮<br/>"档案若有更新会自动换码"
+    User->>User: 12. 复制 code
+    end
+
+    rect rgb(254, 249, 195)
+    Note over User, Bg: ── 阶段 2: 插件 redeem ──
+    User->>Ext: 13. 点 Chrome 工具栏 Htex 插件图标
+    Ext->>User: 14. 弹出 popup: 12 位 code 输入框
+    User->>Ext: 15. 粘贴 code → 点 "Redeem"
+    Ext->>API: 16. POST /api/v2/ds160/code/redeem {code}
+    API->>API: 17. 限频检查 (60s/5 次/order, 60s/10 次/IP)
+    API->>DB: 18. SELECT * FROM orders WHERE ds160_code = ?
+    DB-->>API: 19. order 或 NULL
+
+    alt code 不存在
+        API-->>Ext: 20a. 404 CODE_NOT_FOUND
+        Ext->>User: 21a. 输入框红边 + "code 不存在"
+    else code 已撤销
+        API-->>Ext: 20b. 409 CODE_REVOKED
+        Ext->>User: 21b. "code 已重置, 请回 Htex 拿新 code"
+    else code 存在且未撤销
+        API->>DB: 22. 加载 order.applicants
+        DB-->>API: 23. profile
+        API->>API: 24. fp_now = compute_fingerprint(profile)
+
+        alt fp_now != order.ds160_fingerprint (档案变了!)
+            API->>API: 25a. audit log: ARCHIVE_CHANGED
+            API-->>Ext: 26a. 409 ARCHIVE_CHANGED<br/>{hint, issued_fp, current_fp}
+            Ext->>User: 27a. 红色 banner:<br/>"档案已更新, 请回 Htex 拿新 code"<br/>[回 Htex] 按钮
+        else fp 一致 ✓
+            API->>DB: 28. UPDATE ds160_code_consumed_count++, ds160_last_redeemed_at
+            API->>API: 29. audit log: success
+            API-->>Ext: 30. {order_id, profile, fingerprint, mapping_version}
+            Ext->>Bg: 31. HTEX_REDEEM_CODE → chrome.storage.session.set
+            Bg-->>Ext: 32. OK
+            Ext->>User: 33. popup 显示 "✅ 已就绪: <申请人姓名>"<br/>"请打开 DS-160 官网"
+        end
+    end
+    end
+
+    rect rgb(220, 252, 231)
+    Note over User, DS160: ── 阶段 3: 在 DS-160 填表 ──
+    User->>DS160: 34. 打开 ceac.state.gov/genniv/
+    DS160->>User: 35. 显示登录页
+    Note over DS160: 插件 content-ds160.js 自动注入<br/>高亮 login form + "用你的账号登录"<br/>(插件不碰密码)
+    User->>DS160: 36. 自己输入 DS-160 账号密码 + 点登录
+    DS160->>User: 37. 登录成功, 进 Personal Info 1 页
+    Note over DS160: 插件右上角出现填充面板<br/>"待填 8 字段 · 已填 0/23 页"
+    User->>DS160: 38. 点 "填充本页"
+    DS160->>Bg: 39. HTEX_GET_PROFILE
+    Bg-->>DS160: 40. profile
+    DS160->>DS160: 41. fillEngine: 锚 label 定位 → 按类型填值<br/>绿框高亮已填, 报告"待补"
+    DS160->>User: 42. 已填字段绿框, 报告 toast:<br/>"✅ 7/8 字段已填<br/>⚠️ 1 字段需人工: 国家代码"
+    User->>DS160: 43. 核对 + 自己补 + 自己点 "Next"
+    DS160->>User: 44. 进 Personal Info 2 页
+    Note over User, DS160: 重复 38-43 直到全部 23 页 + Security/Background (manual)
+    User->>DS160: 45. 上传照片 + 核对全文 + 电子签名 + 提交<br/>(全部由用户操作, 插件不替点)
+    end
+
+    rect rgb(243, 232, 255)
+    Note over User, Htex: ── 阶段 4 (可选): 续填 / 改档案 ──
+    User->>Htex: 46. 想到要在 DS-160 改地址, 回 Htex 改
+    Htex->>API: 47. PUT /api/v2/orders/{id} {address: 新}
+    API->>DB: 48. UPDATE order
+    DB-->>API: 49. OK
+    Note over API: 老 code 还在 DB 里<br/>但 fingerprint 已经对不上
+    User->>Htex: 50. 再点 "去 DS-160 填表"
+    Htex->>API: 51. POST /api/v2/ds160/code
+    API->>API: 52. fp_new != order.ds160_fingerprint<br/>→ 生成新 code
+    API->>DB: 53. UPDATE ds160_code = 新
+    API-->>Htex: 54. {code: 新, unchanged: false}
+    Htex->>User: 55. 新 code, "档案已更新, code 自动换"
+    Note over User: 插件拿老 code 再去 redeem →<br/>会触发阶段 2 的 ARCHIVE_CHANGED 分支
+    end
+
+    rect rgb(254, 226, 226)
+    Note over User, API: ── 错误路径: 安全事件 ──
+    Note over API: 场景 A: 同 IP 60s 内 redeem 失败 10 次
+    API->>API: 56. rate limit 触发
+    API-->>Ext: 57. 429 RATE_LIMITED
+    Ext->>User: 58. "操作太频繁, 60 秒后再试"
+
+    Note over API: 场景 B: 用户发现 code 泄漏, 主动 rotate
+    User->>Htex: 59. 订单详情页 → 点 "重置 DS-160 code"
+    Htex->>API: 60. POST /api/v2/ds160/code {force_rotate: true}
+    API->>DB: 61. UPDATE ds160_code = 新, ds160_code_revoked = true (老 code 进黑名单)
+    API-->>Htex: 62. {code: 新}
+    Note over Ext: 即使有人拿到老 code 来 redeem<br/>也返 409 CODE_REVOKED
+    end

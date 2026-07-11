@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Mock DS-160 — 插件填充引擎手动测试页</title>
+  <style>
+    body { font: 14px/1.6 -apple-system, Segoe UI, Roboto, sans-serif; margin: 24px; color: #111; }
+    h1 { font-size: 18px; } .hint { color: #6b7280; }
+    table { border-collapse: collapse; margin-top: 12px; } td { padding: 6px 10px; vertical-align: top; }
+    td:first-child { color: #374151; white-space: nowrap; }
+    input[type=text] { padding: 4px 6px; } select { padding: 4px; }
+    button { margin: 16px 0; padding: 10px 16px; background: #111; color: #fff; border: 0; border-radius: 8px; cursor: pointer; }
+    pre { background: #f6f7f8; padding: 12px; border-radius: 8px; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>Mock DS-160 — 填充引擎手动测试</h1>
+  <p class="hint">在真 Chrome 里直接打开本文件(file://)，点下面的按钮，看引擎把仿真表单填好、日期三连下拉拆填、缺项老实报告。<br>
+     这是不依赖官网的开发/演示 harness;真机跑真官网请按 README 加载扩展。</p>
+
+  <table>
+    <tr><td><label for="s">Surnames</label></td><td><input id="s" type="text"></td></tr>
+    <tr><td>Given Names</td><td><input id="g" type="text"></td></tr>
+    <tr><td>Full Name in Native Alphabet</td>
+        <td><input id="na" type="text"> <input id="nachk" type="checkbox"><label for="nachk">Does Not Apply</label></td></tr>
+    <tr><td>Sex</td><td><select id="sex"><option value="">-</option><option>MALE</option><option>FEMALE</option></select></td></tr>
+    <tr><td>Marital Status</td><td><select id="ms"><option value="">-</option><option>SINGLE</option><option>MARRIED</option></select></td></tr>
+    <tr><td>Date of Birth</td><td><select id="dobD"></select> <select id="dobM"></select> <input id="dobY" type="text" size="6"></td></tr>
+    <tr><td>Passport/Travel Document Number</td><td><input id="pn" type="text"></td></tr>
+    <tr><td>Expiration Date</td><td><select id="expD"></select> <select id="expM"></select> <input id="expY" type="text" size="6"></td></tr>
+    <tr><td>Purpose of Trip to the U.S.</td>
+        <td><select id="pur"><option value="">-</option><option>TEMP. BUSINESS PLEASURE VISITOR (B)</option></select></td></tr>
+    <tr><td>Person/Entity Paying for Your Trip</td><td><select id="pay"><option value="">-</option><option>SELF</option><option>OTHER</option></select></td></tr>
+  </table>
+
+  <button id="fillBtn">⚡ 用示例档案填充</button>
+  <button id="mockRedeemBtn" style="margin-left:8px;background:#0ea5e9;">🧪 模拟 redeem 12 位 code</button>
+  <pre id="out">点按钮后这里显示逐项结果…</pre>
+
+  <script>
+    // 生成日期三连下拉的选项(模拟真 DS-160 结构)
+    const mons = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC']
+    function fillDayMon(dId, mId) {
+      const d = document.getElementById(dId), m = document.getElementById(mId)
+      d.innerHTML = '<option value="">-</option>' + Array.from({length:31}, (_,i)=>`<option>${String(i+1).padStart(2,'0')}</option>`).join('')
+      m.innerHTML = '<option value="">-</option>' + mons.map((mn,i)=>`<option value="${i+1}">${mn}</option>`).join('')
+    }
+    fillDayMon('dobD','dobM'); fillDayMon('expD','expM')
+  </script>
+  <script src="../src/mapping.js"></script>
+  <script src="../src/fillEngine.js"></script>
+  <script>
+    const sampleProfile = {
+      identity: { surname: 'nguyen', givenName: 'van an', sex: 'M', maritalStatus: 'single', dob: '1992-05-14', nationality: 'Vietnam' },
+      passport: { type: 'regular', number: 'c1234567', expiry: '2031-03-01' },
+      travel: { purpose: 'tourism', payer: 'self' },
+    }
+    document.getElementById('fillBtn').addEventListener('click', () => {
+      const guide = window.HTEX.buildGuide(sampleProfile)
+      const report = window.HTEX.fill(guide)
+      const lines = ['汇总: ' + JSON.stringify(report.summary), '']
+      report.results.forEach(r => lines.push(`[${r.status}] ${r.label}${r.value ? ' → ' + r.value : ''}${r.reason ? ' (' + r.reason + ')' : ''}`))
+      document.getElementById('out').textContent = lines.join('\n')
+    })
+
+    // W48 v0.2: mock redeem — simulate the popup → background → storage.session
+    // flow without actually hitting the backend. Useful for verifying that
+    // content-ds160.js picks up the right profile shape.
+    document.getElementById('mockRedeemBtn').addEventListener('click', () => {
+      const fakeCode = 'K7H3N9XRA2BQ'  // any 12 base30 chars
+      const fakeMeta = {
+        order_id: 12345,
+        fingerprint: 'a3f1e9c2b4d8e7f0a1b2c3d4e5f67890',
+        mapping_version: '2026.2',
+        mapping_verified_date: null,
+        profile: sampleProfile,
+      }
+      // We don't actually run background.js in this file:// test page, so just
+      // mirror what background.js does and stash via window.localStorage so
+      // content-ds160.js-style readers (when this page is opened in the
+      // extension context) can pick it up.
+      try {
+        chrome.storage.session.set({ htex_profile: sampleProfile, htex_meta: fakeMeta }, () => {
+          document.getElementById('out').textContent = '✅ Mock redeem OK (code=' + fakeCode + ')\n' + JSON.stringify(fakeMeta, null, 2)
+        })
+      } catch (e) {
+        // Fallback for when chrome.storage isn't available (no extension loaded)
+        document.getElementById('out').textContent =
+          '✅ Mock redeem OK (code=' + fakeCode + ')\n' +
+          '⚠️ chrome.storage.session not available — open this file in the extension context to test storage wiring.\n\n' +
+          JSON.stringify(fakeMeta, null, 2)
+      }
+    })
+  </script>
+</body>
+</html>
