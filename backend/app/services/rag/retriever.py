@@ -56,18 +56,26 @@ async def retrieve(
     min_score: float = 0.05,
     use_mmr: bool = True,
     mmr_lambda: float = 0.7,
+    language: str = "en",
 ) -> List[RetrievedChunk]:
-    """Embed query, score all chunks (filtered by country if given), top-k.
+    """Embed query, score all chunks (filtered by country + language), top-k.
 
     W31: hybrid scoring = EMBEDDING_WEIGHT * embedding_cosine +
                            KEYWORD_WEIGHT * keyword_bm25
     Then applies MMR to dedup near-duplicates in the top-k.
+
+    W47c: ``language`` defaults to ``"en"``. Post-W47c the RAG source of truth
+    is English — retrieval runs over English chunks regardless of the user's
+    display language. Pass a different ``language`` only when testing legacy
+    sources or seeded non-English chunks during the migration window.
     """
     q_vec = embed(query)
 
     stmt = select(RagChunk, RagSource).join(RagSource, RagChunk.source_id == RagSource.id)
     if country_code:
         stmt = stmt.where(RagSource.country_code == country_code)
+    if language:
+        stmt = stmt.where(RagSource.language == language)
     stmt = stmt.where(RagSource.enabled.is_(True))
 
     rows = (await db.execute(stmt)).all()
@@ -97,7 +105,8 @@ async def retrieve(
                 chunk_id=chunk.id,
                 source_id=source.id,
                 source_name=source.name,
-                source_url=source.url,
+                # chunk-level source_url takes priority over legacy RagSource.url
+                source_url=(chunk.source_url or source.url),
                 chunk_index=chunk.chunk_index,
                 text=chunk.content,
                 score=final,
@@ -129,7 +138,8 @@ async def retrieve(
                     chunk_id=chunk.id,
                     source_id=source.id,
                     source_name=source.name,
-                    source_url=source.url,
+                    # chunk-level source_url takes priority over legacy RagSource.url
+                    source_url=(chunk.source_url or source.url),
                     chunk_index=chunk.chunk_index,
                     text=chunk.content,
                     score=final,
@@ -246,9 +256,13 @@ def _highlight_terms(text: str, terms: List[str]) -> str:
 def generate_answer(query: str, retrieved: List[RetrievedChunk]) -> str:
     """Compose an answer from retrieved chunks (extract + highlight).
 
-    W31: top-1 chunk is trimmed to first 2 sentences with matched terms
-    wrapped in **markdown bold** so the UI can render highlights. Source
-    attribution appended at the end.
+    W60: previous version trimmed to first 2 sentences, which truncated
+    enumeration-style chunks (e.g. "Required Documents: 1. ... 2. ... 3. ...")
+    after the first item. New rule: if the chunk has 3+ numbered items
+    (1. / 2. / 3. / 一、 / 1) / etc.) treat it as a list-of-items and return
+    the full chunk — that's the entire point of the chunk. Otherwise fall
+    back to the original 2-sentence trim for prose-style answers.
+    Matched terms are still wrapped in **markdown bold** for UI rendering.
     """
     if not retrieved:
         return (
@@ -256,11 +270,18 @@ def generate_answer(query: str, retrieved: List[RetrievedChunk]) -> str:
         )
     top = retrieved[0]
     snippet = top.text.strip()
-    # trim to 1-2 sentences for readability
-    parts = [p for p in snippet.split(". ") if p.strip()]
-    snippet = ". ".join(parts[:2]).strip()
-    if not snippet.endswith("."):
-        snippet += "."
+    # W60: count enumeration markers (Western "N." or CJK "N、" / "N)")
+    import re as _re
+    enum_markers = _re.findall(r"(?:^\s*\d+[\.\)、])|(?:^\s*[一二三四五六七八九十]+、)", snippet, flags=_re.MULTILINE)
+    if len(enum_markers) >= 3:
+        # enumeration-style chunk — show full content (it's the whole point)
+        pass
+    else:
+        # prose-style — trim to 1-2 sentences for readability (W31 behavior)
+        parts = [p for p in snippet.split(". ") if p.strip()]
+        snippet = ". ".join(parts[:2]).strip()
+        if not snippet.endswith("."):
+            snippet += "."
     # W31: highlight matched keywords
     snippet = _highlight_terms(snippet, top.matched_keywords or [])
     src = top.source_name
@@ -297,3 +318,32 @@ def generate_followups(retrieved: List[RetrievedChunk]) -> List[str]:
     if not country_hint:
         country_hint = "这个国家"
     return [t.format(country_hint) for t in templates]
+
+def generate_followups_en(retrieved: List[RetrievedChunk]) -> List[str]:
+    """W47c: English-language follow-ups. Replaces `generate_followups` for
+    the English-authoritative pipeline — the answer orchestrator translates
+    these into the user's display language, so the source must be English.
+    """
+    if not retrieved:
+        return []
+    templates = [
+        "What documents are required for a {country} visa?",
+        "How much does a {country} visa cost?",
+        "How long does {country} visa processing take?",
+    ]
+    text = retrieved[0].text
+    country_hint = None
+    for kw, name in [
+        ("United States", "United States"),
+        ("U.S.", "United States"),
+        ("Schengen", "Schengen"),
+        ("United Kingdom", "United Kingdom"),
+        ("UK", "United Kingdom"),
+        ("Australia", "Australia"),
+    ]:
+        if kw in text:
+            country_hint = name
+            break
+    if not country_hint:
+        country_hint = "this"
+    return [t.format(country=country_hint) for t in templates]

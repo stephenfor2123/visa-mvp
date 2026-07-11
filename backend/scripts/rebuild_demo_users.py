@@ -17,7 +17,7 @@ from app.models.material import Material  # noqa: E402
 from app.models.order import Order, OrderStatusHistory  # noqa: E402
 from app.services.auth_service import AuthService  # noqa: E402
 
-DEMO_PASSWORD = "demo1234"  # 8 chars, satisfies PASSWORD_MIN_LENGTH=8
+DEMO_PASSWORD = "Htex@2026"  # 8 chars, satisfies PASSWORD_MIN_LENGTH=8
 
 USERS = [
     {

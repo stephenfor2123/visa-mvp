@@ -34,6 +34,10 @@ class MaterialOut(BaseModel):
     expires_at: Optional[datetime]
     archived: bool
     created_at: datetime
+    # W60: 前端 lightbox 需要原文件 URL + 缩略图 URL 才能预览。
+    # 由 api 层在序列化时通过 material_service.build_download_url / build_thumbnail_url 填充。
+    download_url: Optional[str] = None
+    thumbnail_url: Optional[str] = None
 
 
 class MaterialDetailOut(MaterialOut):
@@ -234,6 +238,26 @@ class ConfirmClassificationRequest(BaseModel):
 # --------------------------------------------------------------------------- #
 # Diagnose (AI refusal-risk assessment) — V2 §4.3.5                           #
 # --------------------------------------------------------------------------- #
+class ProcessMaterialResponse(BaseModel):
+    """POST /process — ephemeral OCR result (file bytes are not stored)."""
+
+    material_type: str
+    fields: dict[str, Any] = Field(default_factory=dict)
+    is_blurry: bool = False
+    is_complete: bool = True
+    ocr_status: str = "done"
+    pages_processed: int = 0
+    bank_analysis: Optional[dict[str, Any]] = None
+
+
+class MaterialSnapshotIn(BaseModel):
+    """Client-side material summary for /diagnose (no stored files)."""
+
+    item_key: str = Field(..., min_length=1, max_length=64)
+    material_type: str
+    ocr_result: dict[str, Any] = Field(default_factory=dict)
+
+
 class DiagnoseIssue(BaseModel):
     """One potential issue / improvement opportunity in the application."""
 
@@ -243,6 +267,9 @@ class DiagnoseIssue(BaseModel):
     detail: str
     fix_suggestion: Optional[str] = None
     related_material_id: Optional[int] = None
+    related_item_key: Optional[str] = Field(
+        None, description="Wizard item key when materials are browser-local only"
+    )
     # W46: i18n keys + structured params. When set, frontend should look these
     # up in its own locale and interpolate `params` instead of rendering the
     # pre-rendered zh-CN `title`/`detail` strings.
@@ -261,10 +288,14 @@ class DiagnoseRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     material_ids: list[int] = Field(
-        ...,
-        min_length=1,
+        default_factory=list,
         max_length=50,
-        description="Material IDs to include in the diagnosis",
+        description="Legacy: stored material IDs (deprecated — use materials_snapshot)",
+    )
+    materials_snapshot: list[MaterialSnapshotIn] = Field(
+        default_factory=list,
+        max_length=50,
+        description="Ephemeral OCR summaries from the browser (preferred)",
     )
     country_code: str = Field(
         ...,

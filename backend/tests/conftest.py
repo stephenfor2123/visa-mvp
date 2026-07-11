@@ -33,6 +33,7 @@ def _test_env() -> Generator[None, None, None]:
     os.environ["ADMIN_PASSWORD_SECRET"] = "visa-admin-2024"
     os.environ["ENV"] = "test"
     os.environ["DB_ECHO"] = "0"
+    os.environ["MATERIAL_STORAGE_ENABLED"] = "1"
 
     # Reset cached settings + global state
     from app.core.config import get_settings
@@ -41,6 +42,12 @@ def _test_env() -> Generator[None, None, None]:
     # Reset rate limiter singleton between modules
     from app.middleware.rate_limit import InMemoryRateLimiter
     InMemoryRateLimiter()
+    # Reset DS-160 in-memory rate limiter too (P1: swap to Redis)
+    try:
+        from app.core.ds160 import get_default_rate_limiter
+        get_default_rate_limiter().reset()
+    except Exception:
+        pass
 
     yield
     # Teardown
@@ -163,6 +170,7 @@ async def app():
         ("app.api.v2.voice", "get_db"),
         ("app.api.v2.scheduler", "get_db"),
         ("app.api.v2.affiliate", "get_db"),
+        ("app.api.v2.ds160", "get_db"),
         ("app.core.security", "get_db"),
     ]:
         _safe_patch(module_name, attr, _test_get_db)

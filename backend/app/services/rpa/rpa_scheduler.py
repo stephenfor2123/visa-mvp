@@ -128,6 +128,21 @@ class RPAScheduler:
         """Whether mock mode is enabled."""
         return self._config.get("mock_mode", True)
 
+    @staticmethod
+    def _normalize_country_value(v: Any) -> dict[str, Any]:
+        """Normalize a single country entry from rpa_config.yaml.
+
+        rpa_config.yaml uses a flattened schema where each country is just a
+        bool (``ID: true``). Code paths here historically expected the older
+        nested dict schema (``ID: {enabled: true, ...}``). To stay
+        backward-compatible without forcing a yaml migration, normalize both
+        shapes into a dict with at least an ``enabled`` key.
+        """
+        if isinstance(v, dict):
+            return v
+        # bool / int / None / anything else → treat the truthy value as enabled
+        return {"enabled": bool(v)}
+
     def get_config(self) -> dict[str, Any]:
         """Return current RPA configuration (safe subset, no secrets)."""
         rl = self._config.get("rate_limits", {})
@@ -149,7 +164,7 @@ class RPAScheduler:
                 "page_max_retries": retry.get("page_max_retries", 2),
             },
             "countries": {
-                k: v.get("enabled", False)
+                k: bool(v)
                 for k, v in self._config.get("countries", {}).items()
             },
             "mock_mode": self.mock_mode,
@@ -246,6 +261,10 @@ class RPAScheduler:
             or countries.get(country_code.title())
             or {}
         )
+        # Config has historically used a nested dict {enabled: bool}; the
+        # current rpa_config.yaml uses a flattened bool per country. Both
+        # shapes must be accepted here (see _normalize_country_value).
+        country_config = self._normalize_country_value(country_config)
         if not country_config.get("enabled", False):
             raise RPASchedulerError(f"Country {country_code} is not enabled for RPA")
 

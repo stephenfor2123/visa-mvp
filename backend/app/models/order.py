@@ -18,6 +18,7 @@ from typing import Optional
 
 from sqlalchemy import (
     JSON,
+    Boolean,
     DateTime,
     ForeignKey,
     Index,
@@ -193,6 +194,38 @@ class Order(Base):
 
     # Free-form bag
     extra: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    # === DS-160 browser extension (W48 v0.2) ============================ #
+    # 12-digit base30 code binding the order's applicant_data snapshot to a
+    # fingerprint.  When any DS-160-relevant field changes, the fingerprint
+    # changes and the old code is rejected on redeem with 409 ARCHIVE_CHANGED.
+    # See backend/app/core/ds160.py + browser-extension/DESIGN-v0.2.md.
+    ds160_code: Mapped[Optional[str]] = mapped_column(
+        String(12), nullable=True, index=True,
+        comment="12-char base30 code; null until user requests it via /api/v2/ds160/code",
+    )
+    ds160_fingerprint: Mapped[Optional[str]] = mapped_column(
+        String(64), nullable=True,
+        comment="SHA-256 hex (32 chars) of normalized applicant_data snapshot",
+    )
+    ds160_code_issued_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    ds160_code_consumed_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default="0",
+        comment="Total successful redeems (audit + soft-rate-limit)",
+    )
+    ds160_last_redeemed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    ds160_code_revoked: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default="0",
+        comment="User-initiated rotate: old codes rejected even if fingerprint matches",
+    )
+    # JSON list of 12-char codes that have been explicitly revoked by force_rotate.
+    # P1 swap: when an order has more than a handful of revocations, replace this
+    # with a dedicated revoked_codes table keyed by (order_id, code).
+    ds160_revoked_codes: Mapped[Optional[str]] = mapped_column(
+        Text, nullable=True,
+        comment='JSON list of revoked 12-char codes, e.g. ["K7H3N9XRA2BQ", ...]',
+    )
+    # ==================================================================== #
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), nullable=False

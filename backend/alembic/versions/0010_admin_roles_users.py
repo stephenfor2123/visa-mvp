@@ -11,6 +11,12 @@ Create Date: 2026-06-30 18:00:00.000000
   超级管理员 (super_admin): 所有权限 ["dashboard","orders","payments","users","countries","settings"]
   员工 (staff): 基础权限 ["dashboard","orders","payments"]
   初始账号: admin / Admin@2024 (bcrypt 哈希)
+
+历史说明: 2026-07-07 之后, demo admin 密码已统一改为 8 位 `HtexAd@26`
+(见 backend/scripts/seed_demo_data.py + backend/.env ADMIN_PASSWORD_SECRET)。
+本 migration 的 docstring / seed 哈希保留 W34 当时的快照, 不做变更 — 改它会
+破坏 alembic 审计链。如果需要从旧哈希迁到新哈希, 请新建一个后续 migration
+(W47c+) 而不是改这一条。
 """
 from __future__ import annotations
 

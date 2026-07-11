@@ -77,6 +77,9 @@ class Settings(BaseSettings):
     material_storage_root: str = str(BACKEND_ROOT / "data" / "materials")
     material_url_ttl_seconds: int = 300          # 5 min signed URL
     material_max_file_size_mb: int = 10          # 10MB cap per V2 §5.2 IMAGE_FILE_SIZE_MAX
+    # Privacy-first default: C-side uploads are ephemeral (/materials/process only).
+    # Set MATERIAL_STORAGE_ENABLED=1 only for legacy/admin paths or integration tests.
+    material_storage_enabled: bool = False
     # Image-quality + face-detection rules are gated on this until
     # OpenCV / PaddleOCR land in W3+:
     material_image_quality_enabled: bool = False
@@ -132,12 +135,16 @@ class Settings(BaseSettings):
     #        security add-generic-password -s visa-mvp-stripe \
     #          -a STRIPE_SECRET_KEY -w 'sk_test_xxx'
     #      then a small launcher reads the Keychain item into the process env.
-    #   4. Wire `payment_channel="stripe"` switch (future Story, out of scope).
+    #   4. Set PAYMENT_CHANNEL=stripe to route create/query/notify through
+    #      StripePaymentProvider (requires STRIPE_SECRET_KEY).
     # SECURITY: All three are SECRETS. Never log them. Never echo them in
     # errors. Never commit a real key. macOS Keychain or a real secrets
     # manager (1Password CLI / AWS Secrets Manager / Vault) is the
     # recommended path — .env is acceptable for local dev only.
+    payment_channel: Literal["mock", "stripe"] = "mock"
     stripe_secret_key: str = ""
+    # Public key — safe to expose to the frontend for Stripe.js Elements.
+    stripe_publishable_key: str = ""
     # `whsec_xxx` — used by `handle_notify` to verify the `Stripe-Signature`
     # header on inbound webhooks via `stripe.Webhook.construct_event`. If
     # blank, V2.1 webhook verification falls back to "no-signature" mode
@@ -154,6 +161,20 @@ class Settings(BaseSettings):
     minimax_api_key: str = ""
     minimax_api_base: str = "https://api.minimaxi.com/v1"
     minimax_model: str = "MiniMax-Text-01"
+
+    # --- Product scope ---
+    # Customer markets: Vietnam + Indonesia (overseas Web, not WeChat miniprogram).
+    # Visa destinations (US/Schengen/GB/AU etc.) are unchanged — see docs/PRODUCT_SCOPE.md.
+    # RPA / insurance deferred — flip to true when ready.
+    feature_rpa_enabled: bool = False
+    feature_insurance_enabled: bool = False
+
+    # --- Frontend base for email verification links (W1) ---
+    # W1 dev default: localhost:5173. Prod: set APP_FRONTEND_BASE=https://htex.app
+    app_frontend_base: str = "http://localhost:5173"
+
+    # --- Privacy / support (self-service compliance) ---
+    privacy_support_email: str = "privacy@htex.app"
 
 
 @lru_cache(maxsize=1)

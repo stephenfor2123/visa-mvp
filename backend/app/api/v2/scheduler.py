@@ -23,6 +23,10 @@ from app.core.errors import BizException, ErrorCode
 from app.core.logging import get_logger
 from app.schemas.common import ApiResponse
 from app.services.poll_service import PollService
+from app.services.rag.refresh import (
+    cleanup_expired_snapshots,
+    refresh_all,
+)
 
 
 router = APIRouter()
@@ -82,20 +86,14 @@ async def poll_tick(
 ) -> ApiResponse[dict]:
     """One bulk poll-tick.
 
-    Response payload (under `data`):
-      {
-        "ticked":  <int>,                # orders inspected
-        "changed": <int>,                # orders that actually transitioned
-        "logs":    [<poll-log dict>, ...]
-      }
-
-    Notes:
-      * No request body required; everything is server-driven.
-      * Idempotent at the level of "we'll re-poll the same orders next
-        time" — RPA is allowed to return "no change" repeatedly.
-      * `logs` only contains state-CHANGE rows (no-change rows are NOT
-        recorded, per Story 1.2.2a spec).
+    Disabled when ``feature_rpa_enabled`` is false.
     """
+    if not get_settings().feature_rpa_enabled:
+        return ApiResponse[dict](
+            code="1000",
+            message="RPA disabled (feature_rpa_enabled=false)",
+            data={"ticked": 0, "changed": 0, "logs": [], "rpa_enabled": False},
+        )
     service = PollService(db)
     result = await service.tick(poll_source="scheduler_tick")
     _log.info(
@@ -104,3 +102,61 @@ async def poll_tick(
         result["changed"],
     )
     return ApiResponse[dict](code="1000", message="OK", data=result)
+
+
+# --------------------------------------------------------------------------- #
+# POST /scheduler/rag-refresh-tick                                             #
+# --------------------------------------------------------------------------- #
+@router.post(
+    "/rag-refresh-tick",
+    response_model=ApiResponse[dict],
+    summary=(
+        "Walk all enabled RAG sources, fetch + chunk + write review snapshot. "
+        "System-key auth only."
+    ),
+)
+async def rag_refresh_tick(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _: Annotated[None, Depends(require_system_key)],
+    country_code: Annotated[Optional[str], "Filter by ISO country code"] = None,
+) -> ApiResponse[dict]:
+    """One RAG refresh-tick.
+
+    调用 refresh_all(mode='review') — 抓完存 RagReviewSnapshot,不直接覆盖 RagChunk。
+    admin 在 /admin/rag-review 看到 pending_review 的 snapshot 决定 approve/reject。
+
+    同时跑 cleanup_expired_snapshots 清理 7 天前的 auto-expired snapshot。
+
+    Response payload (under `data`):
+      {
+        "refreshed":  <int>,        # sources that fetched OK
+        "errors":     <int>,        # sources that errored
+        "content_changed": <int>,   # sources whose content hash actually changed
+        "snapshots_created": <int>, # 写入的 snapshot 数量
+        "snapshots_expired": <int>, # 这次清理掉的过期 snapshot
+        "items":      [<per-source dict>, ...]
+      }
+
+    设计上每 6h 跑一次 (k8s CronJob: 0 */6 * * *)。已 pending_review 的
+    source 不会重复刷新 (refresh_source 会 expire 旧 snapshot 再建新的)。
+    """
+    # 先清理过期 snapshot
+    expired = await cleanup_expired_snapshots(db)
+    # 再跑一轮 refresh
+    items = await refresh_all(db, country_code=country_code, mode="review")
+    refreshed = sum(1 for x in items if x.get("status") == "ok")
+    errors = sum(1 for x in items if x.get("status") == "error")
+    content_changed = sum(1 for x in items if x.get("content_changed"))
+    snapshots_created = sum(1 for x in items if x.get("snapshot_id"))
+    _log.info(
+        "rag-refresh-tick refreshed={} errors={} changed={} new_snapshots={} expired={}",
+        refreshed, errors, content_changed, snapshots_created, expired,
+    )
+    return ApiResponse[dict](code="1000", message="OK", data={
+        "refreshed": refreshed,
+        "errors": errors,
+        "content_changed": content_changed,
+        "snapshots_created": snapshots_created,
+        "snapshots_expired": expired,
+        "items": items,
+    })

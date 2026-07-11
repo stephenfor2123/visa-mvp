@@ -15,12 +15,14 @@ from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings, get_settings
 from app.core.db import get_db
 from app.core.errors import BizException, ErrorCode
 from app.models.user import User
+from app.models.user_session import UserSession
 
 
 # ------------------------------------------------------------------ #
@@ -164,6 +166,45 @@ def decode_token(token: str, expected_type: str, settings: Optional[Settings] = 
     return payload
 
 
+def bump_password_changed_at(user: User) -> None:
+    """Mark credential rotation time so older JWTs are rejected.
+
+    JWT ``iat`` is second-granularity only; bump to the next whole second so
+    tokens issued in the same second as the reset are still invalidated.
+    """
+    now = _now_utc()
+    user.password_changed_at = (now + timedelta(seconds=1)).replace(tzinfo=None)
+
+
+def assert_token_valid_for_user(payload: dict[str, Any], user: User) -> None:
+    """Reject access/refresh tokens issued before the last password change."""
+    if user.password_changed_at is None:
+        return
+    token_iat = payload.get("iat")
+    if token_iat is None:
+        return
+    # password_changed_at is stored as naive UTC; attach tz before timestamp().
+    pwd_ts = int(user.password_changed_at.replace(tzinfo=timezone.utc).timestamp())
+    if int(token_iat) < pwd_ts:
+        raise BizException(
+            ErrorCode.UNAUTHORIZED,
+            message="Token invalidated due to credential change",
+        )
+
+
+async def invalidate_user_sessions(db: AsyncSession, user_id: int) -> None:
+    """Revoke all active refresh-token sessions for a user."""
+    now = _now_utc().replace(tzinfo=None)
+    await db.execute(
+        update(UserSession)
+        .where(
+            UserSession.user_id == user_id,
+            UserSession.revoked_at.is_(None),
+        )
+        .values(revoked_at=now)
+    )
+
+
 # ------------------------------------------------------------------ #
 # Current user dependency                                            #
 # ------------------------------------------------------------------ #
@@ -188,4 +229,5 @@ async def get_current_user(
     if user.status != "active":
         raise BizException(ErrorCode.ACCOUNT_DISABLED, message="Account is not active")
 
+    assert_token_valid_for_user(payload, user)
     return user

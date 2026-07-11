@@ -18,6 +18,8 @@ class AdminTokenData(BaseModel):
     admin_id: int
     username: str
     role: str = "admin"
+    role_code: Optional[str] = None
+    permissions: list[str] = Field(default_factory=list)
 
 
 class AdminTokenOut(BaseModel):
@@ -684,3 +686,91 @@ class ImportI18nOverridesRequest(BaseModel):
     """批量导入覆盖 — body: {"locale": "en", "entries": {"key1": "value1", ...}}"""
     locale: str = Field(..., min_length=2, max_length=16)
     entries: dict[str, str] = Field(..., min_length=1, description="key → value 字典")
+
+
+# --------------------------------------------------------------------------- #
+# V2 Dashboard (KPI + trend + funnel + top countries + alerts) — W37           #
+# --------------------------------------------------------------------------- #
+class DashboardSummaryOut(BaseModel):
+    """顶部 4 张 KPI 卡 + 与上周同期的对比涨跌.
+    全部按 admin 本地时区 (UTC) 的"今日/本周/本月"窗口聚合.
+    """
+    # 主指标
+    today_orders: int = Field(..., ge=0, description="今日新订单")
+    today_revenue_usd: float = Field(..., ge=0.0, description="今日已支付订单金额 (USD)")
+    today_new_users: int = Field(..., ge=0, description="今日新注册 C 端用户")
+    today_success_rate: float = Field(..., ge=0.0, le=1.0, description="今日订单提交成功率")
+
+    # 对比 (上周同期)
+    # W63: 对比基线为 0 时返 None (前端走"新"分支, 不假装 +100%)
+    delta_orders_pct: Optional[float] = Field(None, description="订单数对比上周同期 % (0.12 = +12%, None=新无基线)")
+    delta_revenue_pct: Optional[float] = Field(None, description="营收对比上周同期 %")
+    delta_users_pct: Optional[float] = Field(None, description="新用户对比上周同期 %")
+
+    # 累计
+    month_orders: int = Field(..., ge=0, description="本月新订单")
+    total_users: int = Field(..., ge=0, description="全部 C 端用户数")
+    pending_orders: int = Field(..., ge=0, description="待处理订单 (created+submitted+reviewing)")
+
+    generated_at: datetime
+    cached: bool = False
+
+
+class DashboardTrendPoint(BaseModel):
+    date: str = Field(..., description="YYYY-MM-DD (UTC)")
+    orders: int = Field(..., ge=0)
+    revenue_usd: float = Field(..., ge=0.0)
+    new_users: int = Field(..., ge=0)
+
+
+class DashboardTrendOut(BaseModel):
+    metric: str = Field(..., description="orders | revenue | users")
+    range: str = Field(..., description="7d | 30d | 90d")
+    points: list[DashboardTrendPoint]
+    total_orders: int
+    total_revenue_usd: float
+    total_new_users: int
+    generated_at: datetime
+
+
+class DashboardFunnelStep(BaseModel):
+    key: str = Field(..., description="register | country_select | order_create | order_submit | payment_success")
+    label: str
+    count: int = Field(..., ge=0)
+    conversion_pct: float = Field(..., ge=0.0, le=100.0, description="相对上一步的转化率")
+
+
+class DashboardFunnelOut(BaseModel):
+    range: str = Field(..., description="7d | 30d")
+    steps: list[DashboardFunnelStep]
+    overall_conversion_pct: float = Field(..., ge=0.0, le=100.0, description="首步→末步整体转化率")
+    generated_at: datetime
+
+
+class DashboardTopCountryItem(BaseModel):
+    destination_id: int
+    country_code: str = Field(..., description="ISO 二字代码; 查不到时回落到 --")
+    country_name: str = Field(..., description="优先 i18n 中文名, 拿不到用 country_code")
+    order_count: int = Field(..., ge=0)
+    revenue_usd: float = Field(..., ge=0.0)
+    conversion_pct: float = Field(..., ge=0.0, le=100.0)
+
+
+class DashboardTopCountriesOut(BaseModel):
+    range: str = Field(..., description="7d | 30d")
+    items: list[DashboardTopCountryItem]
+    generated_at: datetime
+
+
+class DashboardAlertItem(BaseModel):
+    severity: str = Field(..., description="warning | critical | info")
+    code: str = Field(..., description="rpa_failure_spike | zero_order_country | pending_orders_high | payment_success_low")
+    title: str
+    detail: str
+    metric_value: Optional[float] = None
+    threshold: Optional[float] = None
+
+
+class DashboardAlertsOut(BaseModel):
+    items: list[DashboardAlertItem] = Field(default_factory=list)
+    generated_at: datetime

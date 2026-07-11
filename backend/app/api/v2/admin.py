@@ -28,7 +28,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_db
 from app.core.logging import get_logger
-from app.middleware.admin_auth import verify_admin_token
+from app.middleware.admin_auth import verify_admin_token, verify_admin_token_with_db
+from app.core.permissions import PERMISSIONS, PERM_GROUPS
+from app.middleware.admin_auth import require_perm
 from app.schemas.admin import (
     AdminLoginRequest,
     AdminTokenData,
@@ -73,9 +75,15 @@ from app.schemas.admin import (
     ResetPasswordResponse,
     UserActionResponse,
     PaginatedUserOrderList,
+    DashboardSummaryOut,
+    DashboardTrendOut,
+    DashboardFunnelOut,
+    DashboardTopCountriesOut,
+    DashboardAlertsOut,
 )
 from app.schemas.common import ApiResponse
 from app.services.admin_service import AdminService
+from app.services.admin_dashboard_service import AdminDashboardService
 
 
 # Module-level router (W14-3 left this declaration missing, breaking import).
@@ -87,6 +95,8 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 # --------------------------------------------------------------------------- #
 @router.post(
     "/login",
+    # 注意: login 不需要 perm (任何人可登录尝试, 失败返 401)
+    # W34: DB-first, fallback to env password
     response_model=ApiResponse[AdminTokenOut],
     summary="Admin login (W34: DB-first, fallback to env password)",
 )
@@ -102,16 +112,44 @@ async def admin_login(
 
 
 # --------------------------------------------------------------------------- #
+# Permission registry (单一权威源,前端 perm grid 用)                          #
+# --------------------------------------------------------------------------- #
+@router.get(
+    "/permissions",
+    # 任何登录的 admin 都能查 perm 注册表 (前端 perm grid 渲染用)
+    # 不强制 perm, 否则 role.manage 之外的 staff 看不到自己被分配了哪些 perm
+    response_model=ApiResponse[dict],
+    summary="List all permission codes (grouped) — 前端 perm grid 渲染用",
+)
+async def list_permissions(
+    _admin: AdminTokenData = Depends(verify_admin_token),
+) -> ApiResponse[dict]:
+    grouped: dict[str, list[dict]] = {g: [] for g in set(PERM_GROUPS.values())}
+    for p in PERMISSIONS:
+        grouped[p["group"]].append({
+            "code": p["code"],
+            "label_key": p["label_key"],
+            "description": p["description"],
+        })
+    return ApiResponse[dict](
+        code="1000", message="OK",
+        data={"groups": grouped, "groups_order": list(PERM_GROUPS.keys())},
+    )
+
+
+# --------------------------------------------------------------------------- #
 # Role & admin-user management (W34)                                         #
 # --------------------------------------------------------------------------- #
 @router.get(
     "/roles",
+    dependencies=[Depends(require_perm("role.manage"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[list[AdminRoleOut]],
     summary="List all roles",
 )
 async def list_roles(
     db: Annotated[AsyncSession, Depends(get_db)],
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
 ) -> ApiResponse[list[AdminRoleOut]]:
     svc = AdminService(db)
     out = await svc.list_roles()
@@ -122,6 +160,8 @@ async def list_roles(
 
 @router.post(
     "/roles",
+    dependencies=[Depends(require_perm("role.manage"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[AdminRoleOut],
     status_code=201,
     summary="Create a new role",
@@ -129,7 +169,7 @@ async def list_roles(
 async def create_role(
     body: CreateRoleRequest = Body(...),
     db: AsyncSession = Depends(get_db),
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
 ) -> ApiResponse[AdminRoleOut]:
     svc = AdminService(db)
     out = await svc.create_role(data=body.model_dump())
@@ -138,6 +178,8 @@ async def create_role(
 
 @router.put(
     "/roles/{role_id}",
+    dependencies=[Depends(require_perm("role.manage"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[AdminRoleOut],
     summary="Update a role (description / permissions / is_active)",
 )
@@ -145,7 +187,7 @@ async def update_role(
     role_id: int = Path(..., ge=1),
     body: UpdateRoleRequest = Body(...),
     db: AsyncSession = Depends(get_db),
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
 ) -> ApiResponse[AdminRoleOut]:
     svc = AdminService(db)
     out = await svc.update_role(role_id=role_id, data=body.model_dump(exclude_none=True))
@@ -154,13 +196,15 @@ async def update_role(
 
 @router.delete(
     "/roles/{role_id}",
+    dependencies=[Depends(require_perm("role.manage"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[dict],
     summary="Soft-delete (deactivate) a role",
 )
 async def delete_role(
     role_id: int = Path(..., ge=1),
     db: AsyncSession = Depends(get_db),
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
 ) -> ApiResponse[dict]:
     svc = AdminService(db)
     await svc.delete_role(role_id=role_id)
@@ -169,12 +213,14 @@ async def delete_role(
 
 @router.get(
     "/admin-users",
+    dependencies=[Depends(require_perm("role.manage"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[PaginatedAdminUserList],
     summary="Paginated admin user list",
 )
 async def list_admin_users(
     db: Annotated[AsyncSession, Depends(get_db)],
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
 ) -> ApiResponse[PaginatedAdminUserList]:
@@ -192,6 +238,8 @@ async def list_admin_users(
 
 @router.post(
     "/admin-users",
+    dependencies=[Depends(require_perm("role.manage"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[AdminUserOut],
     status_code=201,
     summary="Create admin user",
@@ -199,7 +247,7 @@ async def list_admin_users(
 async def create_admin_user(
     body: CreateAdminUserRequest = Body(...),
     db: AsyncSession = Depends(get_db),
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
 ) -> ApiResponse[AdminUserOut]:
     svc = AdminService(db)
     out = await svc.create_admin_user(
@@ -210,6 +258,8 @@ async def create_admin_user(
 
 @router.put(
     "/admin-users/{user_id}",
+    dependencies=[Depends(require_perm("settings"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[AdminUserOut],
     summary="Update admin user",
 )
@@ -217,7 +267,7 @@ async def update_admin_user(
     user_id: int = Path(...),
     body: UpdateAdminUserRequest = Body(...),
     db: AsyncSession = Depends(get_db),
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
 ) -> ApiResponse[AdminUserOut]:
     svc = AdminService(db)
     out = await svc.update_admin_user(user_id=user_id, data=body.model_dump(exclude_none=True))
@@ -226,13 +276,15 @@ async def update_admin_user(
 
 @router.delete(
     "/admin-users/{user_id}",
+    dependencies=[Depends(require_perm("settings"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[dict],
     summary="Soft-delete admin user",
 )
 async def delete_admin_user(
     user_id: int = Path(...),
     db: AsyncSession = Depends(get_db),
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
 ) -> ApiResponse[dict]:
     svc = AdminService(db)
     await svc.delete_admin_user(user_id=user_id)
@@ -244,18 +296,21 @@ async def delete_admin_user(
 # --------------------------------------------------------------------------- #
 @router.get(
     "/users",
+    dependencies=[Depends(require_perm("user.view"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[PaginatedUserList],
     summary="Paginated user list",
 )
 async def list_users(
     db: Annotated[AsyncSession, Depends(get_db)],
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     status: Optional[str] = Query(None),
+    q: Optional[str] = Query(None, description="Search email / username / nickname"),
 ) -> ApiResponse[PaginatedUserList]:
     svc = AdminService(db)
-    out = await svc.list_users(page=page, page_size=page_size, status=status)
+    out = await svc.list_users(page=page, page_size=page_size, status=status, q=q)
     return ApiResponse[PaginatedUserList](
         code="1000",
         message="OK",
@@ -271,13 +326,15 @@ async def list_users(
 
 @router.get(
     "/users/{user_id}",
+    dependencies=[Depends(require_perm("user.view"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[UserDetailOut],
     summary="C-端用户详情（含订单/材料统计）",
 )
 async def get_user(
     user_id: int = Path(..., ge=1),
     db: AsyncSession = Depends(get_db),
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
 ) -> ApiResponse[UserDetailOut]:
     """C-端用户详情 — 在原 GET /users/{id} 基础上新增 order_count / material_count。
     邮箱/手机号会被脱敏。"""
@@ -295,13 +352,15 @@ async def get_user(
 # --------------------------------------------------------------------------- #
 @router.get(
     "/users/{user_id}/orders",
+    dependencies=[Depends(require_perm("user.view"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[PaginatedUserOrderList],
     summary="某 C-端用户关联的订单列表（分页）",
 )
 async def list_user_orders(
     user_id: int = Path(..., ge=1),
     db: AsyncSession = Depends(get_db),
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
 ) -> ApiResponse[PaginatedUserOrderList]:
@@ -323,13 +382,15 @@ async def list_user_orders(
 
 @router.post(
     "/users/{user_id}/disable",
+    dependencies=[Depends(require_perm("user.disable"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[UserActionResponse],
     summary="禁用 C-端账号（status=disabled）",
 )
 async def disable_user(
     user_id: int = Path(..., ge=1),
     db: AsyncSession = Depends(get_db),
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
 ) -> ApiResponse[UserActionResponse]:
     svc = AdminService(db)
     raw = await svc.disable_user(user_id=user_id)
@@ -345,13 +406,15 @@ async def disable_user(
 
 @router.post(
     "/users/{user_id}/restore",
+    dependencies=[Depends(require_perm("user.disable"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[UserActionResponse],
     summary="恢复 C-端账号（status=active，仅当 status=disabled）",
 )
 async def restore_user(
     user_id: int = Path(..., ge=1),
     db: AsyncSession = Depends(get_db),
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
 ) -> ApiResponse[UserActionResponse]:
     svc = AdminService(db)
     raw = await svc.restore_user(user_id=user_id)
@@ -367,6 +430,8 @@ async def restore_user(
 
 @router.put(
     "/users/{user_id}",
+    dependencies=[Depends(require_perm("user.edit"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[UserOutSafe],
     summary="修改 C-端用户信息（仅 nickname / language_pref / avatar_url）",
 )
@@ -374,7 +439,7 @@ async def update_user(
     user_id: int = Path(..., ge=1),
     body: UpdateUserRequest = Body(...),
     db: AsyncSession = Depends(get_db),
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
 ) -> ApiResponse[UserOutSafe]:
     svc = AdminService(db)
     raw = await svc.update_user(user_id=user_id, data=body.model_dump(exclude_none=True))
@@ -387,13 +452,15 @@ async def update_user(
 
 @router.post(
     "/users/{user_id}/reset-password",
+    dependencies=[Depends(require_perm("user.reset_password"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[ResetPasswordResponse],
     summary="重置 C-端用户密码（返回一次性明文）",
 )
 async def reset_user_password(
     user_id: int = Path(..., ge=1),
     db: AsyncSession = Depends(get_db),
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
 ) -> ApiResponse[ResetPasswordResponse]:
     svc = AdminService(db)
     out = await svc.reset_user_password(user_id=user_id)
@@ -406,13 +473,15 @@ async def reset_user_password(
 
 @router.delete(
     "/users/{user_id}",
+    dependencies=[Depends(require_perm("user.disable"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[dict],
     summary="Soft-delete user (sets status=pending_destroy)",
 )
 async def delete_user(
     user_id: int = Path(..., ge=1),
     db: AsyncSession = Depends(get_db),
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
 ) -> ApiResponse[dict]:
     svc = AdminService(db)
     await svc.delete_user(user_id=user_id)
@@ -426,12 +495,14 @@ async def delete_user(
 # --------------------------------------------------------------------------- #
 @router.get(
     "/orders",
+    dependencies=[Depends(require_perm("order.view"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[PaginatedOrderList],
     summary="Paginated order list",
 )
 async def list_orders(
     db: Annotated[AsyncSession, Depends(get_db)],
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     status: Optional[str] = Query(None),
@@ -456,13 +527,15 @@ async def list_orders(
 
 @router.get(
     "/orders/{order_id}",
+    dependencies=[Depends(require_perm("order.view"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[OrderDetailOut],
     summary="Order detail",
 )
 async def get_order(
     order_id: int = Path(..., ge=1),
     db: AsyncSession = Depends(get_db),
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
 ) -> ApiResponse[OrderDetailOut]:
     svc = AdminService(db)
     out = await svc.get_order(order_id=order_id)
@@ -471,6 +544,8 @@ async def get_order(
 
 @router.put(
     "/orders/{order_id}/status",
+    dependencies=[Depends(require_perm("order.edit_status"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[dict],
     summary="Update order status (admin override)",
 )
@@ -478,11 +553,12 @@ async def update_order_status(
     body: UpdateOrderStatusRequest,
     order_id: int = Path(..., ge=1),
     db: AsyncSession = Depends(get_db),
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
 ) -> ApiResponse[dict]:
     svc = AdminService(db)
     out = await svc.update_order_status(
-        order_id=order_id, new_status=body.status, note=body.note
+        order_id=order_id, new_status=body.status, note=body.note,
+        admin=admin,
     )
     return ApiResponse[dict](code="1000", message="OK", data=out)
 
@@ -492,12 +568,14 @@ async def update_order_status(
 # --------------------------------------------------------------------------- #
 @router.get(
     "/config/countries",
+    dependencies=[Depends(require_perm("country.manage"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[PaginatedCountryList],
     summary="List country configurations",
 )
 async def list_countries(
     db: Annotated[AsyncSession, Depends(get_db)],
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
     enabled: Optional[bool] = Query(None),
@@ -519,6 +597,8 @@ async def list_countries(
 
 @router.post(
     "/config/countries",
+    dependencies=[Depends(require_perm("country.manage"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[CountryOut],
     status_code=201,
     summary="Create a new country configuration",
@@ -526,7 +606,7 @@ async def list_countries(
 async def create_country(
     body: CreateCountryRequest,
     db: AsyncSession = Depends(get_db),
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
 ) -> ApiResponse[CountryOut]:
     svc = AdminService(db)
     out = await svc.create_country(data=body.model_dump())
@@ -535,6 +615,8 @@ async def create_country(
 
 @router.put(
     "/config/countries/{country_id}",
+    dependencies=[Depends(require_perm("country.manage"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[dict],
     summary="Update country configuration (partial update)",
 )
@@ -542,7 +624,7 @@ async def update_country(
     body: UpdateCountryRequest,
     country_id: int = Path(..., ge=1),
     db: AsyncSession = Depends(get_db),
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
 ) -> ApiResponse[dict]:
     svc = AdminService(db)
     out = await svc.update_country(country_id=country_id, data=body.model_dump())
@@ -551,13 +633,15 @@ async def update_country(
 
 @router.delete(
     "/config/countries/{country_id}",
+    dependencies=[Depends(require_perm("country.manage"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[dict],
     summary="Offline a country (set enabled=False, soft-delete)",
 )
 async def delete_country(
     country_id: int = Path(..., ge=1),
     db: AsyncSession = Depends(get_db),
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
 ) -> ApiResponse[dict]:
     svc = AdminService(db)
     await svc.delete_country(country_id=country_id)
@@ -568,13 +652,15 @@ async def delete_country(
 
 @router.post(
     "/config/countries/reorder",
+    dependencies=[Depends(require_perm("country.manage"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[dict],
     summary="Bulk-update display_order for the V2 country picker",
 )
 async def reorder_countries(
     body: ReorderCountriesRequest,
     db: AsyncSession = Depends(get_db),
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
 ) -> ApiResponse[dict]:
     """Body: ``{ "orders": [{ "id": 1, "display_order": 0 }, ...] }``.
 
@@ -591,6 +677,8 @@ async def reorder_countries(
 
 @router.post(
     "/config/countries/{country_id}/toggle",
+    dependencies=[Depends(require_perm("country.manage"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[CountryOut],
     summary="Toggle the V2 enabled flag for a country",
 )
@@ -598,7 +686,7 @@ async def toggle_country(
     body: ToggleCountryRequest,
     country_id: int = Path(..., ge=1),
     db: AsyncSession = Depends(get_db),
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
 ) -> ApiResponse[CountryOut]:
     """Body: ``{ "enabled": true | false }``.
 
@@ -616,12 +704,14 @@ async def toggle_country(
 # --------------------------------------------------------------------------- #
 @router.get(
     "/config/validation-rules",
+    dependencies=[Depends(require_perm("ai_rules.edit"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[list[ValidationRuleOut]],
     summary="List all AI validation rules",
 )
 async def get_validation_rules(
     db: AsyncSession = Depends(get_db),
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
 ) -> ApiResponse[list[ValidationRuleOut]]:
     svc = AdminService(db)
     out = await svc.get_validation_rules()
@@ -632,13 +722,15 @@ async def get_validation_rules(
 
 @router.put(
     "/config/validation-rules",
+    dependencies=[Depends(require_perm("ai_rules.edit"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[list[ValidationRuleOut]],
     summary="Upsert AI validation rules",
 )
 async def update_validation_rules(
     body: UpdateValidationRulesRequest,
     db: AsyncSession = Depends(get_db),
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
 ) -> ApiResponse[list[ValidationRuleOut]]:
     svc = AdminService(db)
     out = await svc.update_validation_rules(rules=body.rules)
@@ -652,12 +744,14 @@ async def update_validation_rules(
 # --------------------------------------------------------------------------- #
 @router.get(
     "/config/rpa",
+    dependencies=[Depends(require_perm("settings"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[RpaConfigOut],
     summary="Read RPA rate-limit configuration",
 )
 async def get_rpa_config(
     db: AsyncSession = Depends(get_db),
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
 ) -> ApiResponse[RpaConfigOut]:
     svc = AdminService(db)
     out = svc.get_rpa_config()
@@ -666,13 +760,15 @@ async def get_rpa_config(
 
 @router.put(
     "/config/rpa",
+    dependencies=[Depends(require_perm("settings"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[RpaConfigOut],
     summary="Update RPA rate-limit configuration",
 )
 async def update_rpa_config(
     body: UpdateRpaConfigRequest,
     db: AsyncSession = Depends(get_db),
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
 ) -> ApiResponse[RpaConfigOut]:
     svc = AdminService(db)
     updates = {k: v for k, v in body.model_dump().items() if v is not None}
@@ -685,12 +781,14 @@ async def update_rpa_config(
 # --------------------------------------------------------------------------- #
 @router.get(
     "/stats/rpa",
+    dependencies=[Depends(require_perm("settings"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[RpaStatsOut],
     summary="Realtime RPA pipeline stats (today visits, queue, 24h failure rate)",
 )
 async def get_rpa_stats(
     db: AsyncSession = Depends(get_db),
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
 ) -> ApiResponse[RpaStatsOut]:
     """Snapshot of live RPA scheduler state — visit counter, queue depth,
     and failure ratio for the trailing 24 hours."""
@@ -703,12 +801,14 @@ async def get_rpa_stats(
 
 @router.get(
     "/stats/dashboard",
+    dependencies=[Depends(require_perm("dashboard.view"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[DashboardStatsOut],
     summary="Dashboard summary stats (today/week orders, pending, completed, payment rate)",
 )
 async def get_dashboard_stats(
     db: AsyncSession = Depends(get_db),
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
 ) -> ApiResponse[DashboardStatsOut]:
     """Aggregated counts for the admin dashboard — served from an in-process
     TTL cache (60 s) to avoid hammering the DB on every page refresh."""
@@ -719,14 +819,115 @@ async def get_dashboard_stats(
     )
 
 
+# --------------------------------------------------------------------------- #
+# V2 Dashboard — KPI + trend + funnel + top countries + alerts (W37)           #
+# --------------------------------------------------------------------------- #
+@router.get(
+    "/stats/dashboard/summary",
+    dependencies=[Depends(require_perm("dashboard.view"))],
+    # __PERM_DEPENDENCIES_INJECTED__
+    response_model=ApiResponse[DashboardSummaryOut],
+    summary="顶部 4 张 KPI 卡 (今日订单/营收/新用户/成功率, 含上周对比涨跌)",
+)
+async def get_dashboard_summary(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
+) -> ApiResponse[DashboardSummaryOut]:
+    """4 张 KPI 大卡 + 同期对比, 60s 内存缓存. 与 /stats/dashboard 共存 (后者是旧的简化版, 待前端切完可下架)."""
+    svc = AdminDashboardService(db)
+    out = await svc.get_summary()
+    return ApiResponse[DashboardSummaryOut](
+        code="1000", message="OK", data=DashboardSummaryOut(**out)
+    )
+
+
+@router.get(
+    "/stats/dashboard/trend",
+    dependencies=[Depends(require_perm("dashboard.view"))],
+    # __PERM_DEPENDENCIES_INJECTED__
+    response_model=ApiResponse[DashboardTrendOut],
+    summary="趋势数据 (订单/营收/新用户, 默认 7d, 可选 30d / 90d)",
+)
+async def get_dashboard_trend(
+    metric: str = Query("orders", pattern="^(orders|revenue|users)$"),
+    range: str = Query("7d", pattern="^(7d|30d|90d)$"),
+    db: AsyncSession = Depends(get_db),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
+) -> ApiResponse[DashboardTrendOut]:
+    svc = AdminDashboardService(db)
+    out = await svc.get_trend(metric=metric, range_key=range)
+    return ApiResponse[DashboardTrendOut](
+        code="1000", message="OK", data=DashboardTrendOut(**out)
+    )
+
+
+@router.get(
+    "/stats/dashboard/funnel",
+    dependencies=[Depends(require_perm("dashboard.view"))],
+    # __PERM_DEPENDENCIES_INJECTED__
+    response_model=ApiResponse[DashboardFunnelOut],
+    summary="转化漏斗 (注册 → 选国家 → 创建订单 → 提交 → 支付成功)",
+)
+async def get_dashboard_funnel(
+    range: str = Query("7d", pattern="^(7d|30d)$"),
+    db: AsyncSession = Depends(get_db),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
+) -> ApiResponse[DashboardFunnelOut]:
+    svc = AdminDashboardService(db)
+    out = await svc.get_funnel(range_key=range)
+    return ApiResponse[DashboardFunnelOut](
+        code="1000", message="OK", data=DashboardFunnelOut(**out)
+    )
+
+
+@router.get(
+    "/stats/dashboard/top-countries",
+    dependencies=[Depends(require_perm("dashboard.view"))],
+    # __PERM_DEPENDENCIES_INJECTED__
+    response_model=ApiResponse[DashboardTopCountriesOut],
+    summary="热门目的地 Top 10 (按订单量)",
+)
+async def get_dashboard_top_countries(
+    range: str = Query("7d", pattern="^(7d|30d)$"),
+    limit: int = Query(10, ge=1, le=20),
+    db: AsyncSession = Depends(get_db),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
+) -> ApiResponse[DashboardTopCountriesOut]:
+    svc = AdminDashboardService(db)
+    out = await svc.get_top_countries(range_key=range, limit=limit)
+    return ApiResponse[DashboardTopCountriesOut](
+        code="1000", message="OK", data=DashboardTopCountriesOut(**out)
+    )
+
+
+@router.get(
+    "/stats/dashboard/alerts",
+    dependencies=[Depends(require_perm("dashboard.view"))],
+    # __PERM_DEPENDENCIES_INJECTED__
+    response_model=ApiResponse[DashboardAlertsOut],
+    summary="异常告警列表 (RPA 失败率突增 / 某国 24h 零订单 / 待处理积压 / 支付成功率过低)",
+)
+async def get_dashboard_alerts(
+    db: AsyncSession = Depends(get_db),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
+) -> ApiResponse[DashboardAlertsOut]:
+    svc = AdminDashboardService(db)
+    out = await svc.get_alerts()
+    return ApiResponse[DashboardAlertsOut](
+        code="1000", message="OK", data=DashboardAlertsOut(**out)
+    )
+
+
 @router.get(
     "/logs",
+    dependencies=[Depends(require_perm("dashboard.view"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[PaginatedAuditLogList],
     summary="Paginated audit log",
 )
 async def list_logs(
     db: Annotated[AsyncSession, Depends(get_db)],
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
     action: Optional[str] = Query(None),
@@ -754,12 +955,14 @@ async def list_logs(
 # --------------------------------------------------------------------------- #
 @router.get(
     "/payments",
+    dependencies=[Depends(require_perm("payment.view"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[PaginatedPaymentList],
     summary="Paginated payment flow list (资金流)",
 )
 async def list_payments(
     db: Annotated[AsyncSession, Depends(get_db)],
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     status: Optional[str] = Query(None, description="none | pending | paid | closed | failed"),
@@ -784,13 +987,15 @@ async def list_payments(
 # --------------------------------------------------------------------------- #
 @router.post(
     "/config/validation-rules/test",
+    dependencies=[Depends(require_perm("ai_rules.edit"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[dict],
     summary="Test a single validation rule against a sample value",
 )
 async def test_validation_rule(
     body: dict = Body(...),
     db: AsyncSession = Depends(get_db),
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
 ) -> ApiResponse[dict]:
     svc = AdminService(db)
     out = await svc.test_validation_rule(
@@ -802,13 +1007,15 @@ async def test_validation_rule(
 
 @router.get(
     "/config/validation-rules/{rule_code}/history",
+    dependencies=[Depends(require_perm("ai_rules.edit"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[list[AuditLogOut]],
     summary="Modification history for a single validation rule",
 )
 async def get_validation_rule_history(
     rule_code: str,
     db: AsyncSession = Depends(get_db),
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
 ) -> ApiResponse[list[AuditLogOut]]:
     svc = AdminService(db)
     items = await svc.get_validation_rule_history(rule_code=rule_code)
@@ -822,12 +1029,14 @@ async def get_validation_rule_history(
 # --------------------------------------------------------------------------- #
 @router.get(
     "/logs/actions",
+    dependencies=[Depends(require_perm("dashboard.view"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[list[str]],
     summary="Distinct action list from audit_log (for filter dropdown)",
 )
 async def list_log_actions(
     db: AsyncSession = Depends(get_db),
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
 ) -> ApiResponse[list[str]]:
     svc = AdminService(db)
     out = await svc.list_log_actions()
@@ -836,13 +1045,15 @@ async def list_log_actions(
 
 @router.get(
     "/logs/{log_id}",
+    dependencies=[Depends(require_perm("dashboard.view"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[AuditLogOut],
     summary="Single audit log detail",
 )
 async def get_log(
     log_id: int = Path(..., ge=1),
     db: AsyncSession = Depends(get_db),
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
 ) -> ApiResponse[AuditLogOut]:
     svc = AdminService(db)
     out = await svc.get_log(log_id=log_id)
@@ -854,12 +1065,14 @@ async def get_log(
 # --------------------------------------------------------------------------- #
 @router.get(
     "/i18n/overrides",
+    dependencies=[Depends(require_perm("settings"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[PaginatedI18nOverrideList],
     summary="List i18n overrides with pagination + filter",
 )
 async def list_i18n_overrides(
     db: AsyncSession = Depends(get_db),
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     locale: Optional[str] = Query(None),
@@ -882,13 +1095,15 @@ async def list_i18n_overrides(
 
 @router.post(
     "/i18n/overrides",
+    dependencies=[Depends(require_perm("settings"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[I18nOverrideOut],
     summary="Create i18n override",
 )
 async def create_i18n_override(
     body: CreateI18nOverrideRequest,
     db: AsyncSession = Depends(get_db),
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
 ) -> ApiResponse[I18nOverrideOut]:
     svc = AdminService(db)
     out = await svc.create_i18n_override(payload=body.model_dump(), admin_id=admin.admin_id)
@@ -897,6 +1112,8 @@ async def create_i18n_override(
 
 @router.put(
     "/i18n/overrides/{override_id}",
+    dependencies=[Depends(require_perm("settings"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[I18nOverrideOut],
     summary="Update i18n override",
 )
@@ -904,7 +1121,7 @@ async def update_i18n_override(
     override_id: int = Path(..., ge=1),
     body: UpdateI18nOverrideRequest = Body(...),
     db: AsyncSession = Depends(get_db),
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
 ) -> ApiResponse[I18nOverrideOut]:
     svc = AdminService(db)
     out = await svc.update_i18n_override(
@@ -915,13 +1132,15 @@ async def update_i18n_override(
 
 @router.delete(
     "/i18n/overrides/{override_id}",
+    dependencies=[Depends(require_perm("settings"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[dict],
     summary="Delete i18n override",
 )
 async def delete_i18n_override(
     override_id: int = Path(..., ge=1),
     db: AsyncSession = Depends(get_db),
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
 ) -> ApiResponse[dict]:
     svc = AdminService(db)
     await svc.delete_i18n_override(override_id=override_id, admin_id=admin.admin_id)
@@ -930,13 +1149,15 @@ async def delete_i18n_override(
 
 @router.post(
     "/i18n/overrides/import",
+    dependencies=[Depends(require_perm("settings"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[dict],
     summary="Bulk import i18n overrides for a locale",
 )
 async def import_i18n_overrides(
     body: ImportI18nOverridesRequest,
     db: AsyncSession = Depends(get_db),
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
 ) -> ApiResponse[dict]:
     svc = AdminService(db)
     out = await svc.import_i18n_overrides(
@@ -947,13 +1168,15 @@ async def import_i18n_overrides(
 
 @router.get(
     "/i18n/overrides/export",
+    dependencies=[Depends(require_perm("settings"))],
+    # __PERM_DEPENDENCIES_INJECTED__
     response_model=ApiResponse[dict],
     summary="Export all overrides for a locale as JSON dict",
 )
 async def export_i18n_overrides(
     locale: str = Query(..., min_length=2),
     db: AsyncSession = Depends(get_db),
-    admin: AdminTokenData = Depends(verify_admin_token),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
 ) -> ApiResponse[dict]:
     svc = AdminService(db)
     entries = await svc.export_i18n_overrides(locale=locale)

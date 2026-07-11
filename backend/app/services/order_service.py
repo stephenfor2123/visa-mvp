@@ -28,6 +28,7 @@ import hashlib
 import json
 import uuid
 from collections.abc import Iterable
+from decimal import Decimal
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
@@ -78,11 +79,6 @@ class OrderService:
                 ErrorCode.ORDER_INVALID_VISA_TYPE,
                 message=f"visa_type must be one of {sorted(VISA_TYPES)}",
             )
-        if not material_ids:
-            raise BizException(
-                ErrorCode.INVALID_PARAMS, message="material_ids must be non-empty"
-            )
-
         # 1) Destination must exist & be enabled
         dest = await self.db.get(VisaDestination, destination_id)
         if dest is None:
@@ -98,8 +94,10 @@ class OrderService:
                 data={"destination_id": destination_id, "country_code": dest.country_code},
             )
 
-        # 2) Materials must all belong to this user, alive, and visa_type consistent
-        materials = await self._load_owned_materials(user_id, material_ids)
+        # 2) Legacy material association (optional — privacy-first flow uses applicant_data only)
+        materials = []
+        if material_ids:
+            materials = await self._load_owned_materials(user_id, material_ids)
 
         # 3) Generate the order number
         order_no = await self._generate_order_no()
@@ -119,6 +117,13 @@ class OrderService:
                     )
                 normalised_aff_code = stripped.upper()
 
+        # W63: 从 destination 拿价 (visa_fee_usd 存的是 cents), 写到 order.total_amount (USD 元)
+        # 如果 dest 没设 visa_fee_usd (新加 destination 漏了), 用 0 — 跟之前行为兼容
+        order_total_usd = (
+            Decimal(dest.visa_fee_usd) / Decimal(100) if dest.visa_fee_usd else Decimal(0)
+        )
+        order_currency = "USD"
+
         # 5) Persist
         order = Order(
             order_no=order_no,
@@ -126,6 +131,8 @@ class OrderService:
             destination_id=destination_id,
             visa_type=visa_type,
             status="created",
+            total_amount=order_total_usd,
+            currency=order_currency,
             applicant_data=json.dumps(applicant_data or {}, ensure_ascii=False),
             material_ids=json.dumps(material_ids, ensure_ascii=False),
             aff_code=normalised_aff_code,
@@ -152,7 +159,7 @@ class OrderService:
         )
         self.db.add(history)
 
-        # 6) Back-fill materials.order_id so future uploads can stay orderless
+        # 6) Back-fill materials.order_id (legacy path only)
         for m in materials:
             if m.order_id is None:
                 m.order_id = order.id
@@ -243,8 +250,23 @@ class OrderService:
             )
         ).scalars().all()
 
+        # Bulk-load destination rows so the list endpoint doesn't N+1.
+        # We map destination_id -> dict once, then attach per order.
+        dest_ids = {r.destination_id for r in rows if r.destination_id}
+        dest_by_id: dict[int, VisaDestination] = {}
+        if dest_ids:
+            dest_rows = (
+                await self.db.execute(
+                    select(VisaDestination).where(VisaDestination.id.in_(dest_ids))
+                )
+            ).scalars().all()
+            dest_by_id = {d.id: d for d in dest_rows}
+
         return {
-            "items": [self._to_order_dict(r) for r in rows],
+            "items": [
+                self._to_order_dict(r, dest=dest_by_id.get(r.destination_id))
+                for r in rows
+            ],
             "page": page,
             "page_size": page_size,
             "total": int(total),
@@ -260,6 +282,11 @@ class OrderService:
         order = await self._get_owned_order(
             user_id=user_id, order_no=order_no, with_relations=True
         )
+
+        # Destination (eager-load to avoid lazy-load after session close;
+        # _to_order_dict expects the ORM row, see list_orders at L249-256
+        # for the same pattern).
+        destination_row = await self.db.get(VisaDestination, order.destination_id)
 
         # Material refs (only alive ones)
         material_ids = self._decode_material_ids(order.material_ids)
@@ -279,7 +306,7 @@ class OrderService:
                 ).scalars()
             )
 
-        out = self._to_order_dict(order)
+        out = self._to_order_dict(order, dest=destination_row)
         out["status_history"] = [
             {
                 "from_status": h.from_status,
@@ -483,6 +510,26 @@ class OrderService:
         return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
     @staticmethod
+    def _destination_display_name(dest: VisaDestination) -> str:
+        """Best-effort display name from country_name_i18n, fallback to code."""
+        if dest is None:
+            return ""
+        try:
+            i18n = json.loads(dest.country_name_i18n or "{}")
+            if isinstance(i18n, dict):
+                name = (
+                    i18n.get("zh-CN")
+                    or i18n.get("en")
+                    or next((v for v in i18n.values() if v), "")
+                    or ""
+                )
+                if name:
+                    return name
+        except (TypeError, ValueError):
+            pass
+        return dest.country_code or ""
+
+    @staticmethod
     def _destination_to_dict(dest: Optional[VisaDestination]) -> Dict[str, Any]:
         """Render a VisaDestination for the checklist (with i18n fallback)."""
         if dest is None:
@@ -492,19 +539,7 @@ class OrderService:
                 "country_name": "",
                 "enabled": False,
             }
-        name = ""
-        try:
-            i18n = json.loads(dest.country_name_i18n or "{}")
-            if isinstance(i18n, dict):
-                # Prefer zh-CN, then en, then the first non-empty value
-                name = (
-                    i18n.get("zh-CN")
-                    or i18n.get("en")
-                    or next((v for v in i18n.values() if v), "")
-                    or ""
-                )
-        except (TypeError, ValueError):
-            name = dest.country_code  # graceful fallback
+        name = OrderService._destination_display_name(dest) or dest.country_code
         return {
             "id": dest.id,
             "country_code": dest.country_code,
@@ -569,6 +604,133 @@ class OrderService:
                 order_no, exc,
             )
         return order
+
+    # ------------------------------------------------------------------ #
+    # Delete draft (W67)                                                  #
+    # ------------------------------------------------------------------ #
+    async def delete_draft(self, *, user_id: int, order_no: str) -> Dict[str, Any]:
+        """Hard-delete a draft order + soft-delete its associated materials.
+
+        Scope: only `status == "created"` orders (both UI states "草稿" and
+        "待提交" map to `created`). Anything that has been submitted /
+        paid / closed falls outside this endpoint — for those, the user
+        should use cancel (`status → closed`) or contact support.
+
+        Behaviour (W67 decision — soft-delete materials):
+          1. Verify ownership + status gate (404 on foreign/no-exist, 4010
+             on status mismatch — same convention as cancel).
+          2. Soft-delete every Material row referenced by the order
+             (`deleted_at = now`). The file on disk is preserved for
+             audit / recovery; the user will not see these materials in
+             the library any more.
+          3. Append one `OrderStatusHistory` row (source='user',
+             note='draft deleted') so the audit trail of the order
+             itself is captured before the row goes away.
+          4. Physically delete the Order row + its `order_status_history`
+             (cascade) + `order_messages` (cascade). Audit log row is
+             written BEFORE the delete so it survives.
+          5. record_audit(action='order.delete_draft', ...) — admin can
+             find it from the audit log even though the order row is
+             gone.
+
+        Returns a small dict the API layer turns into DeleteDraftResponse.
+
+        Note on the audit: we deliberately keep a *physical* audit row
+        even though the order row is hard-deleted — admin / customer
+        support need to be able to say "user X deleted draft order Y at
+        time T". The audit table is append-only and never cascades.
+        """
+        order = await self._get_owned_order(user_id=user_id, order_no=order_no)
+        if order.status not in CANCELLABLE_STATUSES:
+            # Same gate as cancel — both are "user wants out of a draft
+            # order" actions. We use 4010 ORDER_NOT_EDITABLE so the
+            # front-end's existing handler (which already routes on
+            # 4010 for cancel) catches it transparently.
+            raise BizException(
+                ErrorCode.ORDER_NOT_EDITABLE,
+                message=(
+                    f"Order in status '{order.status}' cannot be deleted as "
+                    "a draft; only 'created' orders can be hard-deleted."
+                ),
+                data={"order_no": order_no, "current_status": order.status},
+            )
+
+        # 1) Snapshot the material ids we need to soft-delete. Decoding
+        #    first avoids holding the order object open across the
+        #    subsequent cascade delete.
+        material_ids = self._decode_material_ids(order.material_ids)
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        order_id = order.id
+
+        # 2) Append the terminal status-history row before the cascade
+        #    wipes them. The (from_status='created', to_status='created',
+        #    source='user', note='draft deleted') combination is the
+        #    audit signal that the order was hard-deleted, even though
+        #    no status transition actually happened (status stays
+        #    'created' until the row goes away).
+        self.db.add(
+            OrderStatusHistory(
+                order_id=order_id,
+                from_status=order.status,
+                to_status=order.status,
+                source="user",
+                note="draft deleted (cascade)",
+            )
+        )
+        await self.db.flush()  # ensure history row materialises before we wipe
+
+        # 3) Soft-delete associated materials. We use a single UPDATE
+        #    rather than N row-by-row updates — same effect, one
+        #    round-trip, and idempotent on already-deleted rows.
+        if material_ids:
+            from sqlalchemy import update
+
+            await self.db.execute(
+                update(Material)
+                .where(
+                    Material.id.in_(material_ids),
+                    Material.user_id == user_id,
+                    Material.deleted_at.is_(None),  # only stamp once
+                )
+                .values(deleted_at=now)
+            )
+
+        # 4) Audit BEFORE delete — the audit table never cascades, so
+        #    the row will survive the order's hard-delete. We record
+        #    the material ids and the user so support can reconstruct
+        #    the cascade.
+        await record_audit(
+            self.db,
+            actor_type="user",
+            actor_id=user_id,
+            action="order.delete_draft",
+            target_type="order",
+            target_id=order_id,
+            payload={
+                "order_no": order_no,
+                "soft_deleted_material_ids": material_ids,
+                "deleted_at": now.isoformat(),
+            },
+        )
+
+        # 5) Hard-delete the order row. SQLAlchemy cascades to
+        #    order_status_history + order_messages (defined on the
+        #    relationship). Audit log has no FK to orders so it's
+        #    preserved.
+        await self.db.delete(order)
+        await self.db.commit()
+
+        _log.info(
+            "order draft deleted order_no={} user_id={} soft_materials={}",
+            order_no, user_id, len(material_ids),
+        )
+
+        return {
+            "order_no": order_no,
+            "deleted": True,
+            "soft_deleted_materials": len(material_ids),
+            "deleted_at": now,
+        }
 
     # ------------------------------------------------------------------ #
     # Submit (V2 §4.2.4 — created → submitted)                           #
@@ -792,13 +954,24 @@ class OrderService:
         return data if isinstance(data, dict) else {}
 
     @staticmethod
-    def _to_order_dict(order: Order) -> Dict[str, Any]:
+    def _to_order_dict(
+        order: Order,
+        *,
+        dest: Optional[VisaDestination] = None,
+    ) -> Dict[str, Any]:
+        country_code = ""
+        country_name = ""
+        if dest is not None:
+            country_code = dest.country_code or ""
+            country_name = OrderService._destination_display_name(dest)
         return {
             "id": order.id,
             "uuid": order.uuid,
             "order_no": order.order_no,
             "user_id": order.user_id,
             "destination_id": order.destination_id,
+            "country_code": country_code,
+            "country_name": country_name,
             "visa_type": order.visa_type,
             "status": order.status,
             "total_amount": order.total_amount,

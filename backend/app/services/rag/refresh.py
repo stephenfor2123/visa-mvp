@@ -1,18 +1,24 @@
 """RAG: refresh pipeline — fetch sources, chunk, embed, store.
 
-Idempotent: refreshing a source replaces its chunks.
+W62: Two modes — "审核" (default) and "force" (legacy/admin override).
+- 审核: refresh_source 抓完 + 切块后,**先存到 RagReviewSnapshot**,
+  把 RagSource.review_status 置为 pending_review,不动 RagChunk。
+  admin 在 /admin/rag-review approve 后才落库。
+- force: 直接覆盖 RagChunk(回退到 W46 之前的行为),并把 review_status
+  标 force_applied。给紧急用,会绕开审核。
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Optional
 
-from sqlalchemy import delete
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.rag import RagChunk, RagSource
+from app.models.rag import RagChunk, RagReviewSnapshot, RagSource
 from app.services.rag.chunker import chunk_text
 from app.services.rag.crawler import fetch_url
 from app.services.rag.embedder import embed
@@ -113,15 +119,111 @@ async def _replace_chunks(db: AsyncSession, source_id: int, texts: List[str]) ->
     return count
 
 
-async def refresh_source(db: AsyncSession, source: RagSource) -> dict:
-    """Refresh one source: fetch + chunk + embed + replace chunks."""
+def _compute_chunks_hash(chunks: List[dict]) -> str:
+    """SHA-1 of concatenated chunk contents, used as content fingerprint.
+
+    任何 chunk 文本变化都会让 hash 变化 — 用作"内容是否真的变了"的判断。
+    """
+    joined = "\n".join(c["content"] for c in chunks)
+    return hashlib.sha1(joined.encode("utf-8")).hexdigest()
+
+
+async def _compute_diff_for_source(db: AsyncSession, source_id: int, new_chunks: List[dict]) -> dict:
+    """Build {added, removed, changed} diff vs current RagChunk rows.
+
+    Used both when creating a snapshot (to show admins) and when deciding
+    whether a content-hash change actually means the content changed (vs.
+    just re-chunked into the same text).
+    """
+    rows = (await db.execute(
+        select(RagChunk).where(RagChunk.source_id == source_id).order_by(RagChunk.chunk_index)
+    )).scalars().all()
+    old_chunks = [{"chunk_index": r.chunk_index, "content": r.content} for r in rows]
+    old_map = {c["chunk_index"]: c["content"] for c in old_chunks}
+    new_map = {c["chunk_index"]: c["content"] for c in new_chunks}
+
+    added = [c for i, c in enumerate(new_chunks) if i not in old_map]
+    removed = [c for c in old_chunks if c["chunk_index"] not in new_map]
+    changed = [
+        {"chunk_index": i, "old": old_map[i], "new": new_map[i]}
+        for i in old_map.keys() & new_map.keys()
+        if old_map[i] != new_map[i]
+    ]
+    return {"added": added, "removed": removed, "changed": changed}
+
+
+async def _expire_existing_pending_snapshots(
+    db: AsyncSession, source_id: int
+) -> None:
+    """If a source already has an open snapshot (还没 approve/reject 的),
+    mark it as auto-rejected with note "superseded by newer refresh".
+
+    避免同一 source 堆 5 个 pending snapshot 让审核员眼花。
+    """
+    now = datetime.utcnow()
+    rows = (await db.execute(
+        select(RagReviewSnapshot).where(
+            RagReviewSnapshot.source_id == source_id,
+            RagReviewSnapshot.decision.is_(None),
+        )
+    )).scalars().all()
+    for snap in rows:
+        snap.decision = "rejected"
+        snap.decided_at = now
+        snap.decision_note = "superseded by newer refresh"
+
+
+async def _create_snapshot(
+    db: AsyncSession,
+    source: RagSource,
+    raw_text: str,
+    new_chunks: List[dict],
+    diff: dict,
+    fetch_meta: dict,
+) -> RagReviewSnapshot:
+    """Save a pending review snapshot for the source. Caller commits."""
+    content_hash = _compute_chunks_hash(new_chunks)
+    expires_at = datetime.utcnow() + timedelta(days=7)
+    snap = RagReviewSnapshot(
+        source_id=source.id,
+        content_hash=content_hash,
+        raw_text=raw_text,
+        chunks_json=json.dumps(new_chunks, ensure_ascii=False),
+        diff_summary_json=json.dumps(diff, ensure_ascii=False),
+        fetch_meta_json=json.dumps(fetch_meta, ensure_ascii=False),
+        expires_at=expires_at,
+    )
+    db.add(snap)
+    source.review_status = "pending_review"
+    await db.flush()
+    return snap
+
+
+async def refresh_source(
+    db: AsyncSession, source: RagSource, *, mode: str = "review"
+) -> dict:
+    """Refresh one source: fetch + chunk + embed + (review snapshot | force replace).
+
+    Args:
+        mode: "review" (default) — 写入 RagReviewSnapshot 等审核;不会改 RagChunk。
+              "force"            — 直接替换 RagChunk (绕过审核),把 review_status
+                                    标 force_applied。一般运维紧急用,前端 UI
+                                    会有二次确认。
+
+    Returns:
+        dict with {id, status, content_changed, snapshot_id?, ...}
+    """
     if not source.enabled:
         return {"id": source.id, "status": "skipped", "reason": "disabled"}
 
     text = None
     title = None
+    fetch_meta: dict = {"extractor": None, "status_code": None, "fetched_chars": 0}
+
     if source.content_type == "web":
         result = fetch_url(source.url)
+        fetch_meta["extractor"] = result.extractor
+        fetch_meta["status_code"] = result.status
         if result.error or not result.text:
             source.last_refresh_at = datetime.utcnow()
             source.last_status = "error"
@@ -130,6 +232,7 @@ async def refresh_source(db: AsyncSession, source: RagSource) -> dict:
             return {"id": source.id, "status": "error", "error": source.last_error}
         text = result.text
         title = result.title
+        fetch_meta["fetched_chars"] = len(text)
     elif source.content_type == "curated":
         text = CURATED_CONTENT.get(source.name)
         if text is None:
@@ -142,22 +245,56 @@ async def refresh_source(db: AsyncSession, source: RagSource) -> dict:
         # local currency before chunking (so RAG retrievals match users
         # querying in their own currency, e.g. "Rp" for ID applicants).
         text = localize_curated_text(text, source.country_code)
+        fetch_meta["fetched_chars"] = len(text)
     else:
         return {"id": source.id, "status": "error", "error": f"unknown content_type: {source.content_type}"}
 
     chunks = chunk_text(text)
-    chunk_count = await _replace_chunks(db, source.id, [c.text for c in chunks])
+    new_chunks = [{"chunk_index": idx, "content": c.text} for idx, c in enumerate(chunks)]
+    new_hash = _compute_chunks_hash(new_chunks)
+    diff = await _compute_diff_for_source(db, source.id, new_chunks)
+    content_changed = source.last_content_hash != new_hash
+
     source.last_refresh_at = datetime.utcnow()
     source.last_status = "ok"
     source.last_error = None
+
+    if mode == "force":
+        # 紧急:直接覆盖 RagChunk
+        await _replace_chunks(db, source.id, [c["content"] for c in new_chunks])
+        source.last_content_hash = new_hash
+        source.review_status = "force_applied"
+        # force 模式:作废现有 pending snapshot
+        await _expire_existing_pending_snapshots(db, source.id)
+        await db.commit()
+        return {
+            "id": source.id,
+            "status": "ok",
+            "mode": "force",
+            "url": source.url,
+            "title": title,
+            "text_chars": len(text),
+            "chunk_count": len(new_chunks),
+            "content_changed": content_changed,
+            "diff": diff,
+        }
+
+    # 默认 mode == "review" — 写入 snapshot,等 admin approve
+    await _expire_existing_pending_snapshots(db, source.id)
+    snap = await _create_snapshot(db, source, text, new_chunks, diff, fetch_meta)
+    snapshot_id = snap.id
     await db.commit()
     return {
         "id": source.id,
         "status": "ok",
+        "mode": "review",
         "url": source.url,
         "title": title,
         "text_chars": len(text),
-        "chunk_count": chunk_count,
+        "chunk_count": len(new_chunks),
+        "content_changed": content_changed,
+        "snapshot_id": snapshot_id,
+        "diff": diff,
     }
 
 
@@ -229,15 +366,149 @@ CURATED_CONTENT = {
 }
 
 
-async def refresh_all(db: AsyncSession, country_code: Optional[str] = None) -> List[dict]:
-    """Refresh every enabled source (optionally filtered by country)."""
-    from sqlalchemy import select
+async def refresh_all(
+    db: AsyncSession,
+    country_code: Optional[str] = None,
+    *,
+    mode: str = "review",
+) -> List[dict]:
+    """Refresh every enabled source (optionally filtered by country).
 
+    mode: "review" | "force" — 透传给 refresh_source。
+    """
     stmt = select(RagSource).where(RagSource.enabled.is_(True))
     if country_code:
         stmt = stmt.where(RagSource.country_code == country_code)
     sources = (await db.execute(stmt)).scalars().all()
     results = []
     for s in sources:
-        results.append(await refresh_source(db, s))
+        results.append(await refresh_source(db, s, mode=mode))
     return results
+
+
+# --------------------------------------------------------------------------- #
+# W62+: 审核流程 service                                                       #
+# --------------------------------------------------------------------------- #
+async def approve_snapshot(
+    db: AsyncSession,
+    *,
+    snapshot_id: int,
+    admin_id: int,
+    note: Optional[str] = None,
+) -> dict:
+    """把 snapshot 的 chunks 写回 RagChunk,更新 RagSource.last_content_hash。
+
+    旧 hash 的 RagTranslation 缓存自动失效 (因为新 chunk 的 content_hash 跟
+    旧的不同,retriever 会按新 hash 查缓存,miss 就走 LLM 重新翻译)。
+
+    Idempotency: 如果 snapshot 已经 decided,直接报 "already_decided"。
+    """
+    snap = (await db.execute(
+        select(RagReviewSnapshot).where(RagReviewSnapshot.id == snapshot_id)
+    )).scalar_one_or_none()
+    if not snap:
+        raise ValueError(f"snapshot {snapshot_id} not found")
+    if snap.decision is not None:
+        raise ValueError(f"snapshot {snapshot_id} already decided: {snap.decision}")
+
+    source = (await db.execute(
+        select(RagSource).where(RagSource.id == snap.source_id)
+    )).scalar_one_or_none()
+    if not source:
+        raise ValueError(f"source {snap.source_id} not found")
+
+    new_chunks = json.loads(snap.chunks_json)
+    # Replace chunks
+    await _replace_chunks(db, source.id, [c["content"] for c in new_chunks])
+    # 重要:刷新每个 chunk 的 content_hash,translation cache 才能正确失效
+    rows = (await db.execute(
+        select(RagChunk).where(RagChunk.source_id == source.id).order_by(RagChunk.chunk_index)
+    )).scalars().all()
+    for chunk in rows:
+        chunk.content_hash = chunk.compute_content_hash()
+    # Update source
+    source.last_content_hash = snap.content_hash
+    source.review_status = "approved"
+    source.reviewed_by = admin_id
+    source.reviewed_at = datetime.utcnow()
+    source.review_note = note
+    # Mark snapshot decided
+    snap.decision = "approved"
+    snap.decided_by = admin_id
+    snap.decided_at = datetime.utcnow()
+    snap.decision_note = note
+    await db.commit()
+    return {
+        "snapshot_id": snapshot_id,
+        "source_id": source.id,
+        "status": "approved",
+        "chunk_count": len(new_chunks),
+    }
+
+
+async def reject_snapshot(
+    db: AsyncSession,
+    *,
+    snapshot_id: int,
+    admin_id: int,
+    note: Optional[str] = None,
+) -> dict:
+    """拒绝 snapshot。RagChunk 不变,source 状态变 rejected。
+
+    跟 approve 一样会标 decision,只是 chunks 不落库。
+    """
+    snap = (await db.execute(
+        select(RagReviewSnapshot).where(RagReviewSnapshot.id == snapshot_id)
+    )).scalar_one_or_none()
+    if not snap:
+        raise ValueError(f"snapshot {snapshot_id} not found")
+    if snap.decision is not None:
+        raise ValueError(f"snapshot {snapshot_id} already decided: {snap.decision}")
+
+    source = (await db.execute(
+        select(RagSource).where(RagSource.id == snap.source_id)
+    )).scalar_one_or_none()
+    if not source:
+        raise ValueError(f"source {snap.source_id} not found")
+
+    source.review_status = "rejected"
+    source.reviewed_by = admin_id
+    source.reviewed_at = datetime.utcnow()
+    source.review_note = note
+    snap.decision = "rejected"
+    snap.decided_by = admin_id
+    snap.decided_at = datetime.utcnow()
+    snap.decision_note = note
+    await db.commit()
+    return {
+        "snapshot_id": snapshot_id,
+        "source_id": source.id,
+        "status": "rejected",
+    }
+
+
+async def cleanup_expired_snapshots(db: AsyncSession) -> int:
+    """7 天前的未决 snapshot 直接 reject (decision=expired)。
+
+    跟 reject 不同:不走 admin 流程,decision='expired' 表示系统自动清理。
+    """
+    now = datetime.utcnow()
+    rows = (await db.execute(
+        select(RagReviewSnapshot).where(
+            RagReviewSnapshot.expires_at < now,
+            RagReviewSnapshot.decision.is_(None),
+        )
+    )).scalars().all()
+    for snap in rows:
+        snap.decision = "expired"
+        snap.decided_at = now
+        snap.decision_note = "auto-expired after 7 days"
+        # 同步 source 状态回 synced (没有 pending 了)
+        source = (await db.execute(
+            select(RagSource).where(RagSource.id == snap.source_id)
+        )).scalar_one_or_none()
+        if source and source.review_status == "pending_review":
+            source.review_status = "synced"
+    if rows:
+        await db.commit()
+    return len(rows)

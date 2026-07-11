@@ -19,7 +19,8 @@ DoD (V2 §4.5 + W6-2 spec):
     because `MockPaymentProvider` self-calls `/payment/notify`.
   - pytest ≥ 3 cases pass, end-to-end curl verifies all 4 endpoints.
 
-V2.1 TODO: drop in real channel adapters behind `Settings.payment_channel`.
+# V2.1 TODO: drop in real channel adapters behind `Settings.payment_channel` (done).
+# RPA / insurance routers gated by feature flags — see docs/PRODUCT_SCOPE.md.
 """
 import json as _json
 import time
@@ -29,6 +30,7 @@ from typing import Annotated, Optional
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, Path, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import get_settings
 from app.core.db import AsyncSessionLocal, get_db
 from app.core.errors import BizException, ErrorCode
 from app.core.metrics import timed
@@ -44,6 +46,7 @@ from app.schemas.payment import (
     CreatePaymentResponse,
     NotifyPaymentRequest,
     NotifyPaymentResponse,
+    PaymentConfigResponse,
     QueryPaymentResponse,
 )
 from app.services.payment_provider import (
@@ -274,13 +277,19 @@ async def create_payment(
     # Order must exist AND belong to current user.
     await _load_owned_order(db, user_id=current_user.id, order_no=body.order_no)
 
-    provider: PaymentProvider = get_payment_provider()
+    provider = get_payment_provider()
     result = await provider.create_order(
         db,
         order_no=body.order_no,
         amount_cents=body.amount_cents,
         desc=body.desc,
         currency=body.currency,
+    )
+    provider_name = "stripe" if type(provider).__name__ == "StripePaymentProvider" else "mock"
+    client_secret = result.prepay_id if provider_name == "stripe" else None
+    auto_notify = (
+        0.0 if provider_name == "stripe"
+        else PaymentProvider.AUTO_NOTIFY_DELAY_SECONDS
     )
     _log.info(
         "payment.create",
@@ -302,7 +311,35 @@ async def create_payment(
             expired_at=result.expired_at,
             amount_cents=body.amount_cents,
             currency=body.currency,
-            auto_notify_in_seconds=PaymentProvider.AUTO_NOTIFY_DELAY_SECONDS,
+            provider=provider_name,
+            client_secret=client_secret,
+            auto_notify_in_seconds=auto_notify,
+        ),
+    )
+
+
+# --------------------------------------------------------------------------- #
+# GET /payment/config                                                         #
+# --------------------------------------------------------------------------- #
+@router.get(
+    "/config",
+    response_model=ApiResponse[PaymentConfigResponse],
+    summary="Public payment channel config for checkout UI",
+)
+@timed
+async def payment_config() -> ApiResponse[PaymentConfigResponse]:
+    """Return the active payment channel and Stripe publishable key (if any)."""
+    settings = get_settings()
+    channel = settings.payment_channel
+    if channel == "stripe" and not settings.stripe_secret_key:
+        channel = "mock"
+    pk = settings.stripe_publishable_key if channel == "stripe" else None
+    return ApiResponse[PaymentConfigResponse](
+        code="1000",
+        message="OK",
+        data=PaymentConfigResponse(
+            channel=channel,
+            stripe_publishable_key=pk or None,
         ),
     )
 

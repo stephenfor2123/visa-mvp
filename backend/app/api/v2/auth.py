@@ -5,7 +5,7 @@
   - POST /api/v2/auth/register            (email + username + password)
   - POST /api/v2/auth/login               (account + password)
   - POST /api/v2/auth/refresh
-  - POST /api/v2/auth/reset-password      (account + new password)
+  - POST /api/v2/auth/reset-password      (token from email + new password)
   - POST /api/v2/auth/google              (Google OAuth id_token)
   - POST /api/v2/auth/wechat              (WeChat miniprogram code)
 """
@@ -15,12 +15,14 @@ from typing import Annotated, Optional
 from fastapi import APIRouter, Body, Depends, Header, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import get_settings
 from app.core.db import get_db
 from app.core.errors import BizException
 from app.core.logging import get_logger
 from app.schemas.auth import (
     GoogleAuthRequest,
     LoginRequest,
+    PasswordResetRequest,
     RefreshRequest,
     RegisterRequest,
     ResetPasswordRequest,
@@ -207,9 +209,28 @@ async def wechat_auth(
 
 
 @router.post(
+    "/password-reset-request",
+    response_model=ApiResponse[dict],
+    summary="Request a password-reset link (sent to registered email)",
+)
+@timed
+async def password_reset_request(
+    body: PasswordResetRequest,
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user_agent: Annotated[Optional[str], Header(alias="User-Agent")] = None,
+    x_device_fp: Annotated[Optional[str], Header(alias="X-Device-Fingerprint")] = None,
+) -> ApiResponse[dict]:
+    service = AuthService(db)
+    info = _client_info(request, user_agent, x_device_fp)
+    result = await service.request_password_reset(account=body.account, info=info)
+    return ApiResponse[dict](code="1000", message="OK", data=result)
+
+
+@router.post(
     "/reset-password",
     response_model=ApiResponse[dict],
-    summary="Reset password by account (email or username) — W26 no SMS",
+    summary="Reset password using token from email link",
 )
 @timed
 async def reset_password(
@@ -221,9 +242,25 @@ async def reset_password(
 ) -> ApiResponse[dict]:
     service = AuthService(db)
     info = _client_info(request, user_agent, x_device_fp)
-    await service.reset_password(
-        account=body.account,
+    result = await service.reset_password(
+        token=body.token,
         new_password=body.new_password,
         info=info,
     )
-    return ApiResponse[dict](code="1000", message="OK", data={"message": "Password updated successfully"})
+    return ApiResponse[dict](code="1000", message="OK", data=result)
+
+
+@router.get(
+    "/public-config",
+    response_model=ApiResponse[dict],
+    summary="Public privacy/support config (no auth)",
+)
+async def public_config() -> ApiResponse[dict]:
+    settings = get_settings()
+    return ApiResponse[dict](
+        code="1000",
+        message="OK",
+        data={
+            "privacy_support_email": settings.privacy_support_email,
+        },
+    )

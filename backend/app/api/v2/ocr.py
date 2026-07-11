@@ -76,6 +76,56 @@ def _pdf_to_bgr(content: bytes, dpi: int = 300) -> Optional[bytes]:
         return None
 
 
+# W52: 多页 PDF 渲染 — 银行流水/在职证明这类多页材料,以前只 OCR 第 1 页,
+# 后面的页面全部被丢掉。设个 MAX_PAGES 保护内存(20 页 × 300dpi 约 80MB JPEG,
+# 解析够用,再大就让用户重传)。
+MAX_PDF_PAGES = 20
+
+
+def is_pdf_bytes(content: bytes, content_type: Optional[str] = None) -> bool:
+    """判断 bytes 是不是 PDF (header magic 或 content_type)。"""
+    if content_type and "pdf" in content_type.lower():
+        return True
+    return content[:4] == b"%PDF"
+
+
+def pdf_pages_to_bgr(content: bytes, dpi: int = 300, max_pages: int = MAX_PDF_PAGES):
+    """Generator: 逐页把 PDF 渲染成 (page_index, jpeg_bytes)。
+
+    Yields:
+        (int, bytes) — page_index 从 1 开始,jpeg_bytes 是该页的 RGB JPEG 编码。
+        若 PDF 解码失败,直接 stop iteration(不抛异常,让调用方走 fallback)。
+    """
+    last_exc = None
+    # 优先 pdf2image
+    try:
+        from pdf2image import convert_from_bytes  # type: ignore
+
+        pages = convert_from_bytes(content, dpi=dpi, first_page=1, last_page=max_pages)
+        for idx, pil in enumerate(pages, start=1):
+            buf = io.BytesIO()
+            pil.convert("RGB").save(buf, format="JPEG", quality=85)
+            yield idx, buf.getvalue()
+        return
+    except Exception as exc:
+        last_exc = exc
+    # fallback PyMuPDF
+    try:
+        import fitz  # type: ignore
+
+        doc = fitz.open(stream=content, filetype="pdf")
+        total = min(doc.page_count, max_pages)
+        for i in range(total):
+            page = doc.load_page(i)
+            pix = page.get_pixmap(dpi=dpi)
+            yield i + 1, pix.tobytes("jpeg")
+        return
+    except Exception as exc:
+        last_exc = exc
+    # 都失败,记一行 warning 后静默 stop — 调用方可以兜底
+    _log.warning("pdf render failed ({}); falling back to no-PDF path", last_exc)
+
+
 # --------------------------------------------------------------------------- #
 # Endpoint                                                                  #
 # --------------------------------------------------------------------------- #
@@ -107,10 +157,16 @@ async def recognize(
 
     # ── W31: detect PDF and convert to JPEG first ──
     content_type = (file.content_type or "").lower()
-    is_pdf = content_type == "application/pdf" or content[:4] == b"%PDF"
+    is_pdf = is_pdf_bytes(content, file.content_type)
+    pdf_pages_jpegs: list = []  # [(page_idx, jpeg_bytes)] 仅 PDF 时填充
     if is_pdf:
-        pdf_bytes = _pdf_to_bgr(content)
-        if pdf_bytes is None:
+        # 一次性收集所有页(最多 MAX_PDF_PAGES),保留 page_index 给 OCR 阶段用
+        try:
+            for idx, jpg in pdf_pages_to_bgr(content):
+                pdf_pages_jpegs.append((idx, jpg))
+        except Exception:
+            pdf_pages_jpegs = []
+        if not pdf_pages_jpegs:
             await record_audit(
                 db,
                 actor_type="user",
@@ -135,7 +191,8 @@ async def recognize(
                     lang=lang,
                 ),
             )
-        content = pdf_bytes
+        # 兼容旧的单页流程:把第一页 JPEG 当作 content
+        content = pdf_pages_jpegs[0][1]
         content_type = "image/jpeg"
 
     # ── W31: ImagePreprocessor (透视矫正 + CLAHE) before OCR ──
@@ -194,13 +251,58 @@ async def recognize(
         )
 
     # ── Run OCR (cached engine per lang) ──
+    # W52: 多页 PDF — 已经收集到 pdf_pages_jpegs[(idx, jpeg_bytes)] 列表时,
+    # 逐页 OCR 后合并 items[]。每条 item 加 page_index 字段标记来源页,
+    # 银行流水 parser 不会用它(它只关心 text),但消费者(比如要按页定位
+    # 关键交易时)能查得到。非 PDF 路径走单页(img_bgr 已有)。
     engine_error = None
     items: list = []
     fields: dict = {}
+    pages_processed = 0
     try:
         engine = get_engine(lang=lang)  # W31: cached singleton
-        items = engine.recognize(img_bgr)
-        fields = engine.extract_passport_fields(img_bgr)
+        if is_pdf and pdf_pages_jpegs:
+            # 多页路径 — 每页独立 OCR 后合并
+            all_items: list = []
+            any_error = None
+            for page_idx, jpg_bytes in pdf_pages_jpegs:
+                try:
+                    import numpy as np
+
+                    page_pil = Image.open(io.BytesIO(jpg_bytes))
+                    if page_pil.mode not in ("RGB", "L"):
+                        page_pil = page_pil.convert("RGB")
+                    page_bgr = cv2.cvtColor(np.array(page_pil), cv2.COLOR_RGB2BGR)
+                    page_items = engine.recognize(page_bgr)
+                    for it in page_items:
+                        # 不动原 item,只附加 page_index;消费者用 .get("page_index")
+                        # 拿到来源页(从 1 开始)
+                        it["page_index"] = page_idx
+                    all_items.extend(page_items)
+                    pages_processed += 1
+                except Exception as page_exc:
+                    _log.warning("pdf page {} ocr failed: {}", page_idx, page_exc)
+                    any_error = str(page_exc)
+                    # 继续下一页
+            items = all_items
+            # passport fields 只从第 1 页抽(护照首页才有这些字段)
+            try:
+                first_pil = Image.open(io.BytesIO(pdf_pages_jpegs[0][1]))
+                if first_pil.mode not in ("RGB", "L"):
+                    first_pil = first_pil.convert("RGB")
+                first_bgr = cv2.cvtColor(np.array(first_pil), cv2.COLOR_RGB2BGR)
+                fields = engine.extract_passport_fields(first_bgr)
+            except Exception as fp_exc:
+                _log.warning("pdf first page passport extract failed: {}", fp_exc)
+                fields = {}
+            if any_error and not all_items:
+                # 所有页都失败 — 报告 engine_error
+                raise RuntimeError(any_error)
+        else:
+            # 单页路径 (image 文件)
+            items = engine.recognize(img_bgr)
+            fields = engine.extract_passport_fields(img_bgr)
+            pages_processed = 1
     except Exception as exc:
         engine_error = str(exc)
         _log.error("ocr engine error: {}", exc)

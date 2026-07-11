@@ -18,13 +18,14 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Optional
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.errors import BizException, ErrorCode
 from app.core.logging import get_logger
+from app.core.security import bump_password_changed_at, invalidate_user_sessions
 from app.middleware.admin_auth import create_admin_token
 from app.models.audit_log import AuditLog
 from app.models.material import Material
@@ -35,6 +36,7 @@ from app.models.order import (
     is_valid_transition,
     next_statuses,
 )
+from app.models.destination import VisaDestination
 from app.models.user import User
 from app.models.visa_countries import VisaCountry
 from app.models.validation_rules import ValidationRule
@@ -129,11 +131,17 @@ class AdminService:
                     ErrorCode.AUTH_INVALID_CREDENTIALS, message="Invalid admin credentials"
                 )
             admin_id = 0
-            permissions = ["dashboard", "orders", "payments", "users", "countries", "settings"]
+            # W63: env fallback 用全 perm code (跟 super_admin role 一致),
+            # 之前用简写 ["dashboard","orders",...] 导致前端 hasPermission 把细粒度 perm
+            # (dashboard.view / order.view / ...) 都判 false,管理后台侧栏菜单残缺。
+            from app.core.permissions import all_perm_codes
+            permissions = all_perm_codes()
             role_name = "超级管理员（env）"
             role_code = "super_admin"
 
-        token, exp = create_admin_token(admin_id=admin_id, username=username)
+        token, exp = create_admin_token(
+            admin_id=admin_id, username=username, permissions=permissions
+        )
         await record_audit(
             self.db,
             actor_type="admin",
@@ -188,12 +196,29 @@ class AdminService:
         return int(order_count), int(material_count)
 
     async def list_users(
-        self, page: int = 1, page_size: int = 20, status: Optional[str] = None
+        self,
+        page: int = 1,
+        page_size: int = 20,
+        status: Optional[str] = None,
+        q: Optional[str] = None,
     ) -> dict[str, Any]:
-        """Paginated user list, optionally filtered by status."""
+        """Paginated user list, optionally filtered by status.
+
+        W63: 列表里直接给 order_count / material_count,免得前端详情抽屉没数。
+        一次 group-by 查询把当前页所有用户的两个 count 拉出来,避免 N+1。
+        """
         query = select(User).order_by(User.created_at.desc())
         if status:
             query = query.where(User.status == status)
+        if q and q.strip():
+            term = f"%{q.strip()}%"
+            query = query.where(
+                or_(
+                    User.email.ilike(term),
+                    User.username.ilike(term),
+                    User.nickname.ilike(term),
+                )
+            )
 
         count_query = select(func.count()).select_from(query.subquery())
         total = (await self.db.execute(count_query)).scalar() or 0
@@ -203,6 +228,30 @@ class AdminService:
         rows = (await self.db.execute(query)).scalars().all()
 
         items = [self._serialize_user(r) for r in rows]
+
+        # W63: batch 算 order_count / material_count (group by user_id 一次拉)
+        if items:
+            user_ids = [u["id"] for u in items]
+            order_rows = (
+                await self.db.execute(
+                    select(Order.user_id, func.count())
+                    .where(Order.user_id.in_(user_ids))
+                    .group_by(Order.user_id)
+                )
+            ).all()
+            mat_rows = (
+                await self.db.execute(
+                    select(Material.user_id, func.count())
+                    .where(Material.user_id.in_(user_ids))
+                    .group_by(Material.user_id)
+                )
+            ).all()
+            order_map = {uid: cnt for uid, cnt in order_rows}
+            mat_map = {uid: cnt for uid, cnt in mat_rows}
+            for u in items:
+                u["order_count"] = int(order_map.get(u["id"], 0))
+                u["material_count"] = int(mat_map.get(u["id"], 0))
+
         return {
             "items": items,
             "page": page,
@@ -351,6 +400,8 @@ class AdminService:
         user.password_hash = bcrypt.hashpw(
             new_pwd.encode(), bcrypt.gensalt()
         ).decode()
+        bump_password_changed_at(user)
+        await invalidate_user_sessions(self.db, user.id)
 
         await record_audit(
             self.db,
@@ -580,7 +631,8 @@ class AdminService:
         }
 
     async def update_order_status(
-        self, order_id: int, new_status: str, note: Optional[str] = None
+        self, order_id: int, new_status: str, note: Optional[str] = None,
+        admin: Optional[Any] = None,
     ) -> dict[str, Any]:
         """Update order status (admin override).
 
@@ -589,6 +641,11 @@ class AdminService:
         a corresponding `OrderStatusHistory` row (was missing before — the
         user-side paths write history, but admin overrides silently
         flipped the status without leaving a trail).
+
+        W47: 二次 perm 校验 — 根据目标 status 决定额外需要的 perm:
+          - close / abnormal / failed → 需要 order.close
+          - 其它编辑 (approved / rejected / submitted / processing …) → 已有 order.edit_status
+          - rpa 重派 / 重置 在专门的接口上,不在此函数校验
         """
         order = await self.db.get(Order, order_id)
         if order is None:
@@ -597,6 +654,17 @@ class AdminService:
             raise BizException(
                 ErrorCode.ORDER_INVALID_STATE, message=f"Invalid status: {new_status}"
             )
+
+        # W47: perm 二次校验 — close 类动作额外要 order.close
+        if new_status in ("closed", "abnormal", "failed"):
+            if admin is not None and admin.role_code != "super_admin":
+                if "order.close" not in (admin.permissions or []):
+                    raise BizException(
+                        ErrorCode.FORBIDDEN,
+                        message="关闭订单需要 order.close 权限",
+                        data={"required_perm": "order.close"},
+                    )
+
         old_status = order.status
         if not is_valid_transition(old_status, new_status):
             raise BizException(
@@ -2071,3 +2139,457 @@ def _user_to_dict(user: Any) -> dict[str, Any]:
         "created_at": user.created_at.isoformat() if user.created_at else None,
         "updated_at": user.updated_at.isoformat() if user.updated_at else None,
     }
+
+
+# --------------------------------------------------------------------------- #
+# V2 Dashboard (W37) — KPI / trend / funnel / top countries / alerts            #
+# --------------------------------------------------------------------------- #
+# 小心 Order.submitted_at 是 None ⇒ 还没提交(支付完成通常也会落 submitted_at);
+# total_amount 是 USD(主币种), 其他币种先按 1:1 处理(实际下个迭代再补汇率).
+# 时间窗以 UTC 切割, 与 Order.created_at 默认 UTC 一致.
+_RANGE_DAYS = {"7d": 7, "30d": 30, "90d": 90}
+
+
+def _pct_change(curr: float, prev: float):
+    """涨跌幅百分比 (0.12 = +12%, -0.05 = -5%).
+
+    W63: prev=0 时不要假装 +100%,返 None 让前端走"新"分支。
+    - prev=0, curr=0: 无变化 → 0.0
+    - prev=0, curr>0: 无对比基线 → None (前端不显箭头,显"新")
+    - prev>0: 正常算 (curr-prev)/prev
+    """
+    if prev == 0:
+        return None if curr > 0 else 0.0
+    return round((curr - prev) / prev, 4)
+
+
+    async def _qcount(self, q):
+        """SELECT COUNT(*) helper — returns int (0 when no rows)."""
+        return int((await self.db.execute(q)).scalar() or 0)
+
+    class AdminDashboardServiceMixin:
+        """Mixin-style methods on AdminService — 5 个新 dashboard 接口的业务实现."""
+
+        # ---------- summary (4 张 KPI 卡 + 同期对比) ----------
+        async def get_dashboard_summary(self) -> dict[str, Any]:
+            """返回今天/本月 KPI + 与上周同期对比. 60s in-memory TTL cache."""
+            cache_key = "v2_dashboard_summary"
+            cached = getattr(self, cache_key, None)
+            now = datetime.utcnow()
+            if cached and cached.get("_ts", 0) + 60 > now.timestamp():
+                out = dict(cached)
+                out["generated_at"] = now.isoformat()
+                out["cached"] = True
+                return out
+
+            today_0 = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            month_start = today_0.replace(day=1)
+
+            # 上周同期窗口 (用于对比): 长度 1 天, 直接拿昨天 0:00 → 今日 0:00 这段
+            yesterday_0 = today_0 - timedelta(days=1)
+            last_week_today = today_0 - timedelta(days=7)
+            last_week_yesterday = yesterday_0 - timedelta(days=7)
+
+            # 今日指标
+            today_orders_q = select(func.count()).select_from(Order).where(Order.created_at >= today_0)
+            today_orders = int((await self.db.execute(today_orders_q)).scalar() or 0)
+
+            today_revenue_q = (
+                select(func.coalesce(func.sum(Order.total_amount), 0))
+                .select_from(Order)
+                .where(Order.created_at >= today_0, Order.submitted_at.isnot(None))
+            )
+            today_revenue = float((await self.db.execute(today_revenue_q)).scalar() or 0)
+
+            today_users_q = select(func.count()).select_from(User).where(User.created_at >= today_0)
+            today_new_users = int((await self.db.execute(today_users_q)).scalar() or 0)
+
+            # 今日成功率 = 今日订单里 submitted_at 非空的比例
+            if today_orders > 0:
+                today_paid_q = (
+                    select(func.count()).select_from(Order)
+                    .where(Order.created_at >= today_0, Order.submitted_at.isnot(None))
+                )
+                today_paid = int((await self.db.execute(today_paid_q)).scalar() or 0)
+                today_success = today_paid / today_orders
+            else:
+                today_success = 0.0
+
+            # 上周同期 (单日: last_week_yesterday → last_week_today)
+            last_orders = await self._qcount(
+                select(func.count()).select_from(Order).where(
+                    Order.created_at >= last_week_yesterday,
+                    Order.created_at < last_week_today,
+                )
+            )
+            last_revenue = float(
+                (await self.db.execute(
+                    select(func.coalesce(func.sum(Order.total_amount), 0))
+                    .select_from(Order)
+                    .where(
+                        Order.created_at >= last_week_yesterday,
+                        Order.created_at < last_week_today,
+                        Order.submitted_at.isnot(None),
+                    )
+                )).scalar() or 0
+            )
+            last_users = await self._qcount(
+                select(func.count()).select_from(User).where(
+                    User.created_at >= last_week_yesterday,
+                    User.created_at < last_week_today,
+                )
+            )
+
+            # 本月 + 待处理 + 总用户
+            month_orders = await self._qcount(
+                select(func.count()).select_from(Order).where(Order.created_at >= month_start)
+            )
+            pending_orders = await self._qcount(
+                select(func.count()).select_from(Order).where(
+                    Order.status.in_(("created", "submitted", "reviewing"))
+                )
+            )
+            total_users = await self._qcount(select(func.count()).select_from(User))
+
+            out = {
+                "today_orders": today_orders,
+                "today_revenue_usd": round(today_revenue, 2),
+                "today_new_users": today_new_users,
+                "today_success_rate": round(today_success, 4),
+                "delta_orders_pct": _pct_change(today_orders, last_orders),
+                "delta_revenue_pct": _pct_change(today_revenue, last_revenue),
+                "delta_users_pct": _pct_change(today_new_users, last_users),
+                "month_orders": month_orders,
+                "total_users": total_users,
+                "pending_orders": pending_orders,
+                "generated_at": now,
+                "cached": False,
+            }
+            cache_blob = dict(out)
+            cache_blob["_ts"] = now.timestamp()
+            setattr(self, cache_key, cache_blob)
+            return out
+
+        # ---------- trend ----------
+        async def get_dashboard_trend(self, metric: str = "orders", range_key: str = "7d") -> dict[str, Any]:
+            """N 天 (默认 7) 每日 3 个指标的序列化. 只算 metric 当前指向的曲线, 另两个在 total_* 里. """
+            days = _RANGE_DAYS.get(range_key, 7)
+            now = datetime.utcnow()
+            today_0 = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            start = today_0 - timedelta(days=days - 1)
+
+            # 一次性拉 orders + revenue 聚合 (按 date(created_at) 分桶)
+            orders_q = (
+                select(
+                    func.date(Order.created_at).label("d"),
+                    func.count(Order.id).label("c"),
+                    func.coalesce(func.sum(Order.total_amount), 0).label("rev"),
+                )
+                .where(Order.created_at >= start)
+                .group_by(func.date(Order.created_at))
+            )
+            orders_rows = (await self.db.execute(orders_q)).all()
+            orders_map = {str(r.d): int(r.c) for r in orders_rows}
+            revenue_map = {str(r.d): float(r.rev or 0) for r in orders_rows}
+
+            users_q = (
+                select(func.date(User.created_at).label("d"), func.count(User.id).label("c"))
+                .where(User.created_at >= start)
+                .group_by(func.date(User.created_at))
+            )
+            users_rows = (await self.db.execute(users_q)).all()
+            users_map = {str(r.d): int(r.c) for r in users_rows}
+
+            points = []
+            total_orders = 0
+            total_revenue = 0.0
+            total_users = 0
+            for i in range(days):
+                day = (start + timedelta(days=i)).strftime("%Y-%m-%d")
+                orders = orders_map.get(day, 0)
+                revenue = revenue_map.get(day, 0.0)
+                users = users_map.get(day, 0)
+                total_orders += orders
+                total_revenue += revenue
+                total_users += users
+                points.append({
+                    "date": day,
+                    "orders": orders,
+                    "revenue_usd": round(revenue, 2),
+                    "new_users": users,
+                })
+
+            return {
+                "metric": metric,
+                "range": range_key,
+                "points": points,
+                "total_orders": total_orders,
+                "total_revenue_usd": round(total_revenue, 2),
+                "total_new_users": total_users,
+                "generated_at": now,
+            }
+
+        # ---------- funnel ----------
+        async def get_dashboard_funnel(self, range_key: str = "7d") -> dict[str, Any]:
+            """4 步漏斗: 注册 → 创建订单 → 提交(支付成功) → 当前可统计的最高一步."""
+            days = _RANGE_DAYS.get(range_key, 7)
+            now = datetime.utcnow()
+            start = now - timedelta(days=days)
+
+            async def _count(q):
+                return int((await self.db.execute(q)).scalar() or 0)
+
+            # 1) 注册
+            register = await _count(
+                select(func.count()).select_from(User).where(User.created_at >= start)
+            )
+            # 兜底: 如果 User 表很空, 看 audit_log user.register
+            if register == 0:
+                register = await _count(
+                    select(func.count()).select_from(AuditLog).where(
+                        AuditLog.action == "user.register",
+                        AuditLog.created_at >= start,
+                    )
+                )
+
+            # 2) 创建订单
+            create = await _count(
+                select(func.count()).select_from(Order).where(Order.created_at >= start)
+            )
+            # 兜底 audit_log order.create
+            if create == 0:
+                create = await _count(
+                    select(func.count()).select_from(AuditLog).where(
+                        AuditLog.action == "order.create",
+                        AuditLog.created_at >= start,
+                    )
+                )
+
+            # 3) 提交订单 (submitted_at 非空 ≈ 已支付)
+            submit = await _count(
+                select(func.count()).select_from(Order).where(
+                    Order.created_at >= start,
+                    Order.submitted_at.isnot(None),
+                )
+            )
+
+            # 4) 走完流程 (approved/closed 成功终态)
+            finish = await _count(
+                select(func.count()).select_from(Order).where(
+                    Order.created_at >= start,
+                    Order.status.in_(("approved", "closed")),
+                )
+            )
+
+            steps = [
+                {"key": "register", "label": "注册", "count": register},
+                {"key": "order_create", "label": "创建订单", "count": create},
+                {"key": "order_submit", "label": "提交订单", "count": submit},
+                {"key": "order_finish", "label": "完成 (approved/closed)", "count": finish},
+            ]
+            # 每步相对上一步的转化率
+            for i, s in enumerate(steps):
+                if i == 0:
+                    s["conversion_pct"] = 100.0
+                else:
+                    prev = steps[i - 1]["count"]
+                    raw_pct = round((s["count"] / prev * 100.0), 2) if prev > 0 else 0.0
+                    s["conversion_pct"] = min(100.0, raw_pct)
+
+            overall = min(100.0, round((finish / register * 100.0), 2)) if register > 0 else 0.0
+
+            return {
+                "range": range_key,
+                "steps": steps,
+                "overall_conversion_pct": overall,
+                "generated_at": now,
+            }
+
+        # ---------- top countries ----------
+        async def get_dashboard_top_countries(
+            self, range_key: str = "7d", limit: int = 10
+        ) -> dict[str, Any]:
+            """按 destination_id 分组聚合订单量+营收, join Destination 拿 country_code + 中文名."""
+            days = _RANGE_DAYS.get(range_key, 7)
+            now = datetime.utcnow()
+            start = now - timedelta(days=days)
+
+            rows = (
+                await self.db.execute(
+                    select(
+                        Order.destination_id,
+                        func.count(Order.id).label("c"),
+                        func.coalesce(func.sum(Order.total_amount), 0).label("rev"),
+                    )
+                    .where(Order.created_at >= start)
+                    .group_by(Order.destination_id)
+                    .order_by(func.count(Order.id).desc())
+                    .limit(limit)
+                )
+            ).all()
+
+            if not rows:
+                return {"range": range_key, "items": [], "generated_at": now}
+
+            # 取 destination 元数据
+            dest_ids = [r.destination_id for r in rows]
+            dest_rows = (
+                await self.db.execute(
+                    select(VisaDestination).where(VisaDestination.id.in_(dest_ids))
+                )
+            ).scalars().all()
+            dest_map = {d.id: d for d in dest_rows}
+
+            # 全期订单总数, 用于算该国家占比
+            total = (
+                await self.db.execute(
+                    select(func.count()).select_from(Order).where(Order.created_at >= start)
+                )
+            ).scalar() or 0
+
+            items = []
+            for r in rows:
+                d = dest_map.get(r.destination_id)
+                country_code = (d.country_code if d else None) or "--"
+                country_name = country_code
+                if d and d.country_name_i18n:
+                    try:
+                        i18n = json.loads(d.country_name_i18n)
+                        country_name = (
+                            i18n.get("zh-CN") or i18n.get("zh") or i18n.get("en")
+                            or country_code
+                        )
+                    except Exception:
+                        country_name = country_code
+                items.append({
+                    "destination_id": r.destination_id,
+                    "country_code": country_code,
+                    "country_name": country_name,
+                    "order_count": int(r.c),
+                    "revenue_usd": round(float(r.rev or 0), 2),
+                    "conversion_pct": round(int(r.c) / total * 100.0, 2) if total else 0.0,
+                })
+
+            return {
+                "range": range_key,
+                "items": items,
+                "generated_at": now,
+            }
+
+        # ---------- alerts ----------
+        async def get_dashboard_alerts(self) -> dict[str, Any]:
+            """规则式告警: 每条独立判断, 不达阈值不出; 命中即入列. 60s cache."""
+            cache_key = "v2_dashboard_alerts"
+            cached = getattr(self, cache_key, None)
+            now = datetime.utcnow()
+            if cached and cached.get("_ts", 0) + 60 > now.timestamp():
+                out = {k: v for k, v in cached.items() if k != "_ts"}
+                out["generated_at"] = now.isoformat()
+                return out
+
+            items = []
+
+            # 1) 待处理订单 > 30 (积压)
+            pending_count = int(
+                (await self.db.execute(
+                    select(func.count()).select_from(Order).where(
+                        Order.status.in_(("created", "submitted"))
+                    )
+                )).scalar() or 0
+            )
+            if pending_count > 30:
+                items.append({
+                    "severity": "warning",
+                    "code": "pending_orders_high",
+                    "title": f"待处理订单积压 ({pending_count})",
+                    "detail": "待处理订单超过 30, 建议检查 RPA 队列与人工坐席",
+                    "metric_value": pending_count,
+                    "threshold": 30.0,
+                })
+
+            # 2) enabled 国家 24h 零订单 (但至少有过订单, 否则没意义)
+            zero_since = now - timedelta(hours=24)
+            active_dests = (
+                await self.db.execute(
+                    select(VisaDestination).where(VisaDestination.enabled == True)  # noqa: E712
+                )
+            ).scalars().all()
+            if active_dests:
+                recent_order_counts = (
+                    await self.db.execute(
+                        select(
+                            Order.destination_id,
+                            func.count(Order.id).label("c"),
+                        )
+                        .where(Order.created_at >= zero_since)
+                        .group_by(Order.destination_id)
+                    )
+                ).all()
+                recent_map = {r.destination_id: int(r.c) for r in recent_order_counts}
+                zero_dests = [
+                    d for d in active_dests
+                    if recent_map.get(d.id, 0) == 0 and (d.country_code or "")
+                ]
+                if zero_dests:
+                    names = ", ".join(d.country_code for d in zero_dests[:5])
+                    more = len(zero_dests) - 5
+                    suffix = f" 等 {more} 个" if more > 0 else ""
+                    items.append({
+                        "severity": "info",
+                        "code": "zero_order_country",
+                        "title": f"{len(zero_dests)} 个启用的目的地 24h 零订单",
+                        "detail": f"{names}{suffix} 过去 24 小时没有任何新订单",
+                        "metric_value": float(len(zero_dests)),
+                        "threshold": 0.0,
+                    })
+
+            # 3) 失败/异常订单 24h 内过多 (>10)
+            fail_count = int(
+                (await self.db.execute(
+                    select(func.count()).select_from(Order).where(
+                        Order.created_at >= zero_since,
+                        Order.status.in_(("failed", "abnormal")),
+                    )
+                )).scalar() or 0
+            )
+            if fail_count > 10:
+                items.append({
+                    "severity": "critical",
+                    "code": "rpa_failure_spike",
+                    "title": f"近 24h 失败/异常订单 {fail_count} 单",
+                    "detail": "正常值应 < 5, 请检查 RPA 调度与目标站点可用性",
+                    "metric_value": float(fail_count),
+                    "threshold": 10.0,
+                })
+
+            # 4) 总体支付成功率过低 (< 30%)
+            total_orders = int(
+                (await self.db.execute(select(func.count()).select_from(Order))).scalar() or 0
+            )
+            if total_orders > 0:
+                paid_orders = int(
+                    (await self.db.execute(
+                        select(func.count()).select_from(Order).where(
+                            Order.submitted_at.isnot(None)
+                        )
+                    )).scalar() or 0
+                )
+                overall_rate = paid_orders / total_orders
+                if overall_rate < 0.3:
+                    items.append({
+                        "severity": "warning",
+                        "code": "payment_success_low",
+                        "title": f"整体支付成功率 {overall_rate*100:.1f}%",
+                        "detail": "历史支付成功率低于 30%, 可能影响营收, 建议排查支付链路",
+                        "metric_value": round(overall_rate * 100, 2),
+                        "threshold": 30.0,
+                    })
+
+            out = {"items": items, "generated_at": now}
+            cache_blob = dict(out)
+            cache_blob["generated_at"] = now
+            cache_blob["_ts"] = now.timestamp()
+            setattr(self, cache_key, cache_blob)
+            return out
+
+# NOTE: V2 dashboard 5 endpoints are now in app/services/admin_dashboard_service.py (W37).

@@ -35,6 +35,7 @@ from fastapi.responses import FileResponse
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import get_settings
 from app.core.db import get_db
 from app.core.errors import BizException, ErrorCode
 from app.core.logging import get_logger
@@ -55,12 +56,14 @@ from app.schemas.material import (
     MaterialOut,
     PreprocessMeta,
     PreprocessResponse,
+    ProcessMaterialResponse,
     UploadResponse,
     ValidateRequest,
     ValidateResponse,
     ValidationIssue,
     safe_filename,
 )
+from app.services.material_process_service import process_bytes
 from app.services import storage
 from app.services.audit import record_audit
 from app.services.image_preprocessor import get_preprocessor
@@ -74,13 +77,58 @@ _log = get_logger()
 
 
 # --------------------------------------------------------------------------- #
-# /upload                                                                     #
+# /process — ephemeral OCR (no file persistence)                              #
+# --------------------------------------------------------------------------- #
+@router.post(
+    "/process",
+    response_model=ApiResponse[ProcessMaterialResponse],
+    summary="Process a material in memory (OCR / bank parse, no storage)",
+)
+async def process_material(
+    file: UploadFile = File(..., description="Binary file content"),
+    material_type: str = Form(
+        ..., description="passport / id_card / household / enrollment / photo / form / bank / other"
+    ),
+    lang: str = Form("en"),
+    country_code: Optional[str] = Form(
+        None, max_length=8, description="Destination ISO-2 for bank review rules"
+    ),
+    current_user: User = Depends(get_current_user),
+) -> ApiResponse[ProcessMaterialResponse]:
+    data = await file.read()
+    if not data:
+        raise BizException(ErrorCode.INVALID_PARAMS, message="file is empty")
+    if len(data) > 20 * 1024 * 1024:
+        raise BizException(
+            ErrorCode.INVALID_PARAMS,
+            message="file too large for process (max 20MB)",
+        )
+
+    out = process_bytes(
+        data,
+        material_type=material_type,
+        lang=lang,
+        country_code=country_code or "",
+    )
+    _log.info(
+        "material process user={} type={} pages={} status={}",
+        current_user.id,
+        material_type,
+        out.get("pages_processed"),
+        out.get("ocr_status"),
+    )
+    payload = ProcessMaterialResponse(**out)
+    return ApiResponse[ProcessMaterialResponse](code="1000", message="OK", data=payload)
+
+
+# --------------------------------------------------------------------------- #
+# /upload — disabled by default (privacy-first); legacy path when enabled     #
 # --------------------------------------------------------------------------- #
 @router.post(
     "/upload",
     response_model=ApiResponse[UploadResponse],
     status_code=201,
-    summary="Upload a material (multipart/form-data)",
+    summary="Upload a material (disabled unless MATERIAL_STORAGE_ENABLED=1)",
 )
 async def upload_material(
     request: Request,
@@ -94,6 +142,12 @@ async def upload_material(
         None, max_length=64, description="Optional order number to associate"
     ),
 ) -> ApiResponse[UploadResponse]:
+    if not get_settings().material_storage_enabled:
+        raise BizException(
+            ErrorCode.INVALID_PARAMS,
+            message="file_upload_disabled: use POST /api/v2/materials/process instead",
+        )
+
     data = await file.read()
     if not data:
         raise BizException(ErrorCode.INVALID_PARAMS, message="file is empty")
@@ -113,7 +167,9 @@ async def upload_material(
     thumb = service.build_thumbnail_url(row, base_url=base_url)
 
     payload = UploadResponse(
-        material=MaterialOut.model_validate(row),
+        material=MaterialOut.model_validate(row).model_copy(
+            update={"download_url": download_url, "thumbnail_url": thumb}
+        ),
         deduplicated=deduplicated,
         download_url=download_url,
         thumbnail_url=thumb,
@@ -188,6 +244,37 @@ async def preprocess_image(
         result.warnings,
     )
     return ApiResponse[PreprocessResponse](code="1000", message="OK", data=payload)
+
+
+# --------------------------------------------------------------------------- #
+# /photo/check — W62 pre-upload quality gate for visa photos                  #
+# --------------------------------------------------------------------------- #
+# Runs BEFORE /upload so the frontend can stop obviously-wrong files
+# (PDFs, group photos, wrong-aspect landscapes, wrong-color background)
+# from ever hitting storage. Returns a structured result; the frontend
+# is responsible for blocking the upload on `errors` and surfacing
+# `warnings` to the user.
+@router.post(
+    "/photo/check",
+    response_model=ApiResponse[dict],
+    summary="Pre-upload check for visa photos (face / aspect / background)",
+)
+async def check_photo(
+    file: UploadFile = File(..., description="Image to check (JPG / PNG / WebP)"),
+    country_code: Optional[str] = Form(
+        None, max_length=8,
+        description="Destination country ISO-2 (e.g. US, GB, ID). Used to pick the right background rule.",
+    ),
+    current_user: User = Depends(get_current_user),
+) -> ApiResponse[dict]:
+    from app.services.photo_checker import check_photo as _check
+
+    data = await file.read()
+    if not data:
+        raise BizException(ErrorCode.INVALID_PARAMS, message="file is empty")
+
+    result = _check(data, country_code or "")
+    return ApiResponse[dict](code="1000", message="OK", data=result.to_dict())
 
 
 # --------------------------------------------------------------------------- #
@@ -327,6 +414,7 @@ async def run_material_ocr(
 
     fields: dict = {}
     items: list = []
+    pages_processed = 0
     try:
         from io import BytesIO
 
@@ -334,16 +422,124 @@ async def run_material_ocr(
         import numpy as np
         from PIL import Image
 
+        from app.api.v2.ocr import is_pdf_bytes, pdf_pages_to_bgr
         from app.services.ocr import OCREngine
 
-        pil = Image.open(BytesIO(content)).convert("RGB")
-        img_bgr = cv2.cvtColor(np.array(pil), cv2.COLOR_RGB2BGR)
         engine = OCREngine(lang=lang)
-        items = engine.recognize(img_bgr)
-        fields = engine.extract_passport_fields(img_bgr)
+
+        # W52: PDF 多页 — 银行流水/在职证明常常 5-20 页,以前只 OCR 第 1 页,
+        # 后续的页面被静默丢弃,流水解析只能拿到 1/N 的交易记录。多页 OCR 后
+        # items[] 合并,每条带 page_index 标记来源页。
+        if is_pdf_bytes(content):
+            all_items: list = []
+            first_page_bgr = None
+            pdf_pages = list(pdf_pages_to_bgr(content))  # materialize for retry-ability
+            for page_idx, jpg_bytes in pdf_pages:
+                try:
+                    page_pil = Image.open(BytesIO(jpg_bytes))
+                    if page_pil.mode != "RGB":
+                        page_pil = page_pil.convert("RGB")
+                    page_bgr = cv2.cvtColor(np.array(page_pil), cv2.COLOR_RGB2BGR)
+                    if first_page_bgr is None:
+                        first_page_bgr = page_bgr
+                    page_items = engine.recognize(page_bgr)
+                    for it in page_items:
+                        it["page_index"] = page_idx
+                    all_items.extend(page_items)
+                    pages_processed += 1
+                except Exception as page_exc:
+                    _log.warning("material_id={} page {} ocr failed: {}", material_id, page_idx, page_exc)
+            items = all_items
+            # passport fields 只从第 1 页抽(身份证/护照首页才有)
+            fields = engine.extract_passport_fields(first_page_bgr) if first_page_bgr is not None else {}
+        else:
+            pil = Image.open(BytesIO(content)).convert("RGB")
+            img_bgr = cv2.cvtColor(np.array(pil), cv2.COLOR_RGB2BGR)
+            items = engine.recognize(img_bgr)
+            fields = engine.extract_passport_fields(img_bgr)
+            pages_processed = 1
     except Exception as exc:
         _log.warning("material ocr failed material_id={}: {}", material_id, exc)
         fields = {"error": str(exc)}
+
+    # W51: 银行流水 mtype=='bank' 时,多走一次 bank_statement_parser,
+    # 把 transactions[] + monthly_summary 等结构化数据塞进 ocr_result。
+    # VisaDiagnoser 直接读 material.ocr_result 这些字段做诊断。
+    #
+    # W56: 多页 PDF / 多张散图会被 ocr_items 自动带 page_index;
+    # 这里用 review_group 跑归组+页序+跨页去重+missing_months 完整流水线。
+    if (material.material_type or "").lower() == "bank" and items:
+        try:
+            from app.services.bank_statement_parser import parse_bank_statement
+            from app.services.material_group import (
+                MaterialItem, group_materials, review_group,
+            )
+            from datetime import datetime
+
+            # W56: 推断 source_country(从 order 关联的 country 或 user setting)
+            # 优先取 material.order_id 关联的 order.country_code
+            source_country = "CN"  # 默认 CN
+            if material.order_id:
+                try:
+                    from app.models.order import Order
+                    order = await db.get(Order, material.order_id)
+                    if order and order.country_code:
+                        # order.country_code 是目的国,但我们要源国
+                        # 用户常用本国银行 → 默认 CN(中文);
+                        # 如果目的国是 CN/US 等通常用户是国内 → CN
+                        # 后续可以从 user profile 拿 nationality
+                        pass
+                except Exception:
+                    pass
+
+            # 单文件场景:直接走 parse_bank_statement(兼容老路径)
+            # 多文件/多页场景:走 review_group
+            # 这里先用 review_group(它内部已经处理单页情况)
+            mi = MaterialItem(
+                material_id=str(material_id),
+                user_id=material.user_id,
+                order_id=material.order_id,
+                material_type=material.material_type,
+                created_at=material.created_at or datetime.utcnow(),
+                ocr_items=list(items),
+            )
+            groups = group_materials([mi])
+            if groups:
+                parsed = review_group(groups[0], source_country=source_country)
+            else:
+                # 兜底:走老 parse_bank_statement
+                parsed = parse_bank_statement(ocr_items=items, source_country=source_country)
+
+            # 把结构性字段合并到 fields
+            fields = {
+                **parsed,
+                "is_passport_doc": False,  # 标记这不是护照,避免护照正则误判
+                "source": "bank_statement_parser",
+                "source_country": source_country,
+            }
+
+            # W63+ 非阻断性审核提示 — 解析完后跑 review_rules() 生成黄框
+            # 提示规则。前端 OCR 完立即在 UploadItemCard 里显示(图 2 同款)。
+            # destination 拿 order.country_code(签证目的国,跟 source_country
+            # 用户本国不同),决定建议余额阈值。
+            try:
+                from app.services.bank_statement_parser import review_rules
+                destination = None
+                if material.order_id:
+                    from app.models.order import Order
+                    _o = await db.get(Order, material.order_id)
+                    if _o and _o.country_code:
+                        destination = _o.country_code
+                bank_analysis = review_rules(parsed, destination=destination)
+                # 把 bank_analysis 也存到 ocr_result 顶层,这样 diagnose / 重新进入页面都能取
+                fields["bank_analysis"] = bank_analysis
+            except Exception as _exc:
+                _log.warning("bank review_rules failed material_id={}: {}", material_id, _exc)
+                bank_analysis = None
+        except Exception as exc:
+            _log.warning("bank statement parse failed material_id={}: {}", material_id, exc)
+            # 解析失败不影响 ocr_status 标记, VisaDiagnoser 走 fallback 提示人工补
+            bank_analysis = None
 
     # Persist as a FLAT dict (not nested under "fields") — this matches the
     # contract `extractApplicantDraft()` in frontend/web/src/api/orders.js
@@ -354,16 +550,22 @@ async def run_material_ocr(
     material.ocr_status = "failed" if fields.get("error") else "done"
     await db.commit()
 
+    # Bank 类型的响应体多带一个 bank_analysis 字段(同 fields 里的那个,
+    # 但放在顶层方便前端取,不用 parse 整个 fields)。
+    response_data: dict = {
+        "material_id": material_id,
+        "fields": fields,
+        "is_blurry": is_blurry,
+        "is_complete": is_complete,
+        "ocr_status": material.ocr_status,
+        "pages_processed": pages_processed,  # W52: 实际 OCR 处理了几页
+    }
+    if (material.material_type or "").lower() == "bank":
+        response_data["bank_analysis"] = fields.get("bank_analysis") or (bank_analysis or None)
     return ApiResponse[dict](
         code="1000",
         message="OK",
-        data={
-            "material_id": material_id,
-            "fields": fields,
-            "is_blurry": is_blurry,
-            "is_complete": is_complete,
-            "ocr_status": material.ocr_status,
-        },
+        data=response_data,
     )
 
 
@@ -442,6 +644,17 @@ async def diagnose(
     """
     service = MaterialService(db)
     materials: list[dict] = []
+
+    for snap in body.materials_snapshot:
+        materials.append({
+            "id": None,
+            "item_key": snap.item_key,
+            "material_type": snap.material_type,
+            "original_filename": snap.item_key,
+            "ocr_status": "done",
+            "ocr_result": snap.ocr_result,
+        })
+
     for mid in body.material_ids:
         try:
             row = await service.get(user_id=current_user.id, material_id=mid)
@@ -464,7 +677,7 @@ async def diagnose(
     if not materials:
         raise BizException(
             ErrorCode.INVALID_PARAMS,
-            message="no valid material_ids provided",
+            message="provide materials_snapshot or valid material_ids",
         )
 
     diagnoser = VisaDiagnoser()
@@ -487,6 +700,7 @@ async def diagnose(
                 detail=i.detail,
                 fix_suggestion=i.fix_suggestion,
                 related_material_id=i.related_material_id,
+                related_item_key=i.related_item_key,
                 title_key=i.title_key,
                 detail_key=i.detail_key,
                 fix_key=i.fix_key,

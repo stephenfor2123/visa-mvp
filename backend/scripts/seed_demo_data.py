@@ -13,14 +13,14 @@ Usage
     .venv/bin/python scripts/seed_demo_data.py --user-count 5  # 5 demo users
     .venv/bin/python scripts/seed_demo_data.py --reset          # drop demo, then re-seed
     .venv/bin/python scripts/seed_demo_data.py --apply-admin-password
-        # write ADMIN_PASSWORD_SECRET=Admin@2024 into backend/.env
+        # write ADMIN_PASSWORD_SECRET=HtexAd@26 into backend/.env
 
 Demo accounts (all created here)
 --------------------------------
 Regular users  (login: POST /api/v2/auth/login with phone + password):
     phone = +86-13800138000{1..N}      (N = --user-count, default 3)
-    password = 123456                 (DEMO ONLY — bypasses strength check
-                                       by direct bcrypt hash, see Notes)
+    password = Htex@2026               (8 chars, DEMO ONLY — bypasses strength
+                                       check by direct bcrypt hash, see Notes)
     phone_country = +86
     nickname = demo_user_{phone}
     role variants:
@@ -31,8 +31,8 @@ Regular users  (login: POST /api/v2/auth/login with phone + password):
 
 Admin (login: POST /api/v2/admin/login):
     username = admin
-    password = Admin@2024             (set ADMIN_PASSWORD_SECRET=Admin@2024
-                                       in backend/.env, or pass
+    password = HtexAd@26               (8 chars, set ADMIN_PASSWORD_SECRET=
+                                       HtexAd@26 in backend/.env, or pass
                                        --apply-admin-password to do it for you)
 
 Demo materials (2 rows)
@@ -55,11 +55,15 @@ Notes
   deliverable.md Notes. By driving raw SQL we sidestep the ORM chain
   entirely and the script works on any Python ≥ 3.7 with sqlite3.
 
-- Password `123456` is intentionally weaker than the product policy
-  (`password_min_length=8`, must contain letters+digits). We bypass
-  validation by calling `passlib.CryptContext` directly — never use
-  these accounts in a real deployment. Production still enforces the
-  rule via AuthService.register / reset-password paths.
+- Password `Htex@2026` (8 chars, meets `password_min_length=8` + letter+digit
+  rule) is the **demo-only** password. We bypass any stricter product
+  policy by calling `passlib.CryptContext` directly — never use these
+  accounts in a real deployment. Production still enforces the rule via
+  AuthService.register / reset-password paths.
+
+- Admin password is `HtexAd@26` (8 chars), distinct from the user password
+  so demo screenshots / operator handover don't accidentally leak the
+  user credential when an admin also tests user-side flows.
 
 - Admin login uses an env-based secret (ADMIN_PASSWORD_SECRET) per the
   v2 admin auth design (no Admin user row in the users table).
@@ -92,13 +96,13 @@ except Exception:
 # Constants — change here only. Idempotency keys come from these.            #
 # --------------------------------------------------------------------------- #
 DEMO_PHONE_BASE = "13800138000"   # 11 digits — +86 prefix appended at login
-DEMO_PASSWORD = "123456"           # demo-only; see Notes above
+DEMO_PASSWORD = "Htex@2026"        # 8 chars, demo-only; see Notes above
 DEMO_PHONE_COUNTRY = "+86"
 DEMO_NICKNAME_PREFIX = "demo_user_"
 
 # Admin (env-based, no user row login)
 ADMIN_USERNAME = "admin"
-ADMIN_PASSWORD = "Admin@2024"
+ADMIN_PASSWORD = "HtexAd@26"       # 8 chars, paired with ADMIN_PASSWORD_SECRET
 
 # Destination to use for all demo orders. Override via --destination if
 # you need a different country (must be enabled in visa_destinations).
@@ -162,9 +166,22 @@ def _connect(db_path: Path) -> sqlite3.Connection:
 # Idempotent inserts — pure SQL, no ORM                                       #
 # --------------------------------------------------------------------------- #
 def _find_user(conn: sqlite3.Connection, phone: str, country: str) -> Optional[sqlite3.Row]:
+    """Locate a demo user by the stable identifier they were seeded with.
+
+    Older schemas used (phone, phone_country) as the natural key. After the
+    W26 email/username migration (see TEST-ACCOUNTS.md) the schema no
+    longer carries a `phone` column, so we look up by username
+    (`demo_user_<phone>`) as the schema-agnostic stable handle.
+    """
+    cols = _table_columns(conn, "users")
+    if "phone" in cols:
+        return conn.execute(
+            "SELECT * FROM users WHERE phone = ? AND phone_country = ?",
+            (phone, country),
+        ).fetchone()
+    username = f"{DEMO_NICKNAME_PREFIX}{phone}"
     return conn.execute(
-        "SELECT * FROM users WHERE phone = ? AND phone_country = ?",
-        (phone, country),
+        "SELECT * FROM users WHERE username = ?", (username,)
     ).fetchone()
 
 
@@ -209,11 +226,19 @@ def _insert_user(
 ) -> int:
     cols = _table_columns(conn, "users")
     payload = {
-        "phone": phone,
-        "phone_country": phone_country,
         "password_hash": password_hash,
         "nickname": nickname,
     }
+    # Legacy schema (pre-W26) keyed users by phone; new schema keys by
+    # email/username. Both branches are populated when the column exists
+    # so a single seed insert works against either migration level.
+    if "phone" in cols:
+        payload["phone"] = phone
+        payload["phone_country"] = phone_country
+    if "username" in cols:
+        payload["username"] = f"{DEMO_NICKNAME_PREFIX}{phone}"
+    if "email" in cols:
+        payload["email"] = f"demo{phone}@htex.app"
     if "uuid" in cols:
         payload["uuid"] = _new_uuid()
     if "status" in cols:
@@ -345,13 +370,41 @@ DEMO_ORDER_PREFIX = "DEMO-"
 def _drop_demo_rows(conn: sqlite3.Connection) -> dict[str, int]:
     deleted: dict[str, int] = {"materials": 0, "orders": 0, "users": 0}
 
+    # Resolve demo user ids via whatever natural key the current schema
+    # exposes — `phone` on legacy schemas, `username` on the post-W26
+    # email/username schema (no `phone` column).
+    cols = _table_columns(conn, "users")
+    if "phone" in cols:
+        placeholders = ",".join("?" for _ in DEMO_USER_PHONES)
+        cur = conn.execute(
+            f"SELECT id FROM users WHERE phone IN ({placeholders})",
+            DEMO_USER_PHONES,
+        )
+        demo_user_ids = [r[0] for r in cur.fetchall()]
+    else:
+        username_placeholders = ",".join(
+            "?" for _ in DEMO_USER_PHONES
+        )
+        usernames = tuple(
+            f"{DEMO_NICKNAME_PREFIX}{p}" for p in DEMO_USER_PHONES
+        )
+        cur = conn.execute(
+            f"SELECT id FROM users WHERE username IN ({username_placeholders})",
+            usernames,
+        )
+        demo_user_ids = [r[0] for r in cur.fetchall()]
+
+    if not demo_user_ids:
+        return deleted
+
+    id_placeholders = ",".join("?" for _ in demo_user_ids)
+
     # Materials owned by any demo user whose sha starts with `demo-sha-`.
-    placeholders = ",".join("?" for _ in DEMO_USER_PHONES)
     cur = conn.execute(
         f"DELETE FROM materials "
         f"WHERE sha256 LIKE 'demo-sha-%' "
-        f"AND user_id IN (SELECT id FROM users WHERE phone IN ({placeholders}))",
-        DEMO_USER_PHONES,
+        f"AND user_id IN ({id_placeholders})",
+        demo_user_ids,
     )
     deleted["materials"] = cur.rowcount
 
@@ -361,10 +414,10 @@ def _drop_demo_rows(conn: sqlite3.Connection) -> dict[str, int]:
     )
     deleted["orders"] = cur.rowcount
 
-    # Users with demo phones.
+    # Demo users themselves.
     cur = conn.execute(
-        f"DELETE FROM users WHERE phone IN ({placeholders})",
-        DEMO_USER_PHONES,
+        f"DELETE FROM users WHERE id IN ({id_placeholders})",
+        demo_user_ids,
     )
     deleted["users"] = cur.rowcount
 
@@ -763,7 +816,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     print(f"  password: {ADMIN_PASSWORD}")
     if not args.apply_admin_password:
         print(
-            "  (NOTE: set ADMIN_PASSWORD_SECRET=Admin@2024 in backend/.env, "
+            f"  (NOTE: set ADMIN_PASSWORD_SECRET={ADMIN_PASSWORD} in backend/.env, "
             "or re-run with --apply-admin-password)"
         )
     return 0

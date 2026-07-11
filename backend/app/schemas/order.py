@@ -20,10 +20,9 @@ class CreateOrderRequest(BaseModel):
     destination_id: int = Field(..., ge=1, description="Target country/destination id")
     visa_type: str = Field(..., description="tourism | student")
     material_ids: list[int] = Field(
-        ...,
-        min_length=1,
+        default_factory=list,
         max_length=50,
-        description="Material IDs to associate with this order (1-50)",
+        description="Deprecated — files are not stored; keep empty for privacy-first flow",
     )
     applicant_data: dict[str, Any] = Field(
         default_factory=dict,
@@ -107,6 +106,11 @@ class OrderOut(BaseModel):
     order_no: str
     user_id: int
     destination_id: int
+    # W2: country_code/country_name surfaced so the order list can render
+    # a flag + country name without a second roundtrip to /destinations.
+    # Falls back gracefully if destination row is missing (deleted etc).
+    country_code: str = Field(default="", description="ISO 2-letter country code, '' if unavailable")
+    country_name: str = Field(default="", description="Country display name (i18n-aware)")
     visa_type: str
     status: str
     total_amount: Decimal
@@ -155,6 +159,25 @@ class CancelOrderResponse(BaseModel):
     order_no: str
     status: str
     cancelled_at: datetime
+
+
+class DeleteDraftResponse(BaseModel):
+    """DELETE /api/v2/orders/{order_no} response — W67.
+
+    Returns the deleted order's order_no, plus the count of materials that
+    were soft-deleted as part of the cascade. Front-end uses the count to
+    surface a "X materials cleared" hint in the success toast.
+    """
+
+    order_no: str
+    deleted: bool = Field(..., description="True when the order row was physically removed")
+    soft_deleted_materials: int = Field(
+        ..., ge=0,
+        description="Number of material rows whose deleted_at was stamped "
+                    "(draft-only; included materials are hidden from the "
+                    "user's library but the rows stay for audit/recovery).",
+    )
+    deleted_at: datetime
 
 
 class SubmitOrderRequest(BaseModel):

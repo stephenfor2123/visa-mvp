@@ -528,13 +528,35 @@ class PaymentProvider:
 # Factory (singleton, per-process)                                            #
 # --------------------------------------------------------------------------- #
 _provider_singleton: Optional[PaymentProvider] = None
+_provider_channel: Optional[str] = None
 
 
 def get_payment_provider() -> PaymentProvider:
-    """Module-level accessor — keeps a single PaymentProvider per process."""
-    global _provider_singleton
-    if _provider_singleton is None:
-        _provider_singleton = PaymentProvider()
+    """Module-level accessor — keeps a single provider per process.
+
+    Routing:
+      - ``payment_channel=mock`` (default) → Mock ``PaymentProvider``.
+      - ``payment_channel=stripe`` + non-blank ``STRIPE_SECRET_KEY`` →
+        ``StripePaymentProvider``.
+      - ``payment_channel=stripe`` but key missing → falls back to Mock
+        with a warning (dev/test stays credential-free).
+    """
+    global _provider_singleton, _provider_channel
+    settings = get_settings()
+    channel = settings.payment_channel
+    if _provider_singleton is None or _provider_channel != channel:
+        if channel == "stripe" and settings.stripe_secret_key:
+            _provider_singleton = StripePaymentProvider()
+            _log.info("payment provider: stripe (V2.1)")
+        else:
+            if channel == "stripe" and not settings.stripe_secret_key:
+                _log.warning(
+                    "payment_channel=stripe but STRIPE_SECRET_KEY empty; "
+                    "falling back to Mock"
+                )
+            _provider_singleton = PaymentProvider()
+            _log.info("payment provider: mock")
+        _provider_channel = channel
     return _provider_singleton
 
 
@@ -547,8 +569,9 @@ def reset_payment_provider_for_tests() -> None:
     loop created by pytest-asyncio) and would have been cancelled by
     the loop's natural shutdown anyway.
     """
-    global _provider_singleton
+    global _provider_singleton, _provider_channel
     _provider_singleton = None
+    _provider_channel = None
     # Cancel any stragglers so pytest doesn't leak running tasks between cases.
     for t in _PENDING_NOTIFIES.values():
         if not t.done():
@@ -948,10 +971,29 @@ class StripePaymentProvider(PaymentProvider):
         extra["payment"] = blob
         order.extra = json.dumps(extra, ensure_ascii=False)
 
-        # Note: Stripe provider does not change order.status (only blob["status"]),
-        # so we skip the no-op OrderStatusHistory row — the payment status is
-        # already reflected in the audit log via record_audit below.
-        # Fix (agent2 2026-06-30): removed redundant from_status==to_status row.
+        # Mirror Mock: payment completion flips order.status created/pending → submitted.
+        paid_at = None
+        if blob.get("paid_at"):
+            try:
+                paid_at = datetime.fromisoformat(blob["paid_at"])
+            except (TypeError, ValueError):
+                paid_at = _utcnow()
+        prev_status = order.status
+        if event_type == "payment_intent.succeeded" and prev_status in ("created", "pending"):
+            order.status = "submitted"
+            if order.submitted_at is None:
+                order.submitted_at = paid_at or _utcnow()
+        new_status = order.status
+        if prev_status != new_status:
+            self.db_add_status_history(
+                db,
+                order_id=order.id,
+                from_status=prev_status,
+                to_status=new_status,
+                source="payment",
+                note=f"payment: stripe paid trade_no={blob.get('trade_no')}",
+            )
+
         await record_audit(
             db,
             actor_type="system",

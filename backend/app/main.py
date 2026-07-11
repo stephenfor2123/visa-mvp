@@ -19,9 +19,10 @@ from app.api.v2 import api_v2_router
 from app.api.v2 import scheduler as scheduler_router
 from app.api.v2 import ws_orders as ws_router
 from app.core.config import get_settings
-from app.core.db import engine
+from app.core.db import AsyncSessionLocal as async_session_maker, engine
 from app.core.errors import BizException, ErrorCode, build_error_payload
 from app.core.logging import configure_logging, get_logger
+from app.core.seed_admin_roles import seed_admin_roles
 from app.core.metrics import metrics_bytes, METRICS_CONTENT_TYPE
 from app.middleware.logging import RequestLoggingMiddleware
 from app.middleware.rate_limit import RateLimitMiddleware
@@ -56,6 +57,13 @@ async def lifespan(app: FastAPI):
             "JWT_SECRET is still the dev placeholder. "
             "Set JWT_SECRET env var before deploying to prod."
         )
+    # Seed 6 个内置 admin 角色 (idempotent, 每次启动对齐 PERMISSIONS 注册表)
+    try:
+        async with async_session_maker() as db:
+            await seed_admin_roles(db)
+        log.info("admin roles seeded")
+    except Exception as exc:  # pragma: no cover - depends on environment
+        log.warning("admin role seed skipped (DB not ready?): {}", exc)
     yield
     log.info("shutting down")
     await engine.dispose()
@@ -200,6 +208,8 @@ def create_app() -> FastAPI:
             # ctx can still have non-serializable values — flatten to strings
             if isinstance(safe.get("ctx"), dict):
                 safe["ctx"] = {ck: str(cv) for ck, cv in safe["ctx"].items()}
+            # Never echo submitted PII back in validation errors (passport, email, etc.)
+            safe.pop("input", None)
             safe_errors.append(safe)
         return JSONResponse(
             status_code=400,

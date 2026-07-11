@@ -46,6 +46,7 @@ from app.schemas.order import (
     CancelOrderResponse,
     CreateOrderRequest,
     CreateOrderResponse,
+    DeleteDraftResponse,
     OrderDetailOut,
     OrderListResponse,
     OrderOut,
@@ -317,6 +318,47 @@ async def cancel_order(
             status=order.status,
             cancelled_at=cancelled_at,
         ),
+    )
+
+
+# --------------------------------------------------------------------------- #
+# DELETE /orders/{order_no} — W67                                             #
+# --------------------------------------------------------------------------- #
+@router.delete(
+    "/{order_no}",
+    response_model=ApiResponse[DeleteDraftResponse],
+    status_code=200,
+    summary=(
+        "Hard-delete a draft order + soft-delete its materials. "
+        "Only allowed when status='created' (草稿 / 待提交); non-created "
+        "returns 4010 ORDER_NOT_EDITABLE."
+    ),
+)
+async def delete_draft_order(
+    order_no: str = Path(..., min_length=1, max_length=32),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> ApiResponse[DeleteDraftResponse]:
+    """W67 — delete-draft flow.
+
+    Difference vs `POST /cancel`:
+      - cancel → status 'closed', order row + materials preserved
+      - delete → order row physically removed, materials soft-deleted,
+        audit row kept
+
+    Use cancel when the user wants to "put the order away but keep it
+    on record"; use delete when the user wants to start fresh with no
+    trace. Front-end surfaces both as separate actions in the draft
+    detail page.
+    """
+    service = OrderService(db)
+    out = await service.delete_draft(
+        user_id=current_user.id, order_no=order_no
+    )
+    return ApiResponse[DeleteDraftResponse](
+        code="1000",
+        message="OK",
+        data=DeleteDraftResponse(**out),
     )
 
 

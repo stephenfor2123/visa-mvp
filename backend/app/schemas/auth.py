@@ -68,21 +68,24 @@ class LoginRequest(BaseModel):
         return _validate_account(v)
 
 
-class ResetPasswordRequest(BaseModel):
-    """Reset by account (email / username) — no SMS code required.
-
-    W26 product change: simplified recovery flow. Admin can also trigger
-    a forced reset from the admin panel.
-    """
+class PasswordResetRequest(BaseModel):
+    """Step 1: request a password-reset link sent to the account's registered email."""
     model_config = ConfigDict(extra="forbid")
 
-    account: str = Field(..., description="Email or username")
-    new_password: str = Field(..., min_length=8, max_length=32)
+    account: str = Field(..., description="Email or username used at signup")
 
     @field_validator("account")
     @classmethod
     def _v_account(cls, v: str) -> str:
         return _validate_account(v)
+
+
+class ResetPasswordRequest(BaseModel):
+    """Step 2: set a new password using the token from the reset email."""
+    model_config = ConfigDict(extra="forbid")
+
+    token: str = Field(..., min_length=10, description="JWT from password-reset email link")
+    new_password: str = Field(..., min_length=8, max_length=32)
 
 
 class RefreshRequest(BaseModel):

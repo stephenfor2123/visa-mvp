@@ -2,6 +2,7 @@
 from datetime import datetime
 
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Boolean
+from sqlalchemy.orm import relationship
 
 from app.core.db import Base
 
@@ -22,3 +23,7 @@ class AdminUser(Base):
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     last_login_at = Column(DateTime, nullable=True, comment="最后登录时间")
+
+    # W46 fix: list_admin_users 在 service 用 selectinload(AdminUser.role),
+    # 模型侧必须显式声明 relationship 否则 selectinload 抛 AttributeError。
+    role = relationship("AdminRole", lazy="joined")

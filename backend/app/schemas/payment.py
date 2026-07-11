@@ -44,9 +44,27 @@ class CreatePaymentResponse(BaseModel):
     expired_at: datetime
     amount_cents: int
     currency: str
+    provider: str = Field(
+        default="mock",
+        description="Payment channel: mock | stripe",
+    )
+    client_secret: Optional[str] = Field(
+        default=None,
+        description="Stripe PaymentIntent client_secret (stripe channel only)",
+    )
     # Echo the auto-notify contract so the client doesn't have to guess:
     # "1s after this 200 returns, GET /payment/{order_no} will say paid".
     auto_notify_in_seconds: float = 1.0
+
+
+class PaymentConfigResponse(BaseModel):
+    """Public payment channel info for the frontend checkout UI."""
+
+    channel: str = Field(description="mock | stripe")
+    stripe_publishable_key: Optional[str] = Field(
+        default=None,
+        description="Stripe.js publishable key (pk_test_xxx / pk_live_xxx)",
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -106,4 +124,5 @@ __all__ = [
     "NotifyPaymentResponse",
     "QueryPaymentResponse",
     "ClosePaymentResponse",
+    "PaymentConfigResponse",
 ]

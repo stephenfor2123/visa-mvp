@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.errors import BizException, ErrorCode
+from app.core.file_validation import validate_upload_bytes
 from app.core.logging import get_logger
 from app.models.material import (
     MATERIAL_TYPES,
@@ -83,8 +84,8 @@ class MaterialService:
                 },
             )
 
+        mime_type = validate_upload_bytes(data, mime_type)
         sha256 = storage.compute_sha256(data)
-        mime_type = (mime_type or "").lower() or _guess_mime(original_filename)
 
         # De-dup: same sha256 + same user, not soft-deleted
         existing = await self._find_dedup(user_id, sha256)
@@ -204,7 +205,14 @@ class MaterialService:
         token, expires_at = storage.make_signed_token(
             row.storage_key, self.settings.material_url_ttl_seconds
         )
-        return f"{base_url}/api/v2/materials/_local/{token}?key={row.storage_key}"
+        # W63-h: 返回**同源相对路径**,不再拼 base_url。
+        # 之前拼绝对 URL(http://127.0.0.1:8000/...)在 dev 模式下:
+        #   - <img> / 普通 fetch 走 vite proxy 同源转发 → OK
+        #   - <iframe src> 不会走 proxy,直接打 127.0.0.1:8000 → 拒连
+        # 改成相对路径后,iframe / img / fetch 都走当前页面的同源,
+        # dev 走 proxy、prod 同源部署都通。
+        # base_url 参数保留兼容旧调用,但不拼到结果里。
+        return f"/api/v2/materials/_local/{token}?key={row.storage_key}"
 
     def build_thumbnail_url(self, row: Material, base_url: str = "") -> Optional[str]:
         if not row.thumbnail_key:
@@ -212,7 +220,7 @@ class MaterialService:
         token, _ = storage.make_signed_token(
             row.thumbnail_key, self.settings.material_url_ttl_seconds
         )
-        return f"{base_url}/api/v2/materials/_local/{token}?key={row.thumbnail_key}"
+        return f"/api/v2/materials/_local/{token}?key={row.thumbnail_key}"
 
     # ------------------------------------------------------------------ #
     # Validate                                                            #

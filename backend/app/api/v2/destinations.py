@@ -34,6 +34,21 @@ class DestinationOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+# W58: DB stores lang keys as short codes ('id' / 'vi' / 'en' / 'zh-CN'),
+# but API callers (vue-i18n / LangSwitch / Destinations.vue) send BCP-47
+# long codes ('id-ID' / 'vi-VN' / 'en-US' / 'zh-CN'). Normalise to short
+# before lookup so an id-ID request finds the Indonesian translation
+# instead of falling through to English. Falls through to the caller-
+# supplied string if we don't recognise the prefix.
+def _short_lang(tag: str) -> str:
+    t = (tag or "").lower()
+    if t.startswith("id"): return "id"
+    if t.startswith("vi"): return "vi"
+    if t.startswith("en"): return "en"
+    if t.startswith("zh"): return "zh-CN"
+    return tag
+
+
 def _format_valid_label(days: int) -> str:
     """Best-effort human label for visa validity."""
     if days <= 0:
@@ -53,41 +68,46 @@ def _format_valid_label(days: int) -> str:
 # asking for lang=zh-CN/id-ID/vi-VN used to fall back to the country code "AT",
 # which is ugly on the card title). Keep this table small (≤ 30 entries for the
 # V2 destinations); once we re-seed, the i18n column will be the source of truth.
+#
+# W58: extended to 4-locale per code so the 26 Schengen countries (which only
+# have a single English-name string in DB) have proper zh-CN / id / vi names on
+# the destination card. EN is kept as the first key for backwards compatibility.
 _COUNTRY_NAME_EN_FALLBACK = {
-    "US": "United States",
-    "AU": "Australia",
-    "GB": "United Kingdom",
-    "JP": "Japan",
-    "CA": "Canada",
-    "SG": "Singapore",
-    "NZ": "New Zealand",
-    "DE": "Germany",
-    "FR": "France",
-    "AT": "Austria",
-    "BE": "Belgium",
-    "HR": "Croatia",
-    "CZ": "Czechia",
-    "DK": "Denmark",
-    "EE": "Estonia",
-    "FI": "Finland",
-    "GR": "Greece",
-    "HU": "Hungary",
-    "IS": "Iceland",
-    "IT": "Italy",
-    "LV": "Latvia",
-    "LI": "Liechtenstein",
-    "LT": "Lithuania",
-    "LU": "Luxembourg",
-    "MT": "Malta",
-    "NL": "Netherlands",
-    "NO": "Norway",
-    "PL": "Poland",
-    "PT": "Portugal",
-    "SK": "Slovakia",
-    "SI": "Slovenia",
-    "ES": "Spain",
-    "SE": "Sweden",
-    "SCHENGEN": "Schengen (any of 26 members)",
+    "US": {"zh-CN": "美国", "en": "United States", "id": "Amerika Serikat", "vi": "Hoa Kỳ"},
+    "AU": {"zh-CN": "澳大利亚", "en": "Australia", "id": "Australia", "vi": "Úc"},
+    "GB": {"zh-CN": "英国", "en": "United Kingdom", "id": "Inggris", "vi": "Vương quốc Anh"},
+    "JP": {"zh-CN": "日本", "en": "Japan", "id": "Jepang", "vi": "Nhật Bản"},
+    "CA": {"zh-CN": "加拿大", "en": "Canada", "id": "Kanada", "vi": "Canada"},
+    "SG": {"zh-CN": "新加坡", "en": "Singapore", "id": "Singapura", "vi": "Singapore"},
+    "NZ": {"zh-CN": "新西兰", "en": "New Zealand", "id": "Selandia Baru", "vi": "New Zealand"},
+    "DE": {"zh-CN": "德国(申根)", "en": "Germany", "id": "Jerman", "vi": "Đức"},
+    "FR": {"zh-CN": "法国(申根)", "en": "France", "id": "Prancis", "vi": "Pháp"},
+    "AT": {"zh-CN": "奥地利(申根)", "en": "Austria", "id": "Austria", "vi": "Áo"},
+    "BE": {"zh-CN": "比利时(申根)", "en": "Belgium", "id": "Belgia", "vi": "Bỉ"},
+    "HR": {"zh-CN": "克罗地亚(申根)", "en": "Croatia", "id": "Kroasia", "vi": "Croatia"},
+    "CZ": {"zh-CN": "捷克(申根)", "en": "Czechia", "id": "Ceko", "vi": "Séc"},
+    "DK": {"zh-CN": "丹麦(申根)", "en": "Denmark", "id": "Denmark", "vi": "Đan Mạch"},
+    "EE": {"zh-CN": "爱沙尼亚(申根)", "en": "Estonia", "id": "Estonia", "vi": "Estonia"},
+    "FI": {"zh-CN": "芬兰(申根)", "en": "Finland", "id": "Finlandia", "vi": "Phần Lan"},
+    "GR": {"zh-CN": "希腊(申根)", "en": "Greece", "id": "Yunani", "vi": "Hy Lạp"},
+    "HU": {"zh-CN": "匈牙利(申根)", "en": "Hungary", "id": "Hungaria", "vi": "Hungary"},
+    "IS": {"zh-CN": "冰岛(申根)", "en": "Iceland", "id": "Islandia", "vi": "Iceland"},
+    "IT": {"zh-CN": "意大利(申根)", "en": "Italy", "id": "Italia", "vi": "Ý"},
+    "LV": {"zh-CN": "拉脱维亚(申根)", "en": "Latvia", "id": "Latvia", "vi": "Latvia"},
+    "LI": {"zh-CN": "列支敦士登(申根)", "en": "Liechtenstein", "id": "Liechtenstein", "vi": "Liechtenstein"},
+    "LT": {"zh-CN": "立陶宛(申根)", "en": "Lithuania", "id": "Lituania", "vi": "Litva"},
+    "LU": {"zh-CN": "卢森堡(申根)", "en": "Luxembourg", "id": "Luksemburg", "vi": "Luxembourg"},
+    "MT": {"zh-CN": "马耳他(申根)", "en": "Malta", "id": "Malta", "vi": "Malta"},
+    "NL": {"zh-CN": "荷兰(申根)", "en": "Netherlands", "id": "Belanda", "vi": "Hà Lan"},
+    "NO": {"zh-CN": "挪威(申根)", "en": "Norway", "id": "Norwegia", "vi": "Na Uy"},
+    "PL": {"zh-CN": "波兰(申根)", "en": "Poland", "id": "Polandia", "vi": "Ba Lan"},
+    "PT": {"zh-CN": "葡萄牙(申根)", "en": "Portugal", "id": "Portugal", "vi": "Bồ Đào Nha"},
+    "SK": {"zh-CN": "斯洛伐克(申根)", "en": "Slovakia", "id": "Slovakia", "vi": "Slovakia"},
+    "SI": {"zh-CN": "斯洛文尼亚(申根)", "en": "Slovenia", "id": "Slovenia", "vi": "Slovenia"},
+    "ES": {"zh-CN": "西班牙(申根)", "en": "Spain", "id": "Spanyol", "vi": "Tây Ban Nha"},
+    "SE": {"zh-CN": "瑞典(申根)", "en": "Sweden", "id": "Swedia", "vi": "Thụy Điển"},
+    "SCHENGEN": {"zh-CN": "申根(任选 26 国)", "en": "Schengen (any of 26 members)",
+                 "id": "Schengen (salah satu dari 26 negara)", "vi": "Schengen (một trong 26 quốc gia)"},
 }
 
 
@@ -131,27 +151,47 @@ async def list_destinations(
         except Exception:
             # legacy 单字符串 — 启发式 split: 第一个空白之前是中文, 之后是英文
             s = (r.country_name_i18n or "").strip()
-            name_map = {"zh-CN": s, "en": s or r.country_code}
-            if " " in s:
+            has_cjk = any("\u4e00" <= c <= "\u9fff" for c in s)
+            if s and not has_cjk and " " not in s:
+                # English-only legacy seed (e.g. seed_schengen_26 wrote "Austria")
+                name_map = {"en": s}
+            elif " " in s:
                 idx = s.find(" ")
                 zh, en = s[:idx], s[idx + 1:].strip()
-                if zh and en:
+                if zh and en and has_cjk:
                     name_map = {"zh-CN": zh, "en": en}
+                else:
+                    name_map = {"en": s or r.country_code}
+            else:
+                name_map = {"zh-CN": s, "en": s or r.country_code}
         # W45 fix: 1) never return the raw country code (e.g. "AT"/"US") as a
         # human-readable country name on the destination card — the DB column
         # might be missing the requested locale (legacy seed_schengen_26 wrote
         # only English), and the legacy fallback above would otherwise hand back
-        # the alpha-2 code. Use the hard-coded EN fallback for en-US, and mirror
-        # the same string for any missing locale (acceptable for an MVP — the
-        # fallback lives in code, not data, so we can replace it with proper
+        # the alpha-2 code. Use the hard-coded fallback table (W58: per-locale
+        # strings) and mirror it for any missing locale (acceptable for an MVP —
+        # the fallback lives in code, not data, so we can replace it with proper
         # translations without a re-seed).
         # 2) when even the EN slot is missing, fall back to the EN table.
-        en_default = name_map.get("en") or _COUNTRY_NAME_EN_FALLBACK.get(
-            r.country_code, r.country_code
-        )
+        fb_entry = _COUNTRY_NAME_EN_FALLBACK.get(r.country_code)
+        if isinstance(fb_entry, dict):
+            fb_map = fb_entry
+        elif isinstance(fb_entry, str):
+            # Defensive: legacy callers / future edits passing a plain string still work.
+            fb_map = {"en": fb_entry}
+        else:
+            fb_map = {"en": r.country_code}
+        # EN layer: prefer what's in DB, then hard-coded EN.
+        en_default = name_map.get("en") or fb_map.get("en") or r.country_code
         name_map.setdefault("en", en_default)
+        short_lang = _short_lang(lang)
         # 3) ensure any requested locale gets *some* non-code string.
+        # First, copy the per-locale strings from fb_map into name_map so the
+        # caller's locale wins if present, otherwise we fill in from code.
+        for lc in ("zh-CN", "id", "vi"):
+            name_map.setdefault(lc, fb_map.get(lc) or en_default)
         name_map.setdefault(lang, en_default)
+        name_map.setdefault(short_lang, en_default)
         if visa_type:
             try:
                 types = json.loads(r.visa_types)
@@ -162,7 +202,15 @@ async def list_destinations(
         items.append(DestinationOut(
             id=r.id,
             country_code=r.country_code,
-            country_name=name_map.get(lang) or name_map.get("en") or _COUNTRY_NAME_EN_FALLBACK.get(r.country_code, r.country_code),
+            # W58: try the short-code ('id' / 'vi') alias first so BCP-47 callers
+            # ('id-ID' / 'vi-VN') get the right translation; fall back to the EN
+            # slot and then the hard-coded fallback if nothing else.
+            country_name=(
+                name_map.get(short_lang)
+                or name_map.get(lang)
+                or name_map.get("en")
+                or r.country_code
+            ),
             visa_types=json.loads(r.visa_types) if r.visa_types else [],
             image_url=r.image_url,
             enabled=r.enabled,

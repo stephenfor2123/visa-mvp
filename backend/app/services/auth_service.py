@@ -1,9 +1,11 @@
 """AuthService — register / login / reset-password / refresh / OAuth."""
 import hashlib
 import re
-from datetime import datetime, timezone
+import secrets
+from datetime import datetime, timedelta, timezone
 from typing import Any, Mapping, Optional
 
+from jose import JWTError, jwt
 from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,16 +14,25 @@ from app.core.errors import BizException, ErrorCode
 from app.core.logging import get_logger
 from app.core.security import (
     TOKEN_TYPE_REFRESH,
+    assert_token_valid_for_user,
+    bump_password_changed_at,
     create_access_token,
     create_refresh_token,
     decode_token,
     hash_password,
+    invalidate_user_sessions,
     validate_password_strength,
     verify_password,
 )
 from app.models.user import User
 from app.models.user_session import UserSession
 from app.services.audit import record_audit
+from app.services.email_service import (
+    PasswordResetEmail,
+    WelcomeEmail,
+    send_password_reset_email,
+    send_welcome_email,
+)
 
 
 _log = get_logger()
@@ -38,6 +49,9 @@ ClientInfo = Mapping[str, Optional[str]]
 
 # Detect "looks-like-email" so we can branch on email vs username in _get_user_by_account.
 _EMAIL_RE = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
+
+_PASSWORD_RESET_TOKEN_TYPE = "password_reset"
+_PASSWORD_RESET_TTL_MINUTES = 30
 
 
 class AuthService:
@@ -187,6 +201,18 @@ class AuthService:
             "user.register",
             extra={"user_id": user.id, "event_type": "user.register", "status": "success"},
         )
+
+        # W48: best-effort welcome email. Never let it bubble back into the
+        # API response — failures are logged inside the service.
+        send_welcome_email(
+            WelcomeEmail(
+                to_email=user.email,
+                nickname=user.nickname or user.username,
+                username=user.username,
+                language_pref=user.language_pref or "zh-CN",
+            )
+        )
+
         return {**tokens, "user": self._to_user_dict(user)}
 
     # ------------------------------------------------------------------ #
@@ -256,6 +282,7 @@ class AuthService:
             raise BizException(
                 ErrorCode.ACCOUNT_DISABLED, message="Account is not active"
             )
+        assert_token_valid_for_user(payload, user)
 
         # Rotate: revoke the old session row, issue a new pair.
         old_hash = _hash_refresh_token(refresh_token)
@@ -409,25 +436,109 @@ class AuthService:
         return {**tokens, "user": self._to_user_dict(user)}
 
     # ------------------------------------------------------------------ #
-    # reset_password (W26: by account, no SMS code)                       #
+    # Password reset (email token — no unauthenticated account+password)   #
     # ------------------------------------------------------------------ #
-    async def reset_password(
+    def _make_password_reset_token(self, user_id: int) -> str:
+        now = datetime.now(timezone.utc)
+        exp = now + timedelta(minutes=_PASSWORD_RESET_TTL_MINUTES)
+        payload = {
+            "sub": str(user_id),
+            "type": _PASSWORD_RESET_TOKEN_TYPE,
+            "iat": int(now.timestamp()),
+            "exp": int(exp.timestamp()),
+            "jti": secrets.token_hex(8),
+        }
+        return jwt.encode(payload, self.settings.jwt_secret, algorithm=self.settings.jwt_algorithm)
+
+    def _decode_password_reset_token(self, token: str) -> dict[str, Any]:
+        try:
+            payload = jwt.decode(
+                token,
+                self.settings.jwt_secret,
+                algorithms=[self.settings.jwt_algorithm],
+            )
+        except JWTError:
+            raise BizException(
+                ErrorCode.PASSWORD_RESET_TOKEN_INVALID, message="Invalid or expired reset link"
+            ) from None
+
+        if payload.get("type") != _PASSWORD_RESET_TOKEN_TYPE:
+            raise BizException(
+                ErrorCode.PASSWORD_RESET_TOKEN_INVALID, message="Invalid reset link"
+            )
+        exp = payload.get("exp")
+        if exp is not None and datetime.fromtimestamp(int(exp), tz=timezone.utc) < datetime.now(timezone.utc):
+            raise BizException(
+                ErrorCode.PASSWORD_RESET_TOKEN_EXPIRED, message="Reset link has expired"
+            )
+        return payload
+
+    def _frontend_base(self) -> str:
+        return self.settings.app_frontend_base or "http://localhost:5173"
+
+    async def request_password_reset(
         self,
         *,
         account: str,
+        info: ClientInfo,
+    ) -> dict[str, Any]:
+        """Always returns a generic success message (no account enumeration)."""
+        user = await self._get_user_by_account(account)
+        if user is not None and user.email:
+            token = self._make_password_reset_token(user.id)
+            reset_url = f"{self._frontend_base()}/forgot-password?token={token}"
+            send_password_reset_email(
+                PasswordResetEmail(
+                    to_email=user.email,
+                    nickname=user.nickname or user.username or "there",
+                    language_pref=user.language_pref or "en",
+                    reset_url=reset_url,
+                ),
+            )
+            _log.info(
+                "user.password_reset.requested",
+                extra={
+                    "user_id": user.id,
+                    "event_type": "user.password_reset.requested",
+                    "status": "sent",
+                },
+            )
+        else:
+            _log.info(
+                "user.password_reset.requested",
+                extra={
+                    "event_type": "user.password_reset.requested",
+                    "status": "noop",
+                    "account_hint": account[:3] + "***" if account else None,
+                },
+            )
+        return {"message": "If the account exists, a reset link has been sent to the registered email"}
+
+    async def reset_password(
+        self,
+        *,
+        token: str,
         new_password: str,
         info: ClientInfo,
     ) -> dict[str, Any]:
-        """Reset by account (email or username). Caller (e.g. admin) is
-        responsible for verifying the user owns the account (e.g. via
-        a separately-issued email token, or admin override)."""
+        """Reset password using a token from the reset email."""
+        payload = self._decode_password_reset_token(token)
+        user_id = int(payload.get("sub") or 0)
+        if user_id <= 0:
+            raise BizException(
+                ErrorCode.PASSWORD_RESET_TOKEN_INVALID, message="Invalid reset link"
+            )
+
+        user = await self.db.get(User, user_id)
+        if user is None or user.status in {"destroyed", "disabled"}:
+            raise BizException(
+                ErrorCode.PASSWORD_RESET_TOKEN_INVALID, message="Invalid reset link"
+            )
+
         validate_password_strength(new_password)
-
-        user = await self._get_user_by_account(account)
-        if user is None:
-            raise BizException(ErrorCode.USER_NOT_FOUND, message="Account not registered")
-
         user.password_hash = hash_password(new_password, self.settings)
+        bump_password_changed_at(user)
+        await invalidate_user_sessions(self.db, user.id)
         await self._commit_with_audit(
             user=user,
             action="user.reset_password",

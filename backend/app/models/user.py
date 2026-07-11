@@ -40,6 +40,9 @@ class User(Base):
     nickname: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, index=True)
     avatar_url: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
     language_pref: Mapped[str] = mapped_column(String(8), default="zh-CN")
+    # W1 — Email change flow: holds the *target* email between request
+    # and confirm. Cleared on confirm (success), or on cancel/expire.
+    email_pending: Mapped[Optional[str]] = mapped_column(String(120), nullable=True, index=True)
 
     # Status — V2 lifecycle: active / pending_destroy / destroyed / disabled
     status: Mapped[str] = mapped_column(String(16), default="active", index=True)
@@ -52,6 +55,8 @@ class User(Base):
     # Misc
     last_login_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     last_login_ip: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    # Tokens issued before this timestamp are rejected (password reset / admin reset).
+    password_changed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), nullable=False
@@ -64,6 +69,8 @@ class User(Base):
     sessions: Mapped[list["UserSession"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
+    # NOTE: `applicants` is attached in app/models/applicant.py to avoid
+    # circular imports (Applicant also imports User for the backref).
 
     def __repr__(self) -> str:  # pragma: no cover - debug only
         return f"<User id={self.id} email={self.email} username={self.username}>"

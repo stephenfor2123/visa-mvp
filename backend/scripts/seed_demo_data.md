@@ -22,29 +22,29 @@ cd backend
 ### Demo 用户(默认 3 个,可调 `--user-count`)
 
 | 手机号                       | 密码    | 角色                              |
-| ---------------------------- | ------- | --------------------------------- |
-| `+86-138001380001`           | `123456` | 新注册用户,无订单                  |
-| `+86-138001380002`           | `123456` | 持有 1 个 `created` 状态的订单      |
-| `+86-138001380003`           | `123456` | 持有 1 个 `submitted` + 1 个 `approved` 订单 |
-| `+86-13800138000{4..N}`      | `123456` | 普通用户(无订单)                   |
+| ---------------------------- | ----------- | --------------------------------- |
+| `+86-138001380001`           | `Htex@2026` | 新注册用户,无订单                  |
+| `+86-138001380002`           | `Htex@2026` | 持有 1 个 `created` 状态的订单      |
+| `+86-138001380003`           | `Htex@2026` | 持有 1 个 `submitted` + 1 个 `approved` 订单 |
+| `+86-13800138000{4..N}`      | `Htex@2026` | 普通用户(无订单)                   |
 
-> 密码 `123456` 故意**违反**产品策略(`password_min_length=8` 且必须含字母+数字)。
+> 密码 `Htex@2026` 是 **8 位**,满足产品策略(`password_min_length=8` + 必须含字母+数字)。
 > 这是 demo 专用账号,**严禁**部署到生产。脚本通过直接调用 `passlib.CryptContext`
-> 绕开 `validate_password_strength()`,所以能写入。
+> 写入 bcrypt 哈希(规避任何"上线前再改"的风险)。
 > 生产环境仍由 `AuthService.register / reset-password` 强制校验。
 
 ### Admin 账号(env-based,无需 user 行)
 
-| 字段     | 值            |
-| -------- | ------------- |
-| username | `admin`       |
-| password | `Admin@2024`  |
+| 字段     | 值             |
+| -------- | -------------- |
+| username | `admin`        |
+| password | `HtexAd@26`    |
 
 > Admin 登录走 `POST /api/v2/admin/login`,校验的是环境变量 `ADMIN_PASSWORD_SECRET`
 > (而不是 users 表)。脚本**不会**自动修改 `.env`,有 2 种启用方式:
 >
-> 1. 一次性写入:加 `--apply-admin-password`,脚本会原子替换 `.env` 里的 `ADMIN_PASSWORD_SECRET=Admin@2024`。
-> 2. 手动修改:打开 `backend/.env`,把 `ADMIN_PASSWORD_SECRET=CHANGE_ME_IN_PROD` 改成 `ADMIN_PASSWORD_SECRET=Admin@2024`。
+> 1. 一次性写入:加 `--apply-admin-password`,脚本会原子替换 `.env` 里的 `ADMIN_PASSWORD_SECRET=HtexAd@26`。
+> 2. 手动修改:打开 `backend/.env`,把 `ADMIN_PASSWORD_SECRET=CHANGE_ME_IN_PROD` 改成 `ADMIN_PASSWORD_SECRET=HtexAd@26`。
 
 ### Demo 订单(3 条,user-count ≥ 3 时才创建)
 
@@ -73,7 +73,7 @@ cd backend
 --reset             先按 demo 标识清空所有 demo 行,再重新插入
 --destination ID    演示订单使用的 visa_destinations.id (默认 1,需 enabled)
 --dry-run           跑一遍但不 commit,方便预演
---apply-admin-password  把 ADMIN_PASSWORD_SECRET=Admin@2024 写入 backend/.env
+--apply-admin-password  把 ADMIN_PASSWORD_SECRET=HtexAd@26 写入 backend/.env
 -h / --help
 ```
 
@@ -124,20 +124,21 @@ cd backend
   reset_deleted: {'materials': 2, 'orders': 3, 'users': 3}
 
 Demo user accounts (phone / password):
-  +86-138001380001  /  123456  (nickname: demo_user_138001380001)
-  +86-138001380002  /  123456  (nickname: demo_user_138001380002)
-  +86-138001380003  /  123456  (nickname: demo_user_138001380003)
+  +86-138001380001  /  Htex@2026  (nickname: demo_user_138001380001)
+  +86-138001380002  /  Htex@2026  (nickname: demo_user_138001380002)
+  +86-138001380003  /  Htex@2026  (nickname: demo_user_138001380003)
 
 Admin login (POST /api/v2/admin/login):
   username: admin
-  password: Admin@2024
+  password: HtexAd@26
 ```
 
 ---
 
 ## 注意事项 / 已知限制
 
-- **密码 `123456` 不符合产品策略**。这是 demo 账号绕开密码强度校验,严禁生产用。
+- **密码 `Htex@2026` 满足产品策略**(8 位 + 字母+数字)。这是 demo 账号专用,严禁生产用;
+  实际仍由 `AuthService.register / reset-password` 在生产链路强制校验。
 - **Admin 账号不写入 users 表**。Admin 登录验证 `ADMIN_PASSWORD_SECRET` 环境变量,
   跟 `User` 模型无关。脚本创建了 nickname=`admin` 的普通用户作为 admin 面板列表展示用。
 - **数据库路径**:脚本读 `app.core.config.get_settings().database_url`,

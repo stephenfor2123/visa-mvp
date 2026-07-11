@@ -86,6 +86,29 @@ class ErrorCode(str, Enum):
     LLM_NOT_CONFIGURED = "8001"
     LLM_UPSTREAM_ERROR = "8002"
 
+    # 9xxx — Applicant (W1)
+    APPLICANT_NOT_FOUND = "9001"
+    APPLICANT_DUPLICATE_NAME = "9002"
+    APPLICANT_DUPLICATE_PASSPORT = "9003"
+    APPLICANT_LIMIT_REACHED = "9004"
+    APPLICANT_PASSPORT_INVALID = "9005"
+
+    # 10xxx — Email change flow (W1)
+    EMAIL_CHANGE_TOKEN_INVALID = "10001"
+    EMAIL_CHANGE_TOKEN_EXPIRED = "10002"
+    EMAIL_CHANGE_SAME_AS_CURRENT = "10003"
+    EMAIL_CHANGE_ALREADY_PENDING = "10004"
+    PASSWORD_RESET_TOKEN_INVALID = "10005"
+    PASSWORD_RESET_TOKEN_EXPIRED = "10006"
+
+    # 11xxx — DS-160 browser extension (W48 v0.2)
+    DS160_CODE_NOT_FOUND = "11001"        # /redeem: 12-digit code not in DB
+    DS160_CODE_REVOKED = "11002"          # /redeem: user rotated, old code blacklisted
+    DS160_ARCHIVE_CHANGED = "11003"       # /redeem: fingerprint mismatch — user must re-fetch code
+    DS160_CODE_INVALID_FORMAT = "11004"   # /redeem: not 12 base30 chars
+    DS160_PROFILE_INCOMPLETE = "11005"    # /code: applicant_data missing required fields
+    DS160_ORDER_NOT_READY = "11006"       # /code: order status doesn't allow code generation
+
 
 # HTTP status mapping (defaults; can be overridden when raising)
 _ERROR_HTTP_STATUS: dict[ErrorCode, int] = {
@@ -142,6 +165,26 @@ _ERROR_HTTP_STATUS: dict[ErrorCode, int] = {
     ErrorCode.SMS_GATEWAY_DOWN: status.HTTP_502_BAD_GATEWAY,
     ErrorCode.LLM_NOT_CONFIGURED: status.HTTP_503_SERVICE_UNAVAILABLE,
     ErrorCode.LLM_UPSTREAM_ERROR: status.HTTP_502_BAD_GATEWAY,
+    # Applicant domain
+    ErrorCode.APPLICANT_NOT_FOUND: status.HTTP_404_NOT_FOUND,
+    ErrorCode.APPLICANT_DUPLICATE_NAME: status.HTTP_409_CONFLICT,
+    ErrorCode.APPLICANT_DUPLICATE_PASSPORT: status.HTTP_409_CONFLICT,
+    ErrorCode.APPLICANT_LIMIT_REACHED: status.HTTP_409_CONFLICT,
+    ErrorCode.APPLICANT_PASSPORT_INVALID: status.HTTP_400_BAD_REQUEST,
+    # Email change flow
+    ErrorCode.EMAIL_CHANGE_TOKEN_INVALID: status.HTTP_400_BAD_REQUEST,
+    ErrorCode.EMAIL_CHANGE_TOKEN_EXPIRED: status.HTTP_410_GONE,
+    ErrorCode.EMAIL_CHANGE_SAME_AS_CURRENT: status.HTTP_400_BAD_REQUEST,
+    ErrorCode.EMAIL_CHANGE_ALREADY_PENDING: status.HTTP_409_CONFLICT,
+    ErrorCode.PASSWORD_RESET_TOKEN_INVALID: status.HTTP_400_BAD_REQUEST,
+    ErrorCode.PASSWORD_RESET_TOKEN_EXPIRED: status.HTTP_410_GONE,
+    # DS-160 extension
+    ErrorCode.DS160_CODE_NOT_FOUND: status.HTTP_404_NOT_FOUND,
+    ErrorCode.DS160_CODE_REVOKED: status.HTTP_409_CONFLICT,
+    ErrorCode.DS160_ARCHIVE_CHANGED: status.HTTP_409_CONFLICT,
+    ErrorCode.DS160_CODE_INVALID_FORMAT: status.HTTP_400_BAD_REQUEST,
+    ErrorCode.DS160_PROFILE_INCOMPLETE: status.HTTP_422_UNPROCESSABLE_ENTITY,
+    ErrorCode.DS160_ORDER_NOT_READY: status.HTTP_409_CONFLICT,
 }
 
 

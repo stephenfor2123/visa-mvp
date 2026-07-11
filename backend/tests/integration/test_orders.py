@@ -187,17 +187,22 @@ class TestCreateOrder:
         assert r.status_code == 403
         assert r.json()["code"] == "4006"
 
-    async def test_missing_materials_1001(self, client):
+    async def test_empty_material_ids_allowed(self, client):
         dest_id = await _seed_destination("US")
         token = await _register(client, "13855550007")
-        # empty material_ids
         r = await client.post(
             "/api/v2/orders",
-            json={"destination_id": dest_id, "visa_type": "tourism", "material_ids": []},
+            json={
+                "destination_id": dest_id,
+                "visa_type": "tourism",
+                "material_ids": [],
+                "applicant_data": {"surname": "TEST", "given_name": "USER"},
+            },
             headers=_bearer(token),
         )
-        assert r.status_code == 400
-        assert r.json()["code"] == "1001"
+        assert r.status_code == 201
+        assert r.json()["code"] == "1000"
+        assert r.json()["data"]["order"]["material_ids"] == []
 
     async def test_nonexistent_material_4005(self, client):
         dest_id = await _seed_destination("US")
@@ -403,6 +408,113 @@ class TestCancelOrder:
         )
         assert rc.status_code == 404
         assert rc.json()["code"] == "4001"
+
+
+# ----------------------------------------------------------------- #
+# DELETE /orders/{order_no}  (W67 — delete draft)                   #
+# ----------------------------------------------------------------- #
+class TestDeleteDraft:
+    """W67 — DELETE /orders/{order_no} happy path + edge cases.
+
+    Three cases cover the contract:
+      1. happy: draft order + 2 materials → DELETE → 200, soft-deleted=2,
+         subsequent GET → 404
+      2. submitted order → DELETE → 4010 ORDER_NOT_EDITABLE (state gate)
+      3. foreign user's order → DELETE → 404 (no existence leak)
+    """
+
+    async def test_delete_draft_happy(self, client):
+        from app.core.db import AsyncSessionLocal
+        from app.models.material import Material
+        from sqlalchemy import select as _select
+
+        dest_id = await _seed_destination("US")
+        token = await _register(client, "13855550050")
+        mid_a = await _upload_material(client, token)
+        mid_b = await _upload_material(client, token)
+        r = await _create_order(client, token, dest_id, [mid_a, mid_b])
+        assert r.status_code == 201
+        order_no = r.json()["data"]["order_no"]
+
+        rd = await client.delete(
+            f"/api/v2/orders/{order_no}", headers=_bearer(token)
+        )
+        assert rd.status_code == 200, rd.text
+        body = rd.json()
+        assert body["code"] == "1000"
+        data = body["data"]
+        assert data["deleted"] is True
+        assert data["soft_deleted_materials"] == 2
+        assert data["order_no"] == order_no
+
+        # Subsequent GET → 404 (order row gone)
+        rg = await client.get(
+            f"/api/v2/orders/{order_no}", headers=_bearer(token)
+        )
+        assert rg.status_code == 404
+        assert rg.json()["code"] == "4001"
+
+        # Materials are soft-deleted (deleted_at is now, row still exists)
+        async with AsyncSessionLocal() as s:
+            for mid in (mid_a, mid_b):
+                m = await s.scalar(_select(Material).where(Material.id == mid))
+                assert m is not None
+                assert m.deleted_at is not None, f"material {mid} should be soft-deleted"
+
+    async def test_delete_draft_non_created_4010(self, client):
+        # Submit a draft, then try to delete it — must be rejected.
+        # Submit moves status: created → submitted, so delete is gated.
+        dest_id = await _seed_destination("US")
+        token = await _register(client, "13855550051")
+        mid = await _upload_material(client, token)
+        r = await _create_order(client, token, dest_id, [mid])
+        order_no = r.json()["data"]["order_no"]
+
+        # Build the locked snapshot signature the same way /checklist does.
+        rck = await client.get(
+            f"/api/v2/orders/{order_no}/checklist", headers=_bearer(token)
+        )
+        assert rck.status_code == 200
+        signature = rck.json()["data"]["signature"]
+
+        rs = await client.post(
+            f"/api/v2/orders/{order_no}/submit",
+            json={"signature": signature},
+            headers=_bearer(token),
+        )
+        assert rs.status_code == 200, rs.text
+        assert rs.json()["data"]["status"] == "submitted"
+
+        # Now try to delete — should fail with 4010 (ORDER_NOT_EDITABLE).
+        rd = await client.delete(
+            f"/api/v2/orders/{order_no}", headers=_bearer(token)
+        )
+        assert rd.status_code == 409
+        body = rd.json()
+        assert body["code"] == "4010"
+        # Message must mention "delete" so i18n fallbacks / E2E can route.
+        assert "delete" in body["message"].lower()
+
+    async def test_delete_draft_foreign_user_404(self, client):
+        # User B cannot delete User A's draft — must 404 (no existence leak).
+        dest_id = await _seed_destination("US")
+        token_a = await _register(client, "13855550052")
+        token_b = await _register(client, "13855550053")
+        mid_a = await _upload_material(client, token_a)
+        r = await _create_order(client, token_a, dest_id, [mid_a])
+        order_no = r.json()["data"]["order_no"]
+
+        rd = await client.delete(
+            f"/api/v2/orders/{order_no}", headers=_bearer(token_b)
+        )
+        assert rd.status_code == 404
+        assert rd.json()["code"] == "4001"
+
+        # And A's order is still alive
+        rg = await client.get(
+            f"/api/v2/orders/{order_no}", headers=_bearer(token_a)
+        )
+        assert rg.status_code == 200
 
 
 # ----------------------------------------------------------------- #
