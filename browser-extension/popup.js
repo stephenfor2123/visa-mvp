@@ -14,6 +14,7 @@ const $readyMappingVd = document.getElementById('ready-mapping-vd')
 const $clear = document.getElementById('clear')
 const $openDs160 = document.getElementById('openDs160')
 const $apiBase = document.getElementById('apiBase')
+const $readySubmitted = document.getElementById('ready-submitted')
 
 // ---------- Status helpers ----------
 function setStatus(text, kind = 'idle') {
@@ -109,6 +110,18 @@ function showReady(meta) {
   $readyMappingVd.textContent = meta.mapping_verified_date == null
     ? 'null (待核对真表)'
     : meta.mapping_verified_date
+
+  // DS-160 提交确认状态(用户在确认页点过"我已提交完成"才有)
+  chrome.runtime.sendMessage({ type: 'HTEX_GET_SUBMITTED', orderId: meta.order_id }, (r) => {
+    if (!$readySubmitted) return
+    if (r && r.submitted) {
+      $readySubmitted.textContent = '🎉 DS-160 已确认提交 · ' + new Date(r.submittedAt).toLocaleString()
+      $readySubmitted.classList.remove('hidden')
+      $readySubmitted.className = 'status ok'
+    } else {
+      $readySubmitted.classList.add('hidden')
+    }
+  })
 }
 
 $clear.addEventListener('click', () => {

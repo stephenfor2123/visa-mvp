@@ -27,6 +27,8 @@ def _test_env() -> Generator[None, None, None]:
     os.environ["SMS_LOG_DIR"] = str(log_dir)
     os.environ["SMS_COOLDOWN_SECONDS"] = "1"        # test-friendly cooldown
     os.environ["SMS_DAILY_LIMIT"] = "10000"          # disable for tests
+    os.environ["EMAIL_COOLDOWN_SECONDS"] = "1"
+    os.environ["EMAIL_DAILY_LIMIT"] = "10000"
     os.environ["RATE_LIMIT_PER_IP_PER_MIN"] = "10000"  # disable IP rate limit
     os.environ["RATE_LIMIT_SLOW_API_PER_MIN"] = "10000"
     os.environ["JWT_SECRET"] = "test-secret-test-secret-test-secret-2026"

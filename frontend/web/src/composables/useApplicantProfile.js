@@ -91,6 +91,7 @@ export function buildApplicantProfile({ form = {}, ocr = {}, travelPlan = {} } =
       purpose: pick(form.visa_type),
       hasPlan,
       arrivalDate: arrival,
+      departureDate: normalizeDate(pick(form.departure_date)),
       stayLength: stay ? `${stay} DAYS` : '',
       usAddress: pick(form.hotel_name, travelPlan.destination),
       payer: pick(form.payer) || 'self',
@@ -169,6 +170,26 @@ export function buildApplicantProfile({ form = {}, ocr = {}, travelPlan = {} } =
     },
     security: {
       acknowledged: coerceYesNo(form.security_acknowledged),
+    },
+    uk: {
+      visaLength: pick(form.uk_visa_length) || '6_months',
+      mainReason: pick(form.uk_main_reason, form.visa_type) || 'tourism',
+      fundsPayer: pick(form.uk_funds_payer, form.payer) || 'self',
+      employmentStatus: pick(form.uk_employment_status),
+      employmentYears: pick(form.uk_employment_years, form.employment_years),
+      fundsBalanceBucket: pick(form.uk_funds_balance_bucket, form.funds_balance_bucket),
+      visaHistory: pick(form.uk_visa_history),
+      ukVisaRefused: coerceYesNo(form.uk_visa_refused),
+      otherVisaRefused: coerceYesNo(form.uk_other_visa_refused),
+    },
+    au: {
+      stream: pick(form.au_stream) || 'tourist',
+      reasonForVisit: pick(form.au_reason_for_visit, form.visa_type) || 'tourism',
+      employmentStatus: pick(form.au_employment_status),
+      employmentYears: pick(form.au_employment_years, form.employment_years),
+      fundsBalanceBucket: pick(form.au_funds_balance_bucket, form.funds_balance_bucket),
+      developedCountryVisa: pick(form.au_developed_country_visa, form.developed_country_visa),
+      auVisaRefused: coerceYesNo(form.au_visa_refused),
     },
   }
 }
@@ -272,6 +293,28 @@ export function buildApplicantDataPayload(form = {}, { dna = {}, itineraryText =
     prev_employer: str(form.prev_employer),
     security_acknowledged: str(form.security_acknowledged),
     payer: 'self',
+    // UK Standard Visitor
+    uk_visa_length: str(form.uk_visa_length) || '6_months',
+    uk_main_reason: str(form.uk_main_reason) || str(form.visa_type) || 'tourism',
+    uk_funds_payer: str(form.uk_funds_payer) || 'self',
+    uk_employment_status: str(form.uk_employment_status),
+    uk_employment_years: str(form.uk_employment_years),
+    uk_funds_balance_bucket: str(form.uk_funds_balance_bucket),
+    uk_visa_history: str(form.uk_visa_history),
+    uk_visa_refused: str(form.uk_visa_refused),
+    uk_other_visa_refused: str(form.uk_other_visa_refused),
+    // AU Subclass 600
+    au_stream: str(form.au_stream) || 'tourist',
+    au_reason_for_visit: str(form.au_reason_for_visit) || str(form.visa_type) || 'tourism',
+    au_employment_status: str(form.au_employment_status),
+    au_employment_years: str(form.au_employment_years),
+    au_funds_balance_bucket: str(form.au_funds_balance_bucket),
+    au_developed_country_visa: str(form.au_developed_country_visa),
+    au_visa_refused: str(form.au_visa_refused),
+    // 诊断共用
+    employment_years: str(form.employment_years),
+    funds_balance_bucket: str(form.funds_balance_bucket),
+    developed_country_visa: str(form.developed_country_visa),
     dna: { ...dna },
     emergency_contact: {
       name: str(form.emergency_name),

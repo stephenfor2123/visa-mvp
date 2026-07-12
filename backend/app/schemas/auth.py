@@ -34,8 +34,17 @@ class RegisterRequest(BaseModel):
     username: str = Field(..., description="3-32 chars [A-Za-z0-9_.-], must start with letter/digit")
     email: str = Field(..., description="User email (used for login + recovery)")
     password: str = Field(..., min_length=8, max_length=32, description="8-32 chars, letters + digits")
+    email_code: str = Field(..., min_length=6, max_length=6, description="6-digit verification code from email")
     nickname: Optional[str] = Field(None, max_length=64)
     language_pref: Optional[str] = Field("zh-CN", max_length=8)
+
+    @field_validator("email_code")
+    @classmethod
+    def _v_email_code(cls, v: str) -> str:
+        v = (v or "").strip()
+        if not v.isdigit() or len(v) != 6:
+            raise ValueError("email_code must be exactly 6 digits")
+        return v
 
     @field_validator("username")
     @classmethod
@@ -53,6 +62,30 @@ class RegisterRequest(BaseModel):
             raise ValueError("invalid email format")
         if len(v) > 120:
             raise ValueError("email must be at most 120 characters")
+        return v
+
+
+class SendEmailCodeRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    email: str = Field(..., description="Target email for the verification code")
+    purpose: str = Field("register", description="register")
+    language_pref: Optional[str] = Field("en", max_length=8, description="en | zh-CN | vi | id")
+
+    @field_validator("email")
+    @classmethod
+    def _v_email(cls, v: str) -> str:
+        v = (v or "").strip().lower()
+        if not _EMAIL_RE.match(v):
+            raise ValueError("invalid email format")
+        return v
+
+    @field_validator("purpose")
+    @classmethod
+    def _v_purpose(cls, v: str) -> str:
+        v = (v or "").strip().lower()
+        if v not in {"register"}:
+            raise ValueError("purpose must be 'register'")
         return v
 
 

@@ -1,12 +1,16 @@
 """/api/v2/ds160/* — DS-160 browser extension endpoints (W48 v0.2).
 
-Two endpoints:
+Three endpoints:
 
-  POST /api/v2/ds160/code          — issue / refresh a 12-char code
-                                    (session auth, user must own the order)
+  POST /api/v2/ds160/code              — issue / refresh a 12-char code
+                                         (session auth, user must own the order)
 
-  POST /api/v2/ds160/code/redeem   — exchange code for ApplicantProfile
-                                    (NO session — the code IS the credential)
+  POST /api/v2/ds160/code/redeem       — exchange code for ApplicantProfile
+                                         (NO session — the code IS the credential)
+
+  POST /api/v2/ds160/portal-submitted  — user confirmed DS-160 submitted on ceac.state.gov
+                                         (NO session — the code IS the credential;
+                                          sets ds160_portal_submitted_at milestone, idempotent)
 
 Design + invariants documented in `browser-extension/DESIGN-v0.2.md`
 and `browser-extension/backend-ds160-code-api.md`.
@@ -86,6 +90,15 @@ class RedeemCodeResponse(BaseModel):
     issued_at: datetime
 
 
+class PortalSubmittedResponse(BaseModel):
+    order_id: int
+    ds160_portal_submitted_at: datetime
+    unchanged: bool = Field(
+        default=False,
+        description="True when portal submission was already recorded (idempotent replay).",
+    )
+
+
 # --------------------------------------------------------------------------- #
 # Helpers                                                                      #
 # --------------------------------------------------------------------------- #
@@ -94,7 +107,11 @@ class RedeemCodeResponse(BaseModel):
 # prefill; paid/submitted/reviewing are also valid because users frequently
 # prep the form while the order is being reviewed.  Closed/abnormal/failed
 # are blocked because the order is no longer actionable.
-_ORDER_READY_STATUSES = frozenset({"created", "submitted", "reviewing", "approved"})
+_ORDER_READY_STATUSES = frozenset({
+    "created", "paid", "completed",
+    # legacy
+    "submitted", "reviewing", "approved",
+})
 
 
 async def _audit_redeem(
@@ -133,6 +150,64 @@ async def _audit_redeem(
         )
     )
     # Don't await commit here — the caller commits in its own transaction.
+
+
+async def _audit_portal_submitted(
+    db: AsyncSession,
+    *,
+    order: Optional[Order],
+    ip: str,
+    user_agent: str,
+    success: bool,
+    error_code: str = "",
+    unchanged: bool = False,
+) -> None:
+    payload = json.dumps(
+        {
+            "ip": ip,
+            "user_agent": user_agent[:200],
+            "success": success,
+            "error": error_code,
+            "unchanged": unchanged,
+        },
+        ensure_ascii=False,
+    )
+    db.add(
+        AuditLog(
+            actor_type="system",
+            actor_id=(order.user_id if order else None),
+            action="ds160.portal.submitted",
+            target_type="order",
+            target_id=(order.id if order else None),
+            payload=payload,
+        )
+    )
+
+
+def _load_revoked_codes(order: Order) -> list[str]:
+    if not order.ds160_revoked_codes:
+        return []
+    try:
+        revoked = json.loads(order.ds160_revoked_codes)
+        return revoked if isinstance(revoked, list) else []
+    except (ValueError, TypeError):
+        return []
+
+
+def _is_code_revoked(order: Order, code: str) -> bool:
+    if order.ds160_code == code and order.ds160_code_revoked:
+        return True
+    return code in _load_revoked_codes(order)
+
+
+async def _lookup_order_by_code(db: AsyncSession, code: str) -> Optional[Order]:
+    """Find an order whose active or recently-revoked DS-160 code matches."""
+    order = await db.scalar(select(Order).where(Order.ds160_code == code))
+    if order is None:
+        order = await db.scalar(
+            select(Order).where(Order.ds160_revoked_codes.like(f'%"{code}"%'))
+        )
+    return order
 
 
 def _client_ip(request: Request) -> str:
@@ -288,17 +363,12 @@ async def redeem_ds160_code(
     # do we walk revoked codes.  We use the JSON-encoded shape `["CODE", ...]`
     # with both leading `"` and trailing `"` so we never accidentally match
     # a substring of another code.
-    order = await db.scalar(select(Order).where(Order.ds160_code == code))
+    order = await _lookup_order_by_code(db, code)
     if order is None:
-        candidate = await db.scalar(
-            select(Order).where(Order.ds160_revoked_codes.like(f'%"{code}"%'))
-        )
-        if candidate is None:
-            await _audit_redeem(db, order=None, ip=ip, user_agent=ua,
-                                success=False, error_code="DS160_CODE_NOT_FOUND")
-            await db.commit()
-            raise BizException(ErrorCode.DS160_CODE_NOT_FOUND)
-        order = candidate
+        await _audit_redeem(db, order=None, ip=ip, user_agent=ua,
+                            success=False, error_code="DS160_CODE_NOT_FOUND")
+        await db.commit()
+        raise BizException(ErrorCode.DS160_CODE_NOT_FOUND)
 
     # 3) Rate limit (only after we know it's a real code; pre-lookup rate
     # limit could be bypassed by the format check above)
@@ -309,27 +379,12 @@ async def redeem_ds160_code(
         await db.commit()
         raise BizException(ErrorCode.RATE_LIMIT, message="Too many redeem attempts")
 
-    # 4) Revoked?  Both the boolean flag (set when an old code is in flight
-    # at the moment of a force_rotate) AND the revoked_codes JSON list are
-    # checked.  The list covers codes that were once the active code but
-    # have since been superseded.
-    if order.ds160_code_revoked:
+    # 4) Revoked?
+    if _is_code_revoked(order, code):
         await _audit_redeem(db, order=order, ip=ip, user_agent=ua,
                             success=False, error_code="DS160_CODE_REVOKED")
         await db.commit()
         raise BizException(ErrorCode.DS160_CODE_REVOKED)
-    if order.ds160_revoked_codes:
-        try:
-            revoked_list = json.loads(order.ds160_revoked_codes)
-            if not isinstance(revoked_list, list):
-                revoked_list = []
-        except (ValueError, TypeError):
-            revoked_list = []
-        if code in revoked_list:
-            await _audit_redeem(db, order=order, ip=ip, user_agent=ua,
-                                success=False, error_code="DS160_CODE_REVOKED")
-            await db.commit()
-            raise BizException(ErrorCode.DS160_CODE_REVOKED)
 
     # 5) Re-derive fingerprint and compare — THE critical security check.
     profile = load_applicant_profile(order.applicant_data)
@@ -372,5 +427,103 @@ async def redeem_ds160_code(
             mapping_version=DS160_MAPPING_VERSION,
             mapping_verified_date=DS160_MAPPING_VERIFIED_DATE,
             issued_at=order.ds160_code_issued_at or datetime.utcnow(),
+        )
+    )
+
+
+# --------------------------------------------------------------------------- #
+# POST /api/v2/ds160/portal-submitted                                          #
+# --------------------------------------------------------------------------- #
+
+@router.post(
+    "/portal-submitted",
+    response_model=ApiResponse[PortalSubmittedResponse],
+    summary="Record DS-160 portal submission milestone (no auth — code is the credential).",
+)
+async def mark_ds160_portal_submitted(
+    body: RedeemCodeRequest,
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> ApiResponse[PortalSubmittedResponse]:
+    """User confirmed they submitted DS-160 on ceac.state.gov.
+
+    This is a **milestone timestamp**, not an order status transition.
+    Idempotent: replays return the existing timestamp with unchanged=True.
+    No confirmation number or other PII is accepted or stored.
+    """
+    ip = _client_ip(request)
+    ua = request.headers.get("user-agent", "")
+
+    code = normalize_code_input(body.code)
+    if not is_valid_code_format(code):
+        await _audit_portal_submitted(
+            db, order=None, ip=ip, user_agent=ua,
+            success=False, error_code="DS160_CODE_INVALID_FORMAT",
+        )
+        await db.commit()
+        raise BizException(
+            ErrorCode.DS160_CODE_INVALID_FORMAT,
+            message="Code must be 12 base30 characters (no 0/O/1/I/L/U)",
+        )
+
+    order = await _lookup_order_by_code(db, code)
+    if order is None:
+        await _audit_portal_submitted(
+            db, order=None, ip=ip, user_agent=ua,
+            success=False, error_code="DS160_CODE_NOT_FOUND",
+        )
+        await db.commit()
+        raise BizException(ErrorCode.DS160_CODE_NOT_FOUND)
+
+    if _is_code_revoked(order, code):
+        await _audit_portal_submitted(
+            db, order=order, ip=ip, user_agent=ua,
+            success=False, error_code="DS160_CODE_REVOKED",
+        )
+        await db.commit()
+        raise BizException(ErrorCode.DS160_CODE_REVOKED)
+
+    if order.status not in _ORDER_READY_STATUSES:
+        await _audit_portal_submitted(
+            db, order=order, ip=ip, user_agent=ua,
+            success=False, error_code="DS160_ORDER_NOT_READY",
+        )
+        await db.commit()
+        raise BizException(
+            ErrorCode.DS160_ORDER_NOT_READY,
+            message=f"Order status '{order.status}' does not allow portal submission recording",
+        )
+
+    if order.portal_submitted_at is not None or order.ds160_portal_submitted_at is not None:
+        ts = order.portal_submitted_at or order.ds160_portal_submitted_at
+        await _audit_portal_submitted(
+            db, order=order, ip=ip, user_agent=ua,
+            success=True, unchanged=True,
+        )
+        await db.commit()
+        return ApiResponse(
+            data=PortalSubmittedResponse(
+                order_id=order.id,
+                ds160_portal_submitted_at=ts,
+                unchanged=True,
+            )
+        )
+
+    now = datetime.utcnow()
+    order.portal_submitted_at = now
+    order.portal_submitted_source = "extension"
+    order.ds160_portal_submitted_at = now
+    await _audit_portal_submitted(
+        db, order=order, ip=ip, user_agent=ua, success=True,
+    )
+    await db.commit()
+    await db.refresh(order)
+
+    _log.info("ds160.portal.submitted order_id=%s code=%s", order.id, code)
+    return ApiResponse(
+        data=PortalSubmittedResponse(
+            order_id=order.id,
+            ds160_portal_submitted_at=order.ds160_portal_submitted_at,
+            unchanged=False,
         )
     )

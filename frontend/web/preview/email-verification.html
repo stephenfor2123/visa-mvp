@@ -1,0 +1,235 @@
+<!--
+  HTEX — Registration verification email preview
+  Open in browser: frontend/web/preview/email-verification.html
+  Switch locale with the toolbar (en / zh-CN / vi / id).
+
+  Copy source of truth: backend/app/email_templates/verification_code.py
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HTEX Email Preview — Verification Code</title>
+  <style>
+    :root {
+      --bg: #E2E8F0;
+      --toolbar: #0F172A;
+      --toolbar-text: #F8FAFC;
+      --accent: #3B6EF5;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif;
+      background: var(--bg);
+    }
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      padding: 12px 20px;
+      background: var(--toolbar);
+      color: var(--toolbar-text);
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.15);
+    }
+    .toolbar h1 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .toolbar__hint {
+      margin: 4px 0 0;
+      font-size: 11px;
+      opacity: 0.7;
+    }
+    .toolbar__controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .lang-btn {
+      border: 1px solid rgba(255,255,255,0.2);
+      background: transparent;
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .lang-btn.is-active {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+    .meta {
+      font-size: 11px;
+      opacity: 0.85;
+      max-width: 280px;
+      line-height: 1.4;
+    }
+    .preview-wrap {
+      padding: 24px 16px 48px;
+    }
+    .device-label {
+      text-align: center;
+      font-size: 11px;
+      color: #64748B;
+      margin-bottom: 12px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    #email-root {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .subject-bar {
+      max-width: 600px;
+      margin: 0 auto 16px;
+      padding: 12px 16px;
+      background: #fff;
+      border: 1px solid #CBD5E1;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #334155;
+    }
+    .subject-bar strong { color: #0F172A; }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <div>
+      <h1>Email Preview · Verification Code</h1>
+      <p class="toolbar__hint">Future: backend picks locale from user language_pref</p>
+    </div>
+    <div class="toolbar__controls" id="lang-buttons"></div>
+    <div class="meta" id="meta-preheader"></div>
+  </div>
+
+  <div class="preview-wrap">
+    <div class="subject-bar" id="subject-bar"></div>
+    <div class="device-label">600px email canvas</div>
+    <div id="email-root"></div>
+  </div>
+
+  <script>
+    const SAMPLE_CODE = '123456'
+    const LOCALES = {
+      en: {
+        subject: 'Your HTEX verification code',
+        preheader: 'Use this code to finish signing up. Expires in 10 minutes.',
+        title: 'Welcome to HTEX',
+        intro: "You're almost there. Enter this verification code to complete your registration:",
+        expiry: 'This code expires in 10 minutes.',
+        security: "If you didn't request this email, you can safely ignore it.",
+        tagline: 'HTEX · Visa made clear',
+        footer: 'This is an automated message. Please do not reply.',
+      },
+      'zh-CN': {
+        subject: '你的 HTEX 验证码',
+        preheader: '使用此验证码完成注册，10 分钟内有效。',
+        title: '欢迎加入 HTEX',
+        intro: '还差一步即可完成注册，请输入以下验证码：',
+        expiry: '验证码 10 分钟内有效。',
+        security: '如非本人操作，请忽略此邮件。',
+        tagline: 'HTEX · 让签证办理更清晰',
+        footer: '本邮件由系统自动发送，请勿直接回复。',
+      },
+      vi: {
+        subject: 'Mã xác minh HTEX của bạn',
+        preheader: 'Dùng mã này để hoàn tất đăng ký. Hết hạn sau 10 phút.',
+        title: 'Chào mừng đến với HTEX',
+        intro: 'Bạn sắp hoàn tất. Nhập mã xác minh sau để đăng ký:',
+        expiry: 'Mã này hết hạn sau 10 phút.',
+        security: 'Nếu bạn không yêu cầu email này, hãy bỏ qua.',
+        tagline: 'HTEX · Visa rõ ràng hơn',
+        footer: 'Đây là email tự động, vui lòng không trả lời.',
+      },
+      id: {
+        subject: 'Kode verifikasi HTEX Anda',
+        preheader: 'Gunakan kode ini untuk menyelesaikan pendaftaran. Berlaku 10 menit.',
+        title: 'Selamat datang di HTEX',
+        intro: 'Hampir selesai. Masukkan kode verifikasi berikut untuk mendaftar:',
+        expiry: 'Kode ini kedaluwarsa dalam 10 menit.',
+        security: 'Jika Anda tidak meminta email ini, abaikan saja.',
+        tagline: 'HTEX · Visa lebih jelas',
+        footer: 'Email ini dibuat otomatis, mohon tidak dibalas.',
+      },
+    }
+
+    let currentLang = 'en'
+
+    function spacedCode(code) {
+      return code.split('').join(' ')
+    }
+
+    function renderEmail(lang, code) {
+      const t = LOCALES[lang] || LOCALES.en
+      const spaced = spacedCode(code)
+      return `
+        <div style="background-color:#F8FAFC;padding:32px 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Helvetica Neue',Arial,sans-serif;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            <tr><td align="center">
+              <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px;box-shadow:0 1px 3px rgba(15,23,42,0.06);">
+                <tr><td style="padding:40px 32px;">
+                  <div style="font-size:24px;font-weight:900;color:#000;letter-spacing:-0.5px;margin-bottom:32px;">Htex</div>
+                  <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;color:#0F172A;">${t.title}</h1>
+                  <p style="margin:0 0 28px;font-size:15px;line-height:24px;color:#334155;">${t.intro}</p>
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
+                    <tr><td style="background:#F1F5F9;border-left:4px solid #3B6EF5;border-radius:10px;padding:20px 32px;text-align:center;">
+                      <div style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:36px;font-weight:700;letter-spacing:8px;color:#0F172A;">${spaced}</div>
+                    </td></tr>
+                  </table>
+                  <p style="margin:0 0 28px;font-size:13px;color:#64748B;">${t.expiry}</p>
+                  <hr style="border:none;border-top:1px solid #E2E8F0;margin:28px 0;">
+                  <p style="margin:0;font-size:13px;color:#64748B;">${t.security}</p>
+                </td></tr>
+              </table>
+              <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;margin-top:24px;">
+                <tr><td align="center" style="font-size:12px;color:#94A3B8;line-height:18px;">
+                  <div style="margin-bottom:4px;">${t.tagline}</div>
+                  <div>${t.footer}</div>
+                </td></tr>
+              </table>
+            </td></tr>
+          </table>
+        </div>`
+    }
+
+    function mountLangButtons() {
+      const wrap = document.getElementById('lang-buttons')
+      Object.keys(LOCALES).forEach((lang) => {
+        const btn = document.createElement('button')
+        btn.type = 'button'
+        btn.className = 'lang-btn' + (lang === currentLang ? ' is-active' : '')
+        btn.textContent = lang
+        btn.addEventListener('click', () => {
+          currentLang = lang
+          document.querySelectorAll('.lang-btn').forEach((b) => b.classList.remove('is-active'))
+          btn.classList.add('is-active')
+          update()
+        })
+        wrap.appendChild(btn)
+      })
+    }
+
+    function update() {
+      const t = LOCALES[currentLang] || LOCALES.en
+      document.getElementById('subject-bar').innerHTML =
+        `<strong>Subject:</strong> ${t.subject}<br><strong>From:</strong> HTEX &lt;noreply@htexvisa.com&gt;`
+      document.getElementById('meta-preheader').textContent = `Preheader: ${t.preheader}`
+      document.getElementById('email-root').innerHTML = renderEmail(currentLang, SAMPLE_CODE)
+      document.documentElement.lang = currentLang
+    }
+
+    mountLangButtons()
+    update()
+  </script>
+</body>
+</html>

@@ -39,18 +39,22 @@ def _new_uuid() -> str:
 
 
 # --------------------------------------------------------------------------- #
-# Order status machine (V2 §4.2.4)                                            #
+# Order status machine — v2 (2026-07)                                         #
 # --------------------------------------------------------------------------- #
-# Lifecycle:
-#   created → submitted → reviewing → approved | rejected → closed
-#   abnormal / failed are terminal-exception states (set by system / scheduler)
-# Cancel is a user-only transition (created → closed) per W3-3 enforcement.
-# Admin overrides may move the order to any state in VALID_TRANSITIONS, but
-# the same validator is shared between user endpoints (cancel/submit) and
-# the admin override (`admin_service.update_order_status`) so the audit
-# trail and the OrderStatusHistory rows stay consistent.
-ORDER_STATUSES: tuple[str, ...] = (
+# Primary lifecycle (new orders):
+#   created → paid → completed
+#   created → cancelled   (user cancel or 1h payment timeout)
+#
+# Legacy statuses remain readable for old rows; admin may still transition them.
+# See docs/ORDER_STATE_MACHINE.md.
+PRIMARY_ORDER_STATUSES: tuple[str, ...] = (
     "created",
+    "paid",
+    "completed",
+    "cancelled",
+)
+
+LEGACY_ORDER_STATUSES: tuple[str, ...] = (
     "submitted",
     "reviewing",
     "approved",
@@ -60,37 +64,44 @@ ORDER_STATUSES: tuple[str, ...] = (
     "failed",
 )
 
+ORDER_STATUSES: tuple[str, ...] = PRIMARY_ORDER_STATUSES + LEGACY_ORDER_STATUSES
+
 VISA_TYPES: tuple[str, ...] = ("tourism", "student")
 
-# Statuses that can still be acted on by the user (cancel, submit)
+# User may cancel only while unpaid.
 CANCELLABLE_STATUSES: frozenset[str] = frozenset({"created"})
 
-# Active statuses used in idx_orders_status (V2 §4.2.2 partial index intent)
-ACTIVE_STATUSES: tuple[str, ...] = ("created", "submitted", "reviewing")
+# Orders still in the payment / diagnosis pipeline.
+ACTIVE_STATUSES: tuple[str, ...] = ("created", "paid")
 
-# Terminal states — no outbound transitions allowed.
-TERMINAL_STATUSES: frozenset[str] = frozenset({"closed", "abnormal", "failed"})
+TERMINAL_STATUSES: frozenset[str] = frozenset(
+    {"completed", "cancelled", "closed", "abnormal", "failed"}
+)
+
+# Refund sub-track (orthogonal to order.status).
+REFUND_STATUSES: tuple[str, ...] = (
+    "none",
+    "pending",
+    "approved",
+    "completed",
+    "rejected",
+    "failed",
+)
+
+PORTAL_SUBMIT_SOURCES: tuple[str, ...] = ("extension", "user", "admin")
+
+ORDER_LOCK_SECONDS: int = 3600  # 1 hour to pay after order creation
 
 # --------------------------------------------------------------------------- #
-# VALID_TRANSITIONS (W34 — single source of truth)                            #
+# VALID_TRANSITIONS                                                           #
 # --------------------------------------------------------------------------- #
-# The map is read by `is_valid_transition()` everywhere a status flip is
-# attempted (user cancel / submit, admin override, scheduler poll). Adding a
-# new state means editing this dict + the ORDER_STATUSES tuple — both
-# kept in one place so the state machine stays coherent.
-#
-# Diagram:
-#   created   → submitted, closed
-#   submitted → reviewing, closed, abnormal, failed
-#   reviewing → approved, rejected, closed, abnormal, failed
-#   approved  → closed
-#   rejected  → closed
-#   closed    → (terminal)
-#   abnormal  → (terminal, system-only)
-#   failed    → (terminal, system-only)
 VALID_TRANSITIONS: dict[str, frozenset[str]] = {
-    "created":   frozenset({"submitted", "closed"}),
-    "submitted": frozenset({"reviewing", "closed", "abnormal", "failed"}),
+    "created":   frozenset({"paid", "cancelled", "submitted"}),  # submitted = legacy RPA
+    "paid":      frozenset({"completed"}),
+    "completed": frozenset(),
+    "cancelled": frozenset(),
+    # Legacy — keep admin / poll paths working on old rows
+    "submitted": frozenset({"reviewing", "closed", "abnormal", "failed", "completed"}),
     "reviewing": frozenset({"approved", "rejected", "closed", "abnormal", "failed"}),
     "approved":  frozenset({"closed"}),
     "rejected":  frozenset({"closed"}),
@@ -225,6 +236,40 @@ class Order(Base):
         Text, nullable=True,
         comment='JSON list of revoked 12-char codes, e.g. ["K7H3N9XRA2BQ", ...]',
     )
+    ds160_portal_submitted_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime, nullable=True,
+        comment="User confirmed DS-160 submitted on ceac.state.gov (US alias for portal_submitted_at)",
+    )
+    # ==================================================================== #
+
+    # === Order lifecycle v2 (2026-07) =================================== #
+    locked_until: Mapped[Optional[datetime]] = mapped_column(
+        DateTime, nullable=True,
+        comment="Payment deadline — 1h after create; expiry → cancelled",
+    )
+    paid_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    diagnosis_completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    completed_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime, nullable=True,
+        comment="Htex service complete (AI diagnosis done)",
+    )
+    portal_submitted_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime, nullable=True,
+        comment="Milestone: user confirmed submission on embassy portal",
+    )
+    portal_submitted_source: Mapped[Optional[str]] = mapped_column(
+        String(16), nullable=True,
+        comment="extension | user | admin",
+    )
+    refund_status: Mapped[str] = mapped_column(
+        String(16), nullable=False, server_default="none",
+    )
+    refund_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    refund_amount: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 2), nullable=True)
+    refund_requested_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    refund_approved_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    refund_reviewed_by: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    refunded_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     # ==================================================================== #
 
     created_at: Mapped[datetime] = mapped_column(

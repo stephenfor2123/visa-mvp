@@ -173,8 +173,22 @@ class Settings(BaseSettings):
     # W1 dev default: localhost:5173. Prod: set APP_FRONTEND_BASE=https://htex.app
     app_frontend_base: str = "http://localhost:5173"
 
+    # --- Email / Resend (registration verification codes) ---
+    # RESEND_API_KEY is a secret — never log or commit. When blank, emails
+    # land in logs/email_outbox/ (dev/test). When set, POST to Resend API.
+    resend_api_key: str = ""
+    email_from: str = "HTEX <noreply@htexvisa.com>"
+    email_code_ttl_seconds: int = 600       # 10 minutes
+    email_cooldown_seconds: int = 60
+    email_daily_limit: int = 10
+
     # --- Privacy / support (self-service compliance) ---
     privacy_support_email: str = "privacy@htex.app"
+
+    @property
+    def email_backend(self) -> Literal["outbox", "resend"]:
+        """Pick dispatch backend: Resend when API key present, else outbox stub."""
+        return "resend" if self.resend_api_key.strip() else "outbox"
 
 
 @lru_cache(maxsize=1)

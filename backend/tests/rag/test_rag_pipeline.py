@@ -395,7 +395,7 @@ class TestRefreshPipeline:
 async def _register(client, username: str, email: str, password: str = "Pass1234") -> str:
     r = await client.post(
         "/api/v2/auth/register",
-        json={"username": username, "email": email, "password": password},
+        json={"username": username, "email": email, "password": password, "email_code": "123456"},
     )
     assert r.status_code == 201, r.text
     return r.json()["data"]["access_token"]

@@ -408,6 +408,71 @@ export async function updateAdminOrderStatus(orderId, body) {
 }
 
 /**
+ * PUT /api/v2/admin/orders/{order_id}/refund?action=approve|reject|complete|fail
+ */
+export async function updateAdminOrderRefund(orderId, action, note) {
+  if (MOCK_MODE) {
+    await delay(150)
+    return { id: orderId, refund_status: action === 'approve' ? 'approved' : action === 'complete' ? 'completed' : action }
+  }
+  try {
+    const qp = new URLSearchParams({ action })
+    if (note) qp.set('note', note)
+    const envelope = await adminHttp.put(`/v2/admin/orders/${orderId}/refund?${qp.toString()}`)
+    if (envelope?.code && envelope.code !== '1000') {
+      throw Object.assign(new Error(envelope.message || 'refund action failed'), { code: envelope.code })
+    }
+    return envelope?.data || null
+  } catch (err) {
+    throw normalizeError(err)
+  }
+}
+
+/**
+ * PUT /api/v2/admin/orders/{order_id}/portal-submitted
+ */
+export async function markAdminOrderPortalSubmitted(orderId) {
+  if (MOCK_MODE) {
+    await delay(120)
+    return { id: orderId, portal_submitted_at: new Date().toISOString() }
+  }
+  try {
+    const envelope = await adminHttp.put(`/v2/admin/orders/${orderId}/portal-submitted`)
+    if (envelope?.code && envelope.code !== '1000') {
+      throw Object.assign(new Error(envelope.message || 'portal submit failed'), { code: envelope.code })
+    }
+    return envelope?.data || null
+  } catch (err) {
+    throw normalizeError(err)
+  }
+}
+
+/**
+ * GET /api/v2/admin/orders/attention/counts
+ */
+export async function getOrderAttentionCounts() {
+  if (MOCK_MODE) {
+    await delay(80)
+    return {
+      payment_expiring_soon: 2,
+      paid_awaiting_diagnosis: 5,
+      completed_awaiting_portal: 3,
+      refund_pending: 1,
+      refund_failed: 0,
+    }
+  }
+  try {
+    const envelope = await adminHttp.get('/v2/admin/orders/attention/counts')
+    if (envelope?.code && envelope.code !== '1000') {
+      throw Object.assign(new Error(envelope.message || 'attention counts failed'), { code: envelope.code })
+    }
+    return envelope?.data || {}
+  } catch (err) {
+    throw normalizeError(err)
+  }
+}
+
+/**
  * GET /api/v2/admin/stats/dashboard — aggregated metrics.
  * @returns {Promise<{ today_new_orders, week_new_orders, pending_orders,
  *   completed_orders, payment_success_rate, generated_at, cached }>}
@@ -748,14 +813,26 @@ export async function listPayments(params = {}) {
         amount_cents: 12500, currency: 'USD',
         paid_at: '2026-06-27T12:00:00Z', created_at: '2026-06-27T11:45:00Z', updated_at: '2026-06-27T13:00:00Z' },
     ]
-    const filtered = params.status ? all.filter(p => p.status === params.status) : all
-    return { items: filtered, page: 1, page_size: 20, total: filtered.length, total_pages: 1 }
+    const filtered = params.status
+      ? all.filter(p => p.status === params.status)
+      : params.refund_status
+        ? all.filter(p => (p.refund_status || 'none') === params.refund_status)
+        : all
+    return {
+      items: filtered,
+      page: 1,
+      page_size: 20,
+      total: filtered.length,
+      total_pages: 1,
+      stats: { total_count: all.length, paid_count: 3, pending_count: 1, refund_pending_count: 0 },
+    }
   }
   try {
     const qp = new URLSearchParams()
     if (params.page) qp.set('page', params.page)
     if (params.page_size) qp.set('page_size', params.page_size)
     if (params.status) qp.set('status', params.status)
+    if (params.refund_status) qp.set('refund_status', params.refund_status)
     const qs = qp.toString() ? `?${qp.toString()}` : ''
     const envelope = await adminHttp.get(`/v2/admin/payments${qs}`)
     if (envelope?.code && envelope.code !== '1000') {
@@ -1217,6 +1294,9 @@ export default {
   listAdminOrders,
   getAdminOrder,
   updateAdminOrderStatus,
+  updateAdminOrderRefund,
+  markAdminOrderPortalSubmitted,
+  getOrderAttentionCounts,
   getDashboardStats,
   listPayments,
   // W34

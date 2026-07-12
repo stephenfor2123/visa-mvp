@@ -58,6 +58,11 @@
           <h3 class="agreement-section__title">{{ t('agreement.terms_section_5_title') }}</h3>
           <p class="agreement-section__body">{{ t('agreement.terms_section_5_body') }}</p>
         </section>
+
+        <section class="agreement-section">
+          <h3 class="agreement-section__title">{{ t('agreement.terms_section_6_title') }}</h3>
+          <p class="agreement-section__body">{{ t('agreement.terms_section_6_body') }}</p>
+        </section>
       </div>
 
       <!-- Privacy -->
@@ -105,10 +110,9 @@
 </template>
 
 <script setup>
-// LEGAL_TODO: 法务 review required before 2026-07-01 launch (W14-8)
-// 当前 4 语种 (zh-CN / en / id / vi) agreement / privacy 文本均为 AI 自译, 未经法务 review
-// review checklist + 状态矩阵见 /Users/apple/Desktop/签证项目/docs/LEGAL_REVIEW_NOTES.md
-// review 通过后请删除本注释
+// LEGAL_TODO: 正式上线前须法务/本地律师签字 — 见 docs/LEGAL_REVIEW_NOTES.md §3
+// 当前 4 语种为 v1.1-gdpr-draft（产品自助合规草稿，已按 GDPR Ch.V / Art.8 对齐）
+// 法务审核通过后删除本注释，并移除 i18n 中的 __legal_review_pending__
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'

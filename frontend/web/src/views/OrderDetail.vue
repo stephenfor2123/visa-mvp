@@ -55,6 +55,61 @@
           </div>
         </section>
 
+        <!-- 申请进度 milestones（主轨 completed 后，官网提交为可选里程碑） -->
+        <section
+          v-if="orderMilestones.length"
+          class="card"
+          data-testid="orderdetail-milestones"
+        >
+          <h2 class="card__title">{{ t('orderdetail.section_milestones') }}</h2>
+          <p class="milestones__hint">{{ t('orderdetail.milestones_hint') }}</p>
+          <div class="milestones">
+            <div
+              v-for="(m, idx) in orderMilestones"
+              :key="m.key"
+              class="ms-step"
+              :class="{
+                'ms-step--done': m.state === 'done',
+                'ms-step--current': m.state === 'current',
+                'ms-step--pending': m.state === 'pending',
+              }"
+              :data-testid="`orderdetail-ms-${m.key}`"
+            >
+              <div class="ms-step__node">
+                <span v-if="m.state === 'done'">✓</span>
+                <span v-else>{{ m.icon }}</span>
+              </div>
+              <div class="ms-step__body">
+                <p class="ms-step__label">{{ t(`orderdetail.milestone_${m.key}`) }}</p>
+                <p class="ms-step__desc">{{ t(`orderdetail.milestone_${m.key}_desc`) }}</p>
+                <p v-if="m.at" class="ms-step__at">{{ formatDateTime(m.at) }}</p>
+              </div>
+              <div v-if="idx < orderMilestones.length - 1" class="ms-step__line"></div>
+            </div>
+          </div>
+          <div
+            v-if="showPortalConfirmBtn"
+            class="portal-confirm"
+            data-testid="orderdetail-portal-confirm"
+          >
+            <p>{{ t('orderdetail.portal_confirm_hint') }}</p>
+            <AppButton
+              variant="primary"
+              size="md"
+              :loading="portalConfirming"
+              data-testid="orderdetail-portal-confirm-btn"
+              @click="onPortalConfirm"
+            >{{ t('orderdetail.portal_confirm_btn') }}</AppButton>
+          </div>
+        </section>
+
+        <!-- GB/AU: Web 填表引导单（无浏览器插件） -->
+        <VisaGuidePanel
+          v-if="visaGuide"
+          :guide="visaGuide"
+          :country-code="orderCountryCode"
+        />
+
         <!-- 5-state timeline -->
         <section class="card" data-testid="orderdetail-timeline">
           <h2 class="card__title">{{ t('orderdetail.section_timeline') }}</h2>
@@ -260,7 +315,7 @@
                  展示给用户复制 → 用户打开 Chrome 插件粘贴 → 插件 redeem 拿档案 →
                  在 ceac.state.gov 看填充面板。 -->
             <AppButton
-              v-if="['created', 'submitted', 'reviewing', 'approved'].includes(order.status)"
+              v-if="orderCountryCode === 'US' && ['created', 'submitted', 'reviewing', 'approved'].includes(order.status)"
               ref="exportDs160BtnRef"
               variant="outline"
               size="md"
@@ -443,6 +498,7 @@ import {
   cancelOrder,
   deleteOrder,
   pollOrderStatus,
+  markPortalSubmitted,
   TIMELINE_STEPS,
   BRANCH_STEPS
 } from '@/api/orders'
@@ -452,6 +508,21 @@ import { getCommission } from '@/api/affiliate'
 // W48 v0.2: DS-160 辅助填充 — 改成后端 12 位 code 兑换流程
 import { issueDs160Code, formatDs160Code, describeDs160Error } from '@/api/ds160'
 import AppHeader from '@/components/AppHeader.vue'
+import VisaGuidePanel from '@/components/VisaGuidePanel.vue'
+import { buildApplicantProfile } from '@/composables/useApplicantProfile'
+import { buildVisaGuide } from '@/data/visaFieldMaps.js'
+
+const DESTINATION_COUNTRY_MAP = {
+  1: 'US', 2: 'JP', 3: 'GB', 4: 'AU', 5: 'CA',
+  6: 'DE', 7: 'FR', 8: 'SG', 9: 'NZ',
+}
+
+function parseApplicantData(order) {
+  const raw = order?.applicant_data
+  if (!raw) return {}
+  if (typeof raw === 'object') return raw
+  try { return JSON.parse(raw) } catch { return {} }
+}
 
 const { t, te, locale } = useI18n()
 const router = useRouter()
@@ -491,6 +562,7 @@ const ds160Fingerprint = ref('')    // 档案指纹前缀 (前 8 位 + ...)
 const ds160IssuedAt = ref('')       // code 签发时间 (ISO)
 const ds160PanelOpen = ref(false)   // 是否展开 code 展示面板
 const ds160LastUnchanged = ref(false) // 上次是否幂等 (true=复用旧 code)
+const portalConfirming = ref(false)
 
 let cancelPoll = null
 let countdownTimer = null
@@ -529,7 +601,8 @@ function statusIcon(s) {
   if (te(k)) return t(k)
   // fallback unicode
   const map = {
-    created: '📝', submitted: '📤', reviewing: '🔍',
+    created: '📝', paid: '💳', completed: '✅',
+    submitted: '📤', reviewing: '🔍',
     approved: '✅', rejected: '❌', cancelled: '🚫',
     closed: '🔒', failed: '⚠️', abnormal: '🆘'
   }
@@ -537,19 +610,19 @@ function statusIcon(s) {
 }
 
 function isStepDone(stepKey, currentStatus) {
-  const order5 = ['created', 'submitted', 'reviewing', 'approved']
-  const si = order5.indexOf(stepKey)
+  const order3 = ['created', 'paid', 'completed']
+  const si = order3.indexOf(stepKey)
   if (si < 0) return false
-  // On rejection, reviewing also counts as done
-  if (currentStatus === 'rejected') {
-    return si <= order5.indexOf('reviewing')
-  }
-  // On cancel, created reaches main axis start (only mark created done)
   if (currentStatus === 'cancelled') {
-    return si <= order5.indexOf('created')
+    return si <= order3.indexOf('created')
   }
-  const ci = order5.indexOf(currentStatus)
-  if (ci < 0) return false
+  // Legacy mapping
+  const legacyIdx = {
+    submitted: 1, reviewing: 2, approved: 2, rejected: 2,
+    closed: 2, created: 0, paid: 1, completed: 2,
+  }
+  const ci = legacyIdx[currentStatus]
+  if (ci === undefined) return false
   return si <= ci
 }
 function isBranchReached(branchKey, status) {
@@ -573,6 +646,80 @@ const destinationName = computed(() => {
   if (order.value.destination_id === 9) return t('country.nz')
   return `#${order.value.destination_id}`
 })
+
+const orderCountryCode = computed(() => {
+  if (!order.value) return ''
+  return DESTINATION_COUNTRY_MAP[order.value.destination_id] || ''
+})
+
+const visaGuide = computed(() => {
+  const cc = orderCountryCode.value
+  if (cc !== 'GB' && cc !== 'AU') return null
+  const form = parseApplicantData(order.value)
+  const profile = buildApplicantProfile({ form })
+  return buildVisaGuide(cc, profile)
+})
+
+const MILESTONE_DEFS = [
+  { key: 'payment', icon: '💳' },
+  { key: 'diagnosis', icon: '🤖' },
+  { key: 'portal', icon: '🌐' },
+]
+
+const orderMilestones = computed(() => {
+  if (!order.value) return []
+  const o = order.value
+  const status = (o.status || '').toLowerCase()
+  const flags = [
+    {
+      key: 'payment',
+      done: ['paid', 'completed'].includes(status) || !!o.paid_at,
+      at: o.paid_at,
+    },
+    {
+      key: 'diagnosis',
+      done: status === 'completed' || !!o.diagnosis_completed_at,
+      at: o.diagnosis_completed_at || o.completed_at,
+    },
+    {
+      key: 'portal',
+      done: !!(o.portal_submitted_at || o.ds160_portal_submitted_at),
+      at: o.portal_submitted_at || o.ds160_portal_submitted_at,
+    },
+  ]
+  let seenCurrent = false
+  return MILESTONE_DEFS.map((def, i) => {
+    const f = flags[i]
+    let state = 'pending'
+    if (f.done) state = 'done'
+    else if (!seenCurrent) {
+      state = 'current'
+      seenCurrent = true
+    }
+    return { ...def, state, at: f.at }
+  })
+})
+
+const showPortalConfirmBtn = computed(() => {
+  if (!order.value) return false
+  const s = order.value.status
+  const done = order.value.portal_submitted_at || order.value.ds160_portal_submitted_at
+  return (s === 'completed' || s === 'paid') && !done
+})
+
+async function onPortalConfirm() {
+  if (!order.value) return
+  portalConfirming.value = true
+  try {
+    await markPortalSubmitted(order.value.order_no)
+    toast.success(t('orderdetail.portal_confirm_ok'))
+    await loadInitial()
+  } catch (e) {
+    toast.error(e?.message || t('orderdetail.portal_confirm_fail'))
+  } finally {
+    portalConfirming.value = false
+  }
+}
 
 const visaTypeName = computed(() => {
   if (!order.value) return '—'
@@ -1073,6 +1220,54 @@ onBeforeUnmount(() => {
   &--branch-cancelled.tl-step--current &__node { background: #64748B; border-color: #64748B; color: #fff; box-shadow: 0 0 0 4px rgba(100,116,139,.15); }
 }
 .tl-step:last-child .tl-step__line { display: none; }
+
+.milestones__hint {
+  margin: -4px 0 16px;
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.5;
+}
+.milestones {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.ms-step {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: 0 12px;
+  position: relative;
+  padding-bottom: 20px;
+  &__node {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; background: #f1f5f9; border: 2px solid #e2e8f0; color: #64748b;
+  }
+  &__body { padding-top: 4px; }
+  &__label { font-weight: 600; font-size: 14px; margin: 0 0 2px; color: #0f172a; }
+  &__desc { font-size: 13px; margin: 0; color: #64748b; line-height: 1.45; }
+  &__at { font-size: 12px; margin: 4px 0 0; color: #059669; }
+  &__line {
+    position: absolute; left: 17px; top: 38px; bottom: 0; width: 2px; background: #e2e8f0;
+  }
+  &--done &__node { background: #ecfdf5; border-color: #10b981; color: #059669; }
+  &--done &__line { background: #a7f3d0; }
+  &--current &__node {
+    background: #eff6ff; border-color: #3b82f6; color: #2563eb;
+    box-shadow: 0 0 0 4px rgba(59,130,246,.12);
+  }
+  &--pending &__label { color: #94a3b8; }
+}
+.ms-step:last-child { padding-bottom: 0; }
+.ms-step:last-child .ms-step__line { display: none; }
+.portal-confirm {
+  margin-top: 16px;
+  padding: 14px 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  p { margin: 0 0 10px; font-size: 13px; color: #475569; }
+}
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }

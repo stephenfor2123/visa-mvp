@@ -181,11 +181,11 @@
                   <AppInput v-model="form.national_id" :label="t('orders.field_national_id')" :placeholder="t('orders.placeholder_national_id')" :hint="t('orders.hint_national_id')" :disabled="dna.national_id" data-testid="mw-form-national-id" />
                   <DnaCheckbox v-model="dna.national_id" data-testid="mw-form-national-id-dna" />
                 </div>
-                <div class="form-cell">
+                <div class="form-cell" v-if="isUsForm">
                   <AppInput v-model="form.us_ssn" :label="t('orders.field_us_ssn')" :hint="t('orders.hint_us_ssn')" :disabled="dna.us_ssn" maxlength="11" data-testid="mw-form-us-ssn" />
                   <DnaCheckbox v-model="dna.us_ssn" data-testid="mw-form-us-ssn-dna" />
                 </div>
-                <div class="form-cell">
+                <div class="form-cell" v-if="isUsForm">
                   <AppInput v-model="form.us_tax_id" :label="t('orders.field_us_tax_id')" :hint="t('orders.hint_us_tax_id')" :disabled="dna.us_tax_id" maxlength="11" data-testid="mw-form-us-tax-id" />
                   <DnaCheckbox v-model="dna.us_tax_id" data-testid="mw-form-us-tax-id-dna" />
                 </div>
@@ -323,7 +323,7 @@
             </section>
 
             <!-- ============== Companions ============== -->
-            <section v-show="activeTab === 'companions'" class="form-card" data-testid="mw-form-section-companions">
+            <section v-if="isUsForm" v-show="activeTab === 'companions'" class="form-card" data-testid="mw-form-section-companions">
               <h2 class="form-card__title">{{ t('orders.section_companions') }}</h2>
               <div class="form-grid">
                 <div class="form-cell">
@@ -361,7 +361,7 @@
             </section>
 
             <!-- ============== Previous U.S. Travel ============== -->
-            <section v-show="activeTab === 'previous_us'" class="form-card" data-testid="mw-form-section-previous-us">
+            <section v-if="isUsForm" v-show="activeTab === 'previous_us'" class="form-card" data-testid="mw-form-section-previous-us">
               <h2 class="form-card__title">{{ t('orders.section_previous_us') }}</h2>
               <p class="form-card__desc">{{ t('orders.section_previous_us_desc') }}</p>
               <div class="form-grid">
@@ -428,7 +428,7 @@
             </section>
 
             <!-- ============== U.S. Point of Contact ============== -->
-            <section v-show="activeTab === 'us_contact'" class="form-card" data-testid="mw-form-section-us-contact">
+            <section v-if="isUsForm" v-show="activeTab === 'us_contact'" class="form-card" data-testid="mw-form-section-us-contact">
               <h2 class="form-card__title">{{ t('orders.section_us_contact') }}</h2>
               <p class="form-card__desc">{{ t('orders.section_us_contact_desc') }}</p>
               <div class="form-grid">
@@ -604,11 +604,18 @@
 
               <div class="form-grid">
                 <div class="form-cell">
-                  <AppInput v-model="form.occupation" :label="t('orders.field_occupation')" :hint="t('orders.hint_occupation')" :disabled="dna.occupation" data-testid="mw-form-occupation" />
+                  <AppInput v-model="form.occupation" :label="t('orders.field_occupation')" :hint="t('orders.hint_occupation')" :disabled="dna.occupation" :error="isUkForm || isAuForm ? errors.occupation : ''" required data-testid="mw-form-occupation" />
                   <DnaCheckbox v-model="dna.occupation" data-testid="mw-form-occupation-dna" />
+                </div>
+                <div v-if="isUkForm || isAuForm" class="form-cell">
+                  <AppInput v-model="form.employer_name" :label="t('orders.field_employer_name')" data-testid="mw-form-employer-name" />
+                </div>
+                <div v-if="isUkForm || isAuForm" class="form-cell">
+                  <AppInput v-model="form.monthly_salary" :label="t('orders.field_monthly_salary')" data-testid="mw-form-monthly-salary" />
                 </div>
               </div>
 
+              <template v-if="isUsForm">
               <div class="form-subtitle-row">
                 <h3 class="form-subtitle">{{ t('orders.add_employment') }}</h3>
                 <button type="button" class="form-add-btn" data-testid="mw-form-add-employment" @click="addEmployment">
@@ -699,10 +706,165 @@
                   </div>
                 </div>
               </div>
+              </template>
+            </section>
+
+            <!-- ============== UK Standard Visitor extras ============== -->
+            <section v-show="activeTab === 'uk_extras'" class="form-card" data-testid="mw-form-section-uk-extras">
+              <h2 class="form-card__title">{{ t('orders.section_uk_extras') }}</h2>
+              <p class="form-card__desc">{{ t('orders.section_uk_extras_desc') }}</p>
+              <div class="form-grid">
+                <div class="form-cell">
+                  <label class="form-cell__label">{{ t('orders.field_uk_visa_length') }}<span class="form-cell__required">*</span></label>
+                  <select v-model="form.uk_visa_length" class="form-cell__select" data-testid="mw-form-uk-visa-length">
+                    <option v-for="(label, value) in UK_VISA_LENGTH" :key="value" :value="value">{{ label }}</option>
+                  </select>
+                </div>
+                <div class="form-cell">
+                  <label class="form-cell__label">{{ t('orders.field_uk_main_reason') }}<span class="form-cell__required">*</span></label>
+                  <select v-model="form.uk_main_reason" class="form-cell__select" data-testid="mw-form-uk-main-reason">
+                    <option value="">— {{ t('orders.placeholder_select') }} —</option>
+                    <option v-for="(label, value) in UK_MAIN_REASON" :key="value" :value="value">{{ label }}</option>
+                  </select>
+                </div>
+                <div class="form-cell">
+                  <label class="form-cell__label">{{ t('orders.field_uk_funds_payer') }}<span class="form-cell__required">*</span></label>
+                  <select v-model="form.uk_funds_payer" class="form-cell__select" data-testid="mw-form-uk-funds-payer">
+                    <option v-for="(label, value) in UK_FUNDS_PAYER" :key="value" :value="value">{{ label }}</option>
+                  </select>
+                </div>
+                <div class="form-cell">
+                  <label class="form-cell__label">{{ t('orders.field_uk_employment_status') }}<span class="form-cell__required">*</span></label>
+                  <select v-model="form.uk_employment_status" class="form-cell__select" data-testid="mw-form-uk-employment-status">
+                    <option value="">— {{ t('orders.placeholder_select') }} —</option>
+                    <option v-for="(label, value) in UK_EMPLOYMENT_STATUS" :key="value" :value="value">{{ label }}</option>
+                  </select>
+                </div>
+                <div class="form-cell">
+                  <AppInput v-model="form.uk_employment_years" :label="t('orders.field_uk_employment_years')" :hint="t('orders.hint_employment_years')" data-testid="mw-form-uk-employment-years" />
+                </div>
+                <div class="form-cell">
+                  <label class="form-cell__label">{{ t('orders.field_uk_funds_balance') }}<span class="form-cell__required">*</span></label>
+                  <select v-model="form.uk_funds_balance_bucket" class="form-cell__select" data-testid="mw-form-uk-funds-balance">
+                    <option value="">— {{ t('orders.placeholder_select') }} —</option>
+                    <option v-for="(label, value) in UK_FUNDS_BUCKET" :key="value" :value="value">{{ label }}</option>
+                  </select>
+                </div>
+                <div class="form-cell form-cell--full">
+                  <label class="form-cell__label">{{ t('orders.field_uk_visa_history') }}<span class="form-cell__required">*</span></label>
+                  <select v-model="form.uk_visa_history" class="form-cell__select" data-testid="mw-form-uk-visa-history">
+                    <option value="">— {{ t('orders.placeholder_select') }} —</option>
+                    <option v-for="(label, value) in UK_VISA_HISTORY" :key="value" :value="value">{{ label }}</option>
+                  </select>
+                </div>
+                <div class="form-cell">
+                  <label class="form-cell__label">{{ t('orders.field_uk_visa_refused') }}</label>
+                  <div class="radio-group" data-testid="mw-form-uk-visa-refused">
+                    <label class="radio-pill" :class="{ on: form.uk_visa_refused === 'YES' }">
+                      <input v-model="form.uk_visa_refused" type="radio" value="YES" />
+                      <span>{{ t('common.yes') }}</span>
+                    </label>
+                    <label class="radio-pill" :class="{ on: form.uk_visa_refused === 'NO' }">
+                      <input v-model="form.uk_visa_refused" type="radio" value="NO" />
+                      <span>{{ t('common.no') }}</span>
+                    </label>
+                  </div>
+                </div>
+                <div class="form-cell">
+                  <label class="form-cell__label">{{ t('orders.field_uk_other_visa_refused') }}</label>
+                  <div class="radio-group" data-testid="mw-form-uk-other-refused">
+                    <label class="radio-pill" :class="{ on: form.uk_other_visa_refused === 'YES' }">
+                      <input v-model="form.uk_other_visa_refused" type="radio" value="YES" />
+                      <span>{{ t('common.yes') }}</span>
+                    </label>
+                    <label class="radio-pill" :class="{ on: form.uk_other_visa_refused === 'NO' }">
+                      <input v-model="form.uk_other_visa_refused" type="radio" value="NO" />
+                      <span>{{ t('common.no') }}</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- ============== AU Subclass 600 extras ============== -->
+            <section v-show="activeTab === 'au_extras'" class="form-card" data-testid="mw-form-section-au-extras">
+              <h2 class="form-card__title">{{ t('orders.section_au_extras') }}</h2>
+              <p class="form-card__desc">{{ t('orders.section_au_extras_desc') }}</p>
+              <div class="form-grid">
+                <div class="form-cell">
+                  <label class="form-cell__label">{{ t('orders.field_au_stream') }}<span class="form-cell__required">*</span></label>
+                  <select v-model="form.au_stream" class="form-cell__select" data-testid="mw-form-au-stream">
+                    <option v-for="(label, value) in AU_STREAM" :key="value" :value="value">{{ label }}</option>
+                  </select>
+                </div>
+                <div class="form-cell">
+                  <label class="form-cell__label">{{ t('orders.field_au_reason') }}<span class="form-cell__required">*</span></label>
+                  <select v-model="form.au_reason_for_visit" class="form-cell__select" data-testid="mw-form-au-reason">
+                    <option value="">— {{ t('orders.placeholder_select') }} —</option>
+                    <option v-for="(label, value) in AU_REASON" :key="value" :value="value">{{ label }}</option>
+                  </select>
+                </div>
+                <div class="form-cell">
+                  <label class="form-cell__label">{{ t('orders.field_au_employment_status') }}<span class="form-cell__required">*</span></label>
+                  <select v-model="form.au_employment_status" class="form-cell__select" data-testid="mw-form-au-employment-status">
+                    <option value="">— {{ t('orders.placeholder_select') }} —</option>
+                    <option v-for="(label, value) in AU_EMPLOYMENT_STATUS" :key="value" :value="value">{{ label }}</option>
+                  </select>
+                </div>
+                <div class="form-cell">
+                  <AppInput v-model="form.au_employment_years" :label="t('orders.field_au_employment_years')" :hint="t('orders.hint_employment_years')" data-testid="mw-form-au-employment-years" />
+                </div>
+                <div class="form-cell">
+                  <label class="form-cell__label">{{ t('orders.field_au_funds_balance') }}<span class="form-cell__required">*</span></label>
+                  <select v-model="form.au_funds_balance_bucket" class="form-cell__select" data-testid="mw-form-au-funds-balance">
+                    <option value="">— {{ t('orders.placeholder_select') }} —</option>
+                    <option v-for="(label, value) in AU_FUNDS_BUCKET" :key="value" :value="value">{{ label }}</option>
+                  </select>
+                </div>
+                <div class="form-cell form-cell--full">
+                  <label class="form-cell__label">{{ t('orders.field_au_developed_visa') }}<span class="form-cell__required">*</span></label>
+                  <select v-model="form.au_developed_country_visa" class="form-cell__select" data-testid="mw-form-au-developed-visa">
+                    <option value="">— {{ t('orders.placeholder_select') }} —</option>
+                    <option v-for="(label, value) in AU_DEVELOPED_VISA" :key="value" :value="value">{{ label }}</option>
+                  </select>
+                </div>
+                <div class="form-cell">
+                  <label class="form-cell__label">{{ t('orders.field_au_visa_refused') }}</label>
+                  <div class="radio-group" data-testid="mw-form-au-visa-refused">
+                    <label class="radio-pill" :class="{ on: form.au_visa_refused === 'YES' }">
+                      <input v-model="form.au_visa_refused" type="radio" value="YES" />
+                      <span>{{ t('common.yes') }}</span>
+                    </label>
+                    <label class="radio-pill" :class="{ on: form.au_visa_refused === 'NO' }">
+                      <input v-model="form.au_visa_refused" type="radio" value="NO" />
+                      <span>{{ t('common.no') }}</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- ============== Declarations (GB/AU) ============== -->
+            <section v-show="activeTab === 'declarations'" class="form-card" data-testid="mw-form-section-declarations">
+              <h2 class="form-card__title">{{ t('orders.section_declarations') }}</h2>
+              <p class="form-card__desc">{{ t('orders.section_declarations_desc') }}</p>
+              <div class="form-cell">
+                <label class="form-cell__label">{{ t('orders.field_declarations_ack') }}<span class="form-cell__required">*</span></label>
+                <div class="radio-group" data-testid="mw-form-declarations-ack">
+                  <label class="radio-pill" :class="{ on: form.security_acknowledged === 'YES' }">
+                    <input v-model="form.security_acknowledged" type="radio" value="YES" />
+                    <span>{{ t('common.yes') }}</span>
+                  </label>
+                  <label class="radio-pill" :class="{ on: form.security_acknowledged === 'NO' }">
+                    <input v-model="form.security_acknowledged" type="radio" value="NO" />
+                    <span>{{ t('common.no') }}</span>
+                  </label>
+                </div>
+              </div>
             </section>
 
             <!-- ============== Security & Background (W50: 5 大类全展开) ============== -->
-            <section v-show="activeTab === 'security'" class="form-card" data-testid="mw-form-section-security">
+            <section v-if="isUsForm" v-show="activeTab === 'security'" class="form-card" data-testid="mw-form-section-security">
               <h2 class="form-card__title">{{ t('orders.section_security') }}</h2>
               <p class="form-card__desc">{{ t('orders.section_security_desc') }}</p>
 
@@ -962,6 +1124,14 @@ import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import { FEATURE_RPA } from '@/config/features'
 import { buildApplicantDataPayload } from '@/composables/useApplicantProfile'
+import { normalizeDestinationCode } from '@/data/visaFieldMaps.js'
+import {
+  UK_VISA_LENGTH, UK_MAIN_REASON, UK_FUNDS_PAYER, UK_EMPLOYMENT_STATUS,
+  UK_VISA_HISTORY, UK_FUNDS_BUCKET,
+} from '@/data/ukVisaEnums.js'
+import {
+  AU_STREAM, AU_REASON, AU_EMPLOYMENT_STATUS, AU_DEVELOPED_VISA, AU_FUNDS_BUCKET,
+} from '@/data/auVisaEnums.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -971,6 +1141,11 @@ const toast = useToast()
 
 const countryCode = (route.query.country || '').toString().toUpperCase()
 const visaType = (route.query.visa_type || 'tourism').toString()
+
+const normalizedCountry = computed(() => normalizeDestinationCode(countryCode))
+const isUsForm = computed(() => !normalizedCountry.value || normalizedCountry.value === 'US')
+const isUkForm = computed(() => normalizedCountry.value === 'GB')
+const isAuForm = computed(() => normalizedCountry.value === 'AU')
 
 const wizard = useMaterialWizard(countryCode, visaType)
 const clearLocalOpen = ref(false)
@@ -1145,8 +1320,8 @@ const minPassportExpiry = (() => {
 const FALLBACK_DESTINATIONS = [
   { id: 1, country_code: 'US', country_name_key: 'country.us', visa_types: ['tourism'], enabled: true },
   { id: 2, country_code: 'JP', country_name_key: 'country.jp', visa_types: ['tourism'], enabled: false },
-  { id: 3, country_code: 'UK', country_name_key: 'country.uk', visa_types: ['tourism'], enabled: false },
-  { id: 4, country_code: 'AU', country_name_key: 'country.au', visa_types: ['tourism'], enabled: false },
+  { id: 3, country_code: 'UK', country_name_key: 'country.uk', visa_types: ['tourism'], enabled: true },
+  { id: 4, country_code: 'AU', country_name_key: 'country.au', visa_types: ['tourism'], enabled: true },
   { id: 5, country_code: 'CA', country_name_key: 'country.ca', visa_types: ['tourism'], enabled: false },
   { id: 6, country_code: 'DE', country_name_key: 'country.de_schengen', visa_types: ['tourism'], enabled: false },
   { id: 7, country_code: 'FR', country_name_key: 'country.fr_schengen', visa_types: ['tourism'], enabled: false },
@@ -1182,8 +1357,8 @@ const relations = [
   { value: 'other', label: 'orders.relation_other' }
 ]
 
-// 表单 sub-tabs — 9 个 section 对应官方 DS-160 一致结构
-const subTabs = [
+// 表单 sub-tabs — US: DS-160 全 11 段；GB/AU: 精简 + 国别专用段
+const US_SUB_TABS = [
   { key: 'personal1',   label: 'orders.tab_personal1' },
   { key: 'personal2',   label: 'orders.tab_personal2' },
   { key: 'address',     label: 'orders.tab_address' },
@@ -1196,6 +1371,33 @@ const subTabs = [
   { key: 'work_edu',    label: 'orders.tab_work_edu' },
   { key: 'security',    label: 'orders.tab_security' },
 ]
+const GB_SUB_TABS = [
+  { key: 'personal1',   label: 'orders.tab_personal1' },
+  { key: 'personal2',   label: 'orders.tab_personal2' },
+  { key: 'address',     label: 'orders.tab_address' },
+  { key: 'passport',    label: 'orders.tab_passport' },
+  { key: 'travel',      label: 'orders.tab_travel' },
+  { key: 'work_edu',    label: 'orders.tab_work_edu' },
+  { key: 'uk_extras',   label: 'orders.tab_uk_extras' },
+  { key: 'family',      label: 'orders.tab_family' },
+  { key: 'declarations', label: 'orders.tab_declarations' },
+]
+const AU_SUB_TABS = [
+  { key: 'personal1',   label: 'orders.tab_personal1' },
+  { key: 'personal2',   label: 'orders.tab_personal2' },
+  { key: 'address',     label: 'orders.tab_address' },
+  { key: 'passport',    label: 'orders.tab_passport' },
+  { key: 'travel',      label: 'orders.tab_travel' },
+  { key: 'work_edu',    label: 'orders.tab_work_edu' },
+  { key: 'au_extras',   label: 'orders.tab_au_extras' },
+  { key: 'family',      label: 'orders.tab_family' },
+  { key: 'declarations', label: 'orders.tab_declarations' },
+]
+const subTabs = computed(() => {
+  if (isUkForm.value) return GB_SUB_TABS
+  if (isAuForm.value) return AU_SUB_TABS
+  return US_SUB_TABS
+})
 const activeTab = ref('personal1')
 
 // W47c: 材料大类 item tab 状态（≥2 个 item 时切 tab 用）
@@ -1324,6 +1526,30 @@ const form = reactive({
   emergency_name: '',
   emergency_phone: '',
   emergency_relation: '',
+  // ===== UK Standard Visitor =====
+  uk_visa_length: '6_months',
+  uk_main_reason: '',
+  uk_funds_payer: 'self',
+  uk_employment_status: '',
+  uk_employment_years: '',
+  uk_funds_balance_bucket: '',
+  uk_visa_history: '',
+  uk_visa_refused: '',
+  uk_other_visa_refused: '',
+  // ===== AU Subclass 600 =====
+  au_stream: 'tourist',
+  au_reason_for_visit: '',
+  au_employment_status: '',
+  au_employment_years: '',
+  au_funds_balance_bucket: '',
+  au_developed_country_visa: '',
+  au_visa_refused: '',
+  // ===== 诊断共用 =====
+  employment_years: '',
+  funds_balance_bucket: '',
+  developed_country_visa: '',
+  employer_name: '',
+  monthly_salary: '',
 })
 // DS-160 风格 "Does Not Apply" checkbox — 勾上时该字段视为不适用(后端提交时跳过)
 // 命名规则: dna.<field_name>;勾上后字段自动 disabled + 值清空(由 watcher 同步)
@@ -1431,6 +1657,19 @@ watch([() => form.arrival_date, () => form.departure_date], () => {
   }
 })
 
+// 英/澳专用字段 → 诊断共用字段同步
+watch(() => form.uk_employment_years, (v) => { if (v) form.employment_years = v })
+watch(() => form.au_employment_years, (v) => { if (v) form.employment_years = v })
+watch(() => form.uk_funds_balance_bucket, (v) => { if (v) form.funds_balance_bucket = v })
+watch(() => form.au_funds_balance_bucket, (v) => { if (v) form.funds_balance_bucket = v })
+watch(() => form.au_developed_country_visa, (v) => { if (v) form.developed_country_visa = v })
+
+watch(subTabs, (tabs) => {
+  if (!tabs.find((x) => x.key === activeTab.value)) {
+    activeTab.value = tabs[0]?.key || 'personal1'
+  }
+})
+
 // DS-160 风格 Does Not Apply 联动:
 // - 勾上 dna[field] = true → 清空 form[field](让 disabled 后值是空的)
 // - 取消勾选: 字段保持空值(用户需重新填写,符合 DS-160 真实行为)
@@ -1520,7 +1759,8 @@ async function loadFormData() {
 
     // 2) 选 destination_id (与 countryCode 关联)
     if (countryCode) {
-      const d = destinations.value.find((x) => x.country_code === countryCode)
+      const nc = normalizeDestinationCode(countryCode)
+      const d = destinations.value.find((x) => normalizeDestinationCode(x.country_code) === nc)
       if (d) form.destination_id = d.id
     }
     if (!form.destination_id && destinations.value.length) {
@@ -1563,6 +1803,15 @@ async function loadFormData() {
     }
     form.visa_type = visaType
 
+    // 7) 英/澳专用字段默认值
+    const defaultReason = visaType === 'business' ? 'business' : 'tourism'
+    if (isUkForm.value) {
+      if (!form.uk_main_reason) form.uk_main_reason = defaultReason
+    }
+    if (isAuForm.value) {
+      if (!form.au_reason_for_visit) form.au_reason_for_visit = defaultReason
+    }
+
     // 6) 从 wizard 拉行程单(MaterialWizard 行程住宿步骤生成)
     if (!itineraryText.value) {
       const wp = wizard.state.travelPlan
@@ -1587,28 +1836,24 @@ watch(
 )
 
 // ---- sub-tab 切换 ----
-const currentFormTabIndex = computed(() => subTabs.findIndex((x) => x.key === activeTab.value))
-const isLastFormTab = computed(() => currentFormTabIndex.value === subTabs.length - 1)
+const currentFormTabIndex = computed(() => subTabs.value.findIndex((x) => x.key === activeTab.value))
+const isLastFormTab = computed(() => currentFormTabIndex.value === subTabs.value.length - 1)
 const hasPrevFormTab = computed(() => currentFormTabIndex.value > 0)
 
+const FORM_TAB_KEY_MAP = { personal1: 'basic', security: 'emergency', declarations: 'emergency' }
+
 function goNextFormTab() {
-  // W67: 切下一个 tab 之前,先用 formTabStatus(只查本 tab 的必填字段)校验当前 tab。
-  // 之前用 validateTab(activeTab.value) 会走 'basic' / 'emergency' 等旧分支,跨 tab
-  // 校验 passport_no 等字段,字段没填时 form.passport_no.toUpperCase() throw,
-  // goNextFormTab 整个函数被吞掉,activeTab 不切,用户感觉"点了没反应"。
   if (!formTabStatus(activeTab.value).done) {
-    // 出错 tab 的 errors 提示:只对有 validateTab 分支的 3 个 tab 触发细校验
-    const keyMap = { personal1: 'basic', security: 'emergency' }
-    validateTab(keyMap[activeTab.value] || activeTab.value, { silent: false })
+    validateTab(FORM_TAB_KEY_MAP[activeTab.value] || activeTab.value, { silent: false })
     return
   }
   if (!isLastFormTab.value) {
-    activeTab.value = subTabs[currentFormTabIndex.value + 1].key
+    activeTab.value = subTabs.value[currentFormTabIndex.value + 1].key
   }
 }
 function goPrevFormTab() {
   if (hasPrevFormTab.value) {
-    activeTab.value = subTabs[currentFormTabIndex.value - 1].key
+    activeTab.value = subTabs.value[currentFormTabIndex.value - 1].key
   }
 }
 
@@ -1616,19 +1861,46 @@ function goPrevFormTab() {
 // 不复用 validateTab: validateTab 走 'basic'/'emergency' 旧 key,还会跨 tab 校验
 // (比如 'basic' 会查 passport_no, 而 passport_no 实际在 passport tab),导致
 // personal1 看起来填完了却报 missing=1。角标只看自己 tab 的字段,简单直接。
-const FORM_TAB_REQUIRED_FIELDS = {
-  personal1:   ['surname', 'given_name', 'sex', 'marital_status', 'dob', 'birth_city', 'birth_country'],
-  personal2:   ['nationality'],
-  address:     ['home_street', 'home_city', 'home_country', 'phone', 'email'],
-  passport:    ['passport_type', 'passport_no', 'passport_issue_country'],
-  travel:      ['destination_id', 'visa_type', 'arrival_date', 'departure_date'],
-  companions:  ['has_companions'],
-  previous_us: ['previous_has_visited', 'previous_has_visa', 'previous_has_refused'],
-  us_contact:  [],
-  family:      [],
-  work_edu:    [],
-  security:    ['security_acknowledged'],
-}
+const FORM_TAB_REQUIRED_FIELDS = computed(() => {
+  const base = {
+    personal1: ['surname', 'given_name', 'sex', 'marital_status', 'dob', 'birth_city', 'birth_country'],
+    personal2: ['nationality'],
+    address: ['home_street', 'home_city', 'home_country', 'phone', 'email'],
+    passport: ['passport_type', 'passport_no', 'passport_issue_country'],
+    travel: ['destination_id', 'visa_type', 'arrival_date', 'departure_date'],
+    family: [],
+  }
+  if (isUkForm.value) {
+    return {
+      ...base,
+      work_edu: ['occupation'],
+      uk_extras: [
+        'uk_visa_length', 'uk_main_reason', 'uk_funds_payer', 'uk_employment_status',
+        'uk_funds_balance_bucket', 'uk_visa_history',
+      ],
+      declarations: ['security_acknowledged'],
+    }
+  }
+  if (isAuForm.value) {
+    return {
+      ...base,
+      work_edu: ['occupation'],
+      au_extras: [
+        'au_stream', 'au_reason_for_visit', 'au_employment_status',
+        'au_funds_balance_bucket', 'au_developed_country_visa',
+      ],
+      declarations: ['security_acknowledged'],
+    }
+  }
+  return {
+    ...base,
+    companions: ['has_companions'],
+    previous_us: ['previous_has_visited', 'previous_has_visa', 'previous_has_refused'],
+    us_contact: [],
+    work_edu: [],
+    security: ['security_acknowledged'],
+  }
+})
 function isFieldFilled(field) {
   const v = form[field]
   if (v === null || v === undefined) return false
@@ -1638,12 +1910,16 @@ function isFieldFilled(field) {
   return !!v
 }
 function formTabStatus(key) {
-  const required = FORM_TAB_REQUIRED_FIELDS[key] || []
+  const required = FORM_TAB_REQUIRED_FIELDS.value[key] || []
   let missing = 0
   for (const f of required) if (!isFieldFilled(f)) missing += 1
-  // companions 条件必填: YES 时,姓名/关系也要填
   if (key === 'companions' && form.has_companions === 'YES') {
     for (const f of ['companion_surname', 'companion_given_name', 'companion_relation']) {
+      if (!isFieldFilled(f)) missing += 1
+    }
+  }
+  if (key === 'family' && form.marital_status === 'married') {
+    for (const f of ['spouse_surname', 'spouse_given_name']) {
       if (!isFieldFilled(f)) missing += 1
     }
   }
@@ -1652,12 +1928,11 @@ function formTabStatus(key) {
 function isFormTabDone(key) {
   return formTabStatus(key).done
 }
-const formSubDoneCount = computed(() => subTabs.filter((x) => isFormTabDone(x.key)).length)
-const formSubTotal = subTabs.length
-// 每个 tab 缺几个字段 — 给 tab 上的角标用
+const formSubDoneCount = computed(() => subTabs.value.filter((x) => isFormTabDone(x.key)).length)
+const formSubTotal = computed(() => subTabs.value.length)
 const formTabMissing = computed(() => {
   const m = {}
-  for (const tab of subTabs) m[tab.key] = formTabStatus(tab.key).missing
+  for (const tab of subTabs.value) m[tab.key] = formTabStatus(tab.key).missing
   return m
 })
 
@@ -1742,19 +2017,12 @@ function validateTab(tabKey, { silent = false } = {}) {
 // 由出问题的 tab 触发一次 silent:false 让 errors 显示出来。
 function validateAllFormTabs() {
   clearFormErrors()
-  // 1) 先按 11 tab 顺序算 done,挑第一个未完成的
-  const firstMissing = subTabs.find((tab) => !formTabStatus(tab.key).done)
+  const firstMissing = subTabs.value.find((tab) => !formTabStatus(tab.key).done)
   if (!firstMissing) return true
-  // 2) 切到那个 tab,并触发对应 validateTab 把 errors 写进表单
   activeTab.value = firstMissing.key
-  // tab key → validateTab key 的映射(只对有专门分支的 3 个 tab 走细校验)
-  // 其它 tab 没 validateTab 分支 → validateTab 默认返回 ok=true,errors 留空,
-  // 角标 missing 数已经够清楚告诉用户缺哪些字段,不需要再弹 errors。
-  const keyMap = { personal1: 'basic', security: 'emergency' }
   try {
-    validateTab(keyMap[firstMissing.key] || firstMissing.key, { silent: false })
+    validateTab(FORM_TAB_KEY_MAP[firstMissing.key] || firstMissing.key, { silent: false })
   } catch (e) {
-    // 兜底: validateTab 内部如果 throw(比如字段 undefined 调 .toUpperCase),不让 onSubmitForm 死掉
     console.warn('[validateAllFormTabs] validateTab threw:', e?.message)
   }
   return false

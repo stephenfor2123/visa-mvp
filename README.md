@@ -355,7 +355,16 @@ flutter analyze            # 静态分析
 
 ## MVP 状态
 
-当前状态：**W15 P0 收口完成 · 法务 review 进行中 · 准备 W16 上线**。
+当前状态：**W68–W74 代码已提交 · 法务 v1.1-gdpr-draft 待律师签字 · 负责人待办四项进行中**。
+
+**负责人当前必办**（外部凭据/基础设施，代码无法代劳）→ [`docs/PRE_LAUNCH_OWNER_TODO.md`](docs/PRE_LAUNCH_OWNER_TODO.md)：
+
+| 事项 | 状态 |
+|------|------|
+| Stripe 凭据 + webhook | ⏳ 待配置 |
+| Google OAuth Client ID | ⏳ 待配置 |
+| 生产域名 + HTTPS | ⏳ 待定 |
+| 企业邮箱 + 事务邮件 SMTP | ⏳ 待配置 |
 
 - ✅ 核心闭环（注册 → 申请 → OCR → 支付 mock → 状态查询）全部跑通
 - ✅ 4 语种 i18n baseline 落地（zh-CN / en / id / vi）

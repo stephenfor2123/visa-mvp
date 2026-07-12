@@ -29,7 +29,7 @@ import json
 import uuid
 from collections.abc import Iterable
 from decimal import Decimal
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 from sqlalchemy import and_, func, select
@@ -44,6 +44,9 @@ from app.models.material import Material
 from app.models.order import (
     ACTIVE_STATUSES,
     CANCELLABLE_STATUSES,
+    ORDER_LOCK_SECONDS,
+    PORTAL_SUBMIT_SOURCES,
+    REFUND_STATUSES,
     Order,
     OrderMessage,
     OrderStatusHistory,
@@ -136,6 +139,7 @@ class OrderService:
             applicant_data=json.dumps(applicant_data or {}, ensure_ascii=False),
             material_ids=json.dumps(material_ids, ensure_ascii=False),
             aff_code=normalised_aff_code,
+            locked_until=self._utcnow() + timedelta(seconds=ORDER_LOCK_SECONDS),
         )
         self.db.add(order)
         try:
@@ -282,6 +286,7 @@ class OrderService:
         order = await self._get_owned_order(
             user_id=user_id, order_no=order_no, with_relations=True
         )
+        await self.maybe_expire_order(order)
 
         # Destination (eager-load to avoid lazy-load after session close;
         # _to_order_dict expects the ORM row, see list_orders at L249-256
@@ -567,13 +572,23 @@ class OrderService:
                 data={"order_no": order_no, "current_status": order.status},
             )
         previous = order.status
-        order.status = "closed"
-        order.closed_at = datetime.now(timezone.utc).replace(tzinfo=None)
+        await self.maybe_expire_order(order)
+        if order.status != "created":
+            raise BizException(
+                ErrorCode.ORDER_NOT_EDITABLE,
+                message=(
+                    f"Order in status '{order.status}' is no longer editable; "
+                    f"cancel is only available for 'created' orders."
+                ),
+                data={"order_no": order_no, "current_status": order.status},
+            )
+        order.status = "cancelled"
+        order.closed_at = self._utcnow()
         self.db.add(
             OrderStatusHistory(
                 order_id=order.id,
                 from_status=previous,
-                to_status="closed",
+                to_status="cancelled",
                 source="user",
                 note="cancelled by user",
             )
@@ -604,6 +619,180 @@ class OrderService:
                 order_no, exc,
             )
         return order
+
+    # ------------------------------------------------------------------ #
+    # Lifecycle v2 — expire / diagnosis / portal / refund                #
+    # ------------------------------------------------------------------ #
+    @staticmethod
+    def _utcnow() -> datetime:
+        return datetime.now(timezone.utc).replace(tzinfo=None)
+
+    async def maybe_expire_order(self, order: Order, *, commit: bool = True) -> bool:
+        """Auto-cancel unpaid orders past locked_until. Returns True if expired."""
+        if order.status != "created" or not order.locked_until:
+            return False
+        if self._utcnow() <= order.locked_until:
+            return False
+        prev = order.status
+        order.status = "cancelled"
+        order.closed_at = self._utcnow()
+        self.db.add(
+            OrderStatusHistory(
+                order_id=order.id,
+                from_status=prev,
+                to_status="cancelled",
+                source="scheduler",
+                note="payment lock expired (1h)",
+            )
+        )
+        if commit:
+            await self.db.commit()
+            await self.db.refresh(order)
+        return True
+
+    async def complete_diagnosis(self, *, user_id: int, order_no: str) -> Order:
+        """AI diagnosis finished → order service complete (paid → completed)."""
+        order = await self._get_owned_order(user_id=user_id, order_no=order_no)
+        if order.status == "completed":
+            return order
+        if order.status != "paid":
+            raise BizException(
+                ErrorCode.ORDER_NOT_EDITABLE,
+                message=f"Diagnosis completion requires status 'paid', got '{order.status}'",
+                data={"order_no": order_no, "current_status": order.status},
+            )
+        now = self._utcnow()
+        prev = order.status
+        order.status = "completed"
+        order.diagnosis_completed_at = now
+        order.completed_at = now
+        self.db.add(
+            OrderStatusHistory(
+                order_id=order.id,
+                from_status=prev,
+                to_status="completed",
+                source="user",
+                note="AI diagnosis completed",
+            )
+        )
+        await record_audit(
+            self.db,
+            actor_type="user",
+            actor_id=user_id,
+            action="order.diagnosis.complete",
+            target_type="order",
+            target_id=order.id,
+            payload={"order_no": order_no},
+        )
+        await self.db.commit()
+        await self.db.refresh(order)
+        return order
+
+    async def mark_portal_submitted(
+        self,
+        *,
+        user_id: int,
+        order_no: str,
+        source: str = "user",
+    ) -> Order:
+        """Milestone only — does not change order.status."""
+        if source not in PORTAL_SUBMIT_SOURCES:
+            raise BizException(
+                ErrorCode.INVALID_PARAMS,
+                message=f"source must be one of {PORTAL_SUBMIT_SOURCES}",
+            )
+        order = await self._get_owned_order(user_id=user_id, order_no=order_no)
+        if order.status not in ("paid", "completed") and order.status not in (
+            "submitted", "reviewing", "approved",
+        ):
+            raise BizException(
+                ErrorCode.ORDER_NOT_EDITABLE,
+                message="Portal submission can only be recorded after payment",
+                data={"order_no": order_no, "current_status": order.status},
+            )
+        now = self._utcnow()
+        if order.portal_submitted_at is None:
+            order.portal_submitted_at = now
+            order.portal_submitted_source = source
+            if order.ds160_portal_submitted_at is None:
+                order.ds160_portal_submitted_at = now
+        await record_audit(
+            self.db,
+            actor_type="user" if source == "user" else "system",
+            actor_id=user_id if source == "user" else 0,
+            action="order.portal.submitted",
+            target_type="order",
+            target_id=order.id,
+            payload={"order_no": order_no, "source": source},
+        )
+        await self.db.commit()
+        await self.db.refresh(order)
+        return order
+
+    async def request_refund(
+        self,
+        *,
+        user_id: int,
+        order_no: str,
+        reason: str,
+        amount: Optional[Decimal] = None,
+    ) -> Order:
+        order = await self._get_owned_order(user_id=user_id, order_no=order_no)
+        if order.status not in ("paid", "completed") and order.status not in (
+            "submitted", "reviewing", "approved",
+        ):
+            raise BizException(
+                ErrorCode.ORDER_NOT_EDITABLE,
+                message="Refund only available for paid/completed orders",
+            )
+        if (order.refund_status or "none") not in ("none", "rejected", "failed"):
+            raise BizException(
+                ErrorCode.ORDER_NOT_EDITABLE,
+                message=f"Refund already in progress: {order.refund_status}",
+            )
+        order.refund_status = "pending"
+        order.refund_reason = (reason or "").strip()[:2000] or None
+        order.refund_amount = amount if amount is not None else order.total_amount
+        order.refund_requested_at = self._utcnow()
+        await record_audit(
+            self.db,
+            actor_type="user",
+            actor_id=user_id,
+            action="order.refund.request",
+            target_type="order",
+            target_id=order.id,
+            payload={"order_no": order_no, "amount": str(order.refund_amount)},
+        )
+        await self.db.commit()
+        await self.db.refresh(order)
+        return order
+
+    async def get_attention_counts(self) -> Dict[str, int]:
+        """Ops dashboard: orders needing follow-up."""
+        now = self._utcnow()
+        soon = now + timedelta(minutes=15)
+        q_pay_soon = select(func.count()).select_from(Order).where(
+            and_(Order.status == "created", Order.locked_until.isnot(None), Order.locked_until <= soon, Order.locked_until > now)
+        )
+        q_paid_no_diag = select(func.count()).select_from(Order).where(
+            and_(Order.status == "paid", Order.diagnosis_completed_at.is_(None))
+        )
+        q_completed_no_portal = select(func.count()).select_from(Order).where(
+            and_(Order.status == "completed", Order.portal_submitted_at.is_(None))
+        )
+        q_refund_pending = select(func.count()).select_from(Order).where(
+            Order.refund_status == "pending"
+        )
+        q_refund_failed = select(func.count()).select_from(Order).where(
+            Order.refund_status == "failed"
+        )
+        return {
+            "payment_expiring_soon": (await self.db.scalar(q_pay_soon)) or 0,
+            "paid_awaiting_diagnosis": (await self.db.scalar(q_paid_no_diag)) or 0,
+            "completed_awaiting_portal": (await self.db.scalar(q_completed_no_portal)) or 0,
+            "refund_pending": (await self.db.scalar(q_refund_pending)) or 0,
+            "refund_failed": (await self.db.scalar(q_refund_failed)) or 0,
+        }
 
     # ------------------------------------------------------------------ #
     # Delete draft (W67)                                                  #
@@ -984,6 +1173,19 @@ class OrderService:
             "submitted_at": order.submitted_at,
             "reviewed_at": order.reviewed_at,
             "closed_at": order.closed_at,
+            "locked_until": order.locked_until,
+            "paid_at": order.paid_at,
+            "diagnosis_completed_at": order.diagnosis_completed_at,
+            "completed_at": order.completed_at,
+            "portal_submitted_at": order.portal_submitted_at,
+            "portal_submitted_source": order.portal_submitted_source,
+            "ds160_portal_submitted_at": order.ds160_portal_submitted_at or order.portal_submitted_at,
+            "refund_status": order.refund_status or "none",
+            "refund_reason": order.refund_reason,
+            "refund_amount": order.refund_amount,
+            "refund_requested_at": order.refund_requested_at,
+            "refund_approved_at": order.refund_approved_at,
+            "refunded_at": order.refunded_at,
             "created_at": order.created_at,
             "updated_at": order.updated_at,
         }

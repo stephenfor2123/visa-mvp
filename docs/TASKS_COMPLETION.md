@@ -1,6 +1,7 @@
 # 四大任务完成状态与操作指南
 
-> 更新：2026-07-11 · 对应 W74 补充
+> 更新：2026-07-11 · 对应 W74 补充  
+> **负责人当前待办（Stripe / Google / 域名 / 邮箱）**: 见 [`PRE_LAUNCH_OWNER_TODO.md`](PRE_LAUNCH_OWNER_TODO.md)
 
 ---
 

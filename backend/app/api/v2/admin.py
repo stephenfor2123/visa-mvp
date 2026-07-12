@@ -27,6 +27,7 @@ from fastapi import APIRouter, Body, Depends, Path, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_db
+from app.core.errors import BizException, ErrorCode
 from app.core.logging import get_logger
 from app.middleware.admin_auth import verify_admin_token, verify_admin_token_with_db
 from app.core.permissions import PERMISSIONS, PERM_GROUPS
@@ -63,6 +64,7 @@ from app.schemas.admin import (
     OrderDetailOut,
     OrderOut,
     PaymentFlowOut,
+    PaymentFlowStats,
     UserOut,
     UserOutSafe,
     I18nOverrideOut,
@@ -563,6 +565,62 @@ async def update_order_status(
     return ApiResponse[dict](code="1000", message="OK", data=out)
 
 
+@router.get(
+    "/orders/attention/counts",
+    dependencies=[Depends(require_perm("order.view"))],
+    response_model=ApiResponse[dict],
+    summary="Ops follow-up counters",
+)
+async def get_order_attention_counts(
+    db: AsyncSession = Depends(get_db),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
+) -> ApiResponse[dict]:
+    from app.services.order_service import OrderService
+    svc = OrderService(db)
+    return ApiResponse(code="1000", message="OK", data=await svc.get_attention_counts())
+
+
+@router.put(
+    "/orders/{order_id}/refund",
+    dependencies=[Depends(require_perm("order.edit_status"))],
+    response_model=ApiResponse[dict],
+    summary="Admin refund action: approve | reject | complete | fail",
+)
+async def update_order_refund(
+    order_id: int = Path(..., ge=1),
+    action: str = Query(..., pattern="^(approve|reject|complete|fail)$"),
+    note: Optional[str] = Query(None),
+    db: AsyncSession = Depends(get_db),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
+) -> ApiResponse[dict]:
+    if action == "complete" and "payment.refund" not in (admin.permissions or []):
+        raise BizException(
+            ErrorCode.FORBIDDEN,
+            message="payment.refund permission required to complete refund payout",
+        )
+    svc = AdminService(db)
+    out = await svc.update_order_refund(
+        order_id, action, admin_id=admin.admin_id, note=note,
+    )
+    return ApiResponse(code="1000", message="OK", data=out)
+
+
+@router.put(
+    "/orders/{order_id}/portal-submitted",
+    dependencies=[Depends(require_perm("order.edit_status"))],
+    response_model=ApiResponse[dict],
+    summary="Admin marks embassy portal submitted (milestone)",
+)
+async def admin_mark_portal_submitted(
+    order_id: int = Path(..., ge=1),
+    db: AsyncSession = Depends(get_db),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
+) -> ApiResponse[dict]:
+    svc = AdminService(db)
+    out = await svc.mark_order_portal_submitted(order_id, admin_id=admin.admin_id)
+    return ApiResponse(code="1000", message="OK", data=out)
+
+
 # --------------------------------------------------------------------------- #
 # Country config                                                             #
 # --------------------------------------------------------------------------- #
@@ -965,10 +1023,14 @@ async def list_payments(
     admin: AdminTokenData = Depends(verify_admin_token_with_db),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    status: Optional[str] = Query(None, description="none | pending | paid | closed | failed"),
+    status: Optional[str] = Query(None, description="none | pending | paid | closed | failed | refunded"),
+    refund_status: Optional[str] = Query(None, description="none | pending | approved | completed | rejected | failed"),
 ) -> ApiResponse[PaginatedPaymentList]:
     svc = AdminService(db)
-    out = await svc.list_payments(page=page, page_size=page_size, status=status)
+    out = await svc.list_payments(
+        page=page, page_size=page_size, status=status, refund_status=refund_status,
+    )
+    stats_data = out.get("stats")
     return ApiResponse[PaginatedPaymentList](
         code="1000",
         message="OK",
@@ -978,6 +1040,7 @@ async def list_payments(
             page_size=out["page_size"],
             total=out["total"],
             total_pages=out["total_pages"],
+            stats=PaymentFlowStats(**stats_data) if stats_data else None,
         ),
     )
 

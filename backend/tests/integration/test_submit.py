@@ -44,7 +44,7 @@ async def _register(client, phone: str) -> str:
     pwd = "Test1234"
     await client.post(
         "/api/v2/auth/register",
-        json={"username": uname, "email": email, "password": pwd},
+        json={"username": uname, "email": email, "password": pwd, "email_code": "123456"},
     )
     r = await client.post(
         "/api/v2/auth/login",

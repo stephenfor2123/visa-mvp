@@ -8,13 +8,15 @@
 
       <div class="filter-bar">
         <select v-model="filter.actor_type" class="form-input" @change="reload">
+          <option value="">{{ t('admin.logs.all_actor_types') }}</option>
           <option value="admin">admin</option>
+          <option value="user">user</option>
           <option value="system">system</option>
           <option value="rpa">rpa</option>
         </select>
         <select v-model="filter.action" class="form-input" @change="reload">
           <option value="">{{ t('admin.logs.all_actions') }}</option>
-          <option v-for="a in actionList" :key="a" :value="a">{{ a }}</option>
+          <option v-for="a in actionList" :key="a" :value="a">{{ formatAuditAction({ action: a }) }}</option>
         </select>
         <input v-model="filter.target_type" class="form-input" placeholder="target_type" @change="reload" />
         <button class="btn-secondary" @click="reset">{{ t('admin.logs.reset') }}</button>
@@ -36,7 +38,7 @@
             <td>{{ l.id }}</td>
             <td>{{ fmtDate(l.created_at) }}</td>
             <td><span class="actor-pill" :class="`actor-${l.actor_type}`">{{ l.actor_type }}</span> #{{ l.actor_id || '—' }}</td>
-            <td><code>{{ l.action }}</code></td>
+            <td><code>{{ formatAuditAction(l) }}</code><span class="muted action-code">{{ l.action }}</span></td>
             <td>{{ l.target_type || '—' }}{{ l.target_id ? `#${l.target_id}` : '' }}</td>
             <td class="muted">{{ l.ip || '—' }}</td>
           </tr>
@@ -55,7 +57,7 @@
           <div class="drawer__body">
             <div class="kv"><label>{{ t('admin.logs.col_time') }}</label><span>{{ fmtDate(detail.created_at) }}</span></div>
             <div class="kv"><label>actor</label><span>{{ detail.actor_type }} #{{ detail.actor_id }}</span></div>
-            <div class="kv"><label>action</label><span><code>{{ detail.action }}</code></span></div>
+            <div class="kv"><label>action</label><span><code>{{ formatAuditAction(detail) }}</code> <span class="muted">({{ detail.action }})</span></span></div>
             <div class="kv"><label>target</label><span>{{ detail.target_type || '—' }} {{ detail.target_id ? `#${detail.target_id}` : '' }}</span></div>
             <div class="kv"><label>IP</label><span>{{ detail.ip || '—' }}</span></div>
             <div class="kv"><label>UA</label><span class="muted">{{ detail.ua || '—' }}</span></div>
@@ -71,6 +73,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import axios from 'axios'
 
+import { formatAuditAction } from '@/utils/auditActionLabels'
+
 const { t } = useI18n()
 
 const logs = ref([])
@@ -78,7 +82,7 @@ const actionList = ref([])
 const loading = ref(false)
 const error = ref('')
 const detail = ref(null)
-const filter = ref({ actor_type: 'admin', action: '', target_type: '' })
+const filter = ref({ actor_type: '', action: '', target_type: '' })
 
 const http = axios.create({ baseURL: import.meta.env.VITE_API_BASE || '/api' })
 http.interceptors.request.use((c) => {
@@ -140,6 +144,7 @@ onMounted(() => { reload(); loadActions() })
 .btn-secondary { background: #fff; border: 1px solid #dcdfe6; color: #606266; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; }
 .form-input { border: 1px solid #dcdfe6; border-radius: 6px; padding: 6px 10px; font-size: 13px; }
 .muted { color: #909399; }
+.action-code { display: block; font-size: 11px; margin-top: 2px; }
 .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 1000; display: flex; justify-content: flex-end; }
 .drawer { background: #fff; width: 560px; max-width: 100vw; height: 100vh; overflow-y: auto; }
 .drawer__head { padding: 16px 20px; border-bottom: 1px solid #e4e7ed; display: flex; justify-content: space-between; align-items: center; }

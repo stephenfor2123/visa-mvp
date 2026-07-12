@@ -75,6 +75,8 @@ class ApplicantProfile:
     work: dict
     family: dict
     security: dict
+    uk: dict
+    au: dict
 
     def to_dict(self) -> dict:
         return {
@@ -87,6 +89,8 @@ class ApplicantProfile:
             "work": dict(self.work),
             "family": dict(self.family),
             "security": dict(self.security),
+            "uk": dict(self.uk),
+            "au": dict(self.au),
         }
 
 
@@ -228,6 +232,7 @@ def _build_profile_from_flat(parsed: Mapping[str, Any]) -> ApplicantProfile:
         "purpose": _pick_raw(parsed, "visa_type"),
         "hasPlan": has_plan,
         "arrivalDate": arrival,
+        "departureDate": normalize_date(_pick_raw(parsed, "departure_date")),
         "stayLength": stay_length,
         "usAddress": _pick_raw(parsed, "hotel_name"),
         "payer": _pick_raw(parsed, "payer") or "self",
@@ -307,6 +312,26 @@ def _build_profile_from_flat(parsed: Mapping[str, Any]) -> ApplicantProfile:
     security = {
         "acknowledged": _coerce_yes_no(_pick_raw(parsed, "security_acknowledged")),
     }
+    uk = {
+        "visaLength": _pick_raw(parsed, "uk_visa_length") or "6_months",
+        "mainReason": _pick_raw(parsed, "uk_main_reason", "visa_type") or "tourism",
+        "fundsPayer": _pick_raw(parsed, "uk_funds_payer", "payer") or "self",
+        "employmentStatus": _pick_raw(parsed, "uk_employment_status"),
+        "employmentYears": _pick_raw(parsed, "uk_employment_years", "employment_years"),
+        "fundsBalanceBucket": _pick_raw(parsed, "uk_funds_balance_bucket", "funds_balance_bucket"),
+        "visaHistory": _pick_raw(parsed, "uk_visa_history"),
+        "ukVisaRefused": _coerce_yes_no(_pick_raw(parsed, "uk_visa_refused")),
+        "otherVisaRefused": _coerce_yes_no(_pick_raw(parsed, "uk_other_visa_refused")),
+    }
+    au = {
+        "stream": _pick_raw(parsed, "au_stream") or "tourist",
+        "reasonForVisit": _pick_raw(parsed, "au_reason_for_visit", "visa_type") or "tourism",
+        "employmentStatus": _pick_raw(parsed, "au_employment_status"),
+        "employmentYears": _pick_raw(parsed, "au_employment_years", "employment_years"),
+        "fundsBalanceBucket": _pick_raw(parsed, "au_funds_balance_bucket", "funds_balance_bucket"),
+        "developedCountryVisa": _pick_raw(parsed, "au_developed_country_visa", "developed_country_visa"),
+        "auVisaRefused": _coerce_yes_no(_pick_raw(parsed, "au_visa_refused")),
+    }
     return ApplicantProfile(
         identity=identity,
         passport=passport,
@@ -317,6 +342,8 @@ def _build_profile_from_flat(parsed: Mapping[str, Any]) -> ApplicantProfile:
         work=work,
         family=family,
         security=security,
+        uk=uk,
+        au=au,
     )
 
 
@@ -362,7 +389,7 @@ def _normalize_nested_profile(parsed: Mapping[str, Any]) -> ApplicantProfile:
             "phone": "", "email": "",
         }),
         travel=sub("travel", {
-            "purpose": "", "hasPlan": "", "arrivalDate": "", "stayLength": "",
+            "purpose": "", "hasPlan": "", "arrivalDate": "", "departureDate": "", "stayLength": "",
             "usAddress": "", "payer": "self", "hasCompanions": "",
             "companion": {"surname": "", "givenName": "", "relation": ""},
         }),
@@ -388,6 +415,16 @@ def _normalize_nested_profile(parsed: Mapping[str, Any]) -> ApplicantProfile:
             "relative": {"surname": "", "givenName": "", "relation": "", "status": ""},
         }),
         security=sub("security", {"acknowledged": ""}),
+        uk=sub("uk", {
+            "visaLength": "6_months", "mainReason": "tourism", "fundsPayer": "self",
+            "employmentStatus": "", "employmentYears": "", "fundsBalanceBucket": "",
+            "visaHistory": "", "ukVisaRefused": "", "otherVisaRefused": "",
+        }),
+        au=sub("au", {
+            "stream": "tourist", "reasonForVisit": "tourism", "employmentStatus": "",
+            "employmentYears": "", "fundsBalanceBucket": "", "developedCountryVisa": "",
+            "auVisaRefused": "",
+        }),
     )
 
 

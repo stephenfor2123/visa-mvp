@@ -286,6 +286,8 @@ def _bare_profile(**overrides) -> ApplicantProfile:
         work=d["work"],
         family=d["family"],
         security=d["security"],
+        uk=d["uk"],
+        au=d["au"],
     )
 
 

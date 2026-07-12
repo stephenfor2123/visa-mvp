@@ -28,11 +28,14 @@ from app.models.user import User
 from app.models.user_session import UserSession
 from app.services.audit import record_audit
 from app.services.email_service import (
+    PasswordChangedEmail,
     PasswordResetEmail,
     WelcomeEmail,
+    send_password_changed_email,
     send_password_reset_email,
     send_welcome_email,
 )
+from app.services.email_verification_service import EmailVerificationService
 
 
 _log = get_logger()
@@ -150,6 +153,7 @@ class AuthService:
         username: str,
         email: str,
         password: str,
+        email_code: str,
         nickname: Optional[str],
         language_pref: Optional[str],
         info: ClientInfo,
@@ -158,6 +162,11 @@ class AuthService:
 
         username_clean = username.strip()
         email_clean = email.strip().lower()
+
+        # Verify email OTP before creating the account.
+        email_svc = EmailVerificationService(self.db)
+        code_row = await email_svc.verify_code(email_clean, email_code, "register")
+        await email_svc.mark_used(code_row)
 
         # Uniqueness: email + username
         existing_email = await self.db.scalar(
@@ -544,6 +553,16 @@ class AuthService:
             action="user.reset_password",
             info=info,
         )
+        login_url = f"{self._frontend_base()}/login"
+        if user.email:
+            send_password_changed_email(
+                PasswordChangedEmail(
+                    to_email=user.email,
+                    nickname=user.nickname or user.username or "there",
+                    language_pref=user.language_pref or "en",
+                    login_url=login_url,
+                ),
+            )
         _log.info(
             "user.reset_password",
             extra={"user_id": user.id, "event_type": "user.reset_password", "status": "success"},

@@ -150,4 +150,13 @@ describe('buildDs160Guide', () => {
     expect(secNo.steps.find(s => s.label === "Companion's Surnames")).toBeUndefined()
     expect(secYes.steps.find(s => s.label === "Companion's Surnames")).toBeDefined()
   })
+
+  it('本地化 enum 未映射 → 待补,不把中文写进 fill value', () => {
+    const g = buildDs160Guide({ identity: { maritalStatus: '单身' } })
+    const ms = g.sections.find((s) => s.section === 'personal1').steps
+      .find((st) => st.label === 'Marital Status')
+    expect(ms.action).toBe('todo')
+    expect(ms.missing).toBe(true)
+    expect(ms.value).toBeNull()
+  })
 })

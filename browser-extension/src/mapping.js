@@ -2495,6 +2495,24 @@
     return raw
   }
 
+  function _isPortalEnumResolved(raw, valueMap) {
+    if (!valueMap || _isEmpty(raw)) return true
+    if (valueMap[raw] !== undefined) return true
+    if (valueMap[String(raw)] !== undefined) return true
+    var coerced = _coerceBoolForValueMap(raw)
+    if (coerced !== raw && valueMap[coerced] !== undefined) return true
+    var up = String(raw).trim().toUpperCase()
+    var vals = Object.keys(valueMap).map(function (k) { return valueMap[k] })
+    for (var i = 0; i < vals.length; i++) {
+      if (String(vals[i]).toUpperCase() === up) return true
+    }
+    for (var j = 0; j < vals.length; j++) {
+      var vu = String(vals[j]).toUpperCase()
+      if (vu.indexOf(up) !== -1 || up.indexOf(vu) !== -1) return true
+    }
+    return false
+  }
+
   // ---- 字段解析 ----
   function resolveField(field, profile) {
     var raw = _getField(profile, field.profile)
@@ -2503,6 +2521,9 @@
       return { label: field.label, profile: field.profile, input: field.input, action: 'todo', value: null, missing: true, optional: false, note: field.note }
     }
     var value = _resolveValueMap(raw, field.valueMap)
+    if (field.valueMap && (field.input === 'select' || field.input === 'radio') && !_isPortalEnumResolved(raw, field.valueMap)) {
+      return { label: field.label, profile: field.profile, input: field.input, action: 'todo', value: null, missing: true, optional: false, note: field.note }
+    }
     if (field.transform === 'upper') value = String(value).toUpperCase()
     else if (field.transform === 'date') value = _toDs160Date(value)
     return { label: field.label, profile: field.profile, input: field.input, action: 'fill', value: value, missing: false, optional: !!field.optional, note: field.note }

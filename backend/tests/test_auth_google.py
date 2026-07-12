@@ -113,6 +113,7 @@ class TestGoogleAuth:
                 "username": "linktarget",
                 "email": "linktarget@htex.test",
                 "password": "abc12345",
+                "email_code": "123456",
                 "nickname": "Link Target",
             },
         )
@@ -223,7 +224,6 @@ class TestGoogleAuth:
                 select(UserSession).where(
                     UserSession.refresh_token_hash == hashlib.sha256(refresh.encode()).hexdigest()
                 )
-            )
             assert row is not None
             assert row.revoked_at is None
 

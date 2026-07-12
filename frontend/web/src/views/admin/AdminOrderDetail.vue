@@ -31,6 +31,13 @@
       <div v-if="loading" class="admin-panel__placeholder">{{ t('admin.orders.loading') }}</div>
       <div v-else-if="loadError" class="admin-panel__placeholder admin-panel__placeholder--err">{{ loadError }}</div>
       <template v-else-if="order">
+        <div
+          v-if="order.attention_hint"
+          class="admin-attention"
+          data-testid="admin-order-attention"
+        >
+          ⚠️ {{ t(`admin.order_detail.attention_${order.attention_hint}`) }}
+        </div>
         <!-- Basics -->
         <AppCard class="admin-panel">
           <template #header>
@@ -59,6 +66,17 @@
             <dd class="admin-mono">{{ order.rpa_task_id || t('admin.order_detail.field_no_rpa') }}</dd>
             <dt>{{ t('admin.order_detail.field_created') }}</dt>
             <dd>{{ formatTime(order.created_at) }}</dd>
+            <dt>{{ t('admin.order_detail.field_paid') }}</dt>
+            <dd>{{ formatTime(order.paid_at) }}</dd>
+            <dt>{{ t('admin.order_detail.field_completed') }}</dt>
+            <dd>{{ formatTime(order.completed_at) }}</dd>
+            <dt>{{ t('admin.order_detail.field_portal') }}</dt>
+            <dd>
+              {{ formatTime(order.portal_submitted_at) }}
+              <span v-if="order.portal_submitted_source" class="admin-muted">
+                ({{ order.portal_submitted_source }})
+              </span>
+            </dd>
             <dt>{{ t('admin.order_detail.field_submitted') }}</dt>
             <dd>{{ formatTime(order.submitted_at) }}</dd>
             <dt>{{ t('admin.order_detail.field_reviewed') }}</dt>
@@ -101,6 +119,63 @@
             <dd>{{ order.payment.paid_at ? formatTime(order.payment.paid_at) : '—' }}</dd>
           </dl>
           <p v-else class="admin-panel__placeholder">{{ t('admin.order_detail.payment_none') }}</p>
+        </AppCard>
+
+        <!-- 退款副轨 -->
+        <AppCard class="admin-panel" data-testid="admin-order-refund">
+          <template #header>
+            <h3>{{ t('admin.order_detail.section_refund') }}</h3>
+          </template>
+          <dl class="admin-dl">
+            <dt>{{ t('admin.order_detail.refund_status') }}</dt>
+            <dd>
+              <span class="admin-pill" :class="`admin-pill--refund-${order.refund_status || 'none'}`">
+                {{ t(`admin.order_detail.refund_status_${order.refund_status || 'none'}`) }}
+              </span>
+            </dd>
+            <dt>{{ t('admin.order_detail.refund_amount') }}</dt>
+            <dd>{{ order.refund_amount != null ? formatAmount(order.refund_amount, order.currency) : '—' }}</dd>
+            <dt>{{ t('admin.order_detail.refund_reason') }}</dt>
+            <dd>{{ order.refund_reason || '—' }}</dd>
+            <dt>{{ t('admin.order_detail.refund_requested') }}</dt>
+            <dd>{{ formatTime(order.refund_requested_at) }}</dd>
+            <dt>{{ t('admin.order_detail.refund_approved') }}</dt>
+            <dd>{{ formatTime(order.refund_approved_at) }}</dd>
+            <dt>{{ t('admin.order_detail.refund_completed') }}</dt>
+            <dd>{{ formatTime(order.refunded_at) }}</dd>
+          </dl>
+          <div v-if="refundActionsVisible.length" class="admin-actions admin-actions--refund">
+            <button
+              v-for="a in refundActionsVisible"
+              :key="a.action"
+              class="admin-action"
+              :class="`admin-action--refund-${a.action}`"
+              :data-testid="`admin-refund-${a.action}`"
+              :disabled="refundSubmitting"
+              @click="openRefundConfirm(a.action)"
+            >
+              {{ t(`admin.order_detail.refund_btn_${a.action}`) }}
+            </button>
+          </div>
+          <p v-if="refundMessage" class="admin-actions__msg" :class="refundOk ? 'is-ok' : 'is-err'">{{ refundMessage }}</p>
+        </AppCard>
+
+        <!-- 官网提交里程碑 -->
+        <AppCard v-if="!order.portal_submitted_at" class="admin-panel">
+          <template #header>
+            <h3>{{ t('admin.order_detail.section_portal') }}</h3>
+          </template>
+          <p class="admin-panel__hint">{{ t('admin.order_detail.portal_hint') }}</p>
+          <button
+            v-if="canMarkPortal"
+            class="admin-action admin-action--portal"
+            data-testid="admin-portal-submit"
+            :disabled="portalSubmitting"
+            @click="submitPortal"
+          >
+            {{ portalSubmitting ? '...' : t('admin.order_detail.portal_btn') }}
+          </button>
+          <p v-if="portalMessage" class="admin-actions__msg" :class="portalOk ? 'is-ok' : 'is-err'">{{ portalMessage }}</p>
         </AppCard>
 
         <!-- 完整审计日志（W34: 订单流/资金流/日志三栏） -->
@@ -195,6 +270,24 @@
         </div>
       </div>
     </div>
+    <!-- Refund confirm modal -->
+    <div v-if="refundConfirming" class="admin-modal-mask" @click.self="cancelRefundConfirm">
+      <div class="admin-modal" data-testid="admin-refund-confirm">
+        <p class="admin-modal__title">{{ t(`admin.order_detail.refund_confirm_${refundConfirming}`) }}</p>
+        <label class="admin-modal__label">{{ t('admin.order_detail.transition_note') }}</label>
+        <textarea v-model="refundNote" class="admin-modal__textarea" rows="3" />
+        <div class="admin-modal__actions">
+          <button class="admin-modal__btn" @click="cancelRefundConfirm">取消</button>
+          <button
+            class="admin-modal__btn admin-modal__btn--primary"
+            :disabled="refundSubmitting"
+            @click="submitRefund"
+          >
+            {{ refundSubmitting ? '...' : t('admin.order_detail.refund_btn_confirm') }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -204,7 +297,8 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import AppCard from '@/components/AppCard.vue'
 import { useAdminStore } from '@/stores/admin'
-import { getAdminOrder, updateAdminOrderStatus } from '@/api/admin'
+import { getAdminOrder, updateAdminOrderStatus, updateAdminOrderRefund, markAdminOrderPortalSubmitted } from '@/api/admin'
+import { formatAuditAction } from '@/utils/auditActionLabels'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -219,6 +313,28 @@ const note = ref('')
 const submitting = ref(false)
 const actionMessage = ref('')
 const actionOk = ref(true)
+const refundConfirming = ref('')
+const refundNote = ref('')
+const refundSubmitting = ref(false)
+const refundMessage = ref('')
+const refundOk = ref(true)
+const portalSubmitting = ref(false)
+const portalMessage = ref('')
+const portalOk = ref(true)
+
+const REFUND_ACTIONS = [
+  { action: 'approve', from: 'pending', perm: 'order.edit_status' },
+  { action: 'reject', from: 'pending', perm: 'order.edit_status' },
+  { action: 'complete', from: 'approved', perm: 'payment.refund' },
+  { action: 'fail', from: 'approved', perm: 'order.edit_status' },
+]
+const refundActionsVisible = computed(() => {
+  const rs = order.value?.refund_status || 'none'
+  return REFUND_ACTIONS.filter((a) => a.from === rs && admin.hasPermission(a.perm))
+})
+const canMarkPortal = computed(() =>
+  order.value && !order.value.portal_submitted_at && admin.hasPermission('order.edit_status')
+)
 
 const allowed = computed(() => order.value?.allowed_next_statuses || [])
 
@@ -229,6 +345,9 @@ const allowed = computed(() => order.value?.allowed_next_statuses || [])
  * rpa 重派 不在 transition 列表里,有自己的接口 + perm
  */
 const ACTION_PERM = {
+  paid: 'order.edit_status',
+  completed: 'order.edit_status',
+  cancelled: 'order.edit_status',
   approved: 'order.edit_status',
   rejected: 'order.edit_status',
   submitted: 'order.edit_status',
@@ -314,6 +433,54 @@ async function submitTransition() {
   }
 }
 
+function openRefundConfirm(action) {
+  refundConfirming.value = action
+  refundNote.value = ''
+  refundMessage.value = ''
+}
+function cancelRefundConfirm() {
+  refundConfirming.value = ''
+  refundNote.value = ''
+}
+
+async function submitRefund() {
+  if (!refundConfirming.value) return
+  refundSubmitting.value = true
+  refundMessage.value = ''
+  try {
+    await updateAdminOrderRefund(
+      Number(route.params.id),
+      refundConfirming.value,
+      refundNote.value || undefined,
+    )
+    refundOk.value = true
+    refundMessage.value = t('admin.order_detail.refund_success')
+    refundConfirming.value = ''
+    await fetchOrder()
+  } catch (err) {
+    refundOk.value = false
+    refundMessage.value = t('admin.order_detail.refund_failed') + ': ' + (err?.message || err)
+  } finally {
+    refundSubmitting.value = false
+  }
+}
+
+async function submitPortal() {
+  portalSubmitting.value = true
+  portalMessage.value = ''
+  try {
+    await markAdminOrderPortalSubmitted(Number(route.params.id))
+    portalOk.value = true
+    portalMessage.value = t('admin.order_detail.portal_success')
+    await fetchOrder()
+  } catch (err) {
+    portalOk.value = false
+    portalMessage.value = t('admin.order_detail.portal_failed') + ': ' + (err?.message || err)
+  } finally {
+    portalSubmitting.value = false
+  }
+}
+
 function formatAmount(cents, currency) {
   if (cents == null) return '—'
   const n = Number(cents) / 100
@@ -330,32 +497,7 @@ function formatActor(log) {
 }
 
 function formatAction(log) {
-  // action → 中文描述
-  const map = {
-    'order.create': '订单创建',
-    'order.submit': '订单提交',
-    'order.cancel': '订单取消',
-    'order.approve': '审核通过',
-    'order.reject': '审核拒绝',
-    'order.close': '订单关闭',
-    'order.abnormal': '订单异常',
-    'order.update_status': '状态变更',
-    'payment.create': '发起支付',
-    'payment.notify': '支付回调',
-    'rpa.start': 'RPA 启动',
-    'rpa.submit': 'RPA 提交',
-    'rpa.done': 'RPA 完成',
-    'rpa.failed': 'RPA 失败',
-    'admin.login': '管理员登录',
-    'admin.order.update_status': '管理员操作状态',
-  }
-  const label = map[log.action] || log.action || ''
-  if (log.payload && typeof log.payload === 'object') {
-    const from = log.payload?.from_status
-    const to = log.payload?.to_status
-    if (from && to) return `${label}：${from} → ${to}`
-  }
-  return label
+  return formatAuditAction(log)
 }
 
 
@@ -375,6 +517,10 @@ onMounted(() => { admin.hydrate(); fetchOrder() })
 .admin-panel__placeholder { padding: 24px 0; text-align: center; color: #94A3B8; font-size: 13px; }
 .admin-panel__placeholder--err { color: #DC2626; }
 .admin-panel h3 { margin: 0; font-size: 15px; color: #0F172A; }
+.admin-attention {
+  margin-bottom: 16px; padding: 12px 16px; border-radius: 10px;
+  background: #fffbeb; border: 1px solid #fde68a; color: #92400e; font-size: 13px;
+}
 
 .admin-dl { display: grid; grid-template-columns: 200px 1fr; gap: 8px 16px; margin: 0; font-size: 13px; }
 .admin-dl dt { color: #94A3B8; font-weight: 600; }
@@ -387,6 +533,9 @@ onMounted(() => { admin.hydrate(); fetchOrder() })
   background: #F1F5F9; color: #475569;
 }
 .admin-pill--created   { background: #E0E7FF; color: #4338CA; }
+.admin-pill--paid      { background: #DBEAFE; color: #1D4ED8; }
+.admin-pill--completed { background: #D1FAE5; color: #047857; }
+.admin-pill--cancelled { background: #E2E8F0; color: #475569; }
 .admin-pill--submitted { background: #DBEAFE; color: #1D4ED8; }
 .admin-pill--reviewing { background: #FEF3C7; color: #B45309; }
 .admin-pill--approved  { background: #D1FAE5; color: #047857; }
@@ -399,6 +548,20 @@ onMounted(() => { admin.hydrate(); fetchOrder() })
 .admin-pill--payment-paid    { background: #D1FAE5; color: #047857; }
 .admin-pill--payment-closed  { background: #E2E8F0; color: #475569; }
 .admin-pill--payment-failed  { background: #FECACA; color: #991B1B; }
+.admin-pill--refund-none      { background: #F1F5F9; color: #64748B; }
+.admin-pill--refund-pending   { background: #FEF3C7; color: #B45309; }
+.admin-pill--refund-approved  { background: #DBEAFE; color: #1D4ED8; }
+.admin-pill--refund-completed { background: #D1FAE5; color: #047857; }
+.admin-pill--refund-rejected  { background: #FEE2E2; color: #B91C1C; }
+.admin-pill--refund-failed    { background: #FECACA; color: #991B1B; }
+.admin-muted { color: #94A3B8; font-size: 12px; margin-left: 4px; }
+.admin-panel__hint { font-size: 13px; color: #64748B; margin: 0 0 12px; }
+.admin-actions--refund { margin-top: 12px; }
+.admin-action--refund-approve { color: #047857; border-color: #A7F3D0; }
+.admin-action--refund-reject { color: #B91C1C; border-color: #FECACA; }
+.admin-action--refund-complete { color: #1D4ED8; border-color: #BFDBFE; }
+.admin-action--refund-fail { color: #9D174D; border-color: #FBCFE8; }
+.admin-action--portal { color: #4338CA; border-color: #C7D2FE; }
 
 .admin-timeline { list-style: none; padding: 0; margin: 0; }
 .admin-timeline__row {

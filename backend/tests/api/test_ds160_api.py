@@ -13,6 +13,7 @@ Mirrors `backend-ds160-code-api.md` §6.2:
   9. /redeem rejects old code after archive change (the critical ARCHIVE_CHANGED path)
  10. /redeem rejects revoked code (force_rotate blacklists the old code)
  11. /redeem is rate-limited per-order after 5 attempts
+ 12. /portal-submitted sets ds160_portal_submitted_at (idempotent)
 """
 from __future__ import annotations
 
@@ -42,6 +43,7 @@ async def _register(client, phone: str) -> str:
             "username": f"u{phone}",
             "email": f"{phone}@test.local",
             "password": "Test1234",
+                "email_code": "123456",
         },
     )
     r = await client.post(
@@ -442,3 +444,103 @@ class TestRedeemCode:
         payload = json.loads(logs[0].payload)
         assert payload["success"] is True
         assert payload["fingerprint_prefix"]
+
+
+# --------------------------------------------------------------------------- #
+# /portal-submitted                                                           #
+# --------------------------------------------------------------------------- #
+
+class TestPortalSubmitted:
+    async def test_happy_path_and_idempotent(self, client):
+        get_default_rate_limiter().reset()
+        dest_id = await _seed_destination()
+        token = await _register(client, "13900000020")
+        mid = await _upload_material(client, token)
+        order_no = await _create_order(client, token, dest_id, mid, _full_applicant())
+        async with AsyncSessionLocal() as s:
+            order_id = (await s.scalar(select(Order).where(Order.order_no == order_no))).id
+
+        r_issue = await client.post(
+            "/api/v2/ds160/code", json={"order_id": order_id}, headers=_bearer(token),
+        )
+        code = r_issue.json()["data"]["code"]
+
+        r1 = await client.post(
+            "/api/v2/ds160/portal-submitted", json={"code": code},
+        )
+        assert r1.status_code == 200, r1.text
+        body1 = r1.json()["data"]
+        assert body1["order_id"] == order_id
+        assert body1["unchanged"] is False
+        assert body1["ds160_portal_submitted_at"]
+
+        async with AsyncSessionLocal() as s:
+            order = await s.scalar(select(Order).where(Order.id == order_id))
+            assert order.ds160_portal_submitted_at is not None
+
+        r2 = await client.post(
+            "/api/v2/ds160/portal-submitted", json={"code": code},
+        )
+        assert r2.status_code == 200
+        body2 = r2.json()["data"]
+        assert body2["unchanged"] is True
+        assert body2["ds160_portal_submitted_at"] == body1["ds160_portal_submitted_at"]
+
+    async def test_rejects_revoked_code(self, client):
+        get_default_rate_limiter().reset()
+        dest_id = await _seed_destination()
+        token = await _register(client, "13900000021")
+        mid = await _upload_material(client, token)
+        order_no = await _create_order(client, token, dest_id, mid, _full_applicant())
+        async with AsyncSessionLocal() as s:
+            order_id = (await s.scalar(select(Order).where(Order.order_no == order_no))).id
+
+        r1 = await client.post(
+            "/api/v2/ds160/code", json={"order_id": order_id}, headers=_bearer(token),
+        )
+        code1 = r1.json()["data"]["code"]
+
+        await client.post(
+            "/api/v2/ds160/code",
+            json={"order_id": order_id, "force_rotate": True},
+            headers=_bearer(token),
+        )
+
+        r = await client.post(
+            "/api/v2/ds160/portal-submitted", json={"code": code1},
+        )
+        assert r.status_code == 409
+        assert r.json()["code"] == "11002"
+
+    async def test_no_fingerprint_check(self, client):
+        """Portal-submitted does NOT require archive fingerprint match (unlike /redeem)."""
+        get_default_rate_limiter().reset()
+        dest_id = await _seed_destination()
+        token = await _register(client, "13900000022")
+        mid = await _upload_material(client, token)
+        order_no = await _create_order(client, token, dest_id, mid, _full_applicant())
+        async with AsyncSessionLocal() as s:
+            order_id = (await s.scalar(select(Order).where(Order.order_no == order_no))).id
+
+        r_issue = await client.post(
+            "/api/v2/ds160/code", json={"order_id": order_id}, headers=_bearer(token),
+        )
+        code = r_issue.json()["data"]["code"]
+
+        new_data = json.dumps({**_full_applicant(), "surname": "TRAN"})
+        async with AsyncSessionLocal() as s:
+            await s.execute(
+                update(Order).where(Order.id == order_id).values(applicant_data=new_data)
+            )
+            await s.commit()
+
+        r_redeem = await client.post(
+            "/api/v2/ds160/code/redeem", json={"code": code},
+        )
+        assert r_redeem.status_code == 409  # ARCHIVE_CHANGED
+
+        r_portal = await client.post(
+            "/api/v2/ds160/portal-submitted", json={"code": code},
+        )
+        assert r_portal.status_code == 200, r_portal.text
+        assert r_portal.json()["data"]["unchanged"] is False

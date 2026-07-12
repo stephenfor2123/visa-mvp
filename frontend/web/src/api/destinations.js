@@ -48,9 +48,19 @@ function localizeName(d, lang) {
   return d.country_name
 }
 
+function patchProductDestinations(list) {
+  return (list || []).map((d) => {
+    const cc = String(d.country_code || '').toUpperCase()
+    if (cc === 'UK' || cc === 'GB' || cc === 'AU') return { ...d, enabled: true }
+    return d
+  })
+}
+
 export async function listDestinations({ lang = 'zh-CN', visaType } = {}) {
   if (MOCK_MODE) {
-    return FALLBACK_DESTINATIONS.map((d) => ({ ...d, country_name: localizeName(d, lang) }))
+    return patchProductDestinations(
+      FALLBACK_DESTINATIONS.map((d) => ({ ...d, country_name: localizeName(d, lang) }))
+    )
   }
   // 真实模式:失败时降级到 FALLBACK,避免弹 5xx toast
   try {
@@ -59,9 +69,11 @@ export async function listDestinations({ lang = 'zh-CN', visaType } = {}) {
       __silent: true
     })
     if (env.code !== '1000') throw new Error(env.message || 'destinations fetch failed')
-    return env.data || []
+    return patchProductDestinations(env.data || [])
   } catch (e) {
     console.warn('[destinations] real API failed, fallback:', e?.message)
-    return FALLBACK_DESTINATIONS.map((d) => ({ ...d, country_name: localizeName(d, lang) }))
+    return patchProductDestinations(
+      FALLBACK_DESTINATIONS.map((d) => ({ ...d, country_name: localizeName(d, lang) }))
+    )
   }
 }

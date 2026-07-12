@@ -21,6 +21,7 @@ class TestRegister:
                 "username": "testalice1",
                 "email": "alice1@htex.test",
                 "password": "abc12345",
+                "email_code": "123456",
                 "nickname": "Alice",
             },
         )
@@ -42,6 +43,7 @@ class TestRegister:
             "username": "testbob2a",
             "email": "bob2@htex.test",
             "password": "abc12345",
+            "email_code": "123456",
         }
         r1 = await client.post("/api/v2/auth/register", json=body)
         assert r1.status_code == 201
@@ -59,6 +61,7 @@ class TestRegister:
             "username": "testcharlie3",
             "email": "charlie3a@htex.test",
             "password": "abc12345",
+            "email_code": "123456",
         }
         r1 = await client.post("/api/v2/auth/register", json=body)
         assert r1.status_code == 201
@@ -78,6 +81,7 @@ class TestRegister:
                 "username": "testdave4",
                 "email": "dave4@htex.test",
                 "password": "abcdefgh",  # no digit → weak
+                "email_code": "123456",
             },
         )
         assert r.status_code == 422
@@ -90,6 +94,7 @@ class TestRegister:
                 "username": "testeve5",
                 "email": "eve5@htex.test",
                 "password": "ab1",  # too short
+                "email_code": "123456",
             },
         )
         assert r.status_code == 400  # Pydantic min_length triggers 1001
@@ -102,6 +107,7 @@ class TestRegister:
                 "username": "testfrank6",
                 "email": "not-an-email",
                 "password": "abc12345",
+                "email_code": "123456",
             },
         )
         assert r.status_code == 400
@@ -123,8 +129,8 @@ class TestLogin:
     async def test_happy(self, client):
         await client.post(
             "/api/v2/auth/register",
-            json={"username": "loginuser1", "email": "loginuser1@htex.test", "password": "abc12345"},
-        )
+            json={"username": "loginuser1", "email": "loginuser1@htex.test", "password": "abc12345", "email_code": "123456"},
+    )
         r = await client.post(
             "/api/v2/auth/login",
             json={"account": "loginuser1", "password": "abc12345"},
@@ -137,8 +143,8 @@ class TestLogin:
     async def test_login_by_email(self, client):
         await client.post(
             "/api/v2/auth/register",
-            json={"username": "loginuser2", "email": "loginuser2@htex.test", "password": "abc12345"},
-        )
+            json={"username": "loginuser2", "email": "loginuser2@htex.test", "password": "abc12345", "email_code": "123456"},
+    )
         r = await client.post(
             "/api/v2/auth/login",
             json={"account": "loginuser2@htex.test", "password": "abc12345"},
@@ -149,8 +155,8 @@ class TestLogin:
     async def test_wrong_password_2001(self, client):
         await client.post(
             "/api/v2/auth/register",
-            json={"username": "loginuser3", "email": "loginuser3@htex.test", "password": "abc12345"},
-        )
+            json={"username": "loginuser3", "email": "loginuser3@htex.test", "password": "abc12345", "email_code": "123456"},
+    )
         r = await client.post(
             "/api/v2/auth/login",
             json={"account": "loginuser3", "password": "wrongpassword1"},
@@ -173,8 +179,8 @@ class TestLogin:
 
         await client.post(
             "/api/v2/auth/register",
-            json={"username": "loginuser4", "email": "loginuser4@htex.test", "password": "abc12345"},
-        )
+            json={"username": "loginuser4", "email": "loginuser4@htex.test", "password": "abc12345", "email_code": "123456"},
+    )
         async with AsyncSessionLocal() as session:
             user = await session.scalar(
                 select(User).where(User.email == "loginuser4@htex.test")
@@ -201,6 +207,7 @@ class TestRefresh:
                 "username": username,
                 "email": f"{username}@htex.test",
                 "password": "abc12345",
+                "email_code": "123456",
             },
         )
         assert r.status_code == 201, r.text
@@ -233,6 +240,7 @@ class TestRefresh:
                 "username": "refreshuser2",
                 "email": "refreshuser2@htex.test",
                 "password": "abc12345",
+                "email_code": "123456",
             },
         )
         assert reg.status_code == 201, reg.text
@@ -270,6 +278,7 @@ class TestServiceLayerExtras:
                 "username": "audituser1",
                 "email": "audituser1@htex.test",
                 "password": "abc12345",
+                "email_code": "123456",
             },
         )
         from app.core.db import AsyncSessionLocal
@@ -293,6 +302,7 @@ class TestServiceLayerExtras:
                 "username": "audituser2",
                 "email": "audituser2@htex.test",
                 "password": "abc12345",
+                "email_code": "123456",
             },
         )
         r = await client.post(
@@ -316,6 +326,7 @@ class TestServiceLayerExtras:
                 "username": "audituser4",
                 "email": "audituser4@htex.test",
                 "password": "abc12345",
+                "email_code": "123456",
                 "language_pref": "en",
             },
         )
@@ -329,6 +340,7 @@ class TestServiceLayerExtras:
                 "username": "audituser5",
                 "email": "audituser5@htex.test",
                 "password": "abc12345",
+                "email_code": "123456",
             },
         )
         assert r.status_code == 201
@@ -342,6 +354,7 @@ class TestServiceLayerExtras:
                 "username": "audituser6",
                 "email": "audituser6@htex.test",
                 "password": "abc12345",
+                "email_code": "123456",
             },
         )
         assert reg.status_code == 201, reg.text
@@ -368,6 +381,7 @@ class TestServiceLayerExtras:
                 "username": "audituser7",
                 "email": "audituser7@htex.test",
                 "password": "abc12345",
+                "email_code": "123456",
             },
             headers={
                 "User-Agent": "visa-mvp-test/1.0",

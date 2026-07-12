@@ -487,6 +487,21 @@ class AdminService:
     # ------------------------------------------------------------------ #
     # Order management                                                      #
     # ------------------------------------------------------------------ #
+    @staticmethod
+    def _order_attention_hint(order: Order) -> Optional[str]:
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        if order.status == "created" and order.locked_until and order.locked_until <= now + timedelta(minutes=15):
+            return "payment_expiring_soon"
+        if order.status == "paid" and not order.diagnosis_completed_at:
+            return "paid_awaiting_diagnosis"
+        if order.status == "completed" and not order.portal_submitted_at:
+            return "completed_awaiting_portal"
+        if (order.refund_status or "none") == "pending":
+            return "refund_pending"
+        if order.refund_status == "failed":
+            return "refund_failed"
+        return None
+
     async def list_orders(
         self,
         page: int = 1,
@@ -612,6 +627,19 @@ class AdminService:
             "submitted_at": order.submitted_at,
             "reviewed_at": order.reviewed_at,
             "closed_at": order.closed_at,
+            "locked_until": order.locked_until,
+            "paid_at": order.paid_at,
+            "diagnosis_completed_at": order.diagnosis_completed_at,
+            "completed_at": order.completed_at,
+            "portal_submitted_at": order.portal_submitted_at,
+            "portal_submitted_source": order.portal_submitted_source,
+            "refund_status": order.refund_status or "none",
+            "refund_reason": order.refund_reason,
+            "refund_amount": float(order.refund_amount) if order.refund_amount is not None else None,
+            "refund_requested_at": order.refund_requested_at,
+            "refund_approved_at": order.refund_approved_at,
+            "refunded_at": order.refunded_at,
+            "attention_hint": self._order_attention_hint(order),
             "applicant_data": order.applicant_data,
             "material_ids": order.material_ids,
             "destination_url": order.destination_url,
@@ -693,6 +721,13 @@ class AdminService:
             order.closed_at = now
         elif new_status in ("approved", "rejected"):
             order.reviewed_at = now
+        elif new_status == "paid":
+            order.paid_at = order.paid_at or now
+        elif new_status == "completed":
+            order.completed_at = order.completed_at or now
+            order.diagnosis_completed_at = order.diagnosis_completed_at or now
+        elif new_status == "cancelled":
+            order.closed_at = order.closed_at or now
         # Status history (was missing for admin overrides — audit 5.0
         # would have caught this in retrospect).
         self.db.add(
@@ -728,6 +763,114 @@ class AdminService:
             "order_no": order.order_no,
             "status": order.status,
             "updated_at": order.updated_at,
+        }
+
+    async def update_order_refund(
+        self,
+        order_id: int,
+        action: str,
+        *,
+        admin_id: int = 0,
+        note: Optional[str] = None,
+    ) -> dict[str, Any]:
+        """Admin refund sub-track: approve | reject | complete | fail."""
+        from app.models.order import REFUND_STATUSES
+
+        order = await self.db.get(Order, order_id)
+        if order is None:
+            raise BizException(ErrorCode.ORDER_NOT_FOUND, message="Order not found")
+
+        valid_actions = {
+            "approve": ("pending", "approved"),
+            "reject": ("pending", "rejected"),
+            "complete": ("approved", "completed"),
+            "fail": ("approved", "failed"),
+        }
+        if action not in valid_actions:
+            raise BizException(ErrorCode.INVALID_PARAMS, message=f"action must be one of {list(valid_actions)}")
+
+        expected_from, new_status = valid_actions[action]
+        current = order.refund_status or "none"
+        if current != expected_from:
+            raise BizException(
+                ErrorCode.ORDER_INVALID_STATE,
+                message=f"Refund status must be '{expected_from}', got '{current}'",
+            )
+
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        if action == "complete":
+            from app.services.payment_provider import get_payment_provider
+
+            amount_cents = None
+            if order.refund_amount is not None:
+                amount_cents = int(float(order.refund_amount) * 100)
+            try:
+                await get_payment_provider().refund_order(
+                    self.db,
+                    order_no=order.order_no,
+                    amount_cents=amount_cents,
+                    reason=order.refund_reason,
+                )
+            except LookupError as exc:
+                raise BizException(
+                    ErrorCode.PAYMENT_NOT_FOUND,
+                    message=str(exc),
+                ) from exc
+            except ValueError as exc:
+                raise BizException(
+                    ErrorCode.PAYMENT_AMOUNT_INVALID,
+                    message=str(exc),
+                ) from exc
+            order.refunded_at = now
+
+        order.refund_status = new_status
+        if action == "approve":
+            order.refund_approved_at = now
+            order.refund_reviewed_by = admin_id or None
+        await record_audit(
+            self.db,
+            actor_type="admin",
+            actor_id=admin_id,
+            action=f"admin.order.refund.{action}",
+            target_type="order",
+            target_id=order_id,
+            payload={"order_no": order.order_no, "note": note, "refund_status": new_status},
+        )
+        await self.db.commit()
+        await self.db.refresh(order)
+        return {
+            "id": order.id,
+            "order_no": order.order_no,
+            "refund_status": order.refund_status,
+            "refunded_at": order.refunded_at,
+        }
+
+    async def mark_order_portal_submitted(
+        self, order_id: int, *, admin_id: int = 0,
+    ) -> dict[str, Any]:
+        order = await self.db.get(Order, order_id)
+        if order is None:
+            raise BizException(ErrorCode.ORDER_NOT_FOUND, message="Order not found")
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        if order.portal_submitted_at is None:
+            order.portal_submitted_at = now
+            order.portal_submitted_source = "admin"
+            order.ds160_portal_submitted_at = order.ds160_portal_submitted_at or now
+        await record_audit(
+            self.db,
+            actor_type="admin",
+            actor_id=admin_id,
+            action="admin.order.portal.submitted",
+            target_type="order",
+            target_id=order_id,
+            payload={"order_no": order.order_no},
+        )
+        await self.db.commit()
+        await self.db.refresh(order)
+        return {
+            "id": order.id,
+            "order_no": order.order_no,
+            "portal_submitted_at": order.portal_submitted_at,
         }
 
     # ------------------------------------------------------------------ #
@@ -1228,7 +1371,7 @@ class AdminService:
           - week_new_orders   : COUNT(*) WHERE created_at >= Monday 00:00 UTC
           - pending_orders    : COUNT(*) WHERE status IN ('created', 'submitted')
           - completed_orders  : COUNT(*) WHERE status IN ('approved', 'closed')
-          - payment_success_rate: orders with submitted_at NOT NULL / total orders
+          - payment_success_rate: orders with paid_at NOT NULL / total orders
           - generated_at      : UTC now
           - cached            : whether the response came from cache
         """
@@ -1268,8 +1411,8 @@ class AdminService:
         self, today_start: datetime, week_start: datetime
     ) -> dict[str, Any]:
         """Execute the five COUNT/SUM aggregate queries against the DB."""
-        pending_statuses = ("created", "submitted")
-        completed_statuses = ("approved", "closed")
+        pending_statuses = ("created", "paid", "submitted")
+        completed_statuses = ("completed", "approved", "closed")
 
         # today_new_orders
         q_today = select(func.count()).select_from(Order).where(
@@ -1295,11 +1438,11 @@ class AdminService:
         )
         completed = (await self.db.execute(q_completed)).scalar() or 0
 
-        # payment_success_rate: orders with submitted_at not null / total
+        # payment_success_rate: orders with paid_at not null / total
         q_total = select(func.count()).select_from(Order)
         total_orders = (await self.db.execute(q_total)).scalar() or 0
         q_paid = select(func.count()).select_from(Order).where(
-            Order.submitted_at.isnot(None)
+            Order.paid_at.isnot(None)
         )
         paid_orders = (await self.db.execute(q_paid)).scalar() or 0
 
@@ -1324,26 +1467,32 @@ class AdminService:
         page: int = 1,
         page_size: int = 20,
         status: Optional[str] = None,
+        refund_status: Optional[str] = None,
     ) -> dict[str, Any]:
         """资金流分页列表：扫描所有有 extra["payment"] 的订单。
 
-        仅返回有支付记录（extra 里含 payment blob）的订单，
-        按 created_at 倒序排列。
+        支持按支付状态 (extra.payment.status) 或退款副轨 (orders.refund_status) 筛选。
         """
-        # 扫描所有有 extra 的订单，解析 payment blob
         query = (
             select(Order)
             .where(Order.extra.isnot(None))
             .order_by(Order.created_at.desc())
         )
-        count_query = select(func.count()).select_from(query.subquery())
-        total = (await self.db.execute(count_query)).scalar() or 0
-
-        offset = (page - 1) * page_size
-        query = query.offset(offset).limit(page_size)
+        if refund_status:
+            query = query.where(Order.refund_status == refund_status)
         rows = (await self.db.execute(query)).scalars().all()
 
-        items = []
+        all_items: list[dict[str, Any]] = []
+        stats = {
+            "total_count": 0,
+            "total_amount_cents": 0,
+            "paid_count": 0,
+            "pending_count": 0,
+            "refund_pending_count": 0,
+            "refund_approved_count": 0,
+            "refund_completed_count": 0,
+            "refund_failed_count": 0,
+        }
         for order in rows:
             extra = {}
             try:
@@ -1351,21 +1500,48 @@ class AdminService:
             except Exception:
                 pass
             payment = extra.get("payment") or {}
-            # 过滤：status 参数
-            if status and payment.get("status") != status:
+            pay_status = payment.get("status") or "none"
+            rs = order.refund_status or "none"
+
+            if status and pay_status != status:
                 continue
-            items.append({
+
+            amount_cents = int(payment.get("amount_cents") or 0)
+            stats["total_count"] += 1
+            stats["total_amount_cents"] += amount_cents
+            if pay_status == "paid":
+                stats["paid_count"] += 1
+            if pay_status == "pending":
+                stats["pending_count"] += 1
+            if rs == "pending":
+                stats["refund_pending_count"] += 1
+            elif rs == "approved":
+                stats["refund_approved_count"] += 1
+            elif rs == "completed":
+                stats["refund_completed_count"] += 1
+            elif rs == "failed":
+                stats["refund_failed_count"] += 1
+
+            all_items.append({
                 "order_id": order.id,
                 "order_no": order.order_no,
                 "user_id": order.user_id,
                 "trade_no": payment.get("trade_no"),
-                "status": payment.get("status") or "none",
-                "amount_cents": payment.get("amount_cents") or 0,
+                "status": pay_status,
+                "order_status": order.status,
+                "refund_status": rs,
+                "refund_amount": float(order.refund_amount) if order.refund_amount is not None else None,
+                "amount_cents": amount_cents,
                 "currency": payment.get("currency") or "USD",
-                "paid_at": _parse_iso(payment.get("paid_at")),
+                "paid_at": _parse_iso(payment.get("paid_at")) or order.paid_at,
+                "refunded_at": order.refunded_at or _parse_iso(payment.get("refunded_at")),
                 "created_at": order.created_at,
                 "updated_at": order.updated_at,
             })
+
+        total = len(all_items)
+        offset = (page - 1) * page_size
+        items = all_items[offset:offset + page_size]
 
         return {
             "items": items,
@@ -1373,6 +1549,7 @@ class AdminService:
             "page_size": page_size,
             "total": total,
             "total_pages": math.ceil(total / page_size) if total > 0 else 0,
+            "stats": stats,
         }
 
     # ------------------------------------------------------------------ #

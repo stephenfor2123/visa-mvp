@@ -13,7 +13,5 @@ export const FEATURE_RPA = import.meta.env.VITE_FEATURE_RPA === 'true'
 export const FEATURE_INSURANCE = import.meta.env.VITE_FEATURE_INSURANCE === 'true'
 
 export function postPaymentRoute(orderNo) {
-  return FEATURE_RPA
-    ? { name: 'RpaSubmit', query: { orderNo } }
-    : { name: 'OrderDetail', params: { orderNo } }
+  return { name: 'OrderPrecheck', params: { orderNo } }
 }

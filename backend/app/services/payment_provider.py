@@ -332,13 +332,48 @@ class PaymentProvider:
         # Fix (agent2 2026-06-30): capture prev_status BEFORE mutation so the
         # history record is accurate; only write a row when status actually changed.
         prev_status = order.status
-        if prev_status in ("created", "pending"):
-            order.status = "submitted"
-            if order.submitted_at is None:
-                order.submitted_at = paid_at
+        if prev_status == "created":
+            # Honour 1h payment lock — late callbacks need manual refund.
+            lock_deadline = order.locked_until
+            if lock_deadline and paid_at > lock_deadline:
+                order.status = "cancelled"
+                order.closed_at = paid_at
+                self.db_add_status_history(
+                    db,
+                    order_id=order.id,
+                    from_status=prev_status,
+                    to_status="cancelled",
+                    source="payment",
+                    note="payment received after lock expired — needs manual refund",
+                )
+                await db.commit()
+                _log.warning(
+                    "handle_notify: late payment after lock order_no={} locked_until={}",
+                    order_no,
+                    lock_deadline,
+                )
+                return False
+            order.status = "paid"
+            order.paid_at = paid_at
+        elif prev_status == "cancelled":
+            _log.warning(
+                "handle_notify: order already cancelled order_no={}", order_no,
+            )
+            return False
+        elif prev_status in ("paid", "completed"):
+            pass  # idempotent replay — payment blob already marked paid above
+        elif prev_status in ("submitted", "reviewing", "approved"):
+            # Legacy rows: keep status, still record payment in extra blob
+            if order.paid_at is None:
+                order.paid_at = paid_at
+        else:
+            _log.warning(
+                "handle_notify: order_no={} status={} not eligible for payment",
+                order_no,
+                prev_status,
+            )
+            return False
 
-        # Write status-history AFTER the mutation (from=prev, to=curr).
-        # Only write a row if something actually changed (idempotency / dedup).
         new_status = order.status
         if prev_status != new_status:
             self.db_add_status_history(
@@ -444,6 +479,100 @@ class PaymentProvider:
             order_no=order_no,
             trade_no=blob.get("trade_no"),
             status="closed",
+            paid_at=_parse_iso(blob.get("paid_at")),
+            amount_cents=int(blob.get("amount_cents") or 0),
+            currency=blob.get("currency") or "USD",
+            raw=blob,
+        )
+
+    # ------------------------------------------------------------------ #
+    # refund_order                                                       #
+    # ------------------------------------------------------------------ #
+    async def refund_order(
+        self,
+        db: AsyncSession,
+        *,
+        order_no: str,
+        amount_cents: Optional[int] = None,
+        reason: Optional[str] = None,
+    ) -> OrderPaymentStatus:
+        """Refund a paid order — mock channel flips `paid → refunded`.
+
+        Persists refund metadata on `orders.extra["payment"]` and writes
+        `payment.refund` audit. Real Stripe refund lives in StripePaymentProvider.
+        """
+        order = await self._load_order(db, order_no)
+        extra = self._load_extra(order)
+        blob = extra.get("payment")
+        if not blob:
+            raise LookupError(f"no payment record for order_no={order_no}")
+        pay_status = blob.get("status")
+        if pay_status == "refunded":
+            _log.info("payment refund skipped (already refunded) order_no={}", order_no)
+            return OrderPaymentStatus(
+                order_no=order_no,
+                trade_no=blob.get("trade_no"),
+                status="refunded",
+                paid_at=_parse_iso(blob.get("paid_at")),
+                amount_cents=int(blob.get("amount_cents") or 0),
+                currency=blob.get("currency") or "USD",
+                raw=blob,
+            )
+        if pay_status != "paid":
+            raise ValueError(
+                f"order_no={order_no} payment status is {pay_status!r}; cannot refund"
+            )
+
+        refund_cents = int(amount_cents or blob.get("amount_cents") or 0)
+        if refund_cents <= 0:
+            raise ValueError(f"refund amount must be positive for order_no={order_no}")
+
+        refund_trade_no = "REFUND" + secrets.token_hex(8).upper()
+        refunded_at = _utcnow()
+        blob["status"] = "refunded"
+        blob["refunded_at"] = refunded_at.isoformat()
+        blob["refund_amount_cents"] = refund_cents
+        blob["refund_trade_no"] = refund_trade_no
+        if reason:
+            blob["refund_reason"] = reason[:500]
+        extra["payment"] = blob
+        order.extra = json.dumps(extra, ensure_ascii=False)
+
+        self.db_add_status_history(
+            db,
+            order_id=order.id,
+            from_status=order.status,
+            to_status=order.status,
+            source="payment",
+            note=f"payment: refunded trade_no={blob.get('trade_no')} refund={refund_trade_no}",
+        )
+        await record_audit(
+            db,
+            actor_type="system",
+            actor_id=0,
+            action="payment.refund",
+            target_type="order",
+            target_id=order.id,
+            payload={
+                "order_no": order_no,
+                "trade_no": blob.get("trade_no"),
+                "refund_trade_no": refund_trade_no,
+                "refund_amount_cents": refund_cents,
+            },
+        )
+        await db.commit()
+        await db.refresh(order)
+        _log.info(
+            "payment refunded order_no={} refund_trade_no={} cents={}",
+            order_no,
+            refund_trade_no,
+            refund_cents,
+        )
+
+        return OrderPaymentStatus(
+            order_no=order_no,
+            trade_no=blob.get("trade_no"),
+            status="refunded",
             paid_at=_parse_iso(blob.get("paid_at")),
             amount_cents=int(blob.get("amount_cents") or 0),
             currency=blob.get("currency") or "USD",

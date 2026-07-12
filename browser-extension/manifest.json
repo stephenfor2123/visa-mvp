@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Htex — DS-160 辅助填充",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "description": "把 Htex 订单的 12 位 code 兑换成档案，自动辅助填入 DS-160 官网。数据只在你本地，不经服务器。",
   "permissions": ["storage", "scripting", "activeTab"],
   "host_permissions": [

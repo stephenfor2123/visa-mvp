@@ -123,6 +123,22 @@ class OrderOut(BaseModel):
     submitted_at: Optional[datetime]
     reviewed_at: Optional[datetime]
     closed_at: Optional[datetime]
+    ds160_portal_submitted_at: Optional[datetime] = Field(
+        default=None,
+        description="US: DS-160 portal submit milestone (alias of portal_submitted_at)",
+    )
+    locked_until: Optional[datetime] = None
+    paid_at: Optional[datetime] = None
+    diagnosis_completed_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    portal_submitted_at: Optional[datetime] = None
+    portal_submitted_source: Optional[str] = None
+    refund_status: str = "none"
+    refund_reason: Optional[str] = None
+    refund_amount: Optional[Decimal] = None
+    refund_requested_at: Optional[datetime] = None
+    refund_approved_at: Optional[datetime] = None
+    refunded_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
 
@@ -214,3 +230,36 @@ class SubmitOrderResponse(BaseModel):
     status: str
     submitted_at: datetime
     rpa_task_id: str
+
+
+class DiagnosisCompleteResponse(BaseModel):
+    order_no: str
+    status: str
+    diagnosis_completed_at: datetime
+    completed_at: datetime
+
+
+class PortalSubmittedResponse(BaseModel):
+    order_no: str
+    portal_submitted_at: datetime
+    portal_submitted_source: str
+    unchanged: bool = False
+
+
+class RefundRequestBody(BaseModel):
+    reason: str = Field(..., min_length=1, max_length=2000)
+    amount: Optional[Decimal] = Field(default=None, ge=0)
+
+
+class RefundRequestResponse(BaseModel):
+    order_no: str
+    refund_status: str
+    refund_requested_at: datetime
+
+
+class OrderAttentionCounts(BaseModel):
+    payment_expiring_soon: int = 0
+    paid_awaiting_diagnosis: int = 0
+    completed_awaiting_portal: int = 0
+    refund_pending: int = 0
+    refund_failed: int = 0

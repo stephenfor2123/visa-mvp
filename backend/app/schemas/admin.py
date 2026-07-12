@@ -596,12 +596,27 @@ class PaymentFlowOut(BaseModel):
     order_no: str
     user_id: int
     trade_no: Optional[str] = Field(None, description="支付流水号")
-    status: str = Field("none", description="none | pending | paid | closed | failed")
+    status: str = Field("none", description="none | pending | paid | closed | failed | refunded")
+    order_status: str = Field("created", description="订单主状态")
+    refund_status: str = Field("none", description="退款副轨状态")
+    refund_amount: Optional[float] = Field(None, description="退款金额")
     amount_cents: int = Field(0, description="支付金额（分）")
     currency: str = Field("USD", description="币种")
     paid_at: Optional[datetime] = Field(None, description="支付成功时间")
+    refunded_at: Optional[datetime] = Field(None, description="退款完成时间")
     created_at: datetime = Field(..., description="订单创建时间")
     updated_at: datetime = Field(..., description="最后更新时间")
+
+
+class PaymentFlowStats(BaseModel):
+    total_count: int = 0
+    total_amount_cents: int = 0
+    paid_count: int = 0
+    pending_count: int = 0
+    refund_pending_count: int = 0
+    refund_approved_count: int = 0
+    refund_completed_count: int = 0
+    refund_failed_count: int = 0
 
 
 class PaginatedPaymentList(BaseModel):
@@ -610,6 +625,7 @@ class PaginatedPaymentList(BaseModel):
     page_size: int
     total: int
     total_pages: int
+    stats: Optional[PaymentFlowStats] = None
 
 
 # --------------------------------------------------------------------------- #

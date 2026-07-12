@@ -2,7 +2,8 @@
 /api/v2/auth/* — register, login, refresh, reset-password, Google/WeChat OAuth.
 
 5 endpoints (V2 §4.1):
-  - POST /api/v2/auth/register            (email + username + password)
+  - POST /api/v2/auth/register            (email + username + password + email_code)
+  - POST /api/v2/auth/send-email-code     (send registration verification code)
   - POST /api/v2/auth/login               (account + password)
   - POST /api/v2/auth/refresh
   - POST /api/v2/auth/reset-password      (token from email + new password)
@@ -26,12 +27,14 @@ from app.schemas.auth import (
     RefreshRequest,
     RegisterRequest,
     ResetPasswordRequest,
+    SendEmailCodeRequest,
     TokenPair,
     WechatAuthRequest,
 )
 from app.schemas.common import ApiResponse
 from app.core.metrics import timed
 from app.services.auth_service import AuthService
+from app.services.email_verification_service import EmailVerificationService
 
 
 router = APIRouter()
@@ -77,6 +80,7 @@ async def register(
         username=body.username,
         email=body.email,
         password=body.password,
+        email_code=body.email_code,
         nickname=body.nickname,
         language_pref=body.language_pref,
         info=info,
@@ -91,6 +95,23 @@ async def register(
         },
     )
     return ApiResponse[TokenPair](code="1000", message="OK", data=TokenPair(**result))
+
+
+@router.post(
+    "/send-email-code",
+    response_model=ApiResponse[dict],
+    summary="Send email verification code (outbox mode: returns raw code in response)",
+)
+@timed
+async def send_email_code(
+    body: SendEmailCodeRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> ApiResponse[dict]:
+    service = EmailVerificationService(db)
+    payload = await service.send_code(
+        email=body.email, purpose=body.purpose, language_pref=body.language_pref or "en"
+    )
+    return ApiResponse[dict](code="1000", message="OK", data=payload)
 
 
 @router.post(

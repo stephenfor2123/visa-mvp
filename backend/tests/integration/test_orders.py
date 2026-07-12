@@ -40,7 +40,7 @@ async def _register(client, phone: str) -> str:
     pwd = "Test1234"
     await client.post(
         "/api/v2/auth/register",
-        json={"username": uname, "email": email, "password": pwd},
+        json={"username": uname, "email": email, "password": pwd, "email_code": "123456"},
     )
     r = await client.post(
         "/api/v2/auth/login",
@@ -359,7 +359,7 @@ class TestCancelOrder:
         assert rc.status_code == 200, rc.text
         body = rc.json()["data"]
         assert body["order_no"] == order_no
-        assert body["status"] == "closed"
+        assert body["status"] == "cancelled"
 
         # detail now shows 2 history rows
         rd = await client.get(
@@ -369,7 +369,7 @@ class TestCancelOrder:
         assert len(hist) == 2
         assert hist[0]["to_status"] == "created"
         assert hist[1]["from_status"] == "created"
-        assert hist[1]["to_status"] == "closed"
+        assert hist[1]["to_status"] == "cancelled"
         assert hist[1]["source"] == "user"
 
     async def test_cancel_twice_409(self, client):

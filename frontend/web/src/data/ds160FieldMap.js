@@ -12,6 +12,9 @@
 //      插件端在构建时编译成函数(compileWhenToFn)。
 //   4. 可选字段用 `optional` —— 空值时提示"勾 Does Not Apply"，不算缺失。
 //   5. 必填字段值缺失时，生成器标"待补"，绝不瞎填。
+//   6. 门户语言: DS-160 官网是英文 — label/valueMap 的值必须是 ceac 下拉里的英文文案;
+//      Htex App 的 i18n(中/越/印尼)只用于 UI 提示(note)，绝不直接写入官网表单。
+//      select/radio 若 valueMap 无法解析档案值 → 标待补,不 pass-through 原始文本。
 //
 // ⚠️ v0 草稿:下面的字段标签/下拉值是按公开 DS-160 结构整理的**初稿**，
 //    正式启用前必须对着 ceac.state.gov 真表逐条核对一遍(这正是签证工具
@@ -374,6 +377,24 @@ function _resolveValueMap(raw, valueMap) {
   return raw
 }
 
+/** select/radio 的 valueMap 是否成功解析为官网枚举(防 i18n/脏值 pass-through) */
+function _isPortalEnumResolved(raw, valueMap) {
+  if (!valueMap || _isEmpty(raw)) return true
+  if (valueMap[raw] !== undefined) return true
+  if (valueMap[String(raw)] !== undefined) return true
+  const coerced = _coerceBoolForValueMap(raw)
+  if (coerced !== raw && valueMap[coerced] !== undefined) return true
+  const up = String(raw).trim().toUpperCase()
+  for (const v of Object.values(valueMap)) {
+    if (String(v).toUpperCase() === up) return true
+  }
+  for (const v of Object.values(valueMap)) {
+    const vu = String(v).toUpperCase()
+    if (vu.includes(up) || up.includes(vu)) return true
+  }
+  return false
+}
+
 function _toDs160Date(raw) {
   const m = String(raw).trim().match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/)
   if (!m) return String(raw)
@@ -389,6 +410,12 @@ function _resolveField(f, profile) {
     return { label: f.label, profile: f.profile, input: f.input, action: 'todo', value: null, missing: true, optional: false, note: f.note }
   }
   let value = _resolveValueMap(raw, f.valueMap)
+  if (f.valueMap && (f.input === 'select' || f.input === 'radio') && !_isPortalEnumResolved(raw, f.valueMap)) {
+    return {
+      label: f.label, profile: f.profile, input: f.input, action: 'todo', value: null,
+      missing: true, optional: false, note: f.note,
+    }
+  }
   if (f.transform === 'upper') value = String(value).toUpperCase()
   else if (f.transform === 'date') value = _toDs160Date(value)
   return { label: f.label, profile: f.profile, input: f.input, action: 'fill', value, missing: false, optional: !!f.optional, note: f.note }

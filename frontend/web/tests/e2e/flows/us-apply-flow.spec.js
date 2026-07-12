@@ -27,7 +27,7 @@ async function postWithRetry(request, url, data, maxRetries = 5) {
   let lastRes
   for (let i = 0; i < maxRetries; i++) {
     lastRes = await request.post(url, { data })
-    if (lastRes.status() < 400) return lastRes
+    if (lastRes.status() < 500) return lastRes
     await new Promise((r) => setTimeout(r, 500 + i * 800))
   }
   return lastRes

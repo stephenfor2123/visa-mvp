@@ -1,0 +1,229 @@
+<!--
+  HTEX — All transactional email previews
+  Open: frontend/web/preview/email-templates.html
+
+  Scenarios: register code · forgot password · password changed · email change · welcome
+  Backend source: backend/app/email_templates/
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HTEX Email Templates — Preview</title>
+  <style>
+    :root { --toolbar: #0F172A; --accent: #3B6EF5; --bg: #CBD5E1; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif; background: var(--bg); }
+    .toolbar {
+      position: sticky; top: 0; z-index: 20;
+      padding: 12px 20px; background: var(--toolbar); color: #F8FAFC;
+      box-shadow: 0 2px 8px rgba(15,23,42,.2);
+    }
+    .toolbar h1 { margin: 0; font-size: 14px; font-weight: 600; }
+    .toolbar p { margin: 4px 0 0; font-size: 11px; opacity: .75; }
+    .toolbar__row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 10px; }
+    .group-label { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; opacity: .6; margin-right: 4px; }
+    .btn {
+      border: 1px solid rgba(255,255,255,.2); background: transparent; color: #fff;
+      padding: 6px 12px; border-radius: 8px; font-size: 12px; cursor: pointer;
+    }
+    .btn.is-active { background: var(--accent); border-color: var(--accent); }
+    .preview-wrap { padding: 20px 16px 48px; }
+    .subject-bar {
+      max-width: 600px; margin: 0 auto 12px; padding: 12px 16px;
+      background: #fff; border: 1px solid #94A3B8; border-radius: 8px; font-size: 13px; color: #334155;
+    }
+    .device-label { text-align: center; font-size: 11px; color: #64748B; margin-bottom: 12px; letter-spacing: .06em; text-transform: uppercase; }
+    #email-root { max-width: 600px; margin: 0 auto; }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <h1>HTEX Transactional Emails</h1>
+    <p>Switch scenario + locale · matches backend/app/email_templates/</p>
+    <div class="toolbar__row">
+      <span class="group-label">Scenario</span>
+      <div id="scenario-buttons"></div>
+    </div>
+    <div class="toolbar__row">
+      <span class="group-label">Locale</span>
+      <div id="lang-buttons"></div>
+    </div>
+  </div>
+  <div class="preview-wrap">
+    <div class="subject-bar" id="subject-bar"></div>
+    <div class="device-label" id="scenario-label"></div>
+    <div id="email-root"></div>
+  </div>
+
+  <script>
+    const SAMPLE = {
+      nickname: 'Stephen',
+      code: '123456',
+      resetUrl: 'https://htexvisa.com/forgot-password?token=sample-token',
+      confirmUrl: 'https://htexvisa.com/profile/email/verify?token=sample-token',
+      loginUrl: 'https://htexvisa.com/login',
+      newEmail: 'new.address@example.com',
+    }
+
+    const TAGLINE = {
+      en: 'HTEX · Visa made clear',
+      'zh-CN': 'HTEX · 让签证办理更清晰',
+      vi: 'HTEX · Visa rõ ràng hơn',
+      id: 'HTEX · Visa lebih jelas',
+    }
+    const FOOTER = {
+      en: 'This is an automated message. Please do not reply.',
+      'zh-CN': '本邮件由系统自动发送，请勿直接回复。',
+      vi: 'Đây là email tự động, vui lòng không trả lời.',
+      id: 'Email ini dibuat otomatis, mohon tidak dibalas.',
+    }
+
+    const SCENARIOS = {
+      verification: {
+        label: '1 · Register code',
+        locales: {
+          en: { subject: 'Your HTEX verification code', preheader: 'Use this code to finish signing up. Expires in 10 minutes.', title: 'Welcome to HTEX', intro: "You're almost there. Enter this verification code to complete your registration:", expiry: 'This code expires in 10 minutes.', security: "If you didn't request this email, you can safely ignore it." },
+          'zh-CN': { subject: '你的 HTEX 验证码', preheader: '使用此验证码完成注册，10 分钟内有效。', title: '欢迎加入 HTEX', intro: '还差一步即可完成注册，请输入以下验证码：', expiry: '验证码 10 分钟内有效。', security: '如非本人操作，请忽略此邮件。' },
+          vi: { subject: 'Mã xác minh HTEX của bạn', preheader: 'Dùng mã này để hoàn tất đăng ký. Hết hạn sau 10 phút.', title: 'Chào mừng đến với HTEX', intro: 'Bạn sắp hoàn tất. Nhập mã xác minh sau để đăng ký:', expiry: 'Mã này hết hạn sau 10 phút.', security: 'Nếu bạn không yêu cầu email này, hãy bỏ qua.' },
+          id: { subject: 'Kode verifikasi HTEX Anda', preheader: 'Gunakan kode ini untuk menyelesaikan pendaftaran. Berlaku 10 menit.', title: 'Selamat datang di HTEX', intro: 'Hampir selesai. Masukkan kode verifikasi berikut untuk mendaftar:', expiry: 'Kode ini kedaluwarsa dalam 10 menit.', security: 'Jika Anda tidak meminta email ini, abaikan saja.' },
+        },
+      },
+      password_reset: {
+        label: '2 · Forgot password',
+        locales: {
+          en: { subject: 'Reset your HTEX password', preheader: 'Reset your password. This link expires in 30 minutes.', title: 'Reset your password', greeting: 'Hi {nickname},', intro: 'We received a request to reset the password on your HTEX account. Click the button below to set a new password:', cta: 'Reset password', expiry: 'This link expires in 30 minutes.', security: "If you didn't request a password reset, you can safely ignore this email. Your password will stay the same.", link_label: 'Or copy this link into your browser:' },
+          'zh-CN': { subject: '重置你的 HTEX 密码', preheader: '点击链接重置密码，30 分钟内有效。', title: '重置密码', greeting: '{nickname} 你好，', intro: '我们收到了重置你 HTEX 账号密码的请求。请点击下方按钮设置新密码：', cta: '重置密码', expiry: '该链接 30 分钟内有效。', security: '如非本人操作，请忽略此邮件，你的密码将保持不变。', link_label: '或复制以下链接到浏览器打开：' },
+          vi: { subject: 'Đặt lại mật khẩu HTEX', preheader: 'Đặt lại mật khẩu. Liên kết hết hạn sau 30 phút.', title: 'Đặt lại mật khẩu', greeting: 'Xin chào {nickname},', intro: 'Chúng tôi nhận được yêu cầu đặt lại mật khẩu tài khoản HTEX của bạn. Nhấp nút bên dưới:', cta: 'Đặt lại mật khẩu', expiry: 'Liên kết hết hạn sau 30 phút.', security: 'Nếu bạn không yêu cầu, hãy bỏ qua email này. Mật khẩu của bạn sẽ không thay đổi.', link_label: 'Hoặc sao chép liên kết sau vào trình duyệt:' },
+          id: { subject: 'Atur ulang kata sandi HTEX', preheader: 'Atur ulang kata sandi. Tautan berlaku 30 menit.', title: 'Atur ulang kata sandi', greeting: 'Halo {nickname},', intro: 'Kami menerima permintaan untuk mengatur ulang kata sandi akun HTEX Anda. Klik tombol di bawah:', cta: 'Atur ulang kata sandi', expiry: 'Tautan kedaluwarsa dalam 30 menit.', security: 'Jika bukan Anda yang meminta, abaikan email ini. Kata sandi Anda tidak akan berubah.', link_label: 'Atau salin tautan berikut ke browser:' },
+        },
+      },
+      password_changed: {
+        label: '3 · Password changed',
+        locales: {
+          en: { subject: 'Your HTEX password was updated', preheader: 'Your account password was changed successfully.', title: 'Password updated', greeting: 'Hi {nickname},', banner: 'Your password has been changed successfully.', intro: 'This is a confirmation that the password on your HTEX account was just updated. All other active sessions have been signed out for your security.', cta: 'Sign in again', security: 'If you did not make this change, reset your password immediately and contact support.' },
+          'zh-CN': { subject: '你的 HTEX 密码已更新', preheader: '你的账号密码已成功修改。', title: '密码已更新', greeting: '{nickname} 你好，', banner: '你的密码已成功修改。', intro: '此邮件用于确认你的 HTEX 账号密码刚刚已更新。为保障安全，其他已登录的设备/session 已自动退出。', cta: '重新登录', security: '如非本人操作，请立即重置密码并联系客服。' },
+          vi: { subject: 'Mật khẩu HTEX của bạn đã được cập nhật', preheader: 'Mật khẩu tài khoản đã được thay đổi thành công.', title: 'Mật khẩu đã cập nhật', greeting: 'Xin chào {nickname},', banner: 'Mật khẩu của bạn đã được thay đổi thành công.', intro: 'Email này xác nhận mật khẩu tài khoản HTEX vừa được cập nhật. Các phiên đăng nhập khác đã được đăng xuất để bảo mật.', cta: 'Đăng nhập lại', security: 'Nếu không phải bạn, hãy đặt lại mật khẩu ngay và liên hệ hỗ trợ.' },
+          id: { subject: 'Kata sandi HTEX Anda telah diperbarui', preheader: 'Kata sandi akun berhasil diubah.', title: 'Kata sandi diperbarui', greeting: 'Halo {nickname},', banner: 'Kata sandi Anda berhasil diubah.', intro: 'Email ini mengonfirmasi kata sandi akun HTEX Anda baru saja diperbarui. Sesi aktif lainnya telah keluar demi keamanan.', cta: 'Masuk kembali', security: 'Jika bukan Anda, segera atur ulang kata sandi dan hubungi dukungan.' },
+        },
+      },
+      email_change: {
+        label: '4 · Change email',
+        locales: {
+          en: { subject: 'Confirm your new HTEX email', preheader: 'Confirm your new email address. Link expires in 30 minutes.', title: 'Confirm new email', greeting: 'Hi {nickname},', intro: 'You requested to change the email on your HTEX account to:', cta: 'Confirm new email', expiry: 'This link expires in 30 minutes.', security: "If you didn't request this change, ignore this email and your account email will stay the same.", link_label: 'Or copy this link into your browser:' },
+          'zh-CN': { subject: '确认你的新 HTEX 邮箱', preheader: '确认新邮箱地址，链接 30 分钟内有效。', title: '确认新邮箱', greeting: '{nickname} 你好，', intro: '你申请将 HTEX 账号邮箱更换为：', cta: '确认新邮箱', expiry: '该链接 30 分钟内有效。', security: '如非本人操作，请忽略此邮件，你的账号邮箱将保持不变。', link_label: '或复制以下链接到浏览器打开：' },
+          vi: { subject: 'Xác nhận email HTEX mới', preheader: 'Xác nhận email mới. Liên kết hết hạn sau 30 phút.', title: 'Xác nhận email mới', greeting: 'Xin chào {nickname},', intro: 'Bạn yêu cầu đổi email tài khoản HTEX thành:', cta: 'Xác nhận email mới', expiry: 'Liên kết hết hạn sau 30 phút.', security: 'Nếu không phải bạn, hãy bỏ qua email này.', link_label: 'Hoặc sao chép liên kết sau:' },
+          id: { subject: 'Konfirmasi email HTEX baru', preheader: 'Konfirmasi email baru. Tautan berlaku 30 menit.', title: 'Konfirmasi email baru', greeting: 'Halo {nickname},', intro: 'Anda meminta mengubah email akun HTEX menjadi:', cta: 'Konfirmasi email baru', expiry: 'Tautan kedaluwarsa dalam 30 menit.', security: 'Jika bukan Anda, abaikan email ini.', link_label: 'Atau salin tautan berikut:' },
+        },
+      },
+      welcome: {
+        label: '5 · Welcome',
+        locales: {
+          en: { subject: 'Welcome to HTEX', preheader: 'Your account is ready. Start your visa application in 3 steps.', title: 'Welcome to HTEX', greeting: 'Hi {nickname},', intro: 'Thanks for signing up. From today on, visa applications become clear and easier to track.', steps: [['Your checklist', 'Pick destination — we build your list.'], ['Snap & pre-check', 'OCR upload, catch gaps early.'], ['Submit faster', 'Forms + translation, less hassle.']], cta: 'Get started' },
+          'zh-CN': { subject: '欢迎加入 HTEX', preheader: '账号已就绪，3 步开始你的签证办理。', title: '欢迎加入 HTEX', greeting: '{nickname} 你好，', intro: '感谢你注册 HTEX。让签证办理更清晰、可追踪。', steps: [['专属清单', '选目的地，即时出清单'], ['拍照预审', '上传识别，查缺漏风险'], ['跨语提交', '填表翻译，更快更简单']], cta: '立即开始' },
+          vi: { subject: 'Chào mừng đến với HTEX', preheader: 'Tài khoản đã sẵn sàng. Bắt đầu hồ sơ visa trong 3 bước.', title: 'Chào mừng đến với HTEX', greeting: 'Xin chào {nickname},', intro: 'Cảm ơn bạn đã đăng ký. Hồ sơ visa rõ ràng và dễ theo dõi hơn.', steps: [['Danh sách riêng', 'Chọn điểm đến, tạo list ngay.'], ['Chụp & kiểm tra', 'OCR tải lên, phát hiện lỗi.'], ['Nộp nhanh', 'Điền form + dịch, đơn giản.']], cta: 'Bắt đầu ngay' },
+          id: { subject: 'Selamat datang di HTEX', preheader: 'Akun siap. Mulai visa Anda dalam 3 langkah.', title: 'Selamat datang di HTEX', greeting: 'Halo {nickname},', intro: 'Terima kasih telah mendaftar. Pengajuan visa jadi lebih jelas dan terlacak.', steps: [['Daftar khusus', 'Pilih tujuan, buat list.'], ['Foto & cek', 'OCR unggah, deteksi celah.'], ['Ajukan cepat', 'Isi form + terjemah, mudah.']], cta: 'Mulai sekarang' },
+        },
+      },
+    }
+
+    let currentScenario = 'verification'
+    let currentLang = 'en'
+
+    function fmt(s) { return s.replace('{nickname}', SAMPLE.nickname) }
+
+    function shell(title, inner, lang) {
+      return `<div style="background:#F8FAFC;padding:32px 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC',sans-serif;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
+          <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#FFF;border:1px solid #E2E8F0;border-radius:12px;box-shadow:0 1px 3px rgba(15,23,42,.06);">
+            <tr><td style="padding:40px 32px;">
+              <div style="font-size:24px;font-weight:900;color:#000;margin-bottom:32px;">Htex</div>
+              <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;color:#0F172A;">${title}</h1>
+              ${inner}
+            </td></tr>
+          </table>
+          <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;margin-top:24px;">
+            <tr><td align="center" style="font-size:12px;color:#94A3B8;line-height:18px;">
+              <div style="margin-bottom:4px;">${TAGLINE[lang]}</div>
+              <div>${FOOTER[lang]}</div>
+            </td></tr>
+          </table>
+        </td></tr></table>
+      </div>`
+    }
+
+    function p(text, mb=28) { return `<p style="margin:0 0 ${mb}px;font-size:15px;line-height:24px;color:#334155;">${text}</p>` }
+    function muted(text, mb=28) { return `<p style="margin:0 0 ${mb}px;font-size:13px;line-height:20px;color:#64748B;">${text}</p>` }
+    function hr() { return '<hr style="border:none;border-top:1px solid #E2E8F0;margin:28px 0;">' }
+    function codeBlock(code) {
+      const spaced = code.split('').join(' ')
+      return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;"><tr>
+        <td style="background:#F1F5F9;border-left:4px solid #3B6EF5;border-radius:10px;padding:20px 32px;text-align:center;">
+          <div style="font-family:ui-monospace,Menlo,monospace;font-size:36px;font-weight:700;letter-spacing:8px;color:#0F172A;">${spaced}</div>
+        </td></tr></table>`
+    }
+    function cta(url, label) {
+      return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 20px;"><tr>
+        <td style="border-radius:10px;background:#3B6EF5;">
+          <a href="${url}" style="display:inline-block;padding:14px 28px;font-size:15px;font-weight:600;color:#FFF;text-decoration:none;">${label}</a>
+        </td></tr></table>`
+    }
+    function linkFallback(url) {
+      return `<p style="margin:0 0 28px;font-size:12px;line-height:18px;color:#94A3B8;word-break:break-all;">${url}</p>`
+    }
+    function banner(text) {
+      return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;"><tr>
+        <td style="background:#F0FDF4;border-left:4px solid #16A34A;border-radius:10px;padding:16px 20px;">
+          <div style="font-size:14px;line-height:22px;color:#166534;font-weight:600;">${text}</div>
+        </td></tr></table>`
+    }
+    function steps(steps) {
+      return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">' +
+        steps.map((s, i) => `<tr><td style="padding:0 0 14px;font-size:14px;line-height:22px;color:#334155;"><strong style="color:#0F172A;">${i+1}. ${s[0]}</strong> — ${s[1]}</td></tr>`).join('') + '</table>'
+    }
+
+    function renderBody(scenario, t, lang) {
+      switch (scenario) {
+        case 'verification':
+          return p(t.intro) + codeBlock(SAMPLE.code) + muted(t.expiry) + hr() + muted(t.security, 0)
+        case 'password_reset':
+          return p(fmt(t.greeting), 12) + p(t.intro) + cta(SAMPLE.resetUrl, t.cta) + muted(t.link_label, 8) + linkFallback(SAMPLE.resetUrl) + muted(t.expiry) + hr() + muted(t.security, 0)
+        case 'password_changed':
+          return p(fmt(t.greeting), 12) + banner(t.banner) + p(t.intro) + cta(SAMPLE.loginUrl, t.cta) + hr() + muted(t.security, 0)
+        case 'email_change':
+          return p(fmt(t.greeting), 12) + p(t.intro, 8) + `<p style="margin:0 0 28px;font-size:16px;font-weight:600;color:#0F172A;">${SAMPLE.newEmail}</p>` + cta(SAMPLE.confirmUrl, t.cta) + muted(t.link_label, 8) + linkFallback(SAMPLE.confirmUrl) + muted(t.expiry) + hr() + muted(t.security, 0)
+        case 'welcome':
+          return p(fmt(t.greeting), 12) + p(t.intro) + steps(t.steps) + cta(SAMPLE.loginUrl, t.cta)
+        default: return ''
+      }
+    }
+
+    function update() {
+      const scenario = SCENARIOS[currentScenario]
+      const t = scenario.locales[currentLang] || scenario.locales.en
+      document.getElementById('subject-bar').innerHTML =
+        `<strong>Subject:</strong> ${t.subject}<br><strong>From:</strong> HTEX &lt;noreply@htexvisa.com&gt;<br><strong>Preheader:</strong> ${t.preheader || ''}`
+      document.getElementById('scenario-label').textContent = scenario.label + ' · ' + currentLang
+      document.getElementById('email-root').innerHTML = shell(t.title, renderBody(currentScenario, t, currentLang), currentLang)
+      document.documentElement.lang = currentLang
+    }
+
+    function mountButtons(containerId, items, active, onClick) {
+      const wrap = document.getElementById(containerId)
+      items.forEach(([key, label]) => {
+        const btn = document.createElement('button')
+        btn.type = 'button'
+        btn.className = 'btn' + (key === active ? ' is-active' : '')
+        btn.textContent = label
+        btn.onclick = () => { onClick(key); wrap.querySelectorAll('.btn').forEach(b => b.classList.remove('is-active')); btn.classList.add('is-active'); update() }
+        wrap.appendChild(btn)
+      })
+    }
+
+    mountButtons('scenario-buttons', Object.entries(SCENARIOS).map(([k,v]) => [k, v.label]), currentScenario, k => { currentScenario = k })
+    mountButtons('lang-buttons', [['en','en'],['zh-CN','zh-CN'],['vi','vi'],['id','id']], currentLang, k => { currentLang = k })
+    update()
+  </script>
+</body>
+</html>

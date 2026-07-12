@@ -47,9 +47,13 @@ from app.schemas.order import (
     CreateOrderRequest,
     CreateOrderResponse,
     DeleteDraftResponse,
+    DiagnosisCompleteResponse,
     OrderDetailOut,
     OrderListResponse,
     OrderOut,
+    PortalSubmittedResponse,
+    RefundRequestBody,
+    RefundRequestResponse,
     SubmitOrderRequest,
     SubmitOrderResponse,
 )
@@ -419,4 +423,88 @@ async def submit_order(
             submitted_at=out["submitted_at"],
             rpa_task_id=out["rpa_task_id"],
         ),
+    )
+
+
+# --------------------------------------------------------------------------- #
+# POST /orders/{order_no}/diagnosis-complete                                  #
+# --------------------------------------------------------------------------- #
+@router.post(
+    "/{order_no}/diagnosis-complete",
+    response_model=ApiResponse[DiagnosisCompleteResponse],
+    summary="Mark AI diagnosis done (paid → completed).",
+)
+async def complete_diagnosis(
+    order_no: str = Path(..., min_length=1, max_length=32),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> ApiResponse[DiagnosisCompleteResponse]:
+    service = OrderService(db)
+    order = await service.complete_diagnosis(user_id=current_user.id, order_no=order_no)
+    return ApiResponse(
+        data=DiagnosisCompleteResponse(
+            order_no=order.order_no,
+            status=order.status,
+            diagnosis_completed_at=order.diagnosis_completed_at,
+            completed_at=order.completed_at,
+        )
+    )
+
+
+# --------------------------------------------------------------------------- #
+# POST /orders/{order_no}/portal-submitted                                    #
+# --------------------------------------------------------------------------- #
+@router.post(
+    "/{order_no}/portal-submitted",
+    response_model=ApiResponse[PortalSubmittedResponse],
+    summary="User confirms embassy portal submission (milestone only).",
+)
+async def mark_portal_submitted(
+    order_no: str = Path(..., min_length=1, max_length=32),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> ApiResponse[PortalSubmittedResponse]:
+    service = OrderService(db)
+    order = await service._get_owned_order(user_id=current_user.id, order_no=order_no)
+    unchanged = order.portal_submitted_at is not None
+    order = await service.mark_portal_submitted(
+        user_id=current_user.id, order_no=order_no, source="user",
+    )
+    return ApiResponse(
+        data=PortalSubmittedResponse(
+            order_no=order.order_no,
+            portal_submitted_at=order.portal_submitted_at,
+            portal_submitted_source=order.portal_submitted_source or "user",
+            unchanged=unchanged,
+        )
+    )
+
+
+# --------------------------------------------------------------------------- #
+# POST /orders/{order_no}/refund-request                                      #
+# --------------------------------------------------------------------------- #
+@router.post(
+    "/{order_no}/refund-request",
+    response_model=ApiResponse[RefundRequestResponse],
+    summary="User requests a refund (starts refund sub-track).",
+)
+async def request_refund(
+    body: RefundRequestBody,
+    order_no: str = Path(..., min_length=1, max_length=32),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> ApiResponse[RefundRequestResponse]:
+    service = OrderService(db)
+    order = await service.request_refund(
+        user_id=current_user.id,
+        order_no=order_no,
+        reason=body.reason,
+        amount=body.amount,
+    )
+    return ApiResponse(
+        data=RefundRequestResponse(
+            order_no=order.order_no,
+            refund_status=order.refund_status,
+            refund_requested_at=order.refund_requested_at,
+        )
     )

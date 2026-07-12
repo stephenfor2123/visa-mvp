@@ -27,6 +27,7 @@ venv/
 # IDE
 .idea/
 .vscode/
+.cursor/
 *.iml
 
 # Build outputs

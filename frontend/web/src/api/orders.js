@@ -269,8 +269,8 @@ export async function createOrder({
 // 5 态规范(V2 §3.6.1 + §4.2.4):created / submitted / reviewing / approved / rejected
 // 扩展态:cancelled / closed / failed / abnormal
 const ALL_STATUSES = [
-  'created', 'submitted', 'reviewing', 'approved', 'rejected',
-  'cancelled', 'closed', 'failed', 'abnormal'
+  'created', 'paid', 'completed', 'cancelled',
+  'submitted', 'reviewing', 'approved', 'rejected', 'closed', 'failed', 'abnormal',
 ]
 
 function isValidStatus(s) {
@@ -495,9 +495,8 @@ export function listMockOrders() {
 // V2 §3.6.2 N4 详情页
 export const TIMELINE_STEPS = [
   { key: 'created',   label: 'orderdetail.status_created'   },
-  { key: 'submitted', label: 'orderdetail.status_submitted' },
-  { key: 'reviewing', label: 'orderdetail.status_reviewing' },
-  { key: 'approved',  label: 'orderdetail.status_approved'  }
+  { key: 'paid',      label: 'orderdetail.status_paid'      },
+  { key: 'completed', label: 'orderdetail.status_completed' },
 ]
 
 // 分支态(独立展示,不进主轴)
@@ -734,6 +733,36 @@ export async function listOrders({ page = 1, pageSize = 20 } = {}) {
     throw new Error(envelope.message || 'listOrders failed')
   }
   return envelope.data || { items: [], total: 0 }
+}
+
+export async function completeDiagnosis(orderNo) {
+  const resp = await http.post(`/v2/orders/${orderNo}/diagnosis-complete`, {}, { __silent: true })
+  if (resp?.code && resp.code !== '1000') {
+    const e = new Error(resp.message || 'diagnosis complete failed')
+    e.code = resp.code
+    throw e
+  }
+  return resp?.data || resp
+}
+
+export async function markPortalSubmitted(orderNo) {
+  const resp = await http.post(`/v2/orders/${orderNo}/portal-submitted`, {}, { __silent: true })
+  if (resp?.code && resp.code !== '1000') {
+    const e = new Error(resp.message || 'portal submitted failed')
+    e.code = resp.code
+    throw e
+  }
+  return resp?.data || resp
+}
+
+export async function requestRefund(orderNo, { reason, amount } = {}) {
+  const resp = await http.post(`/v2/orders/${orderNo}/refund-request`, { reason, amount }, { __silent: true })
+  if (resp?.code && resp.code !== '1000') {
+    const e = new Error(resp.message || 'refund request failed')
+    e.code = resp.code
+    throw e
+  }
+  return resp?.data || resp
 }
 
 export const __test = { genOrderNo, todayIso, plusDaysIso, ALL_STATUSES, isValidStatus }

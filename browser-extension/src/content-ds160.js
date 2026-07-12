@@ -48,6 +48,16 @@
     var body = (document.body && document.body.innerHTML) || ''
     var text = (document.body && document.body.textContent || '').toLowerCase()
 
+    // Submitted confirmation page: after Sign & Submit, CEAC shows a
+    // confirmation page (barcode + "print confirmation").  Detect it FIRST
+    // (it may also contain words that match other modes' heuristics).
+    // Conservative markers — worst case we miss it and the user just doesn't
+    // see the "mark as submitted" banner.
+    if (/confirmation/i.test(url) && /ceac\.state\.gov/i.test(url)) return 'submitted'
+    if (/your application (has been|was) (successfully )?submitted/i.test(text)) return 'submitted'
+    if (/application.{0,40}successfully submitted/i.test(text)) return 'submitted'
+    if (/print confirmation/i.test(text) && /confirmation/i.test(text) && !/sign and submit/i.test(text)) return 'submitted'
+
     // Sign-in: URL or DOM contains auth markers
     if (/ceac\.state\.gov.*(login|signin|sign-in|auth)/i.test(url)) return 'login'
     if (/name=["']?(applicationID|userId|password)/i.test(body)) return 'login'
@@ -70,9 +80,71 @@
     return 'form'
   }
 
+  // ---- 提交确认页:绿色横幅 + 一键"我已提交完成" ----
+  // 红线不变:插件不替用户点 Sign & Submit;只在检测到确认页后请用户自己确认。
+  function showSubmittedBanner() {
+    chrome.runtime.sendMessage({ type: 'HTEX_GET_META' }, function (resp) {
+      var meta = resp && resp.meta
+      var orderId = meta && meta.order_id
+
+      var banner = el('div', [
+        'position:fixed;left:16px;top:16px;z-index:2147483647;max-width:360px',
+        'background:#ecfdf5;color:#065f46;padding:14px 16px;border-radius:12px',
+        'font:13px/1.5 -apple-system,Segoe UI,Roboto,sans-serif',
+        'box-shadow:0 8px 22px rgba(0,0,0,.18);border:1px solid #a7f3d0'
+      ].join(';'))
+      banner.appendChild(el('div', 'font-weight:600;margin-bottom:4px;font-size:14px', '🎉 看起来 DS-160 已提交成功'))
+
+      function renderConfirmed(submittedAt, synced, syncError) {
+        banner.innerHTML = ''
+        banner.appendChild(el('div', 'font-weight:600;margin-bottom:4px;font-size:14px', '✅ 已记录:DS-160 提交完成'))
+        var detail = '确认时间 ' + new Date(submittedAt).toLocaleString() +
+          '\n请截图/打印确认页(含条形码),面签要带。下一步:去预约站交 MRV 费 + 约面签。'
+        if (synced) detail += '\n\n☁️ 已同步到 Htex 订单'
+        else if (syncError) detail += '\n\n⚠️ 本地已记录,同步 Htex 失败:' + syncError
+        banner.appendChild(el('div', 'color:#047857', detail))
+        banner.style.whiteSpace = 'pre-line'
+        addDismiss()
+      }
+
+      function addDismiss() {
+        var x = el('span', 'position:absolute;top:6px;right:10px;cursor:pointer;color:#065f46;font-size:18px', '×')
+        x.onclick = function () { try { banner.remove() } catch (e) {} }
+        banner.appendChild(x)
+      }
+
+      // 已经确认过 → 直接显示已完成态
+      chrome.runtime.sendMessage({ type: 'HTEX_GET_SUBMITTED', orderId: orderId }, function (r) {
+        if (r && r.submitted) {
+          renderConfirmed(r.submittedAt, r.synced, r.syncError)
+          document.body.appendChild(banner)
+          return
+        }
+
+        banner.appendChild(el('div', 'color:#047857;white-space:pre-line',
+          '请核对本页是否显示确认码/条形码。\n确认无误后点下面按钮,插件会记录你已完成提交(只记时间,不上传确认码)。'))
+        var btn = el('button', [
+          'margin-top:10px;padding:8px 14px;border:0;border-radius:8px;cursor:pointer',
+          'background:#059669;color:#fff;font-size:13px;font-weight:600'
+        ].join(';'), '✓ 我已提交完成')
+        btn.onclick = function () {
+          btn.disabled = true
+          chrome.runtime.sendMessage({ type: 'HTEX_MARK_SUBMITTED', orderId: orderId }, function (r2) {
+            if (r2 && r2.ok) renderConfirmed(r2.submittedAt, r2.synced, r2.syncError)
+            else { btn.disabled = false }
+          })
+        }
+        banner.appendChild(btn)
+        addDismiss()
+        document.body.appendChild(banner)
+      })
+    })
+  }
+
   function maybeShowPageHint() {
     var mode = detectPageMode()
     if (mode === 'form') return  // fill panel will mount normally
+    if (mode === 'submitted') { showSubmittedBanner(); return }
 
     var messages = {
       login: {

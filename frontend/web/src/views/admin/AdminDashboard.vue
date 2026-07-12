@@ -69,6 +69,21 @@
       </AppCard>
     </section>
 
+    <!-- 2b. 待跟进运营提示 -->
+    <section v-if="attentionTotal > 0" class="attention-grid" data-testid="dashboard-attention">
+      <AppCard
+        v-for="item in attentionItems"
+        :key="item.key"
+        v-show="item.count > 0"
+        class="attention-card"
+        :class="`attention-card--${item.key}`"
+      >
+        <div class="attention-card__count">{{ fmt(item.count) }}</div>
+        <div class="attention-card__label">{{ t(`admin.dashboard.attention_${item.key}`) }}</div>
+        <router-link to="/admin/orders" class="attention-card__link">{{ t('admin.dashboard.attention_go') }}</router-link>
+      </AppCard>
+    </section>
+
     <!-- 3. 趋势图 -->
     <AppCard class="admin-panel">
       <template #header>
@@ -259,6 +274,7 @@ import {
   getDashboardFunnel,
   getDashboardTopCountries,
   getDashboardAlerts,
+  getOrderAttentionCounts,
 } from '@/api/admin'
 
 const { t } = useI18n()
@@ -279,6 +295,16 @@ const trend = ref({ points: [], total_orders: 0, total_revenue_usd: 0, total_new
 const funnel = ref({ steps: [], overall_conversion_pct: 0 })
 const topCountries = ref({ items: [] })
 const alerts = ref({ items: [] })
+const attention = ref({})
+
+const attentionItems = computed(() => [
+  { key: 'payment_expiring_soon', count: attention.value.payment_expiring_soon || 0 },
+  { key: 'paid_awaiting_diagnosis', count: attention.value.paid_awaiting_diagnosis || 0 },
+  { key: 'completed_awaiting_portal', count: attention.value.completed_awaiting_portal || 0 },
+  { key: 'refund_pending', count: attention.value.refund_pending || 0 },
+  { key: 'refund_failed', count: attention.value.refund_failed || 0 },
+])
+const attentionTotal = computed(() => attentionItems.value.reduce((s, i) => s + i.count, 0))
 
 const trendLoading = ref(false)
 const funnelLoading = ref(false)
@@ -366,10 +392,16 @@ async function loadAlerts() {
   alerts.value = r
 }
 
+async function loadAttention() {
+  attention.value = await getOrderAttentionCounts()
+}
+
 async function reload() {
   loading.value = true
   try {
-    await Promise.all([loadSummary(), loadTrend(), loadFunnel(), loadTopCountries(), loadAlerts()])
+    await Promise.all([
+      loadSummary(), loadTrend(), loadFunnel(), loadTopCountries(), loadAlerts(), loadAttention(),
+    ])
   } finally { loading.value = false }
 }
 
@@ -674,6 +706,24 @@ onMounted(reload)
   margin-bottom: 12px;
 }
 .kpi-grid--mini { grid-template-columns: repeat(3, 1fr); margin-bottom: 20px; }
+.attention-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.attention-card {
+  padding: 14px 16px;
+  border-left: 4px solid #F59E0B;
+  background: #fffbeb;
+}
+.attention-card__count { font-size: 22px; font-weight: 700; color: #92400e; }
+.attention-card__label { font-size: 12px; color: #78350f; margin: 4px 0 8px; }
+.attention-card__link { font-size: 12px; color: #3B6EF5; font-weight: 600; text-decoration: none; }
+.attention-card__link:hover { text-decoration: underline; }
+.attention-card--refund_pending, .attention-card--refund_failed { border-left-color: #DC2626; background: #FEF2F2; }
+.attention-card--refund_pending .attention-card__count,
+.attention-card--refund_failed .attention-card__count { color: #991B1B; }
 .kpi-card { padding: 16px 18px; }
 .kpi-card--mini { padding: 12px 16px; }
 .kpi-card__label {

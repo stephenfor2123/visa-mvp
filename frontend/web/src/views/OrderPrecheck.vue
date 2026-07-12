@@ -226,6 +226,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { diagnoseMaterials } from '@/api/materials'
+import { completeDiagnosis } from '@/api/orders'
 import { loadPrecheckSnapshot, buildDiagnosableSnapshotFromOcrCache } from '@/utils/localPrivacyStorage'
 import AppButton from '@/components/AppButton.vue'
 import AppHeader from '@/components/AppHeader.vue'
@@ -360,6 +361,11 @@ onMounted(async () => {
       fields: fieldsMap.value,
     })
     result.value = data
+    try {
+      await completeDiagnosis(orderNo.value)
+    } catch (e) {
+      console.warn('[precheck] diagnosis-complete:', e?.message || e)
+    }
   } catch (e) {
     errorMsg.value = `诊断失败: ${e?.message || e}`
   } finally {

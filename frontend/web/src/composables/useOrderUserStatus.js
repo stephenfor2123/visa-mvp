@@ -54,22 +54,22 @@ export function computeUserStatus(order) {
   const pay = (order.payment_status || '').toLowerCase()
   const refund = (order.refund_status || '').toLowerCase()
 
-  // Refund line takes precedence over everything
-  if (refund === 'refunding') return { key: 'refunding', ...USER_STATUSES.refunding }
-  if (refund === 'refunded')  return { key: 'refunded',  ...USER_STATUSES.refunded }
-  if (refund === 'failed')    return { key: 'error',    ...USER_STATUSES.error }
+  // Refund sub-track takes precedence
+  if (refund === 'pending') return { key: 'refunding', ...USER_STATUSES.refunding }
+  if (refund === 'completed') return { key: 'refunded', ...USER_STATUSES.refunded }
+  if (refund === 'failed') return { key: 'error', ...USER_STATUSES.error }
+  if (refund === 'rejected') return { key: 'cancelled', ...USER_STATUSES.cancelled }
 
-  // Terminal exception states
-  if (status === 'abnormal' || status === 'failed') {
-    return { key: 'error', ...USER_STATUSES.error }
-  }
-
-  // Business flow
   switch (status) {
     case 'created':
-      // created + paid → 待提交 (paid 但还没用 RPA 提交到使馆,用户在 precheck 页能看到)
-      if (pay === 'paid') return { key: 'ready_to_submit', ...USER_STATUSES.ready_to_submit }
       return { key: 'pending_payment', ...USER_STATUSES.pending_payment }
+    case 'paid':
+      return { key: 'paid', ...USER_STATUSES.paid }
+    case 'completed':
+      return { key: 'completed', ...USER_STATUSES.approved }
+    case 'cancelled':
+      return { key: 'cancelled', ...USER_STATUSES.cancelled }
+    // Legacy rows
     case 'submitted':
     case 'reviewing':
       return { key: 'processing', ...USER_STATUSES.processing }
@@ -78,11 +78,10 @@ export function computeUserStatus(order) {
     case 'rejected':
       return { key: 'rejected', ...USER_STATUSES.rejected }
     case 'closed':
-      // closed without refund = user cancelled
-      if (order.closed_reason === 'user_cancel') {
-        return { key: 'cancelled', ...USER_STATUSES.cancelled }
-      }
-      return { key: 'approved', ...USER_STATUSES.approved }
+      return { key: 'cancelled', ...USER_STATUSES.cancelled }
+    case 'abnormal':
+    case 'failed':
+      return { key: 'error', ...USER_STATUSES.error }
     default:
       return { key: 'error', ...USER_STATUSES.error }
   }
