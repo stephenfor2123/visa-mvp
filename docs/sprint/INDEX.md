@@ -4,7 +4,7 @@
 
 | 日期 | 状态 | Commit | 摘要 |
 |------|------|--------|------|
-| [2026-07-13](./2026-07-13.md) | `committed` | `33a15de` | 平台定价、Stripe Phase A、Admin/Web/i18n/SEO |
+| [2026-07-13](./2026-07-13.md) | `committed` | `317b56a` | 平台定价、Stripe Phase A、Admin/Web/i18n/SEO |
 
 ## 快速链接
 
