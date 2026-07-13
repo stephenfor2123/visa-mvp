@@ -74,17 +74,27 @@ def upgrade() -> None:
     # Seed roles (permissions as JSON string via text())
     super_admin_perms = json.dumps(["dashboard", "orders", "payments", "users", "countries", "settings"])
     staff_perms = json.dumps(["dashboard", "orders", "payments"])
-    op.execute(
-        sa.text("INSERT INTO admin_roles (name, code, permissions, description) VALUES (:name, :code, :perms, :desc)"),
-        [{"name": "超级管理员", "code": "super_admin", "perms": super_admin_perms, "desc": "拥有所有后台权限"},
-         {"name": "员工", "code": "staff", "perms": staff_perms, "desc": "基础操作权限，不可管理用户和国家配置"}]
+    bind = op.get_bind()
+    bind.execute(
+        sa.text(
+            "INSERT INTO admin_roles (name, code, permissions, description) "
+            "VALUES (:name, :code, :perms, :desc)"
+        ),
+        {"name": "超级管理员", "code": "super_admin", "perms": super_admin_perms, "desc": "拥有所有后台权限"},
+    )
+    bind.execute(
+        sa.text(
+            "INSERT INTO admin_roles (name, code, permissions, description) "
+            "VALUES (:name, :code, :perms, :desc)"
+        ),
+        {"name": "员工", "code": "staff", "perms": staff_perms, "desc": "基础操作权限，不可管理用户和国家配置"},
     )
 
     # Seed default admin user (password: Admin@2024)
     pw_hash = bcrypt.hashpw("Admin@2024".encode(), bcrypt.gensalt()).decode()
-    op.execute(
+    bind.execute(
         sa.text("INSERT INTO admin_users (username, password_hash, role_id) VALUES (:username, :pw, :role_id)"),
-        [{"username": "admin", "pw": pw_hash, "role_id": 1}]
+        {"username": "admin", "pw": pw_hash, "role_id": 1},
     )
 
 

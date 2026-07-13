@@ -148,17 +148,18 @@ def upgrade() -> None:
         ["target_lang"],
         unique=False,
     )
-    op.create_unique_constraint(
+    op.create_index(
         "ux_rag_translation_lookup",
         "rag_translation",
         ["source_hash", "target_lang", "kind"],
+        unique=True,
     )
 
 
 def downgrade() -> None:
     # Inverse of upgrade — drop the new table first, then strip the new
     # columns + indexes off rag_chunk in the reverse order they were added.
-    op.drop_constraint("ux_rag_translation_lookup", "rag_translation", type_="unique")
+    op.drop_index("ux_rag_translation_lookup", table_name="rag_translation")
     op.drop_index("ix_rag_translation_target_lang", table_name="rag_translation")
     op.drop_index("ix_rag_translation_source_hash", table_name="rag_translation")
     op.drop_table("rag_translation")

@@ -208,9 +208,9 @@ import { useAdminStore } from '@/stores/admin'
 import {
   listCUsers,
   getCUser,
-  disableCUser,
-  restoreCUser,
-  resetCUserPassword,
+  disableUser,
+  restoreUser,
+  resetUserPassword,
 } from '@/api/admin'
 
 const { t } = useI18n()
@@ -287,7 +287,7 @@ async function openDetail(u) {
 async function doDisable(u) {
   if (!confirm(t('admin.users.confirm_disable', { name: u.username || u.id }))) return
   try {
-    await disableCUser(u.id)
+    await disableUser(u.id)
     await fetchUsers()
   } catch (e) {
     alert(e.message || t('admin.error_save'))
@@ -296,7 +296,7 @@ async function doDisable(u) {
 
 async function doRestore(u) {
   try {
-    await restoreCUser(u.id)
+    await restoreUser(u.id)
     await fetchUsers()
   } catch (e) {
     alert(e.message || t('admin.error_save'))
@@ -306,7 +306,7 @@ async function doRestore(u) {
 async function doResetPassword(userId) {
   if (!confirm(t('admin.users.confirm_reset_pwd'))) return
   try {
-    const res = await resetCUserPassword(userId)
+    const res = await resetUserPassword(userId)
     generatedPassword.value = res?.password || ''
   } catch (e) {
     alert(e.message || t('admin.error_save'))

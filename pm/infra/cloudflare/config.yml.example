@@ -1,0 +1,32 @@
+# ~/.cloudflared/config.yml
+# 复制或让 setup_named_tunnel.sh 自动生成
+#
+# 替换:
+#   <TUNNEL_ID>  → cloudflared tunnel list 里的 ID
+#   <TUNNEL_NAME> → 例如 htex-visa
+
+tunnel: <TUNNEL_ID>
+credentials-file: /Users/<YOU>/.cloudflared/<TUNNEL_ID>.json
+
+ingress:
+  # API 后端 (FastAPI :8000)
+  - hostname: api.htexvisa.com
+    service: http://localhost:8000
+    originRequest:
+      connectTimeout: 30s
+      noTLSVerify: false
+
+  # 前端 Web
+  # 开发期: Vite dev server
+  - hostname: htexvisa.com
+    service: http://localhost:5173
+  - hostname: www.htexvisa.com
+    service: http://localhost:5173
+
+  # 生产期把上面两行改成静态文件服务，例如:
+  # - hostname: htexvisa.com
+  #   service: http://localhost:4173   # vite preview
+  # 或 nginx :8080 serve frontend/web/dist
+
+  # 兜底 — 必须放最后
+  - service: http_status:404

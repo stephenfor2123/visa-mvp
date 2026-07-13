@@ -46,10 +46,12 @@ async def lifespan(app: FastAPI):
         log.error("db connection FAILED: {}", exc)
         raise
     # Refuse to boot in prod with the dev-only placeholder password.
-    if settings.env == "prod" and settings.admin_password == "CHANGE_ME_IN_PROD":
+    has_admin_secret = bool(settings.admin_password_secret.strip()) or (
+        settings.admin_password != "CHANGE_ME_IN_PROD"
+    )
+    if settings.env == "prod" and not has_admin_secret:
         raise ValueError(
-            "ADMIN_PASSWORD is still the dev placeholder. "
-            "Set ADMIN_PASSWORD env var before deploying to prod."
+            "ADMIN_PASSWORD_SECRET (or ADMIN_PASSWORD) must be set before deploying to prod."
         )
     # Refuse to boot in prod with the dev-only placeholder JWT secret.
     if settings.env == "prod" and settings.jwt_secret == "dev-secret-change-me-in-prod-visa-mvp-2026":

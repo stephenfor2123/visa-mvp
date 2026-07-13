@@ -198,14 +198,6 @@ function confirmOriginal() {
   doUpload(pendingFile.value)
 }
 
-function fileToDataUrl(file) {
-  return new Promise((resolve) => {
-    const r = new FileReader()
-    r.onload = () => resolve(r.result)
-    r.readAsDataURL(file)
-  })
-}
-
 function base64ToBlob(b64, mime) {
   const bytes = atob(b64)
   const arr = new Uint8Array(bytes.length)

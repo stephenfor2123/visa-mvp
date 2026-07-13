@@ -20,15 +20,21 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Drop sms_codes table entirely
-    op.drop_table("sms_codes")
+    # Drop sms_codes table entirely (idempotent on fresh DB)
+    conn = op.get_bind()
+    insp = sa.inspect(conn)
+    if "sms_codes" in insp.get_table_names():
+        op.drop_table("sms_codes")
 
     with op.batch_alter_table("users") as batch_op:
-        batch_op.drop_index("ix_users_phone")
-        batch_op.drop_column("phone")
-        batch_op.drop_column("phone_country")
-        batch_op.drop_column("mfa_phone")
-        batch_op.drop_column("mfa_phone_country")
+        indexes = {idx["name"] for idx in insp.get_indexes("users")}
+        for idx_name in ("ix_users_phone", "uq_users_phone_country"):
+            if idx_name in indexes:
+                batch_op.drop_index(idx_name)
+        cols = {c["name"] for c in insp.get_columns("users")}
+        for col in ("phone", "phone_country", "mfa_phone", "mfa_phone_country"):
+            if col in cols:
+                batch_op.drop_column(col)
 
 
 def downgrade() -> None:

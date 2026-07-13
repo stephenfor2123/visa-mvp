@@ -22,6 +22,7 @@
 - 日常联调 → **ngrok**(有 Web UI 调试,体验好)
 - 临时分享 / 不想注册 → **cloudflared**(零摩擦)
 - 团队稳定域名 → ngrok 付费 或 cloudflared 绑 CF 账号
+- **生产固定域名 (htexvisa.com)** → 见 [`cloudflare/README.md`](cloudflare/README.md)
 
 ---
 

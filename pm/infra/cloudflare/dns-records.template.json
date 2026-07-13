@@ -1,0 +1,59 @@
+{
+  "_comment": "Cloudflare DNS 手动添加参考 — Tunnel 方案用 setup_named_tunnel.sh 自动创建",
+  "zone": "htexvisa.com",
+  "records_tunnel": [
+    {
+      "type": "CNAME",
+      "name": "@",
+      "content": "<TUNNEL_ID>.cfargotunnel.com",
+      "proxied": true,
+      "comment": "根域 — CF CNAME flattening"
+    },
+    {
+      "type": "CNAME",
+      "name": "www",
+      "content": "<TUNNEL_ID>.cfargotunnel.com",
+      "proxied": true
+    },
+    {
+      "type": "CNAME",
+      "name": "api",
+      "content": "<TUNNEL_ID>.cfargotunnel.com",
+      "proxied": true
+    }
+  ],
+  "records_vps": [
+    {
+      "type": "A",
+      "name": "@",
+      "content": "<VPS_PUBLIC_IP>",
+      "proxied": true
+    },
+    {
+      "type": "A",
+      "name": "www",
+      "content": "<VPS_PUBLIC_IP>",
+      "proxied": true
+    },
+    {
+      "type": "A",
+      "name": "api",
+      "content": "<VPS_PUBLIC_IP>",
+      "proxied": true
+    }
+  ],
+  "records_email_resend": [
+    {
+      "type": "TXT",
+      "name": "@",
+      "content": "v=spf1 include:zohomail.com include:amazonses.com ~all",
+      "comment": "以 Resend Dashboard 为准"
+    },
+    {
+      "type": "TXT",
+      "name": "resend._domainkey",
+      "content": "<DKIM_FROM_RESEND>",
+      "comment": "Resend → Domains → htexvisa.com"
+    }
+  ]
+}
