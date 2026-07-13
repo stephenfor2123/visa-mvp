@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -9,10 +9,22 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Htex" />
-    <!-- Default title; main.js rewrites it to "Htex · {app_slogan}" per locale.
-         Keep the literal "Htex" so the tab still shows something during the
-         brief window before i18n messages load. -->
+    <!-- Baseline SEO (overwritten per-route by src/seo/applySeo.js after Vue boots). -->
     <title>Htex</title>
+    <meta name="description" content="Htex — guided visa application assistant for US, Schengen, UK and Australia visas." />
+    <meta name="robots" content="index,follow" />
+    <link rel="canonical" href="https://htexvisa.com/home" />
+    <meta property="og:site_name" content="Htex" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://htexvisa.com/home" />
+    <meta property="og:title" content="Htex" />
+    <meta property="og:description" content="Htex — guided visa application assistant for US, Schengen, UK and Australia visas." />
+    <meta property="og:image" content="https://htexvisa.com/icons/icon-512.png" />
+    <meta name="twitter:card" content="summary" />
+    <link rel="alternate" type="text/plain" href="https://htexvisa.com/llms.txt" title="LLM site summary" />
+    <script type="application/ld+json">
+      {"@context":"https://schema.org","@type":"Organization","name":"Htex","url":"https://htexvisa.com","logo":"https://htexvisa.com/icons/icon-512.png"}
+    </script>
   </head>
   <body>
     <div id="app"></div>

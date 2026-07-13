@@ -234,9 +234,7 @@ document.documentElement.lang = lang
   // resolves, the consumer's t() returns the raw key (e.g. "common.lang_switched_by_ip")
   // because messages are still being fetched.
   await loadLocale(lang)
-  // Refresh tab title + PWA manifest title after messages are in
-  syncDocumentTitle(i18n)
-  // Notify listeners (e.g. to show "已根据 IP 切换" hint)
+  // Title + meta tags: main.js onLocaleChange → reapplySeoForLastRoute()
   _emit('change', { locale: lang, source })
 }
 

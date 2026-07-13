@@ -39,6 +39,63 @@
     "relogin": "Sign in again",
     "dismiss": "Dismiss"
   },
+  "seo": {
+    "default_description": "Free guides & self-check. Premium: templates, AI review, OCR fill. Promo $19.9 Jul 15–Aug 15, 2026 ($99.9 list). Fee charged on approval only; refunded if denied. Embassy fees non-refundable.",
+    "pages": {
+      "home": {
+        "title": "Visa application assistant",
+        "description": "Free guides & self-check. Premium: templates, AI review, OCR fill. Promo $19.9 Jul 15–Aug 15, 2026. Platform fee on approval only; refunded if denied. No guarantee — government decides."
+      },
+      "destinations": {
+        "title": "Visa destinations",
+        "description": "Choose your visa destination and start a guided application for the United States, Schengen, United Kingdom or Australia."
+      },
+      "schengen": {
+        "title": "Schengen visa countries",
+        "description": "Select your main Schengen destination country and begin a guided visa application with Htex."
+      },
+      "apply": {
+        "title": "Start visa application",
+        "description": "Pick a destination country, review required documents and start your visa application workflow."
+      },
+      "diagnose": {
+        "title": "Visa readiness check",
+        "description": "Assess visa readiness based on your profile and destination requirements before you apply."
+      },
+      "resources": {
+        "title": "Visa resources center",
+        "description": "Visa guides, policy notes, document templates and FAQs for local applicants."
+      },
+      "resources_wiki": {
+        "title": "Visa wiki",
+        "description": "Curated visa encyclopedia articles for US, UK, Australia and Schengen applications."
+      },
+      "resources_policy": {
+        "title": "Visa policy updates",
+        "description": "Policy summaries and official source links for visa applicants by destination country."
+      },
+      "resources_templates": {
+        "title": "Visa document templates",
+        "description": "Document templates and examples to help you prepare a complete visa application package."
+      },
+      "resources_faq": {
+        "title": "Visa FAQ",
+        "description": "Frequently asked questions about visa requirements, documents, fees and application steps."
+      },
+      "contact": {
+        "title": "Contact us",
+        "description": "Get in touch with the Htex team for visa application support."
+      },
+      "pricing": {
+        "title": "Pricing",
+        "description": "Transparent embassy fees and Htex service pricing for supported visa destinations."
+      },
+      "agreement": {
+        "title": "Terms of service",
+        "description": "Htex terms of service, privacy notices and user agreements."
+      }
+    }
+  },
   "nav": {
     "home": "Home",
     "login": "Log In",
@@ -657,6 +714,7 @@
     "menu_cleanup": "Cleanup",
     "menu_settings": "Settings",
     "menu_payments": "Payment Flow",
+    "menu_pricing": "Pricing & Promo",
     "orders": {
       "page_title": "Order Management",
       "page_subtitle": "Review and manage every user order, follow state machine progress",
@@ -814,6 +872,28 @@
       "empty": "No payment records",
       "prev": "Prev",
       "next": "Next"
+    },
+    "pricing": {
+      "page_title": "Pricing & Marketing",
+      "page_subtitle": "Configure list price, promo price, and validity window",
+      "preview_title": "User-facing preview",
+      "badge_promo": "On promo",
+      "badge_regular": "Regular price",
+      "preview_window": "Promo window: {start} – {end}",
+      "preview_no_window": "No promo window configured",
+      "field_list": "List price (strikethrough)",
+      "field_promo": "Promo price",
+      "field_starts": "Promo starts",
+      "field_ends": "Promo ends",
+      "field_enabled": "Enable promo (show promo price within window)",
+      "field_note": "Internal note",
+      "hint_list": "Shown when promo is off or outside the window",
+      "hint_promo": "Shown during promo window; must be lower than list price",
+      "note_placeholder": "e.g. Summer campaign, new-user offer…",
+      "save": "Save pricing",
+      "reset": "Reload",
+      "save_ok": "Pricing saved",
+      "err_promo_gt_list": "Promo price must be lower than list price"
     },
     "login": {
       "title": "Admin Sign-in",
@@ -1136,6 +1216,10 @@
       "page_title": "Users",
       "page_subtitle": "Manage registered C-side users (disable, view order counts)",
       "filter_status": "Status",
+      "search_placeholder": "Search email, username or nickname",
+      "search": "Search",
+      "retry": "Retry",
+      "error_network": "Unable to connect to the admin service. Please retry.",
       "status_all": "All",
       "status_active": "Active",
       "status_pending_destroy": "Pending destroy",
@@ -1155,11 +1239,14 @@
       "mfa_off": "Disabled",
       "detail_title": "User #{id} · {name}",
       "col_id": "ID",
-      "col_nickname": "Nickname / Username",
+      "col_nickname": "Nickname",
+      "col_username": "Username",
       "col_email": "Email",
       "col_phone": "Phone",
       "col_lang": "Lang",
       "col_status": "Status",
+      "col_orders": "Orders",
+      "col_materials": "Materials",
       "col_created": "Registered",
       "col_last_login": "Last Login"
     },
@@ -1185,6 +1272,7 @@
       "dashboard.view": "View dashboard",
       "dashboard.export": "Export dashboard",
       "country.manage": "Country management",
+      "pricing.manage": "Pricing & marketing",
       "rag.review": "RAG review",
       "ai_rules.edit": "AI rules",
       "role.manage": "Role management",
@@ -1905,6 +1993,7 @@
       "refund_consulate_note": "Collected by the consulate, independent of the outcome",
       "total_label": "Summary",
       "total_note": "Total = consulate fee + service fee. The service fee is refundable on denial; the consulate fee follows the consulate policy.",
+      "promo_tag": "Limited promo",
       "service_refund_title": "Service fee refunded on denial",
       "service_refund_desc": "If your application is denied, the $19.9 service fee is returned to your original payment within 3–5 business days.",
       "consulate_no_refund_title": "Consulate fee non-refundable",
@@ -2302,7 +2391,7 @@
   "contact": {
     "title": "Contact us",
     "sub": "Email replies within 1h · Weekdays all-day",
-    "email": "Email",
+    "email": "Support",
     "phone": "Phone",
     "wechat": "WeChat",
     "whatsapp": "WhatsApp",
@@ -2311,7 +2400,7 @@
     "hours_time": "09:00 — 21:00 (Beijing)",
     "copy": "Copy",
     "copied": "Copied",
-    "partner_label": "Partnerships",
+    "partner_label": "Business",
     "partner_subject": "Partnership inquiry"
   },
   "wizard": {
@@ -2559,7 +2648,7 @@
   },
   "pricing_page": {
     "title": "Transparent pricing",
-    "sub": "Flat $19.9 service fee, charged only on approval. Consulate fees follow the official schedule and are non-refundable.",
+    "sub": "Promo $19.9 Jul 15–Aug 15, 2026 (regular $99.9). Platform fee charged only on approval; refunded if denied. Embassy fees are non-refundable. Do not book non-refundable travel before approval.",
     "cta_apply": "Start your application",
     "cta_contact": "Contact us"
   },

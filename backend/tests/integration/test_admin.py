@@ -157,6 +157,37 @@ class TestAdminAuthenticated:
         assert r.json()["code"] == "1000"
         assert "items" in r.json()["data"]
 
+    async def test_list_users_returns_registered_user_details(self, client):
+        from app.core.db import AsyncSessionLocal
+        from app.models.user import User
+
+        async with AsyncSessionLocal() as session:
+            session.add(User(
+                email="admin-list-user@test.local",
+                username="admin_list_user",
+                nickname="测试昵称",
+                password_hash="not-used",
+            ))
+            await session.commit()
+
+        token = await self._admin_token(client)
+        r = await client.get(
+            "/api/v2/admin/users?q=admin_list_user",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert r.status_code == 200, r.text
+        body = r.json()["data"]
+        assert body["total"] == 1
+        user = body["items"][0]
+        assert user["id"] > 0
+        assert user["username"] == "admin_list_user"
+        assert user["nickname"] == "测试昵称"
+        assert user["email"] == "ad***@test.local"
+        assert user["created_at"]
+        assert user["order_count"] == 0
+        assert user["material_count"] == 0
+
     async def test_list_orders_authenticated(self, client):
         token = await self._admin_token(client)
         r = await client.get(

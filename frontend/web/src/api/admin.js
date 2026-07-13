@@ -85,7 +85,7 @@ function normalizeError(err) {
   const backendMsg = err?.response?.data?.message || err?.message || ''
   const lower = String(backendMsg).toLowerCase()
   if (!status && !err?.response) {
-    return Object.assign(new Error('NETWORK'), { code: 'NETWORK' })
+    return Object.assign(new Error('网络异常，请稍后重试'), { code: 'NETWORK' })
   }
   if (status === 401 || backendCode === 'INVALID_CREDENTIALS' || lower.includes('invalid') || lower.includes('凭证')) {
     return Object.assign(new Error(backendMsg || '账号或密码错误'), { code: 'INVALID_CREDENTIALS' })
@@ -773,6 +773,51 @@ export async function updateRpaConfig(rateLimits) {
   }
 }
 
+/** GET /api/v2/admin/config/platform-pricing */
+export async function getPlatformPricingAdmin() {
+  if (MOCK_MODE) {
+    await delay(100)
+    return {
+      id: 1,
+      list_price_usd: 99.9,
+      promo_price_usd: 19.9,
+      currency: 'USD',
+      promo_enabled: true,
+      promo_starts_at: '2026-07-15T00:00:00Z',
+      promo_ends_at: '2026-08-15T23:59:59Z',
+      marketing_note: 'Launch promo',
+      is_promo: true,
+      display_price_usd: 19.9,
+    }
+  }
+  try {
+    const envelope = await adminHttp.get('/v2/admin/config/platform-pricing')
+    if (envelope?.code && envelope.code !== '1000') {
+      throw Object.assign(new Error(envelope.message || 'get pricing failed'), { code: envelope.code })
+    }
+    return envelope?.data || null
+  } catch (err) {
+    throw normalizeError(err)
+  }
+}
+
+/** PUT /api/v2/admin/config/platform-pricing */
+export async function updatePlatformPricingAdmin(body) {
+  if (MOCK_MODE) {
+    await delay(150)
+    return { ...body, id: 1, is_promo: true, display_price_usd: body.promo_price_usd }
+  }
+  try {
+    const envelope = await adminHttp.put('/v2/admin/config/platform-pricing', body)
+    if (envelope?.code && envelope.code !== '1000') {
+      throw Object.assign(new Error(envelope.message || 'update pricing failed'), { code: envelope.code })
+    }
+    return envelope?.data || null
+  } catch (err) {
+    throw normalizeError(err)
+  }
+}
+
 /**
  * GET /api/v2/admin/stats/rpa — realtime pipeline stats.
  * @returns {Promise<{ today_visits, queued_tasks, failure_rate_24h,
@@ -781,7 +826,7 @@ export async function updateRpaConfig(rateLimits) {
  */
 /**
  * GET /api/v2/admin/payments — paginated payment flow list (资金流).
- * @param {{ page?: number, page_size?: number, status?: string|null }} params
+ * @param {{ page?: number, page_size?: number, status?: string|null, q?: string|null }} params
  * @returns {Promise<{ items, page, page_size, total, total_pages }>}
  */
 export async function listPayments(params = {}) {
@@ -1079,11 +1124,15 @@ export async function listCUsers(params = {}) {
         created_at: '2026-04-01T10:00:00Z', updated_at: '2026-06-27T18:00:00Z' },
     ]
     const filtered = params.status ? all.filter(u => u.status === params.status) : all
+    const searched = params.q
+      ? filtered.filter((u) => [u.email, u.username, u.nickname]
+          .some((value) => String(value || '').toLowerCase().includes(params.q.toLowerCase())))
+      : filtered
     return {
-      items: filtered,
+      items: searched,
       page: 1,
       page_size: params.page_size || 20,
-      total: filtered.length,
+      total: searched.length,
       total_pages: 1,
     }
   }
@@ -1092,6 +1141,7 @@ export async function listCUsers(params = {}) {
     if (params.page) qp.set('page', params.page)
     if (params.page_size) qp.set('page_size', params.page_size)
     if (params.status) qp.set('status', params.status)
+    if (params.q) qp.set('q', params.q)
     const qs = qp.toString() ? `?${qp.toString()}` : ''
     const envelope = await adminHttp.get(`/v2/admin/users${qs}`)
     if (envelope?.code && envelope.code !== '1000') {
@@ -1289,6 +1339,8 @@ export default {
   ADMIN_STORAGE_KEYS,
   getRpaConfig,
   updateRpaConfig,
+  getPlatformPricingAdmin,
+  updatePlatformPricingAdmin,
   getRpaStats,
   RPA_DEFAULT_CONFIG,
   listAdminOrders,
@@ -1770,6 +1822,7 @@ export async function listPermissions() {
         ],
         system: [
           { code: 'country.manage', label_key: 'admin.perms.country.manage', description: '国家配置' },
+          { code: 'pricing.manage', label_key: 'admin.perms.pricing.manage', description: '价格营销' },
           { code: 'rag.review', label_key: 'admin.perms.rag.review', description: 'RAG 审核' },
           { code: 'ai_rules.edit', label_key: 'admin.perms.ai_rules.edit', description: 'AI 规则' },
           { code: 'role.manage', label_key: 'admin.perms.role.manage', description: '角色管理' },

@@ -36,6 +36,11 @@ def _test_env() -> Generator[None, None, None]:
     os.environ["ENV"] = "test"
     os.environ["DB_ECHO"] = "0"
     os.environ["MATERIAL_STORAGE_ENABLED"] = "1"
+    os.environ["PAYMENT_CHANNEL"] = "mock"
+    os.environ["STRIPE_SECRET_KEY"] = ""
+    os.environ["STRIPE_PUBLISHABLE_KEY"] = ""
+    os.environ["STRIPE_WEBHOOK_SECRET"] = ""
+    os.environ["RESEND_API_KEY"] = ""
 
     # Reset cached settings + global state
     from app.core.config import get_settings

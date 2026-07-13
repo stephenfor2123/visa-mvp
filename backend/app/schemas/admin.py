@@ -113,8 +113,23 @@ class UserOutSafe(UserOut):
         from_attributes = True
 
 
+class UserListItem(UserOutSafe):
+    """C-端用户列表项，包含运营需要的关联数据统计。"""
+    order_count: int = Field(0, ge=0, description="该用户的订单总数")
+    material_count: int = Field(0, ge=0, description="该用户的材料总数")
+
+    @classmethod
+    def from_raw(cls, raw: dict) -> "UserListItem":
+        safe = UserOutSafe.from_raw(raw)
+        return cls(
+            **safe.model_dump(),
+            order_count=int(raw.get("order_count") or 0),
+            material_count=int(raw.get("material_count") or 0),
+        )
+
+
 class PaginatedUserList(BaseModel):
-    items: list[UserOut]
+    items: list[UserListItem]
     page: int
     page_size: int
     total: int
@@ -124,10 +139,9 @@ class PaginatedUserList(BaseModel):
 # --------------------------------------------------------------------------- #
 # C-端用户管理 (W36: 详情页 + 操作能力)                                          #
 # --------------------------------------------------------------------------- #
-class UserDetailOut(UserOutSafe):
+class UserDetailOut(UserListItem):
     """C-端用户详情（含统计字段）。继承自 UserOutSafe 自动脱敏。"""
-    order_count: int = Field(0, ge=0, description="该用户的订单总数")
-    material_count: int = Field(0, ge=0, description="该用户的材料总数")
+    pass
 
 
 class UpdateUserRequest(BaseModel):

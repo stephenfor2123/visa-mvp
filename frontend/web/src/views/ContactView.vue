@@ -14,32 +14,31 @@
         <span class="contact-page__chip contact-page__chip--blue" v-html="SVG_MAIL" />
         <div class="contact-page__row-body">
           <div class="contact-page__row-label">{{ t('contact.email') }}</div>
-          <a class="contact-page__row-value" :href="`mailto:${CONTACT.email}`" data-testid="contact-email-value">{{ CONTACT.email }}</a>
+          <a class="contact-page__row-value" :href="`mailto:${CONTACT.support}`" data-testid="contact-email-value">{{ CONTACT.support }}</a>
         </div>
         <button
           type="button"
           class="contact-page__copy"
           :data-testid="`contact-copy-email`"
           :class="{ 'is-copied': copyState === 'email' }"
-          @click="copyToClipboard('email', CONTACT.email)"
+          @click="copyToClipboard('email', CONTACT.support)"
         >
           {{ copyState === 'email' ? t('contact.copied') : t('contact.copy') }}
         </button>
       </li>
 
-      <!-- W57: 商业合作 — 共用 hello@htex.com, 文案区分用途。 -->
       <li class="contact-page__row contact-page__row--partner" data-testid="contact-row-partner">
         <span class="contact-page__chip contact-page__chip--indigo" v-html="SVG_BRIEFCASE" />
         <div class="contact-page__row-body">
           <div class="contact-page__row-label">{{ t('contact.partner_label') }}</div>
-          <a class="contact-page__row-value" :href="`mailto:${CONTACT.email}?subject=${encodeURIComponent(t('contact.partner_subject'))}`" data-testid="contact-partner-value">{{ CONTACT.email }}</a>
+          <a class="contact-page__row-value" :href="`mailto:${CONTACT.business}?subject=${encodeURIComponent(t('contact.partner_subject'))}`" data-testid="contact-partner-value">{{ CONTACT.business }}</a>
         </div>
         <button
           type="button"
           class="contact-page__copy"
           :data-testid="`contact-copy-partner`"
           :class="{ 'is-copied': copyState === 'partner' }"
-          @click="copyToClipboard('partner', CONTACT.email)"
+          @click="copyToClipboard('partner', CONTACT.business)"
         >
           {{ copyState === 'partner' ? t('contact.copied') : t('contact.copy') }}
         </button>
@@ -62,11 +61,11 @@ const { t } = useI18n()
 // W31: 联系信息(品牌统一,可后续改为后端配置)
 // W54: 只保留邮件渠道 — 电话/微信/WhatsApp 已被产品决策下线。
 const CONTACT = {
-  email: 'hello@htex.com',
+  support: 'support@htexvisa.com',
+  business: 'business@htexvisa.com',
 }
 
 const SVG_MAIL = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 7l9 6 9-6" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`
-// W57: 商业合作 — 共用 hello@htex.com,但视觉与文案区分。
 const SVG_BRIEFCASE = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M3 12h18" stroke="currentColor" stroke-width="1.6"/></svg>`
 
 // 复制到剪贴板

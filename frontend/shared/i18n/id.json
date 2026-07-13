@@ -39,6 +39,63 @@
     "relogin": "Masuk lagi",
     "dismiss": "Tutup"
   },
+  "seo": {
+    "default_description": "Panduan & cek mandiri gratis. Premium: template, review AI, OCR. Promo $19,9 15 Jul–15 Agu 2026 ($99,9 normal). Biaya platform setelah disetujui; dikembalikan jika ditolak. Biaya kedutaan tidak dikembalikan.",
+    "pages": {
+      "home": {
+        "title": "Asisten aplikasi visa",
+        "description": "Ajukan visa AS, Schengen, Inggris, dan Australia dengan panduan dokumen, bantuan DS-160, dan harga transparan."
+      },
+      "destinations": {
+        "title": "Destinasi visa",
+        "description": "Pilih negara tujuan visa dan mulai aplikasi terpandu untuk Amerika Serikat, Schengen, Inggris, atau Australia."
+      },
+      "schengen": {
+        "title": "Negara visa Schengen",
+        "description": "Pilih negara Schengen utama Anda dan mulai aplikasi visa terpandu dengan Htex."
+      },
+      "apply": {
+        "title": "Mulai aplikasi visa",
+        "description": "Pilih negara tujuan, tinjau dokumen yang diperlukan, dan mulai alur aplikasi visa."
+      },
+      "diagnose": {
+        "title": "Cek kesiapan visa",
+        "description": "Nilai kesiapan visa berdasarkan profil dan persyaratan destinasi sebelum mengajukan."
+      },
+      "resources": {
+        "title": "Pusat sumber daya visa",
+        "description": "Panduan visa, catatan kebijakan, template dokumen, dan FAQ untuk pelamar lokal."
+      },
+      "resources_wiki": {
+        "title": "Wiki visa",
+        "description": "Artikel ensiklopedia visa untuk aplikasi AS, Inggris, Australia, dan Schengen."
+      },
+      "resources_policy": {
+        "title": "Kebijakan visa",
+        "description": "Ringkasan kebijakan dan tautan sumber resmi untuk pelamar visa menurut negara tujuan."
+      },
+      "resources_templates": {
+        "title": "Template dokumen visa",
+        "description": "Template dan contoh dokumen untuk menyiapkan paket aplikasi visa yang lengkap."
+      },
+      "resources_faq": {
+        "title": "FAQ visa",
+        "description": "Pertanyaan umum tentang persyaratan visa, dokumen, biaya, dan langkah aplikasi."
+      },
+      "contact": {
+        "title": "Hubungi kami",
+        "description": "Hubungi tim Htex untuk dukungan aplikasi visa."
+      },
+      "pricing": {
+        "title": "Harga",
+        "description": "Biaya kedutaan dan harga layanan Htex yang transparan untuk destinasi visa yang didukung."
+      },
+      "agreement": {
+        "title": "Ketentuan layanan",
+        "description": "Ketentuan layanan, privasi, dan perjanjian pengguna Htex."
+      }
+    }
+  },
   "nav": {
     "home": "Beranda",
     "login": "Masuk",
@@ -816,6 +873,10 @@
       "page_title": "Pengguna",
       "page_subtitle": "Kelola pengguna C yang terdaftar (nonaktifkan, lihat jumlah pesanan)",
       "filter_status": "Status",
+      "search_placeholder": "Cari email, akun, atau nama",
+      "search": "Cari",
+      "retry": "Coba lagi",
+      "error_network": "Tidak dapat terhubung ke layanan admin. Silakan coba lagi.",
       "status_all": "Semua",
       "status_active": "Aktif",
       "status_pending_destroy": "Menunggu hapus",
@@ -835,11 +896,14 @@
       "mfa_off": "Nonaktif",
       "detail_title": "Pengguna #{id} · {name}",
       "col_id": "ID",
-      "col_nickname": "Nama / Akun",
+      "col_nickname": "Nama",
+      "col_username": "Akun",
       "col_email": "Email",
       "col_phone": "Telepon",
       "col_lang": "Bahasa",
       "col_status": "Status",
+      "col_orders": "Pesanan",
+      "col_materials": "Dokumen",
       "col_created": "Terdaftar",
       "col_last_login": "Login terakhir"
     },
@@ -1938,7 +2002,7 @@
   "contact": {
     "title": "Hubungi kami",
     "sub": "Balasan email 1 jam · Setiap hari kerja",
-    "email": "Email",
+    "email": "Dukungan",
     "phone": "Telepon",
     "wechat": "WeChat",
     "whatsapp": "WhatsApp",
@@ -1947,7 +2011,7 @@
     "hours_time": "09:00 — 21:00 (Waktu Beijing)",
     "copy": "Salin",
     "copied": "Tersalin",
-    "partner_label": "Kemitraan",
+    "partner_label": "Bisnis",
     "partner_subject": "Pertanyaan kemitraan"
   },
   "wizard": {

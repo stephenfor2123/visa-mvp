@@ -18,25 +18,30 @@
 
 ## 1. Stripe
 
-**目标**: 从 `PAYMENT_CHANNEL=mock` 切到真实 Stripe（建议先 test mode）。
+**阶段**: **A = Test mode 接通**（当前）→ 以后再考虑 Live / 本地钱包
+
+**目标**: 从 `PAYMENT_CHANNEL=mock` 切到 Stripe **Test**（`sk_test_` / `pk_test_`）。
 
 ### 待办
 
-- [ ] Stripe Dashboard 创建账号 / 开通 test mode
-- [ ] 获取并填入：
-  - `STRIPE_SECRET_KEY`（`sk_test_…` 或 `sk_live_…`）
+- [ ] Stripe Dashboard 注册 + 保持 **Test mode**
+- [ ] 获取并填入 `backend/.env`：
+  - `PAYMENT_CHANNEL=stripe`
+  - `STRIPE_SECRET_KEY`（`sk_test_…`）
   - `STRIPE_PUBLISHABLE_KEY`（`pk_test_…`）
-  - `STRIPE_WEBHOOK_SECRET`（`whsec_…`）
-- [ ] Webhook endpoint: `https://<你的域名>/api/v2/payment/notify`
-  - Events: `payment_intent.succeeded`, `payment_intent.payment_failed`
-- [ ] `backend/.env`: `PAYMENT_CHANNEL=stripe`
-- [ ] `frontend/web/.env`（可选）: `VITE_STRIPE_PUBLISHABLE_KEY=pk_test_…`
-- [ ] 本地 webhook 测试: `stripe listen --forward-to localhost:8000/api/v2/payment/notify`
+  - `STRIPE_WEBHOOK_SECRET`（`whsec_…`，用 Stripe CLI 拿）
+- [ ] Webhook（本地）:
+  ```bash
+  stripe listen --forward-to localhost:8000/api/v2/payment/stripe-webhook
+  ```
+- [ ] 手测: 测试卡 `4242 4242 4242 4242` 支付成功
 
 ### 参考
 
-- 详细步骤: [`docs/stripe-credentials-setup.md`](stripe-credentials-setup.md)
+- **Phase A 操作指南**: [`docs/STRIPE_PHASE_A.md`](STRIPE_PHASE_A.md)
+- 旧 recipe: [`docs/stripe-credentials-setup.md`](stripe-credentials-setup.md)
 - 代码: `backend/app/services/payment_provider.py`, `frontend/web/src/views/PaymentCheckout.vue`
+- Webhook 路由: `POST /api/v2/payment/stripe-webhook`
 
 ---
 
@@ -105,6 +110,7 @@ VITE_API_BASE=https://api.<你的域名>    # 或同域 /api
 
 - 开发阶段可用 `localhost:5173` + `localhost:8000`；**对外发布前域名是硬依赖**
 - 临时外网联调可参考 `pm/infra/README.md`（ngrok / cloudflared），不作为生产方案
+- **htexvisa.com 已在 Cloudflare**：生产 DNS + Tunnel 见 `pm/infra/cloudflare/README.md`
 
 ---
 

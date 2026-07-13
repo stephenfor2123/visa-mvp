@@ -154,17 +154,34 @@ function stopPolling() {
 
 async function pollUntilPaid() {
   stopPolling()
-  pollTimer = setInterval(async () => {
-    try {
-      const resp = await queryPaymentStatus(orderNo.value)
-      const st = resp?.data?.status
-      if (st === 'paid' || st === 'success') {
+  // Immediate sync attempt (Stripe may already show succeeded)
+  try {
+    const first = await queryPaymentStatus(orderNo.value)
+    const st0 = first?.data?.status
+    if (st0 === 'paid' || st0 === 'success') {
+      return true
+    }
+  } catch (_) { /* keep polling */ }
+
+  return await new Promise((resolve) => {
+    let ticks = 0
+    pollTimer = setInterval(async () => {
+      ticks += 1
+      try {
+        const resp = await queryPaymentStatus(orderNo.value)
+        const st = resp?.data?.status
+        if (st === 'paid' || st === 'success') {
+          stopPolling()
+          resolve(true)
+          return
+        }
+      } catch (_) { /* keep polling */ }
+      if (ticks >= 20) {
         stopPolling()
-        toast.success(t('payment.success_title'))
-        goNext()
+        resolve(false)
       }
-    } catch (_) { /* keep polling */ }
-  }, 1500)
+    }, 1500)
+  })
 }
 
 async function mountStripe(publishableKey) {
@@ -194,6 +211,8 @@ async function onStripePay() {
       stripeError.value = error.message || t('payment.failed_reason_unknown')
       return
     }
+    // Confirm ok → poll once so backend can sync PaymentIntent → paid
+    await pollUntilPaid()
     toast.success(t('payment.success_title'))
     goNext()
   } catch (e) {
@@ -237,7 +256,11 @@ async function initCheckout() {
         || import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
       await mountStripe(pk)
     } else {
-      await pollUntilPaid()
+      const paid = await pollUntilPaid()
+      if (paid) {
+        toast.success(t('payment.success_title'))
+        goNext()
+      }
     }
   } catch (e) {
     loadError.value = e?.message || t('payment.load_failed')

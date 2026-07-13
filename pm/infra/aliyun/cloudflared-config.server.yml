@@ -1,0 +1,11 @@
+# Server-side Cloudflare Tunnel — API only (frontend on Vercel later)
+tunnel: b65e732f-bff0-4bdf-9dfc-aea8e0362b7a
+credentials-file: /root/.cloudflared/b65e732f-bff0-4bdf-9dfc-aea8e0362b7a.json
+
+ingress:
+  - hostname: api.htexvisa.com
+    service: http://127.0.0.1:8000
+    originRequest:
+      connectTimeout: 30s
+
+  - service: http_status:404

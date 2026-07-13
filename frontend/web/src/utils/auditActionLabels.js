@@ -26,6 +26,7 @@ export const AUDIT_ACTION_LABELS = {
   'admin.order.refund.complete': '管理员完成退款打款',
   'admin.order.refund.fail': '管理员标记退款失败',
   'admin.order.portal.submitted': '管理员确认官网提交',
+  'admin.pricing.update': '更新平台定价',
   'ds160.portal.submitted': 'DS-160 官网提交（插件）',
 }
 

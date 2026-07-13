@@ -45,7 +45,15 @@
               <span class="pricing__note">{{ t(`home.pricing.consulate_note_${row.currency.toLowerCase()}`) }}</span>
             </td>
             <td>
-              <span class="pricing__amount pricing__amount--svc">{{ SERVICE_FEE.symbol }} {{ SERVICE_FEE.amount.toLocaleString() }}</span>
+              <div class="pricing__svc-cell">
+                <span v-if="isPromo" class="pricing__amount pricing__amount--list">
+                  {{ symbol }} {{ formatUsd(listPrice) }}
+                </span>
+                <span class="pricing__amount pricing__amount--svc">
+                  {{ symbol }} {{ formatUsd(displayPrice) }}
+                </span>
+                <span v-if="isPromo" class="pricing__promo-tag">{{ t('home.pricing.promo_tag') }}</span>
+              </div>
               <span class="pricing__note">{{ t('home.pricing.service_note') }}</span>
             </td>
             <td class="pricing__refund">
@@ -70,11 +78,11 @@
 </template>
 
 <script setup>
+import { onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { usePlatformPricing } from '@/composables/usePlatformPricing'
 
 defineProps({
-  // W58: 独立页 (/pricing) 模式下, 去掉外层卡片框 + 渐变背景 + 大间距,
-  // 让区块直接铺到页面背景上, 与首页 "被框住" 的版本做区分
   standalone: {
     type: Boolean,
     default: false,
@@ -82,21 +90,16 @@ defineProps({
 })
 
 const { t } = useI18n()
+const { isPromo, displayPrice, listPrice, symbol, load, formatUsd } = usePlatformPricing()
 
-  // 4 国使馆费 — 按官方币种展示, 不二次换算到人民币。
-  //   数字取自后端 destinations 接口 visa_fee_usd 字段 (USD cents, 已 /100 转 USD 整数)。
-  //   GB / FR / AU 的非美元由后端 destinations 接口另存字段时同步 (这里先按公开样本调研估算)。
-  //   真实计费: 订单创建时按国家币种收, 这里仅作展示。
+onMounted(() => { load() })
+
   const ROWS = [
     { code: 'us', flag: '🇺🇸', currency: 'USD', symbol: '$',  amount: 185 },
     { code: 'gb', flag: '🇬🇧', currency: 'GBP', symbol: '£', amount: 127 },
     { code: 'fr', flag: '🇫🇷', currency: 'EUR', symbol: '€', amount: 90 },
     { code: 'au', flag: '🇦🇺', currency: 'AUD', symbol: 'A$', amount: 215 },
   ]
-
-  // 平台服务费: 一次性 $19.9 USD / 单 — 全平台统一, 拒签可退。
-  // 跟使领馆币种对齐原则一致: 不用再二次换算, 各币区用户所见即所付。
-  const SERVICE_FEE = { symbol: '$', amount: 19.9 }
 </script>
 
 <style scoped>
@@ -178,6 +181,15 @@ const { t } = useI18n()
   font-variant-numeric: tabular-nums;
 }
 .pricing__amount--svc { color: #2563eb; }
+.pricing__amount--list {
+  font-size: 14px; font-weight: 600; color: #94a3b8;
+  text-decoration: line-through; margin-right: 6px;
+}
+.pricing__svc-cell { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px; }
+.pricing__promo-tag {
+  font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;
+  background: #fef3c7; color: #b45309; margin-left: 4px;
+}
 .pricing__note {
   display: block; margin-top: 4px;
   font-size: 11px; color: #94a3b8; line-height: 1.5;

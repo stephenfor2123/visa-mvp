@@ -332,6 +332,7 @@ flutter analyze            # 静态分析
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | 系统架构（顶层组件图 / 数据流 / 横切关注点） |
 | [`docs/API.md`](docs/API.md) | REST + WebSocket API 参考（942 行） |
 | [`docs/LEGAL_REVIEW_NOTES.md`](docs/LEGAL_REVIEW_NOTES.md) | 法务 review 18 项 checklist |
+| [`docs/STRIPE_PHASE_A.md`](docs/STRIPE_PHASE_A.md) | Stripe Phase A（Test mode）接通步骤 |
 | [`docs/stripe-credentials-setup.md`](docs/stripe-credentials-setup.md) | Stripe 凭据切换（mock → live） |
 | [`docs/adr/0001-fastapi-not-django.md`](docs/adr/0001-fastapi-not-django.md) | ADR：为什么选 FastAPI 而非 Django |
 | [`docs/adr/0002-vue3-elementplus.md`](docs/adr/0002-vue3-elementplus.md) | ADR：Vue 3 + Element Plus 选型 |
@@ -361,7 +362,7 @@ flutter analyze            # 静态分析
 
 | 事项 | 状态 |
 |------|------|
-| Stripe 凭据 + webhook | ⏳ 待配置 |
+| Stripe 凭据 + webhook | ⏳ Phase A 代码已接，待填 `sk_test_` / `pk_test_` — 见 [`docs/STRIPE_PHASE_A.md`](docs/STRIPE_PHASE_A.md) |
 | Google OAuth Client ID | ⏳ 待配置 |
 | 生产域名 + HTTPS | ⏳ 待定 |
 | 企业邮箱 + 事务邮件 SMTP | ⏳ 待配置 |

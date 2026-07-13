@@ -111,11 +111,15 @@ describe('Login.vue — Google sign-in button visibility', () => {
     // Mock GIS script — renderButton just no-ops, but the div gets a child.
     let capturedCallback: any = null
     let renderButtonCalled = false
+    let renderButtonOpts: any = null
     ;(window as any).google = {
       accounts: {
         id: {
           initialize: (cfg: any) => { capturedCallback = cfg.callback },
-          renderButton: (_el: any, _opts: any) => { renderButtonCalled = true }
+          renderButton: (_el: any, opts: any) => {
+            renderButtonCalled = true
+            renderButtonOpts = opts
+          }
         }
       }
     }
@@ -127,6 +131,7 @@ describe('Login.vue — Google sign-in button visibility', () => {
     expect(wrapper.find('.google-btn-wrap').exists()).toBe(true)
     expect(wrapper.find('.auth-divider').exists()).toBe(true)
     expect(renderButtonCalled).toBe(true)
+    expect(renderButtonOpts?.locale).toBe('en')
 
     // callback wired — exercise it to make sure it calls loginWithGoogle
     expect(capturedCallback).toBeTruthy()

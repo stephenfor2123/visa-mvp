@@ -63,6 +63,9 @@ const navItems = computed(() => {
     items.push({ path: '/admin/users', label: 'admin.menu_users', perm: 'user.view' })
   }
   if (admin.hasPermission('country.manage')) items.push({ path: '/admin/countries', label: 'admin.menu_countries', perm: 'country.manage' })
+  if (admin.hasPermission('pricing.manage') || admin.hasPermission('settings')) {
+    items.push({ path: '/admin/pricing', label: 'admin.menu_pricing', perm: 'pricing.manage' })
+  }
   if (admin.hasPermission('settings')) items.push({ path: '/admin/rate-limit', label: 'admin.menu_settings', perm: 'settings' })
   if (admin.hasPermission('ai_rules.edit')) items.push({ path: '/admin/ai-rules', label: 'admin.menu_ai_rules', perm: 'ai_rules.edit' })
   if (admin.hasPermission('rag.review')) items.push({ path: '/admin/rag-review', label: 'admin.menu_rag_review', perm: 'rag.review' })

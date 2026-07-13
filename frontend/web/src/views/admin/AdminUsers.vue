@@ -21,6 +21,14 @@
     <section>
       <!-- Filter bar -->
       <div class="users-toolbar">
+        <form class="users-search" @submit.prevent="onSearch">
+          <input
+            v-model.trim="query"
+            type="search"
+            :placeholder="t('admin.users.search_placeholder')"
+          />
+          <button class="btn-secondary" type="submit">{{ t('admin.users.search') }}</button>
+        </form>
         <label class="users-status-filter">
           <span>{{ t('admin.users.filter_status') }}</span>
           <select v-model="status" @change="onStatusChange">
@@ -36,36 +44,44 @@
       </div>
 
       <div v-if="loading" class="admin-loading">{{ t('admin.loading') }}</div>
-      <div v-else-if="error" class="admin-error">{{ error }}</div>
+      <div v-else-if="error" class="admin-error">
+        <span>{{ error }}</span>
+        <button class="btn-secondary" type="button" @click="fetchUsers">
+          {{ t('admin.users.retry') }}
+        </button>
+      </div>
       <template v-else>
-        <table class="data-table">
+        <div class="data-table-wrap">
+          <table class="data-table">
           <thead>
             <tr>
               <th>{{ t('admin.users.col_id') }}</th>
               <th>{{ t('admin.users.col_nickname') }}</th>
+              <th>{{ t('admin.users.col_username') }}</th>
               <th>{{ t('admin.users.col_email') }}</th>
-              <th>{{ t('admin.users.col_phone') }}</th>
-              <th>{{ t('admin.users.col_lang') }}</th>
               <th>{{ t('admin.users.col_status') }}</th>
-              <th>{{ t('admin.users.col_last_login') }}</th>
+              <th>{{ t('admin.users.col_orders') }}</th>
+              <th>{{ t('admin.users.col_materials') }}</th>
               <th>{{ t('admin.users.col_created') }}</th>
+              <th>{{ t('admin.users.col_last_login') }}</th>
               <th>{{ t('admin.order_detail.col_action') }}</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="u in users" :key="u.id" data-testid="users-row">
               <td>#{{ u.id }}</td>
-              <td>{{ u.nickname || u.username || '—' }}</td>
+              <td>{{ u.nickname || '—' }}</td>
+              <td>{{ u.username || '—' }}</td>
               <td>{{ u.email || '—' }}</td>
-              <td>{{ u.phone ? `${u.phone_country || ''} ${u.phone}` : '—' }}</td>
-              <td>{{ u.language_pref || '—' }}</td>
               <td>
                 <span class="status-pill" :class="`is-${u.status}`">
                   {{ statusLabel(u.status) }}
                 </span>
               </td>
-              <td>{{ fmtDate(u.last_login_at) || '—' }}</td>
+              <td>{{ u.order_count ?? 0 }}</td>
+              <td>{{ u.material_count ?? 0 }}</td>
               <td>{{ fmtDate(u.created_at) }}</td>
+              <td>{{ fmtDate(u.last_login_at) || '—' }}</td>
               <td>
                 <button class="btn-text" @click="openDetail(u)" data-testid="users-detail-btn">
                   {{ t('admin.users.detail') }}
@@ -89,10 +105,11 @@
               </td>
             </tr>
             <tr v-if="!users.length">
-              <td colspan="9" class="users-empty">{{ t('admin.users.empty') }}</td>
+              <td colspan="10" class="users-empty">{{ t('admin.users.empty') }}</td>
             </tr>
           </tbody>
-        </table>
+          </table>
+        </div>
         <!-- Pagination -->
         <div v-if="totalPages > 1" class="pagination">
           <button class="btn-secondary" :disabled="page <= 1" @click="changePage(page - 1)">
@@ -130,12 +147,16 @@
               <span class="detail-val">{{ detailFull.nickname || '—' }}</span>
             </div>
             <div class="detail-line">
-              <span class="detail-key">{{ t('admin.users.col_email') }}</span>
-              <span class="detail-val">{{ detailFull.email || '—' }}</span>
+              <span class="detail-key">{{ t('admin.users.col_username') }}</span>
+              <span class="detail-val">{{ detailFull.username || '—' }}</span>
             </div>
             <div class="detail-line">
-              <span class="detail-key">{{ t('admin.users.col_phone') }}</span>
-              <span class="detail-val">{{ detailFull.phone_country }} {{ detailFull.phone }}</span>
+              <span class="detail-key">UUID</span>
+              <span class="detail-val detail-mono">{{ detailFull.uuid }}</span>
+            </div>
+            <div class="detail-line">
+              <span class="detail-key">{{ t('admin.users.col_email') }}</span>
+              <span class="detail-val">{{ detailFull.email || '—' }}</span>
             </div>
             <div class="detail-line">
               <span class="detail-key">{{ t('admin.users.col_lang') }}</span>
@@ -222,6 +243,7 @@ const canResetPwd = computed(() => admin.hasPermission('user.reset_password'))
 
 // Filter state
 const status = ref('')
+const query = ref('')
 const users = ref([])
 const total = ref(0)
 const loading = ref(false)
@@ -247,15 +269,23 @@ async function fetchUsers() {
       page: page.value,
       page_size: pageSize,
       status: status.value || null,
+      q: query.value || null,
     })
     users.value = res.items
     total.value = res.total
     totalPages.value = res.total_pages
   } catch (e) {
-    error.value = e.message || t('admin.error_load')
+    error.value = e?.code === 'NETWORK'
+      ? t('admin.users.error_network')
+      : (e.message || t('admin.error_load'))
   } finally {
     loading.value = false
   }
+}
+
+function onSearch() {
+  page.value = 1
+  fetchUsers()
 }
 
 function onStatusChange() {
@@ -333,6 +363,8 @@ function fmtDate(iso) {
 
 <style scoped>
 .data-table { width: 100%; border-collapse: collapse; }
+.data-table-wrap { overflow-x: auto; border: 1px solid #e4e7ed; border-radius: 8px; }
+.data-table { min-width: 1080px; }
 .data-table th, .data-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e4e7ed; font-size: 14px; }
 .data-table th { background: #f5f7fa; font-weight: 600; color: #606266; }
 .status-pill { font-size: 12px; padding: 2px 8px; border-radius: 4px; white-space: nowrap; }
@@ -341,6 +373,8 @@ function fmtDate(iso) {
 .users-empty { text-align: center; padding: 30px; color: #909399; }
 
 .users-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 12px; flex-wrap: wrap; }
+.users-search { display: flex; align-items: center; gap: 8px; }
+.users-search input { width: 280px; max-width: 50vw; padding: 7px 10px; border: 1px solid #dcdfe6; border-radius: 6px; font-size: 14px; }
 .users-status-filter { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #606266; }
 .users-status-filter select { padding: 6px 10px; border: 1px solid #dcdfe6; border-radius: 6px; font-size: 14px; }
 .users-count { font-size: 13px; color: #909399; }
@@ -356,6 +390,7 @@ function fmtDate(iso) {
 
 .admin-loading, .admin-error { padding: 20px; text-align: center; color: #909399; }
 .admin-error { color: #f56c6c; }
+.admin-error { display: flex; justify-content: center; align-items: center; gap: 12px; }
 
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
 .modal { background: #fff; border-radius: 12px; width: 480px; max-width: 90vw; max-height: 85vh; overflow-y: auto; }
@@ -371,6 +406,7 @@ function fmtDate(iso) {
 .detail-key { flex: 0 0 90px; color: #909399; font-size: 13px; }
 .detail-val { color: #1f2937; }
 .detail-sub { color: #909399; font-size: 12px; margin-left: 6px; }
+.detail-mono { font-family: ui-monospace, Menlo, monospace; font-size: 12px; word-break: break-all; }
 .detail-stats { display: flex; gap: 12px; margin-top: 8px; padding-top: 12px; border-top: 1px dashed #e4e7ed; }
 .detail-stat { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px; background: #f8fafc; border-radius: 8px; }
 .detail-stat__n { font-size: 22px; font-weight: 600; color: #3b6ef5; }

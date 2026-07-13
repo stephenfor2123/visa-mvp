@@ -48,9 +48,20 @@ async def _register(client, phone: str) -> str:
     uname = f"u{phone}"
     email = f"{phone}@test.local"
     pwd = "Test1234"
+    send = await client.post(
+        "/api/v2/auth/send-email-code",
+        json={"email": email, "purpose": "register"},
+    )
+    assert send.status_code == 200, send.text
+    email_code = send.json()["data"]["code"]
     await client.post(
         "/api/v2/auth/register",
-        json={"username": uname, "email": email, "password": pwd, "email_code": "123456"},
+        json={
+            "username": uname,
+            "email": email,
+            "password": pwd,
+            "email_code": email_code,
+        },
     )
     r = await client.post(
         "/api/v2/auth/login",
@@ -400,3 +411,173 @@ class TestClosePayment:
         )
         assert rcl.status_code == 404
         assert rcl.json()["code"] == "4012"
+
+
+class TestRefundPayment:
+    async def test_refund_paid_order_mock(self, client):
+        """POST /payment/{no}/refund flips paid → refunded (mock channel)."""
+        dest_id = await _seed_destination("US")
+        token = await _register(client, "13955550030")
+        mid = await _upload_material(client, token)
+        order_no = await _create_order_for(client, token, dest_id, [mid])
+
+        rc = await client.post(
+            "/api/v2/payment/create",
+            json={"order_no": order_no, "amount_cents": 1990, "currency": "USD"},
+            headers=_bearer(token),
+        )
+        assert rc.status_code == 201, rc.text
+        trade_no = rc.json()["data"]["trade_no"]
+        rn = await client.post(
+            "/api/v2/payment/notify",
+            json={"order_no": order_no, "trade_no": trade_no},
+        )
+        assert rn.status_code == 200, rn.text
+
+        rr = await client.post(
+            f"/api/v2/payment/{order_no}/refund",
+            json={"reason": "user cancelled within policy"},
+            headers=_bearer(token),
+        )
+        assert rr.status_code == 200, rr.text
+        body = rr.json()["data"]
+        assert body["status"] == "refunded"
+        assert body["refund_trade_no"].startswith("REFUND")
+        assert body["refund_amount_cents"] == 1990
+
+        rq = await client.get(
+            f"/api/v2/payment/{order_no}", headers=_bearer(token)
+        )
+        assert rq.status_code == 200, rq.text
+        assert rq.json()["data"]["status"] == "refunded"
+        assert rq.json()["data"]["refund_trade_no"] == body["refund_trade_no"]
+
+    async def test_refund_pending_order_4014(self, client):
+        dest_id = await _seed_destination("US")
+        token = await _register(client, "13955550031")
+        mid = await _upload_material(client, token)
+        order_no = await _create_order_for(client, token, dest_id, [mid])
+
+        rc = await client.post(
+            "/api/v2/payment/create",
+            json={"order_no": order_no, "amount_cents": 1000, "currency": "USD"},
+            headers=_bearer(token),
+        )
+        assert rc.status_code == 201
+
+        rr = await client.post(
+            f"/api/v2/payment/{order_no}/refund",
+            json={},
+            headers=_bearer(token),
+        )
+        assert rr.status_code == 400
+        assert rr.json()["code"] == "4014"
+
+
+class TestPaymentIdempotency:
+    async def test_create_idempotent_returns_same_trade_no(self, client):
+        """Duplicate create while pending + same amount → same trade_no."""
+        dest_id = await _seed_destination("US")
+        token = await _register(client, "13955550040")
+        mid = await _upload_material(client, token)
+        order_no = await _create_order_for(client, token, dest_id, [mid])
+
+        payload = {"order_no": order_no, "amount_cents": 1990, "currency": "USD"}
+        r1 = await client.post(
+            "/api/v2/payment/create", json=payload, headers=_bearer(token)
+        )
+        r2 = await client.post(
+            "/api/v2/payment/create", json=payload, headers=_bearer(token)
+        )
+        assert r1.status_code == 201, r1.text
+        assert r2.status_code == 201, r2.text
+        assert r1.json()["data"]["trade_no"] == r2.json()["data"]["trade_no"]
+
+    async def test_create_when_already_paid_4013(self, client):
+        dest_id = await _seed_destination("US")
+        token = await _register(client, "13955550041")
+        mid = await _upload_material(client, token)
+        order_no = await _create_order_for(client, token, dest_id, [mid])
+
+        rc = await client.post(
+            "/api/v2/payment/create",
+            json={"order_no": order_no, "amount_cents": 1000, "currency": "USD"},
+            headers=_bearer(token),
+        )
+        trade_no = rc.json()["data"]["trade_no"]
+        await client.post(
+            "/api/v2/payment/notify",
+            json={"order_no": order_no, "trade_no": trade_no},
+        )
+
+        r2 = await client.post(
+            "/api/v2/payment/create",
+            json={"order_no": order_no, "amount_cents": 1000, "currency": "USD"},
+            headers=_bearer(token),
+        )
+        assert r2.status_code == 409
+        assert r2.json()["code"] == "4013"
+
+    async def test_notify_stale_trade_no_rejected(self, client):
+        dest_id = await _seed_destination("US")
+        token = await _register(client, "13955550042")
+        mid = await _upload_material(client, token)
+        order_no = await _create_order_for(client, token, dest_id, [mid])
+
+        rc = await client.post(
+            "/api/v2/payment/create",
+            json={"order_no": order_no, "amount_cents": 1000, "currency": "USD"},
+            headers=_bearer(token),
+        )
+        assert rc.status_code == 201
+        # Supersede with different amount → new trade_no
+        rc2 = await client.post(
+            "/api/v2/payment/create",
+            json={"order_no": order_no, "amount_cents": 2000, "currency": "USD"},
+            headers=_bearer(token),
+        )
+        assert rc2.status_code == 201
+        assert rc2.json()["data"]["trade_no"] != rc.json()["data"]["trade_no"]
+
+        stale = await client.post(
+            "/api/v2/payment/notify",
+            json={
+                "order_no": order_no,
+                "trade_no": rc.json()["data"]["trade_no"],
+            },
+        )
+        assert stale.status_code == 404
+        assert stale.json()["code"] == "4012"
+
+    async def test_refund_idempotent_second_call(self, client):
+        dest_id = await _seed_destination("US")
+        token = await _register(client, "13955550043")
+        mid = await _upload_material(client, token)
+        order_no = await _create_order_for(client, token, dest_id, [mid])
+
+        rc = await client.post(
+            "/api/v2/payment/create",
+            json={"order_no": order_no, "amount_cents": 1500, "currency": "USD"},
+            headers=_bearer(token),
+        )
+        trade_no = rc.json()["data"]["trade_no"]
+        await client.post(
+            "/api/v2/payment/notify",
+            json={"order_no": order_no, "trade_no": trade_no},
+        )
+        r1 = await client.post(
+            f"/api/v2/payment/{order_no}/refund",
+            json={},
+            headers=_bearer(token),
+        )
+        r2 = await client.post(
+            f"/api/v2/payment/{order_no}/refund",
+            json={},
+            headers=_bearer(token),
+        )
+        assert r1.status_code == 200
+        assert r2.status_code == 200
+        assert (
+            r1.json()["data"]["refund_trade_no"]
+            == r2.json()["data"]["refund_trade_no"]
+        )

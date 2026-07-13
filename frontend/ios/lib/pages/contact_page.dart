@@ -25,7 +25,7 @@ class ContactPage extends StatelessWidget {
           _contactCard(
             icon: Icons.email_outlined,
             title: '邮箱',
-            value: 'support@htex.app',
+            value: 'support@htexvisa.com',
             subtitle: '所有问题 24 小时内回复',
             onTap: () {},
           ),
@@ -46,7 +46,7 @@ class ContactPage extends StatelessWidget {
           _contactCard(
             icon: Icons.business_outlined,
             title: '商务合作',
-            value: 'biz@htex.app',
+            value: 'business@htexvisa.com',
             subtitle: 'Affiliate / 旅行社',
             onTap: () {},
           ),

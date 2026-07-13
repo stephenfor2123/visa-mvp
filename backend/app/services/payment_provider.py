@@ -147,6 +147,13 @@ class PaymentProvider:
             raise ValueError(f"amount_cents must be positive, got {amount_cents}")
 
         order = await self._load_order(db, order_no)
+        extra, reuse_blob, _superseded = self._prepare_create_payment(
+            order,
+            amount_cents=amount_cents,
+            currency=currency,
+        )
+        if reuse_blob is not None:
+            return self._blob_to_create_result(order_no, reuse_blob)
 
         # Cancel any pending auto-notify for this order (e.g. re-pay flow).
         prior = _PENDING_NOTIFIES.pop(order_no, None)
@@ -175,7 +182,6 @@ class PaymentProvider:
         }
 
         # Merge into existing extra["payment"] so we don't clobber other keys.
-        extra = self._load_extra(order)
         extra["payment"] = payment_blob
         order.extra = json.dumps(extra, ensure_ascii=False)
 
@@ -305,12 +311,28 @@ class PaymentProvider:
             )
             return True
 
+        if current_status == "refunded":
+            _log.warning(
+                "handle_notify: order_no={} already refunded; ignoring callback",
+                order_no,
+            )
+            return False
+
         # Refuse to revive a closed/failed payment.
         if current_status not in (None, "pending"):
             _log.warning(
                 "handle_notify: order_no={} status={} not eligible",
                 order_no,
                 current_status,
+            )
+            return False
+
+        if trade_no and blob.get("trade_no") and trade_no != blob.get("trade_no"):
+            _log.warning(
+                "handle_notify: stale trade_no order_no={} expected={} got={}",
+                order_no,
+                blob.get("trade_no"),
+                trade_no,
             )
             return False
 
@@ -600,6 +622,97 @@ class PaymentProvider:
             return {}
         return data if isinstance(data, dict) else {}
 
+    def _archive_payment_attempt(
+        self, extra: dict[str, Any], blob: dict[str, Any], *, reason: str
+    ) -> None:
+        """Append a superseded payment blob for audit (duplicate trade_no trail)."""
+        history = extra.get("payment_history")
+        if not isinstance(history, list):
+            history = []
+        archived = dict(blob)
+        archived["archived_at"] = _utcnow().isoformat()
+        archived["archive_reason"] = reason
+        history.append(archived)
+        extra["payment_history"] = history
+
+    def _blob_to_create_result(
+        self, order_no: str, blob: dict[str, Any]
+    ) -> CreateOrderResult:
+        expired_at = _parse_iso(blob.get("expired_at"))
+        if expired_at is None:
+            expired_at = _utcnow() + timedelta(seconds=self.MOCK_ORDER_TTL_SECONDS)
+        return CreateOrderResult(
+            order_no=order_no,
+            trade_no=str(blob.get("trade_no") or ""),
+            code_url=str(blob.get("code_url") or ""),
+            prepay_id=str(blob.get("prepay_id") or blob.get("client_secret") or ""),
+            expired_at=expired_at,
+            raw=blob,
+        )
+
+    def _prepare_create_payment(
+        self,
+        order: Order,
+        *,
+        amount_cents: int,
+        currency: str,
+    ) -> tuple[dict[str, Any], Optional[dict[str, Any]], Optional[str]]:
+        """Resolve idempotent create / supersede before issuing a new trade_no.
+
+        Returns:
+            extra — mutable orders.extra dict
+            reuse_blob — when set, caller must return existing payment as-is
+            superseded_trade_no — when set, caller should cancel old channel intent
+
+        Raises:
+            ValueError: order already paid (duplicate payment forbidden).
+        """
+        extra = self._load_extra(order)
+        blob = extra.get("payment")
+        if not isinstance(blob, dict) or not blob:
+            return extra, None, None
+
+        status = blob.get("status")
+        if status == "paid":
+            raise ValueError(
+                f"order_no={order.order_no} is already paid; duplicate payment rejected"
+            )
+
+        if status == "refunded":
+            self._archive_payment_attempt(extra, blob, reason="superseded_after_refund")
+            extra.pop("payment", None)
+            return extra, None, None
+
+        if status == "pending":
+            expired_at = _parse_iso(blob.get("expired_at"))
+            same_amount = int(blob.get("amount_cents") or 0) == int(amount_cents)
+            same_currency = (blob.get("currency") or "USD").upper() == currency.upper()
+            not_expired = expired_at is None or expired_at > _utcnow()
+            if same_amount and same_currency and not_expired:
+                _log.info(
+                    "payment create idempotent replay order_no={} trade_no={}",
+                    order.order_no,
+                    blob.get("trade_no"),
+                )
+                return extra, blob, None
+            superseded = blob.get("trade_no")
+            self._archive_payment_attempt(extra, blob, reason="superseded_pending")
+            extra.pop("payment", None)
+            return extra, None, str(superseded) if superseded else None
+
+        if status in ("closed", "failed"):
+            superseded = blob.get("trade_no")
+            self._archive_payment_attempt(
+                extra, blob, reason=f"superseded_{status}"
+            )
+            extra.pop("payment", None)
+            return extra, None, str(superseded) if superseded else None
+
+        superseded = blob.get("trade_no")
+        self._archive_payment_attempt(extra, blob, reason="superseded_unknown")
+        extra.pop("payment", None)
+        return extra, None, str(superseded) if superseded else None
+
     @staticmethod
     def db_add_status_history(
         db: AsyncSession,
@@ -759,6 +872,20 @@ def reset_payment_provider_for_tests() -> None:
 #     async SDK methods. The `httpx` library that stripe uses is
 #     intercepted by `respx` (out of scope) or simply rejected at the
 #     `if self.stripe is None` gate if no key is set.
+def _configure_stripe_network(stripe_module) -> None:
+    """Keep Stripe HTTPS off local HTTP_PROXY (common 403 on CN dev proxies)."""
+    import os
+
+    for key in ("NO_PROXY", "no_proxy"):
+        current = os.environ.get(key, "")
+        if "api.stripe.com" not in current:
+            os.environ[key] = ",".join(
+                part for part in (current, "api.stripe.com") if part
+            )
+    # Recreate lazily so httpx picks up the updated NO_PROXY.
+    stripe_module.default_http_client = None
+
+
 class StripePaymentProvider(PaymentProvider):
     """V2.1 真接 — `PaymentIntent` + `Webhook` + `Transfer` 调真 SDK.
 
@@ -796,6 +923,7 @@ class StripePaymentProvider(PaymentProvider):
         secret = get_settings().stripe_secret_key
         if secret:
             # Real key present → V2.1 path. Configure the SDK in-place.
+            _configure_stripe_network(_stripe)
             _stripe.api_key = secret
             self.stripe = _stripe
             self.webhook_secret = get_settings().stripe_webhook_secret
@@ -864,6 +992,30 @@ class StripePaymentProvider(PaymentProvider):
         self._require_stripe()
 
         order = await self._load_order(db, order_no)
+        extra, reuse_blob, superseded_trade_no = self._prepare_create_payment(
+            order,
+            amount_cents=amount_cents,
+            currency=currency,
+        )
+        if reuse_blob is not None:
+            return self._blob_to_create_result(order_no, reuse_blob)
+
+        if superseded_trade_no:
+            try:
+                await self.stripe.PaymentIntent.cancel_async(superseded_trade_no)
+                _log.info(
+                    "stripe superseded pending intent order_no={} trade_no={}",
+                    order_no,
+                    superseded_trade_no,
+                )
+            except Exception as exc:  # noqa: BLE001 — best-effort
+                _log.warning(
+                    "stripe cancel superseded intent failed order_no={} "
+                    "trade_no={} err={}",
+                    order_no,
+                    superseded_trade_no,
+                    exc,
+                )
 
         # Create the real PaymentIntent via the async SDK call.
         intent = await self.stripe.PaymentIntent.create_async(
@@ -889,7 +1041,8 @@ class StripePaymentProvider(PaymentProvider):
             "trade_no": trade_no,
             "client_secret": client_secret,
             "code_url": code_url,
-            "status": intent.status,  # `requires_payment_method` etc.
+            "status": "pending",
+            "stripe_status": intent.status,
             "amount_cents": int(amount_cents),
             "currency": currency,
             "desc": desc,
@@ -900,7 +1053,6 @@ class StripePaymentProvider(PaymentProvider):
         }
 
         # Persist to orders.extra (same shape as Mock).
-        extra = self._load_extra(order)
         extra["payment"] = payment_blob
         order.extra = json.dumps(extra, ensure_ascii=False)
 
@@ -958,6 +1110,16 @@ class StripePaymentProvider(PaymentProvider):
         order = await self._load_order(db, order_no)
         blob = self._load_extra(order).get("payment") or {}
         trade_no = blob.get("trade_no")
+        if blob.get("status") == "refunded":
+            return OrderPaymentStatus(
+                order_no=order_no,
+                trade_no=trade_no,
+                status="refunded",
+                paid_at=_parse_iso(blob.get("paid_at")),
+                amount_cents=int(blob.get("amount_cents") or 0),
+                currency=blob.get("currency") or "USD",
+                raw=blob,
+            )
         if not trade_no:
             return OrderPaymentStatus(
                 order_no=order_no, trade_no=None, status="none",
@@ -997,11 +1159,41 @@ class StripePaymentProvider(PaymentProvider):
         normalised = _STRIPE_STATUS_MAP.get(intent.status, "failed")
         paid_at = _parse_iso(blob.get("paid_at"))
         # If Stripe says succeeded but our blob doesn't yet have paid_at
-        # (e.g. webhook hasn't landed), fall back to intent's created timestamp.
-        if normalised == "paid and not paid_at" if False else (
-            normalised == "paid" and not paid_at
-        ):
-            paid_at = _utcnow()  # best-effort marker; webhook will overwrite
+        # (e.g. webhook hasn't landed), sync DB so Phase A polling works
+        # without requiring stripe CLI immediately.
+        if normalised == "paid" and blob.get("status") != "paid":
+            extra = self._load_extra(order)
+            payment_blob = dict(extra.get("payment") or blob)
+            payment_blob["status"] = "paid"
+            payment_blob["paid_at"] = _utcnow().isoformat()
+            payment_blob["trade_no"] = intent.id
+            if getattr(intent, "amount_received", None) is not None:
+                payment_blob["amount_received_cents"] = int(intent.amount_received)
+            extra["payment"] = payment_blob
+            order.extra = json.dumps(extra, ensure_ascii=False)
+            prev_status = order.status
+            if prev_status in ("created", "pending"):
+                order.status = "submitted"
+                if order.submitted_at is None:
+                    order.submitted_at = _utcnow()
+                self.db_add_status_history(
+                    db,
+                    order_id=order.id,
+                    from_status=prev_status,
+                    to_status="submitted",
+                    source="payment",
+                    note=f"payment: stripe query sync paid trade_no={intent.id}",
+                )
+            await db.commit()
+            await db.refresh(order)
+            blob = payment_blob
+            paid_at = _parse_iso(blob.get("paid_at"))
+            _log.info(
+                "stripe query_order synced paid order_no={} trade_no={}",
+                order_no, intent.id,
+            )
+        elif normalised == "paid" and not paid_at:
+            paid_at = _utcnow()
 
         return OrderPaymentStatus(
             order_no=order_no,
@@ -1060,19 +1252,46 @@ class StripePaymentProvider(PaymentProvider):
 
         event_type = payload.get("type") or ""
         event_object = (payload.get("data") or {}).get("object") or {}
+        event_trade_no = event_object.get("id")
 
-        # Idempotency: if already paid, no-op (Stripe may retry the webhook).
+        # Idempotency: paid / refunded are terminal for this trade_no.
         if blob.get("status") == "paid":
+            if event_trade_no and event_trade_no != blob.get("trade_no"):
+                _log.warning(
+                    "stripe handle_notify: trade_no mismatch order_no={} "
+                    "expected={} got={}",
+                    order_no,
+                    blob.get("trade_no"),
+                    event_trade_no,
+                )
+                return False
             _log.info(
                 "stripe handle_notify: order_no={} already paid (replay)",
                 order_no,
             )
             return True
 
+        if blob.get("status") == "refunded":
+            _log.warning(
+                "stripe handle_notify: order_no={} refunded; ignoring event {}",
+                order_no,
+                event_type,
+            )
+            return False
+
         # Only "succeeded" / "payment_failed" flip the order's status
         # (other events are informational: `payment_intent.created`,
         # `payment_intent.processing`, etc.).
         if event_type == "payment_intent.succeeded":
+            if event_trade_no and blob.get("trade_no") and event_trade_no != blob.get("trade_no"):
+                _log.warning(
+                    "stripe handle_notify: stale intent succeeded order_no={} "
+                    "current={} event={}",
+                    order_no,
+                    blob.get("trade_no"),
+                    event_trade_no,
+                )
+                return True  # ack without mutating current payment
             blob["status"] = "paid"
             blob["paid_at"] = _utcnow().isoformat()
             if event_object.get("id"):
@@ -1233,6 +1452,128 @@ class StripePaymentProvider(PaymentProvider):
             order_no=order_no,
             trade_no=trade_no,
             status="closed",
+            paid_at=_parse_iso(blob.get("paid_at")),
+            amount_cents=int(blob.get("amount_cents") or 0),
+            currency=blob.get("currency") or "USD",
+            raw=blob,
+        )
+
+    # ------------------------------------------------------------------ #
+    # V2.1 真接 refund_order (stripe.Refund.create_async)                  #
+    # ------------------------------------------------------------------ #
+    async def refund_order(
+        self,
+        db: AsyncSession,
+        *,
+        order_no: str,
+        amount_cents: Optional[int] = None,
+        reason: Optional[str] = None,
+    ) -> OrderPaymentStatus:
+        """Issue a real Stripe Refund against the order's PaymentIntent."""
+        self._require_stripe()
+        order = await self._load_order(db, order_no)
+        extra = self._load_extra(order)
+        blob = extra.get("payment")
+        if not blob:
+            raise LookupError(f"no payment record for order_no={order_no}")
+
+        pay_status = blob.get("status")
+        if pay_status == "refunded":
+            _log.info("stripe refund skipped (already refunded) order_no={}", order_no)
+            return OrderPaymentStatus(
+                order_no=order_no,
+                trade_no=blob.get("trade_no"),
+                status="refunded",
+                paid_at=_parse_iso(blob.get("paid_at")),
+                amount_cents=int(blob.get("amount_cents") or 0),
+                currency=blob.get("currency") or "USD",
+                raw=blob,
+            )
+        if pay_status != "paid":
+            intent_id = blob.get("trade_no")
+            if intent_id:
+                try:
+                    intent = await self.stripe.PaymentIntent.retrieve_async(intent_id)
+                    if intent.status == "succeeded":
+                        paid_at = _utcnow()
+                        blob["status"] = "paid"
+                        blob["paid_at"] = blob.get("paid_at") or paid_at.isoformat()
+                        pay_status = "paid"
+                        extra["payment"] = blob
+                        order.extra = json.dumps(extra, ensure_ascii=False)
+                        await db.commit()
+                except Exception as exc:  # noqa: BLE001
+                    _log.warning(
+                        "stripe refund pre-sync failed order_no={} err={}",
+                        order_no,
+                        exc,
+                    )
+        if pay_status != "paid":
+            raise ValueError(
+                f"order_no={order_no} payment status is {pay_status!r}; cannot refund"
+            )
+
+        intent_id = blob.get("trade_no")
+        if not intent_id:
+            raise LookupError(f"no Stripe intent id for order_no={order_no}")
+
+        refund_cents = int(amount_cents or blob.get("amount_cents") or 0)
+        if refund_cents <= 0:
+            raise ValueError(f"refund amount must be positive for order_no={order_no}")
+
+        refund = await self.stripe.Refund.create_async(
+            payment_intent=intent_id,
+            amount=refund_cents,
+            reason="requested_by_customer",
+            metadata={"order_no": order_no, "reason": (reason or "")[:500]},
+        )
+
+        refunded_at = _utcnow()
+        blob["status"] = "refunded"
+        blob["refunded_at"] = refunded_at.isoformat()
+        blob["refund_amount_cents"] = refund_cents
+        blob["refund_trade_no"] = refund.id
+        if reason:
+            blob["refund_reason"] = reason[:500]
+        extra["payment"] = blob
+        order.extra = json.dumps(extra, ensure_ascii=False)
+
+        self.db_add_status_history(
+            db,
+            order_id=order.id,
+            from_status=order.status,
+            to_status=order.status,
+            source="payment",
+            note=f"payment: stripe refunded trade_no={intent_id} refund={refund.id}",
+        )
+        await record_audit(
+            db,
+            actor_type="system",
+            actor_id=0,
+            action="payment.refund",
+            target_type="order",
+            target_id=order.id,
+            payload={
+                "order_no": order_no,
+                "trade_no": intent_id,
+                "refund_trade_no": refund.id,
+                "refund_amount_cents": refund_cents,
+                "provider": "stripe",
+            },
+        )
+        await db.commit()
+        await db.refresh(order)
+        _log.info(
+            "stripe payment refunded order_no={} refund_id={} cents={}",
+            order_no,
+            refund.id,
+            refund_cents,
+        )
+
+        return OrderPaymentStatus(
+            order_no=order_no,
+            trade_no=intent_id,
+            status="refunded",
             paid_at=_parse_iso(blob.get("paid_at")),
             amount_cents=int(blob.get("amount_cents") or 0),
             currency=blob.get("currency") or "USD",

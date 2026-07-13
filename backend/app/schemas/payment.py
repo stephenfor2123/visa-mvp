@@ -101,10 +101,13 @@ class NotifyPaymentResponse(BaseModel):
 class QueryPaymentResponse(BaseModel):
     order_no: str
     trade_no: Optional[str]
-    status: str         # none | pending | paid | closed | failed
+    status: str         # none | pending | paid | closed | failed | refunded
     paid_at: Optional[datetime]
     amount_cents: int
     currency: str
+    refunded_at: Optional[datetime] = None
+    refund_trade_no: Optional[str] = None
+    refund_amount_cents: Optional[int] = None
 
 
 # --------------------------------------------------------------------------- #
@@ -117,6 +120,26 @@ class ClosePaymentResponse(BaseModel):
     closed_at: datetime
 
 
+# --------------------------------------------------------------------------- #
+# POST /payment/{order_no}/refund                                             #
+# --------------------------------------------------------------------------- #
+class RefundPaymentRequest(BaseModel):
+    amount_cents: Optional[int] = Field(
+        default=None, gt=0,
+        description="Partial refund in cents; defaults to full paid amount",
+    )
+    reason: Optional[str] = Field(default=None, max_length=500)
+
+
+class RefundPaymentResponse(BaseModel):
+    order_no: str
+    trade_no: Optional[str]
+    refund_trade_no: str
+    status: str         # "refunded"
+    refunded_at: datetime
+    refund_amount_cents: int
+
+
 __all__ = [
     "CreatePaymentRequest",
     "CreatePaymentResponse",
@@ -124,5 +147,7 @@ __all__ = [
     "NotifyPaymentResponse",
     "QueryPaymentResponse",
     "ClosePaymentResponse",
+    "RefundPaymentRequest",
+    "RefundPaymentResponse",
     "PaymentConfigResponse",
 ]

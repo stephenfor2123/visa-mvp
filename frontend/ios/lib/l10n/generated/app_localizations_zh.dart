@@ -1115,7 +1115,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get contactEmail => '邮箱';
 
   @override
-  String get contactEmailAddr => 'support@htex.app';
+  String get contactEmailAddr => 'support@htexvisa.com';
 
   @override
   String get contactEmailSub => '所有问题 24 小时内回复';
@@ -1136,7 +1136,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get contactBiz => '商务合作';
 
   @override
-  String get contactBizAddr => 'biz@htex.app';
+  String get contactBizAddr => 'business@htexvisa.com';
 
   @override
   String get contactBizSub => 'Affiliate / 旅行社';

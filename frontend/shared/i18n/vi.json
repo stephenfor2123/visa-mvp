@@ -39,6 +39,63 @@
     "relogin": "Đăng nhập lại",
     "dismiss": "Đóng"
   },
+  "seo": {
+    "default_description": "Hướng dẫn & tự kiểm tra miễn phí. Trả phí: mẫu checklist, AI rà soát, OCR. Khuyến mãi $19.9 15/07–15/08/2026 ($99.9 gốc). Thu phí nền tảng sau khi duyệt; hoàn nếu bị từ chối. Lệ phí lãnh sự không hoàn.",
+    "pages": {
+      "home": {
+        "title": "Trợ lý xin visa",
+        "description": "Xin visa Mỹ, Schengen, Anh và Úc với hướng dẫn hồ sơ, hỗ trợ DS-160 và bảng giá minh bạch."
+      },
+      "destinations": {
+        "title": "Điểm đến visa",
+        "description": "Chọn quốc gia đích visa và bắt đầu hồ sơ có hướng dẫn cho Mỹ, Schengen, Anh hoặc Úc."
+      },
+      "schengen": {
+        "title": "Quốc gia visa Schengen",
+        "description": "Chọn quốc gia Schengen chính và bắt đầu xin visa có hướng dẫn với Htex."
+      },
+      "apply": {
+        "title": "Bắt đầu xin visa",
+        "description": "Chọn quốc gia đích, xem tài liệu cần thiết và bắt đầu quy trình xin visa."
+      },
+      "diagnose": {
+        "title": "Đánh giá sẵn sàng visa",
+        "description": "Đánh giá mức độ sẵn sàng visa theo hồ sơ và yêu cầu điểm đến trước khi nộp."
+      },
+      "resources": {
+        "title": "Trung tâm tài nguyên visa",
+        "description": "Hướng dẫn visa, ghi chú chính sách, mẫu tài liệu và FAQ cho người nộp địa phương."
+      },
+      "resources_wiki": {
+        "title": "Wiki visa",
+        "description": "Bài viết bách khoa visa cho hồ sơ Mỹ, Anh, Úc và Schengen."
+      },
+      "resources_policy": {
+        "title": "Chính sách visa",
+        "description": "Tóm tắt chính sách và liên kết nguồn chính thức theo quốc gia đích."
+      },
+      "resources_templates": {
+        "title": "Mẫu tài liệu visa",
+        "description": "Mẫu và ví dụ tài liệu để chuẩn bị bộ hồ sơ visa đầy đủ."
+      },
+      "resources_faq": {
+        "title": "FAQ visa",
+        "description": "Câu hỏi thường gặp về yêu cầu visa, tài liệu, phí và các bước nộp hồ sơ."
+      },
+      "contact": {
+        "title": "Liên hệ",
+        "description": "Liên hệ đội ngũ Htex để được hỗ trợ xin visa."
+      },
+      "pricing": {
+        "title": "Bảng giá",
+        "description": "Phí lãnh sự và giá dịch vụ Htex minh bạch cho các điểm đến được hỗ trợ."
+      },
+      "agreement": {
+        "title": "Điều khoản dịch vụ",
+        "description": "Điều khoản dịch vụ, quyền riêng tư và thỏa thuận người dùng của Htex."
+      }
+    }
+  },
   "nav": {
     "home": "Trang chủ",
     "login": "Đăng nhập",
@@ -816,6 +873,10 @@
       "page_title": "Người dùng",
       "page_subtitle": "Quản lý người dùng C đã đăng ký (vô hiệu, xem số đơn)",
       "filter_status": "Trạng thái",
+      "search_placeholder": "Tìm email, tài khoản hoặc biệt danh",
+      "search": "Tìm kiếm",
+      "retry": "Thử lại",
+      "error_network": "Không thể kết nối dịch vụ quản trị. Vui lòng thử lại.",
       "status_all": "Tất cả",
       "status_active": "Hoạt động",
       "status_pending_destroy": "Chờ hủy",
@@ -835,11 +896,14 @@
       "mfa_off": "Chưa bật",
       "detail_title": "Người dùng #{id} · {name}",
       "col_id": "ID",
-      "col_nickname": "Biệt danh / Tên đăng nhập",
+      "col_nickname": "Biệt danh",
+      "col_username": "Tên đăng nhập",
       "col_email": "Email",
       "col_phone": "Điện thoại",
       "col_lang": "Ngôn ngữ",
       "col_status": "Trạng thái",
+      "col_orders": "Đơn hàng",
+      "col_materials": "Tài liệu",
       "col_created": "Ngày đăng ký",
       "col_last_login": "Lần cuối đăng nhập"
     },
@@ -1938,7 +2002,7 @@
   "contact": {
     "title": "Liên hệ chúng tôi",
     "sub": "Email phản hồi trong 1 giờ · Mọi ngày trong tuần",
-    "email": "Email",
+    "email": "Hỗ trợ",
     "phone": "Điện thoại",
     "wechat": "WeChat",
     "whatsapp": "WhatsApp",
@@ -1947,7 +2011,7 @@
     "hours_time": "09:00 — 21:00 (Giờ Bắc Kinh)",
     "copy": "Sao chép",
     "copied": "Đã sao chép",
-    "partner_label": "Hợp tác",
+    "partner_label": "Hợp tác kinh doanh",
     "partner_subject": "Yêu cầu hợp tác"
   },
   "wizard": {

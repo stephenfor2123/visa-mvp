@@ -1,0 +1,13 @@
+# Keep Vercel upload small; shared/ + web/src are enough to build
+node_modules
+web/node_modules
+web/dist
+web/dist-ssr
+web/test-results
+web/playwright-report
+web/screenshots
+ios
+miniprogram
+**/.git
+**/*.log
+shot-results.json

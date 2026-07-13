@@ -2301,7 +2301,7 @@ abstract class AppLocalizations {
   /// No description provided for @contactEmailAddr.
   ///
   /// In en, this message translates to:
-  /// **'support@htex.app'**
+  /// **'support@htexvisa.com'**
   String get contactEmailAddr;
 
   /// No description provided for @contactEmailSub.
@@ -2343,7 +2343,7 @@ abstract class AppLocalizations {
   /// No description provided for @contactBizAddr.
   ///
   /// In en, this message translates to:
-  /// **'biz@htex.app'**
+  /// **'business@htexvisa.com'**
   String get contactBizAddr;
 
   /// No description provided for @contactBizSub.

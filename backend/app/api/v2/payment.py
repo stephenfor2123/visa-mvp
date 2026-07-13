@@ -3,12 +3,12 @@
 
 Endpoints:
   - POST /api/v2/payment/create           (JWT) -> {trade_no, code_url, ...}
-  - POST /api/v2/payment/notify           (no auth — called by the Mock provider's
-                                          auto-notify task after a 1s delay; in V2.1
-                                          this is where the real WxPay/Stripe callback
-                                          lands, with HMAC signature verification)
+  - GET  /api/v2/payment/config           (public) -> active channel + publishable key
+  - POST /api/v2/payment/notify           (no auth — Mock auto-notify; kept for mock)
+  - POST /api/v2/payment/stripe-webhook   (no auth — Stripe signed webhook, Phase A)
   - GET  /api/v2/payment/{order_no}       (JWT) -> status snapshot
   - POST /api/v2/payment/{order_no}/close (JWT) -> flip pending -> closed
+  - POST /api/v2/payment/{order_no}/refund (JWT) -> refund paid order
 
 DoD (V2 §4.5 + W6-2 spec):
   - Zero credentials required to run end-to-end (no WECHATPAY_* / STRIPE_*
@@ -48,6 +48,8 @@ from app.schemas.payment import (
     NotifyPaymentResponse,
     PaymentConfigResponse,
     QueryPaymentResponse,
+    RefundPaymentRequest,
+    RefundPaymentResponse,
 )
 from app.services.payment_provider import (
     OrderPaymentStatus,
@@ -81,6 +83,7 @@ async def _load_owned_order(
 
 
 def _status_to_response(s: OrderPaymentStatus) -> QueryPaymentResponse:
+    raw = s.raw or {}
     return QueryPaymentResponse(
         order_no=s.order_no,
         trade_no=s.trade_no,
@@ -88,7 +91,19 @@ def _status_to_response(s: OrderPaymentStatus) -> QueryPaymentResponse:
         paid_at=s.paid_at,
         amount_cents=s.amount_cents,
         currency=s.currency,
+        refunded_at=_parse_iso(raw.get("refunded_at")),
+        refund_trade_no=raw.get("refund_trade_no"),
+        refund_amount_cents=raw.get("refund_amount_cents"),
     )
+
+
+def _parse_iso(value: object) -> Optional[datetime]:
+    if not value or not isinstance(value, str):
+        return None
+    try:
+        return datetime.fromisoformat(value)
+    except ValueError:
+        return None
 
 
 # --------------------------------------------------------------------------- #
@@ -237,13 +252,62 @@ async def _process_stripe_webhook(event: dict) -> None:
 
 
 # --------------------------------------------------------------------------- #
+# POST /payment/stripe-webhook  (Phase A — Stripe Test / Live)                #
+# --------------------------------------------------------------------------- #
+@router.post(
+    "/stripe-webhook",
+    summary="Stripe webhook receiver (signature-verified, no JWT)",
+    status_code=200,
+)
+@timed
+async def stripe_webhook(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    stripe_signature: Annotated[Optional[str], Header(alias="Stripe-Signature")] = None,
+) -> dict:
+    """Receive Stripe webhooks for Phase A (test mode) and later live.
+
+    Stripe CLI / Dashboard must point here:
+      stripe listen --forward-to localhost:8000/api/v2/payment/stripe-webhook
+
+    Flow:
+      1. Read raw body + Stripe-Signature
+      2. Verify with STRIPE_WEBHOOK_SECRET → construct_event
+      3. Ack 200 immediately, process in background (idempotent)
+    """
+    raw_body = await request.body()
+    if not stripe_signature:
+        raise BizException(
+            ErrorCode.PAYMENT_SIGNATURE_INVALID,
+            message="missing Stripe-Signature header",
+        )
+
+    settings = get_settings()
+    event = _verify_stripe_signature(
+        raw_body,
+        stripe_signature,
+        settings.stripe_webhook_secret,
+    )
+    # construct_event may return a Stripe Object — normalise to dict
+    if hasattr(event, "to_dict"):
+        event_dict = event.to_dict()
+    elif isinstance(event, dict):
+        event_dict = event
+    else:
+        event_dict = dict(event)
+
+    background_tasks.add_task(_process_stripe_webhook, event_dict)
+    return {"received": True}
+
+
+# --------------------------------------------------------------------------- #
 # POST /payment/create                                                        #
 # --------------------------------------------------------------------------- #
 @router.post(
     "/create",
     response_model=ApiResponse[CreatePaymentResponse],
     status_code=201,
-    summary="Create a Mock payment order (returns trade_no + code_url)",
+    summary="Create a payment order (Mock or Stripe PaymentIntent)",
 )
 @timed
 async def create_payment(
@@ -278,13 +342,27 @@ async def create_payment(
     await _load_owned_order(db, user_id=current_user.id, order_no=body.order_no)
 
     provider = get_payment_provider()
-    result = await provider.create_order(
-        db,
-        order_no=body.order_no,
-        amount_cents=body.amount_cents,
-        desc=body.desc,
-        currency=body.currency,
-    )
+    try:
+        result = await provider.create_order(
+            db,
+            order_no=body.order_no,
+            amount_cents=body.amount_cents,
+            desc=body.desc,
+            currency=body.currency,
+        )
+    except ValueError as exc:
+        msg = str(exc)
+        if "already paid" in msg:
+            raise BizException(
+                ErrorCode.PAYMENT_ALREADY_PAID,
+                message=msg,
+                data={"order_no": body.order_no},
+            )
+        raise BizException(
+            ErrorCode.PAYMENT_AMOUNT_INVALID,
+            message=msg,
+            data={"order_no": body.order_no},
+        )
     provider_name = "stripe" if type(provider).__name__ == "StripePaymentProvider" else "mock"
     client_secret = result.prepay_id if provider_name == "stripe" else None
     auto_notify = (
@@ -517,5 +595,65 @@ async def close_payment(
             trade_no=status.trade_no,
             status=status.status,
             closed_at=datetime.now(timezone.utc).replace(tzinfo=None),
+        ),
+    )
+
+
+# --------------------------------------------------------------------------- #
+# POST /payment/{order_no}/refund                                             #
+# --------------------------------------------------------------------------- #
+@router.post(
+    "/{order_no}/refund",
+    response_model=ApiResponse[RefundPaymentResponse],
+    summary="Refund a paid order (mock or Stripe channel)",
+)
+@timed
+async def refund_payment(
+    body: RefundPaymentRequest,
+    order_no: str = Path(..., min_length=1, max_length=32),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> ApiResponse[RefundPaymentResponse]:
+    order = await _load_owned_order(db, user_id=current_user.id, order_no=order_no)
+    provider: PaymentProvider = get_payment_provider()
+    try:
+        status = await provider.refund_order(
+            db,
+            order_no=order.order_no,
+            amount_cents=body.amount_cents,
+            reason=body.reason,
+        )
+    except LookupError:
+        raise BizException(
+            ErrorCode.PAYMENT_NOT_FOUND,
+            message=f"no payment record for order_no={order_no}",
+            data={"order_no": order_no},
+        )
+    except ValueError as exc:
+        raise BizException(
+            ErrorCode.PAYMENT_AMOUNT_INVALID,
+            message=str(exc),
+            data={"order_no": order_no},
+        )
+
+    raw = status.raw or {}
+    refund_trade_no = raw.get("refund_trade_no")
+    refunded_at = _parse_iso(raw.get("refunded_at"))
+    refund_amount_cents = raw.get("refund_amount_cents")
+    if not refund_trade_no or refunded_at is None or refund_amount_cents is None:
+        raise BizException(
+            ErrorCode.SERVER_ERROR,
+            message="internal: refund succeeded but metadata missing",
+        )
+    return ApiResponse[RefundPaymentResponse](
+        code="1000",
+        message="OK",
+        data=RefundPaymentResponse(
+            order_no=status.order_no,
+            trade_no=status.trade_no,
+            refund_trade_no=refund_trade_no,
+            status=status.status,
+            refunded_at=refunded_at,
+            refund_amount_cents=int(refund_amount_cents),
         ),
     )

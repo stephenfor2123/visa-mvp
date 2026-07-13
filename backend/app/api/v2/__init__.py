@@ -20,6 +20,7 @@ from app.api.v2 import my
 from app.api.v2 import ocr
 from app.api.v2 import orders
 from app.api.v2 import payment
+from app.api.v2 import pricing
 # W1 — Personal profile (applicant library + email change)
 from app.api.v2 import profile
 # Case 4 — RAG: retrieval-augmented Q&A over official visa info
@@ -60,6 +61,7 @@ api_v2_router.include_router(my.router, tags=["my"])
 api_v2_router.include_router(ocr.router, prefix="/ocr", tags=["ocr"])
 api_v2_router.include_router(orders.router, prefix="/orders", tags=["orders"])
 api_v2_router.include_router(payment.router, prefix="/payment", tags=["payment"])
+api_v2_router.include_router(pricing.router, prefix="/pricing", tags=["pricing"])
 # W1 — Personal profile (no extra prefix; profile.router already has prefix="/profile")
 api_v2_router.include_router(profile.router, tags=["profile"])
 # Case 4 — RAG endpoint (registered after rpa, no extra prefix; rag.router already has /rag prefix)

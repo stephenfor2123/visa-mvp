@@ -39,6 +39,63 @@
     "relogin": "重新登录",
     "dismiss": "知道了"
   },
+  "seo": {
+    "default_description": "免费攻略与自测。增值：模版、AI 检测、OCR 填表。促销 $19.9（2026-07-15 至 2026-08-15，原价 $99.9）。过签后收平台费，拒签退平台费；使馆费不退。不保证过签。",
+    "pages": {
+      "home": {
+        "title": "签证申请助手",
+        "description": "免费攻略与自测。增值：模版、AI 检测、OCR 填表。促销 $19.9（2026-07-15 至 2026-08-15）。过签后收平台费，拒签退平台费；使馆费不退。审核权在政府，请勿提前购买不可退机票酒店。"
+      },
+      "destinations": {
+        "title": "签证目的地",
+        "description": "选择签证目的地，开始美国、申根、英国或澳大利亚的引导式申请。"
+      },
+      "schengen": {
+        "title": "申根签证国家",
+        "description": "选择主要申根目的国，通过 Htex 开始引导式签证申请。"
+      },
+      "apply": {
+        "title": "开始签证申请",
+        "description": "选择目的国，查看所需材料并开始签证申请流程。"
+      },
+      "diagnose": {
+        "title": "签证准备度评估",
+        "description": "根据你的情况与目的地要求，在申请前评估签证准备度。"
+      },
+      "resources": {
+        "title": "签证资源中心",
+        "description": "面向本地申请人的签证指南、政策说明、材料模板与常见问题。"
+      },
+      "resources_wiki": {
+        "title": "签证百科",
+        "description": "美国、英国、澳大利亚与申根签证的精选百科内容。"
+      },
+      "resources_policy": {
+        "title": "签证政策",
+        "description": "各目的国签证政策摘要与官方来源链接。"
+      },
+      "resources_templates": {
+        "title": "签证材料模板",
+        "description": "材料模板与示例，帮助你准备完整的签证申请包。"
+      },
+      "resources_faq": {
+        "title": "签证常见问题",
+        "description": "关于签证要求、材料、费用与申请步骤的常见问题。"
+      },
+      "contact": {
+        "title": "联系我们",
+        "description": "联系 Htex 团队获取签证申请相关支持。"
+      },
+      "pricing": {
+        "title": "价格说明",
+        "description": "各支持目的地的使馆费用与 Htex 服务定价说明。"
+      },
+      "agreement": {
+        "title": "服务协议",
+        "description": "Htex 服务条款、隐私说明与用户协议。"
+      }
+    }
+  },
   "nav": {
     "home": "首页",
     "login": "登录",
@@ -657,6 +714,7 @@
     "menu_cleanup": "文件清理",
     "menu_settings": "系统设置",
     "menu_payments": "资金流",
+    "menu_pricing": "价格营销",
     "orders": {
       "page_title": "订单管理",
       "page_subtitle": "查看并管理所有用户订单,跟进状态机流转",
@@ -815,6 +873,28 @@
       "prev": "上一页",
       "next": "下一页"
     },
+    "pricing": {
+      "page_title": "价格与营销",
+      "page_subtitle": "配置平台服务费划线价、促销价及有效期",
+      "preview_title": "用户端预览",
+      "badge_promo": "促销中",
+      "badge_regular": "常规价",
+      "preview_window": "促销有效期：{start} 至 {end}",
+      "preview_no_window": "未设置促销时间窗口",
+      "field_list": "划线价（原价）",
+      "field_promo": "促销价",
+      "field_starts": "促销开始",
+      "field_ends": "促销结束",
+      "field_enabled": "启用促销（在有效期内自动展示促销价）",
+      "field_note": "内部备注",
+      "hint_list": "促销结束后或未在有效期内时展示此价格",
+      "hint_promo": "促销有效期内展示此价格，须低于划线价",
+      "note_placeholder": "如：暑期活动、新用户专享…",
+      "save": "保存定价",
+      "reset": "重新加载",
+      "save_ok": "定价已保存",
+      "err_promo_gt_list": "促销价必须低于划线价"
+    },
     "roles": {
       "page_title": "角色管理",
       "page_subtitle": "管理后台账号角色与权限分配",
@@ -841,6 +921,10 @@
       "page_title": "用户管理",
       "page_subtitle": "管理 C 端注册用户(可禁用、查看订单数)",
       "filter_status": "状态",
+      "search_placeholder": "搜索邮箱、账号或昵称",
+      "search": "搜索",
+      "retry": "重试",
+      "error_network": "无法连接后台服务，请检查网络后重试",
       "status_all": "全部",
       "status_active": "正常",
       "status_pending_destroy": "待注销",
@@ -860,11 +944,14 @@
       "mfa_off": "未开启",
       "detail_title": "用户 #{id} · {name}",
       "col_id": "ID",
-      "col_nickname": "昵称/账号",
+      "col_nickname": "昵称",
+      "col_username": "登录账号",
       "col_email": "邮箱",
       "col_phone": "手机",
       "col_lang": "语言",
       "col_status": "状态",
+      "col_orders": "订单数",
+      "col_materials": "材料数",
       "col_created": "注册时间",
       "col_last_login": "最后登录"
     },
@@ -890,6 +977,7 @@
       "dashboard.view": "查看运营看板",
       "dashboard.export": "导出看板报表",
       "country.manage": "签证国家管理",
+      "pricing.manage": "价格与营销定价",
       "rag.review": "RAG 内容审核",
       "ai_rules.edit": "AI 规则编辑",
       "role.manage": "角色管理",
@@ -1907,6 +1995,7 @@
       "refund_consulate_note": "由使领馆收取,签证结果不影响",
       "total_label": "总说明",
       "total_note": "实际收费 = 使馆费 + 平台服务费。平台服务费拒签可退,使馆费按使领馆规则执行。",
+      "promo_tag": "限时促销",
       "service_refund_title": "服务费拒签可退",
       "service_refund_desc": "若签证申请被拒,99 元平台服务费原路退回,3-5 个工作日到账。",
       "consulate_no_refund_title": "使馆费不退",
@@ -2328,7 +2417,7 @@
   "contact": {
     "title": "联系我们",
     "sub": "邮件咨询 1 小时内回复 · 工作日全天",
-    "email": "邮件",
+    "email": "客服",
     "phone": "电话",
     "wechat": "微信",
     "whatsapp": "WhatsApp",
@@ -2337,7 +2426,7 @@
     "hours_time": "09:00 — 21:00 (北京时间)",
     "copy": "复制",
     "copied": "已复制",
-    "partner_label": "工作邮箱",
+    "partner_label": "商务合作",
     "partner_subject": "商业合作咨询"
   },
   "wizard": {

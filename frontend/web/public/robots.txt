@@ -1,0 +1,64 @@
+# Htex — https://htexvisa.com
+# Technical SEO + GEO. New URLs require owner approval before sitemap update.
+
+User-agent: *
+Allow: /
+Allow: /home
+Allow: /destinations
+Allow: /schengen-countries
+Allow: /apply
+Allow: /diagnose
+Allow: /resources
+Allow: /contact
+Allow: /pricing
+Allow: /agreement
+Allow: /llms.txt
+Allow: /llms-full.txt
+
+Disallow: /admin
+Disallow: /profile
+Disallow: /orders
+Disallow: /payment
+Disallow: /materials
+Disallow: /materials-wizard
+Disallow: /passport-review
+Disallow: /transfer
+Disallow: /rpa
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+
+# AI / LLM crawlers — explicitly allowed on public pages (opt-in for GEO).
+User-agent: GPTBot
+Allow: /resources
+Allow: /home
+Allow: /apply
+Allow: /pricing
+Allow: /contact
+Allow: /llms.txt
+Allow: /llms-full.txt
+Disallow: /admin
+Disallow: /profile
+Disallow: /orders
+Disallow: /payment
+Disallow: /materials
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+Sitemap: https://htexvisa.com/sitemap.xml

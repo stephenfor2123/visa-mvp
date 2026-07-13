@@ -31,7 +31,7 @@ from app.core.errors import BizException, ErrorCode
 from app.core.logging import get_logger
 from app.middleware.admin_auth import verify_admin_token, verify_admin_token_with_db
 from app.core.permissions import PERMISSIONS, PERM_GROUPS
-from app.middleware.admin_auth import require_perm
+from app.middleware.admin_auth import require_perm, require_perm_any
 from app.schemas.admin import (
     AdminLoginRequest,
     AdminTokenData,
@@ -65,8 +65,8 @@ from app.schemas.admin import (
     OrderOut,
     PaymentFlowOut,
     PaymentFlowStats,
-    UserOut,
     UserOutSafe,
+    UserListItem,
     I18nOverrideOut,
     CreateI18nOverrideRequest,
     UpdateI18nOverrideRequest,
@@ -84,8 +84,10 @@ from app.schemas.admin import (
     DashboardAlertsOut,
 )
 from app.schemas.common import ApiResponse
+from app.schemas.pricing import PlatformPricingAdminOut, UpdatePlatformPricingRequest
 from app.services.admin_service import AdminService
 from app.services.admin_dashboard_service import AdminDashboardService
+from app.services.pricing_service import PricingService
 
 
 # Module-level router (W14-3 left this declaration missing, breaking import).
@@ -317,7 +319,7 @@ async def list_users(
         code="1000",
         message="OK",
         data=PaginatedUserList(
-            items=[UserOutSafe.from_raw(i) for i in out["items"]],
+            items=[UserListItem.from_raw(i) for i in out["items"]],
             page=out["page"],
             page_size=out["page_size"],
             total=out["total"],
@@ -832,6 +834,40 @@ async def update_rpa_config(
     updates = {k: v for k, v in body.model_dump().items() if v is not None}
     out = await svc.update_rpa_config(updates=updates)
     return ApiResponse[RpaConfigOut](code="1000", message="OK", data=RpaConfigOut(**out))
+
+
+# --------------------------------------------------------------------------- #
+# Platform pricing (service fee + promo window)                               #
+# --------------------------------------------------------------------------- #
+@router.get(
+    "/config/platform-pricing",
+    dependencies=[Depends(require_perm_any("pricing.manage", "settings"))],
+    response_model=ApiResponse[PlatformPricingAdminOut],
+    summary="Read platform service-fee pricing config",
+)
+async def get_platform_pricing(
+    db: AsyncSession = Depends(get_db),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
+) -> ApiResponse[PlatformPricingAdminOut]:
+    svc = PricingService(db)
+    out = await svc.get_admin()
+    return ApiResponse[PlatformPricingAdminOut](code="1000", message="OK", data=PlatformPricingAdminOut(**out))
+
+
+@router.put(
+    "/config/platform-pricing",
+    dependencies=[Depends(require_perm_any("pricing.manage", "settings"))],
+    response_model=ApiResponse[PlatformPricingAdminOut],
+    summary="Update platform service-fee pricing config",
+)
+async def update_platform_pricing(
+    body: UpdatePlatformPricingRequest,
+    db: AsyncSession = Depends(get_db),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
+) -> ApiResponse[PlatformPricingAdminOut]:
+    svc = PricingService(db)
+    out = await svc.update(body.model_dump(), admin_id=admin.admin_id)
+    return ApiResponse[PlatformPricingAdminOut](code="1000", message="OK", data=PlatformPricingAdminOut(**out))
 
 
 # --------------------------------------------------------------------------- #

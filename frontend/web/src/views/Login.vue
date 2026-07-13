@@ -87,10 +87,9 @@ import AppInput from '@/components/AppInput.vue'
 import AppButton from '@/components/AppButton.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
+import { useGoogleAuthButton } from '@/composables/useGoogleAuthButton'
 import { validateAccount, validatePassword } from '@/utils/validation'
 import AppHeader from '@/components/AppHeader.vue'
-
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
 
 const { t } = useI18n()
 const router = useRouter()
@@ -105,9 +104,26 @@ const remember = ref(true)
 const submitting = ref(false)
 const errors = reactive({ account: '', password: '' })
 
-const googleEnabled = !!GOOGLE_CLIENT_ID
-const googleBtnRef = ref(null)
 const googleLoading = ref(false)
+
+async function handleGoogleCredential(response) {
+  googleLoading.value = true
+  try {
+    await auth.loginWithGoogle(response.credential)
+    toast.success(t('toast.login_success'))
+    const redirect = route.query.redirect || '/destinations'
+    router.push(redirect)
+  } catch (e) {
+    toast.error(e?.message || t('toast.login_fail'))
+  } finally {
+    googleLoading.value = false
+  }
+}
+
+const { googleBtnRef, googleEnabled } = useGoogleAuthButton({
+  buttonText: 'signin_with',
+  onCredential: handleGoogleCredential,
+})
 
 function validatePwd() {
   errors.account = validateAccount(account.value) ? t(validateAccount(account.value)) : ''
@@ -145,56 +161,11 @@ function goSignup() {
   router.push('/register')
 }
 
-async function handleGoogleCredential(response) {
-  googleLoading.value = true
-  try {
-    await auth.loginWithGoogle(response.credential)
-    toast.success(t('toast.login_success'))
-    const redirect = route.query.redirect || '/destinations'
-    router.push(redirect)
-  } catch (e) {
-    toast.error(e?.message || t('toast.login_fail'))
-  } finally {
-    googleLoading.value = false
-  }
-}
-
-function initGoogleAuth() {
-  if (!window.google) return
-  window.google.accounts.id.initialize({
-    client_id: GOOGLE_CLIENT_ID,
-    callback: handleGoogleCredential,
-    auto_select: false,
-  })
-  if (googleBtnRef.value) {
-    window.google.accounts.id.renderButton(googleBtnRef.value, {
-      type: 'standard',
-      shape: 'rectangular',
-      theme: 'outline',
-      text: 'signin_with',
-      size: 'large',
-      width: '340',
-    })
-  }
-}
-
 onMounted(() => {
   auth.hydrate()
   if (route.query.demo !== undefined) {
     account.value = 'demo138001380001@htex.app'
     password.value = 'Htex@2026'
-  }
-  if (googleEnabled) {
-    if (window.google) {
-      initGoogleAuth()
-    } else {
-      const script = document.createElement('script')
-      script.src = 'https://accounts.google.com/gsi/client'
-      script.async = true
-      script.defer = true
-      script.onload = initGoogleAuth
-      document.head.appendChild(script)
-    }
   }
 })
 </script>

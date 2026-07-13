@@ -174,14 +174,7 @@ async def verify_admin_token_with_db(
 
 
 def require_perm(*perm_codes: str):
-    """FastAPI dependency factory — 校验当前 admin 是否拥有指定 perm。
-
-    用法:
-        @router.post("/xxx", dependencies=[Depends(require_perm("order.edit_status"))])
-        async def xxx(...): ...
-
-    super_admin 自动通过(全权限)。
-    """
+    """FastAPI dependency factory — 校验当前 admin 是否拥有**全部**指定 perm。"""
     from fastapi import Depends
 
     async def _checker(
@@ -197,5 +190,25 @@ def require_perm(*perm_codes: str):
                     data={"required_perm": code, "missing": True},
                 )
         return admin
+
+    return _checker
+
+
+def require_perm_any(*perm_codes: str):
+    """FastAPI dependency — 拥有任一 perm 即可通过。"""
+    from fastapi import Depends
+
+    async def _checker(
+        admin: AdminTokenData = Depends(verify_admin_token_with_db),
+    ) -> AdminTokenData:
+        if admin.role_code == "super_admin":
+            return admin
+        if any(code in admin.permissions for code in perm_codes):
+            return admin
+        raise BizException(
+            ErrorCode.FORBIDDEN,
+            message=f"权限不足:需要以下任一权限 {', '.join(perm_codes)}",
+            data={"required_perm": perm_codes[0], "missing": True},
+        )
 
     return _checker

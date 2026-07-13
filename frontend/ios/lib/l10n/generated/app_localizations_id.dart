@@ -1126,7 +1126,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get contactEmail => 'Email';
 
   @override
-  String get contactEmailAddr => 'support@htex.app';
+  String get contactEmailAddr => 'support@htexvisa.com';
 
   @override
   String get contactEmailSub => 'Reply within 24 hours';
@@ -1147,7 +1147,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get contactBiz => 'Bisnis';
 
   @override
-  String get contactBizAddr => 'biz@htex.app';
+  String get contactBizAddr => 'business@htexvisa.com';
 
   @override
   String get contactBizSub => 'Affiliate / Travel agencies';

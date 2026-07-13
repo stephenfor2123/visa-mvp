@@ -101,7 +101,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import AppCard from '@/components/AppCard.vue'
@@ -109,6 +109,7 @@ import AppInput from '@/components/AppInput.vue'
 import AppButton from '@/components/AppButton.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
+import { useGoogleAuthButton } from '@/composables/useGoogleAuthButton'
 import {
   validateUsername,
   validateEmail,
@@ -117,15 +118,11 @@ import {
 } from '@/utils/validation'
 import AppHeader from '@/components/AppHeader.vue'
 
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
-
 const { t } = useI18n()
 const router = useRouter()
 const auth = useAuthStore()
 const toast = useToast()
 
-const googleEnabled = !!GOOGLE_CLIENT_ID
-const googleBtnRef = ref(null)
 const googleLoading = ref(false)
 
 const username = ref('')
@@ -212,41 +209,10 @@ async function handleGoogleCredential(response) {
   }
 }
 
-function initGoogleAuth() {
-  if (!window.google) return
-  window.google.accounts.id.initialize({
-    client_id: GOOGLE_CLIENT_ID,
-    callback: handleGoogleCredential,
-    auto_select: false,
-  })
-  if (googleBtnRef.value) {
-    window.google.accounts.id.renderButton(googleBtnRef.value, {
-      type: 'standard',
-      shape: 'rectangular',
-      theme: 'outline',
-      text: 'signup_with',
-      size: 'large',
-      width: '340',
-    })
-  }
-}
-
-onMounted(() => {
-  if (googleEnabled) {
-    if (window.google) {
-      initGoogleAuth()
-    } else {
-      const script = document.createElement('script')
-      script.src = 'https://accounts.google.com/gsi/client'
-      script.async = true
-      script.defer = true
-      script.onload = initGoogleAuth
-      document.head.appendChild(script)
-    }
-  }
+const { googleBtnRef, googleEnabled } = useGoogleAuthButton({
+  buttonText: 'signup_with',
+  onCredential: handleGoogleCredential,
 })
-
-onUnmounted(() => {})
 </script>
 
 <style scoped lang="scss">

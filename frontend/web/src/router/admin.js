@@ -69,6 +69,12 @@ export const adminRoutes = [
         meta: { title: 'admin.countries.page_title', adminAuth: true, permission: 'country.manage' }
       },
       {
+        path: 'pricing',
+        name: 'AdminPricing',
+        component: () => import('@/views/admin/AdminPricing.vue'),
+        meta: { title: 'admin.pricing.page_title', adminAuth: true, permission: ['pricing.manage', 'settings'] }
+      },
+      {
         path: 'ai-rules',
         name: 'AdminAiRules',
         component: () => import('@/views/admin/AdminAiRules.vue'),
@@ -112,7 +118,10 @@ export function adminGuard(to) {
     return { name: 'AdminLogin', query: { redirect: to.fullPath } }
   }
   if (to.meta.permission && !admin.hasPermission(to.meta.permission)) {
-    return { name: 'AdminDashboard' }
+    const perms = Array.isArray(to.meta.permission) ? to.meta.permission : [to.meta.permission]
+    if (!perms.some((p) => admin.hasPermission(p))) {
+      return { name: 'AdminDashboard' }
+    }
   }
   if (to.meta.guestOnly && admin.isAuthenticated) {
     return { name: 'AdminDashboard' }

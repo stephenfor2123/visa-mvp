@@ -3,6 +3,7 @@ import i18n from '@/i18n'
 import { useAuthStore } from '@/stores/auth'
 import { adminRoutes, adminGuard } from './admin'
 import { FEATURE_RPA } from '@/config/features'
+import { applyRouteSeo, rememberRouteForSeo } from '@/seo/applySeo'
 
 function rpaDisabledRedirect() {
   return FEATURE_RPA ? true : { name: 'Orders' }
@@ -288,22 +289,8 @@ router.beforeEach((to, from, next) => {
 })
 
 router.afterEach((to) => {
-  const i18nKey = to.meta?.title
-  // W19-3: use i18n.global.t to translate (was showing raw key like "nav.home" before)
-  // W32: page-specific title when route declares one (e.g. "上传材料");
-  //      otherwise fall back to "Htex · {app_slogan}" so the brand+slogan
-  //      pattern is consistent across pages that don't set their own title.
-  if (i18nKey) {
-    document.title = `Htex · ${i18n.global.t(i18nKey)}`
-  } else {
-    const slogan = (() => {
-      try {
-        const v = i18n.global.t('common.app_slogan')
-        return v && !v.startsWith('common.') ? v : null
-      } catch { return null }
-    })()
-    document.title = slogan ? `Htex · ${slogan}` : i18n.global.t('common.app_name') || 'Htex'
-  }
+  rememberRouteForSeo(to)
+  applyRouteSeo(to, i18n)
 })
 
 export default router

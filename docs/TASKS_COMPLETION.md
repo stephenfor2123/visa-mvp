@@ -84,34 +84,29 @@ open http://localhost:5173/admin/login
 | 前端 Stripe.js | ✅ **W74 新增** | `PaymentCheckout.vue` + `@stripe/stripe-js` |
 | 支付配置 API | ✅ **W74 新增** | `GET /api/v2/payment/config` |
 
-### 启用 Stripe（test mode）
+### 启用 Stripe（test mode）— Phase A
+
+详见 [`docs/STRIPE_PHASE_A.md`](STRIPE_PHASE_A.md)。
 
 ```bash
 # backend/.env
 PAYMENT_CHANNEL=stripe
 STRIPE_SECRET_KEY=sk_test_xxx
 STRIPE_PUBLISHABLE_KEY=pk_test_xxx
-STRIPE_WEBHOOK_SECRET=whsec_xxx
+STRIPE_WEBHOOK_SECRET=whsec_xxx   # stripe listen 打印的值
 
 # frontend/web/.env (可选,也可从 /payment/config 读取)
 VITE_STRIPE_PUBLISHABLE_KEY=pk_test_xxx
 ```
 
-### Webhook 配置
-
-1. Stripe Dashboard → Developers → Webhooks → Add endpoint
-2. URL: `https://your-api.com/api/v2/payment/notify`
-3. Events: `payment_intent.succeeded`, `payment_intent.payment_failed`
-4. 复制 Signing secret → `STRIPE_WEBHOOK_SECRET`
-
-### 本地 webhook 测试
+Webhook 本地转发：
 
 ```bash
-stripe listen --forward-to localhost:8000/api/v2/payment/notify
+stripe listen --forward-to localhost:8000/api/v2/payment/stripe-webhook
 ```
 
-详细步骤见 [`docs/stripe-credentials-setup.md`](stripe-credentials-setup.md)。
-
+Dashboard 永久 endpoint（有域名后）: `https://your-api.com/api/v2/payment/stripe-webhook`  
+Events: `payment_intent.succeeded`, `payment_intent.payment_failed`
 ---
 
 ## 4. 浏览器插件

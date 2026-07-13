@@ -82,6 +82,8 @@ PERMISSIONS: Final[list[dict[str, str]]] = [
      "group": "system", "description": "AI 校验规则编辑"},
     {"code": "role.manage", "label_key": "admin.perms.role.manage",
      "group": "system", "description": "角色与管理员账号管理"},
+    {"code": "pricing.manage", "label_key": "admin.perms.pricing.manage",
+     "group": "system", "description": "平台服务费与促销定价"},
     {"code": "system.cleanup", "label_key": "admin.perms.system.cleanup",
      "group": "system", "description": "数据清理"},
 ]
@@ -116,6 +118,7 @@ ROLE_PERMISSIONS: Final[dict[str, dict[str, list[str]]] | dict[str, list[str]]] 
             "payment.view",
             "user.view", "user.edit", "user.disable", "user.reset_password",
             "dashboard.view", "dashboard.export",
+            "settings", "pricing.manage",
             "rag.review",
         ],
     },
