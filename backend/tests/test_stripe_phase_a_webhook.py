@@ -62,3 +62,22 @@ async def test_stripe_webhook_accepts_verified_event(client, monkeypatch):
     assert r.status_code == 200
     assert r.json().get("received") is True
     process.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_notify_forbidden_when_stripe_channel(client, monkeypatch):
+    from app.core import config as config_mod
+
+    settings = config_mod.get_settings()
+    monkeypatch.setattr(settings, "payment_channel", "stripe")
+
+    r = await client.post(
+        "/api/v2/payment/notify",
+        json={
+            "order_no": "ORD-TEST",
+            "trade_no": "pi_fake",
+            "payload": {"type": "payment_intent.succeeded"},
+        },
+    )
+    assert r.status_code == 403
+    assert r.json()["code"] == "1006"

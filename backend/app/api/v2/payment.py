@@ -25,6 +25,7 @@ DoD (V2 §4.5 + W6-2 spec):
 import json as _json
 import time
 from datetime import datetime, timezone
+from decimal import Decimal
 from typing import Annotated, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, Path, Request
@@ -56,6 +57,7 @@ from app.services.payment_provider import (
     PaymentProvider,
     get_payment_provider,
 )
+from app.services.pricing_service import PricingService
 from sqlalchemy import select
 
 
@@ -80,6 +82,14 @@ async def _load_owned_order(
             data={"order_no": order_no},
         )
     return order
+
+
+async def _expected_payment_cents(db: AsyncSession, order: Order) -> int:
+    """Server-side fee — order.total_amount wins; else platform pricing."""
+    if order.total_amount and order.total_amount > 0:
+        return int((order.total_amount * 100).quantize(Decimal("1")))
+    pricing = await PricingService(db).get_current()
+    return int(pricing["display_price_cents"])
 
 
 def _status_to_response(s: OrderPaymentStatus) -> QueryPaymentResponse:
@@ -339,7 +349,30 @@ async def create_payment(
         )
 
     # Order must exist AND belong to current user.
-    await _load_owned_order(db, user_id=current_user.id, order_no=body.order_no)
+    order = await _load_owned_order(db, user_id=current_user.id, order_no=body.order_no)
+
+    settings = get_settings()
+    if settings.payment_channel == "stripe":
+        expected_cents = await _expected_payment_cents(db, order)
+        if body.amount_cents != expected_cents:
+            raise BizException(
+                ErrorCode.PAYMENT_AMOUNT_INVALID,
+                message=(
+                    f"amount_cents must be {expected_cents} for this order, "
+                    f"got {body.amount_cents}"
+                ),
+                data={
+                    "order_no": body.order_no,
+                    "expected_amount_cents": expected_cents,
+                    "amount_cents": body.amount_cents,
+                },
+            )
+        if body.currency.upper() != (order.currency or "USD").upper():
+            raise BizException(
+                ErrorCode.PAYMENT_AMOUNT_INVALID,
+                message=f"currency must be {order.currency}, got {body.currency}",
+                data={"order_no": body.order_no, "currency": body.currency},
+            )
 
     provider = get_payment_provider()
     try:
@@ -453,6 +486,13 @@ async def notify_payment(
     after the first success — the second call returns 200 with the
     existing `paid_at` (replays are common in real channel flows).
     """
+    settings = get_settings()
+    if settings.payment_channel == "stripe":
+        raise BizException(
+            ErrorCode.FORBIDDEN,
+            message="Stripe channel must use POST /payment/stripe-webhook",
+        )
+
     provider: PaymentProvider = get_payment_provider()
     t0 = time.perf_counter()
     try:
@@ -614,6 +654,13 @@ async def refund_payment(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> ApiResponse[RefundPaymentResponse]:
+    settings = get_settings()
+    if settings.payment_channel == "stripe":
+        raise BizException(
+            ErrorCode.FORBIDDEN,
+            message="Stripe refunds require admin review; contact support",
+        )
+
     order = await _load_owned_order(db, user_id=current_user.id, order_no=order_no)
     provider: PaymentProvider = get_payment_provider()
     try:
