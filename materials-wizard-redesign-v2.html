@@ -1,0 +1,799 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Htex · 材料向导</title>
+  <style>
+    :root {
+      --primary: #2563EB;
+      --primary-hover: #1D4ED8;
+      --primary-active: #1E40AF;
+      --primary-bg: #EFF6FF;
+      --white: #FFFFFF;
+      --canvas: #F8FAFC;
+      --surface-muted: #F1F5F9;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-tertiary: #64748B;
+      --text-muted: #94A3B8;
+      --border: #E2E8F0;
+      --font: -apple-system, BlinkMacSystemFont, "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", Roboto, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--text-primary);
+      background: var(--canvas);
+      font-family: var(--font);
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .site-header {
+      position: sticky;
+      z-index: 20;
+      top: 0;
+      border-bottom: 1px solid var(--border);
+      background: var(--white);
+    }
+
+    .header-inner {
+      width: min(1200px, calc(100% - 80px));
+      height: 62px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin: 0 auto;
+      padding: 14px 20px;
+    }
+
+    .brand {
+      flex: 0 0 auto;
+      color: var(--text-primary);
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -1px;
+      text-decoration: none;
+    }
+
+    .main-nav {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      margin-left: 32px;
+    }
+
+    .nav-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .nav-link:hover,
+    .nav-link[aria-current="page"] {
+      color: var(--primary);
+    }
+
+    .chevron {
+      width: 6px;
+      height: 6px;
+      border-right: 1px solid currentColor;
+      border-bottom: 1px solid currentColor;
+      transform: rotate(45deg) translateY(-2px);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-left: auto;
+    }
+
+    .icon-button,
+    .account-button {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      flex: 0 0 auto;
+      place-items: center;
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      color: var(--text-secondary);
+      background: var(--white);
+    }
+
+    .icon-button:hover,
+    .account-button:hover {
+      color: var(--primary);
+      border-color: var(--primary);
+      background: var(--primary-bg);
+    }
+
+    .icon-button svg,
+    .account-button svg,
+    .privacy-button svg {
+      width: 17px;
+      height: 17px;
+    }
+
+    .privacy-button,
+    .language-button {
+      height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 0 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .privacy-button {
+      color: var(--primary);
+      border: 1px solid var(--primary);
+      background: var(--primary-bg);
+    }
+
+    .language-button {
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+      background: var(--white);
+    }
+
+    .language-button:hover {
+      color: var(--primary);
+      border-color: var(--primary);
+      background: var(--primary-bg);
+    }
+
+    .page {
+      width: min(1200px, calc(100% - 80px));
+      margin: 0 auto;
+      padding: 32px 0 64px;
+    }
+
+    .page-header {
+      margin-bottom: 32px;
+      text-align: left;
+    }
+
+    .page-title {
+      margin: 0 0 12px;
+      color: var(--text-primary);
+      font-size: 30px;
+      font-weight: 700;
+      line-height: 37.5px;
+    }
+
+    .privacy-note {
+      margin: 0;
+      color: var(--text-tertiary);
+      font-size: 14px;
+      line-height: 20px;
+    }
+
+    .clear-button {
+      min-height: 40px;
+      margin-top: 12px;
+      padding: 10px 20px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      background: var(--white);
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .clear-button:hover {
+      color: var(--primary);
+      border-color: var(--primary);
+      background: var(--primary-bg);
+    }
+
+    .progress-region {
+      margin-bottom: 32px;
+      padding: 20px;
+      border: 1px solid var(--surface-muted);
+      border-radius: 16px;
+      background: var(--white);
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 8px;
+      overflow: hidden;
+      border-radius: 8px;
+      background: var(--border);
+    }
+
+    .progress-value {
+      width: 0;
+      height: 100%;
+      background: var(--primary);
+      transition: width .2s ease;
+    }
+
+    .progress-label {
+      margin-top: 12px;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-align: right;
+    }
+
+    .category-list {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .category-button {
+      min-height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 12px;
+      padding: 12px 20px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      background: var(--white);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .category-button:hover {
+      color: var(--primary);
+      border-color: var(--primary);
+      background: var(--primary-bg);
+    }
+
+    .category-button[aria-selected="true"] {
+      color: var(--primary);
+      border-color: var(--primary);
+      background: var(--primary-bg);
+    }
+
+    .category-icon {
+      width: 28px;
+      height: 28px;
+      display: grid;
+      flex: 0 0 auto;
+      place-items: center;
+      border-radius: 50%;
+      color: var(--white);
+      background: var(--text-primary);
+    }
+
+    .category-button[aria-selected="true"] .category-icon {
+      color: var(--white);
+      background: var(--primary);
+    }
+
+    .category-icon svg {
+      width: 17px;
+      height: 17px;
+    }
+
+    .wizard-card {
+      padding: 40px;
+      border: 1px solid var(--surface-muted);
+      border-radius: 16px;
+      background: var(--white);
+    }
+
+    .section-title {
+      margin: 0 0 20px;
+      color: var(--text-primary);
+      font-size: 22px;
+      font-weight: 700;
+      line-height: normal;
+    }
+
+    .document-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .document-tab {
+      min-height: 40px;
+      padding: 10px 20px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      background: var(--canvas);
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .document-tab:hover {
+      color: var(--primary);
+      border-color: var(--primary);
+      background: var(--primary-bg);
+    }
+
+    .document-tab[aria-selected="true"] {
+      color: var(--white);
+      border-color: var(--text-primary);
+      background: var(--text-primary);
+    }
+
+    .upload-panel {
+      padding: 32px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--white);
+    }
+
+    .upload-title {
+      margin: 0 0 8px;
+      color: var(--text-primary);
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .upload-description {
+      margin: 0 0 6px;
+      color: var(--text-tertiary);
+      font-size: 13px;
+      line-height: 20px;
+    }
+
+    .upload-help {
+      margin: 0 0 20px;
+      color: var(--text-muted);
+      font-size: 12px;
+      line-height: 18px;
+    }
+
+    .upload-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .file-input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .upload-button,
+    .camera-button {
+      min-height: 48px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .upload-button {
+      color: var(--white);
+      border: 1px solid var(--primary);
+      background: var(--primary);
+      cursor: pointer;
+    }
+
+    .upload-button:hover {
+      border-color: var(--primary-hover);
+      background: var(--primary-hover);
+    }
+
+    .file-input:focus-visible + .upload-button {
+      border-color: var(--primary-active);
+    }
+
+    .camera-button {
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+      background: var(--canvas);
+    }
+
+    .camera-button:hover {
+      color: var(--primary);
+      border-color: var(--primary);
+      background: var(--primary-bg);
+    }
+
+    .selected-file {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 20px;
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--white);
+    }
+
+    .selected-file.is-visible {
+      display: flex;
+    }
+
+    .file-copy {
+      min-width: 0;
+    }
+
+    .file-name {
+      overflow: hidden;
+      margin: 0 0 6px;
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 700;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .file-status {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .remove-file {
+      min-height: 40px;
+      padding: 10px 20px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      background: var(--canvas);
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .wizard-footer {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 32px;
+      padding-top: 32px;
+      border-top: 1px solid var(--surface-muted);
+    }
+
+    .next-button {
+      min-height: 48px;
+      padding: 10px 20px;
+      border: 1px solid var(--primary);
+      border-radius: 8px;
+      color: var(--white);
+      background: var(--primary);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .next-button:hover:not(:disabled) {
+      border-color: var(--primary-hover);
+      background: var(--primary-hover);
+    }
+
+    .next-button:disabled {
+      cursor: not-allowed;
+      color: var(--text-muted);
+      border-color: var(--border);
+      background: var(--surface-muted);
+    }
+
+    @media (max-width: 900px) {
+      .header-inner {
+        width: calc(100% - 40px);
+      }
+
+      .main-nav {
+        display: none;
+      }
+
+      .page {
+        width: calc(100% - 40px);
+      }
+
+      .category-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .category-button:last-child {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .header-inner {
+        width: 100%;
+        height: 62px;
+        padding: 14px 20px;
+      }
+
+      .privacy-button span,
+      .language-button span,
+      .language-button .chevron {
+        display: none;
+      }
+
+      .privacy-button,
+      .language-button {
+        width: 34px;
+        padding: 0;
+        border-radius: 50%;
+      }
+
+      .language-button {
+        font-size: 0;
+      }
+
+      .page {
+        width: 100%;
+        padding: 32px 20px 64px;
+      }
+
+      .page-title {
+        font-size: 22px;
+        line-height: normal;
+      }
+
+      .category-list,
+      .upload-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .category-button:last-child {
+        grid-column: auto;
+      }
+
+      .category-button {
+        min-height: 64px;
+        justify-content: flex-start;
+      }
+
+      .wizard-card {
+        padding: 32px 20px;
+      }
+
+      .upload-panel {
+        padding: 20px;
+      }
+
+      .selected-file {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .wizard-footer,
+      .next-button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="#">Htex</a>
+
+      <nav class="main-nav" aria-label="主导航">
+        <a class="nav-link" href="#" aria-current="page">办签证 <span class="chevron"></span></a>
+        <a class="nav-link" href="#">查通过率 <span class="chevron"></span></a>
+        <a class="nav-link" href="#">看政策 <span class="chevron"></span></a>
+        <a class="nav-link" href="#">联系我们 <span class="chevron"></span></a>
+        <a class="nav-link" href="#">产品定价 <span class="chevron"></span></a>
+      </nav>
+
+      <div class="header-actions">
+        <button class="icon-button" type="button" aria-label="搜索">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/>
+          </svg>
+        </button>
+
+        <button class="privacy-button" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>
+          </svg>
+          <span>隐私保护</span>
+          <span class="chevron"></span>
+        </button>
+
+        <button class="language-button" type="button" aria-label="切换语言">
+          🇨🇳
+          <span>中文</span>
+          <span class="chevron"></span>
+        </button>
+
+        <button class="account-button" type="button" aria-label="账户">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <circle cx="12" cy="8" r="3.5"/><path d="M5 21c.5-4.2 2.8-6.5 7-6.5s6.5 2.3 7 6.5"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="page">
+    <header class="page-header">
+      <h1 class="page-title">材料向导</h1>
+      <p class="privacy-note">证件原件仅在本机处理，识别结果保存在浏览器（7 天有效），不会上传到服务器存档。</p>
+      <button class="clear-button" id="clear-data" type="button">清除本机数据</button>
+    </header>
+
+    <section class="progress-region" aria-label="材料准备进度">
+      <div class="progress-track">
+        <div class="progress-value" id="progress-value"></div>
+      </div>
+      <div class="progress-label" id="progress-label">0% 完成</div>
+    </section>
+
+    <nav class="category-list" aria-label="材料分类">
+      <button class="category-button" type="button" aria-selected="true" data-category="身份证明">
+        <span class="category-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8" cy="11" r="2"/><path d="M5.5 16c.6-1.5 1.5-2.3 2.5-2.3s1.9.8 2.5 2.3M13 10h5M13 14h5"/>
+          </svg>
+        </span>
+        身份证明
+      </button>
+      <button class="category-button" type="button" aria-selected="false" data-category="财务证明">
+        <span class="category-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <circle cx="12" cy="12" r="8"/><path d="M14.5 9.5c-.6-.6-1.4-.9-2.4-.9-1.3 0-2.3.7-2.3 1.7 0 2.6 4.7 1.2 4.7 3.8 0 1-1 1.8-2.4 1.8-1.1 0-2-.4-2.7-1.1M12 7v10"/>
+          </svg>
+        </span>
+        财务证明
+      </button>
+      <button class="category-button" type="button" aria-selected="false" data-category="工作 / 在职">
+        <span class="category-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <rect x="3" y="7" width="18" height="12" rx="2"/><path d="M8 7V5h8v2M3 12h18"/>
+          </svg>
+        </span>
+        工作 / 在职
+      </button>
+      <button class="category-button" type="button" aria-selected="false" data-category="行程 / 住宿">
+        <span class="category-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="m3 14 7-3 3-7 2 1-1 7 5 3-1.5 1.5-5-1-3 5-1.5-1 1-6-5 2z"/>
+          </svg>
+        </span>
+        行程 / 住宿
+      </button>
+      <button class="category-button" type="button" aria-selected="false" data-category="签证表格">
+        <span class="category-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M6 3h9l3 3v15H6z"/><path d="M15 3v4h4M9 12h6M9 16h6"/>
+          </svg>
+        </span>
+        签证表格
+      </button>
+    </nav>
+
+    <section class="wizard-card">
+      <h2 class="section-title" id="section-title">身份证明</h2>
+
+      <div class="document-tabs" role="tablist" aria-label="身份证明类型">
+        <button class="document-tab" type="button" role="tab" aria-selected="true" data-document="护照">护照</button>
+        <button class="document-tab" type="button" role="tab" aria-selected="false" data-document="证件照片">证件照片</button>
+      </div>
+
+      <section class="upload-panel">
+        <h3 class="upload-title" id="upload-title">护照</h3>
+        <p class="upload-description" id="upload-description">护照资料页（含照片、姓名、护照号、有效期）</p>
+        <p class="upload-help">支持 JPG / PNG / WebP / PDF，单个文件不超过 10MB</p>
+
+        <div class="upload-actions">
+          <input class="file-input" id="file-input" type="file" accept=".jpg,.jpeg,.png,.webp,.pdf">
+          <label class="upload-button" for="file-input">选择图片/文件</label>
+          <button class="camera-button" id="camera-button" type="button">拍照扫描</button>
+        </div>
+
+        <div class="selected-file" id="selected-file">
+          <div class="file-copy">
+            <p class="file-name" id="file-name"></p>
+            <p class="file-status">文件已保存在本地浏览器</p>
+          </div>
+          <button class="remove-file" id="remove-file" type="button">移除</button>
+        </div>
+      </section>
+
+      <footer class="wizard-footer">
+        <button class="next-button" id="next-button" type="button" disabled>进入下一步 →</button>
+      </footer>
+    </section>
+  </main>
+
+  <script>
+    const categoryButtons = document.querySelectorAll("[data-category]");
+    const documentTabs = document.querySelectorAll("[data-document]");
+    const sectionTitle = document.querySelector("#section-title");
+    const uploadTitle = document.querySelector("#upload-title");
+    const uploadDescription = document.querySelector("#upload-description");
+    const fileInput = document.querySelector("#file-input");
+    const selectedFile = document.querySelector("#selected-file");
+    const fileName = document.querySelector("#file-name");
+    const nextButton = document.querySelector("#next-button");
+    const progressValue = document.querySelector("#progress-value");
+    const progressLabel = document.querySelector("#progress-label");
+
+    const documentDescriptions = {
+      "护照": "护照资料页（含照片、姓名、护照号、有效期）",
+      "证件照片": "近期白底彩色证件照片"
+    };
+
+    categoryButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        categoryButtons.forEach((item) => item.setAttribute("aria-selected", "false"));
+        button.setAttribute("aria-selected", "true");
+        sectionTitle.textContent = button.dataset.category;
+      });
+    });
+
+    documentTabs.forEach((button) => {
+      button.addEventListener("click", () => {
+        documentTabs.forEach((item) => item.setAttribute("aria-selected", "false"));
+        button.setAttribute("aria-selected", "true");
+        uploadTitle.textContent = button.dataset.document;
+        uploadDescription.textContent = documentDescriptions[button.dataset.document];
+      });
+    });
+
+    function clearSelectedFile() {
+      fileInput.value = "";
+      fileName.textContent = "";
+      selectedFile.classList.remove("is-visible");
+      nextButton.disabled = true;
+      progressValue.style.width = "0%";
+      progressLabel.textContent = "0% 完成";
+    }
+
+    fileInput.addEventListener("change", () => {
+      const file = fileInput.files[0];
+      if (!file) {
+        clearSelectedFile();
+        return;
+      }
+
+      fileName.textContent = file.name;
+      selectedFile.classList.add("is-visible");
+      nextButton.disabled = false;
+      progressValue.style.width = "20%";
+      progressLabel.textContent = "20% 完成";
+    });
+
+    document.querySelector("#remove-file").addEventListener("click", clearSelectedFile);
+    document.querySelector("#clear-data").addEventListener("click", clearSelectedFile);
+    document.querySelector("#camera-button").addEventListener("click", () => fileInput.click());
+    nextButton.addEventListener("click", () => {
+      if (!nextButton.disabled) {
+        categoryButtons[1].click();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    });
+  </script>
+</body>
+</html>
