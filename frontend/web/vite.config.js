@@ -12,6 +12,9 @@ export default defineConfig({
     AutoImport({ resolvers: [ElementPlusResolver()] }),
     Components({ resolvers: [ElementPlusResolver()] }),
     VitePWA({
+      // Local builds sometimes fail in this environment when writing SW artifacts.
+      // For SEO/GEO pre-render we can safely disable PWA.
+      disable: process.env.DISABLE_PWA === '1',
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'icons/*.png'],
       manifest: false, // 使用 public/manifest.json

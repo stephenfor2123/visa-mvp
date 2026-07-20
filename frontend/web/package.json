@@ -6,8 +6,8 @@
   "description": "Htex - Visa AI Web (User-facing)",
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 5173",
-    "build": "vite build && npx playwright install --with-deps chromium && node scripts/prerender-seo.mjs && node scripts/generate-seo-guides.mjs && node scripts/audit-seo.mjs",
-    "build:seo": "vite build && npx playwright install --with-deps chromium && node scripts/prerender-seo.mjs && node scripts/generate-seo-guides.mjs && node scripts/audit-seo.mjs",
+    "build": "vite build && npx playwright install chromium && node scripts/prerender-seo.mjs && node scripts/generate-seo-guides.mjs && node scripts/audit-seo.mjs",
+    "build:seo": "vite build && npx playwright install chromium && node scripts/prerender-seo.mjs && node scripts/generate-seo-guides.mjs && node scripts/audit-seo.mjs",
     "seo:prerender": "node scripts/prerender-seo.mjs",
     "seo:guides": "node scripts/generate-seo-guides.mjs",
     "seo:audit": "node scripts/audit-seo.mjs",
