@@ -61,10 +61,11 @@ function localizeName(d, lang) {
 }
 
 function patchProductDestinations(list) {
-  // 只保留产品线目的地; 印尼/越南/日/加/新/新西兰等一律剔除
+  // 只保留产品线目的地; 印尼/越南/日/加/新/新西兰等一律剔除。
+  // enabled 以接口/后台开关为准，不再强制 true。
   return (list || [])
     .filter((d) => isProductDestination(d.country_code))
-    .map((d) => ({ ...d, enabled: true }))
+    .filter((d) => d.enabled !== false)
 }
 
 export async function listDestinations({ lang = 'zh-CN', visaType } = {}) {

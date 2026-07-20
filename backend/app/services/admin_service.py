@@ -25,6 +25,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import get_settings
 from app.core.errors import BizException, ErrorCode
 from app.core.logging import get_logger
+from app.core.product_scope import normalize_destination_code
 from app.core.security import bump_password_changed_at, invalidate_user_sessions
 from app.middleware.admin_auth import create_admin_token
 from app.models.audit_log import AuditLog
@@ -913,6 +914,25 @@ class AdminService:
             "updated_at": r.updated_at,
         }
 
+    async def _sync_destination_enabled(self, country_code: str, enabled: bool) -> None:
+        """Mirror admin country toggle onto visa_destinations (public picker + order guard).
+
+        Matches UK↔GB. No-op when no destination row exists yet (admin-only config).
+        """
+        norm = normalize_destination_code(country_code)
+        codes = {norm}
+        if norm == "GB":
+            codes.add("UK")
+        elif norm == "UK":
+            codes.add("GB")
+        rows = (
+            await self.db.execute(
+                select(VisaDestination).where(VisaDestination.country_code.in_(codes))
+            )
+        ).scalars().all()
+        for dest in rows:
+            dest.enabled = enabled
+
     async def list_countries(
         self, page: int = 1, page_size: int = 50, enabled: Optional[bool] = None
     ) -> dict[str, Any]:
@@ -977,6 +997,7 @@ class AdminService:
         )
         self.db.add(country)
         await self.db.flush()
+        await self._sync_destination_enabled(country.country_code, country.enabled)
         await record_audit(
             self.db,
             actor_type="admin",
@@ -1028,6 +1049,9 @@ class AdminService:
         if "extra" in data:
             country.extra = data["extra"]
 
+        if "enabled" in data and data["enabled"] is not None:
+            await self._sync_destination_enabled(country.country_code, country.enabled)
+
         await record_audit(
             self.db,
             actor_type="admin",
@@ -1047,6 +1071,7 @@ class AdminService:
         if country is None:
             raise BizException(ErrorCode.NOT_FOUND, message="Country not found")
         country.enabled = False
+        await self._sync_destination_enabled(country.country_code, False)
         await record_audit(
             self.db,
             actor_type="admin",
@@ -1062,13 +1087,15 @@ class AdminService:
 
         Returns the updated country (V2 schema). The audit trail records
         ``admin.country.toggle`` so operators can tell a toggle apart from
-        a generic update in the log.
+        a generic update in the log. Also syncs ``visa_destinations.enabled``
+        so the public picker and order create guard stay in lockstep.
         """
         country = await self.db.get(VisaCountry, country_id)
         if country is None:
             raise BizException(ErrorCode.NOT_FOUND, message="Country not found")
         old = country.enabled
         country.enabled = enabled
+        await self._sync_destination_enabled(country.country_code, enabled)
         await record_audit(
             self.db,
             actor_type="admin",

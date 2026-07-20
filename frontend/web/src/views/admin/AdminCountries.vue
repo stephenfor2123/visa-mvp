@@ -7,7 +7,7 @@
         <div class="admin-main__actions">
           <button class="btn-primary" @click="openCreate">+ {{ t('admin.countries.create') }}</button>
         </div>
-      </header>
+    </header>
 
       <div v-if="loading" class="admin-loading">{{ t('admin.loading') }}</div>
       <div v-else-if="error" class="admin-error">{{ error }}</div>
@@ -24,8 +24,8 @@
         >
           <div class="country-card__header">
             <span class="country-card__flag">{{ c.flag_emoji || '🏳️' }}</span>
-            <span class="country-card__name">{{ c.name_zh || c.name }}</span>
-            <span class="country-card__code">{{ c.code }}</span>
+            <span class="country-card__name">{{ c.country_name_zh || c.country_name_en }}</span>
+            <span class="country-card__code">{{ c.country_code }}</span>
             <span class="country-card__handle" title="拖动排序">⋮⋮</span>
           </div>
           <div class="country-card__types">
@@ -55,14 +55,15 @@
             <button class="modal__close" @click="closeModal">×</button>
           </div>
           <div class="modal__body">
-            <div class="form-field"><label>{{ t('admin.countries.form_code') }} *</label><input v-model="form.code" class="form-input" :disabled="!!editing" /></div>
-            <div class="form-field"><label>{{ t('admin.countries.form_name') }} *</label><input v-model="form.name" class="form-input" /></div>
-            <div class="form-field"><label>{{ t('admin.countries.form_name_zh') }}</label><input v-model="form.name_zh" class="form-input" /></div>
+            <div class="form-field"><label>{{ t('admin.countries.form_code') }} *</label><input v-model="form.country_code" class="form-input" :disabled="!!editing" /></div>
+            <div class="form-field"><label>{{ t('admin.countries.form_name') }} *</label><input v-model="form.country_name_en" class="form-input" /></div>
+            <div class="form-field"><label>{{ t('admin.countries.form_name_zh') }}</label><input v-model="form.country_name_zh" class="form-input" /></div>
             <div class="form-field"><label>{{ t('admin.countries.form_flag') }}</label><input v-model="form.flag_emoji" class="form-input" placeholder="🇺🇸" /></div>
             <div class="form-field"><label>{{ t('admin.countries.form_capital') }}</label><input v-model="form.capital_city" class="form-input" /></div>
             <div class="form-field"><label>{{ t('admin.countries.form_types') }}</label>
               <div class="perm-grid">
                 <label class="perm-check"><input type="checkbox" value="tourism" v-model="form.visa_types" /> {{ t('admin.countries.type_tourism') }}</label>
+                <label class="perm-check"><input type="checkbox" value="student" v-model="form.visa_types" /> {{ t('admin.countries.type_student') }}</label>
               </div>
             </div>
             <div class="form-field"><label>{{ t('admin.countries.form_template') }}</label><input v-model="form.form_template_url" class="form-input" /></div>
@@ -78,13 +79,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAdminStore } from '@/stores/admin'
 import axios from 'axios'
 
 const { t } = useI18n()
-const admin = useAdminStore()
 
 const countries = ref([])
 const loading = ref(false)
@@ -93,7 +92,18 @@ const showModal = ref(false)
 const editing = ref(null)
 const submitting = ref(false)
 const dragSrc = ref(null)
-const form = ref({ code: '', name: '', name_zh: '', flag_emoji: '🏳️', capital_city: '', visa_types: [], form_template_url: '', description: '', enabled: true })
+const emptyForm = () => ({
+  country_code: '',
+  country_name_en: '',
+  country_name_zh: '',
+  flag_emoji: '🏳️',
+  capital_city: '',
+  visa_types: ['tourism'],
+  form_template_url: '',
+  description: '',
+  enabled: true,
+})
+const form = ref(emptyForm())
 
 const http = axios.create({ baseURL: import.meta.env.VITE_API_BASE || '/api' })
 http.interceptors.request.use((c) => {
@@ -110,16 +120,45 @@ async function load() {
   finally { loading.value = false }
 }
 
-function openCreate() { editing.value = null; form.value = { code: '', name: '', name_zh: '', flag_emoji: '🏳️', capital_city: '', visa_types: ['tourism'], form_template_url: '', description: '', enabled: true }; showModal.value = true }
-function openEdit(c) { editing.value = c; form.value = { ...c, visa_types: [...(c.visa_types || [])] }; showModal.value = true }
+function openCreate() { editing.value = null; form.value = emptyForm(); showModal.value = true }
+function openEdit(c) {
+  editing.value = c
+  form.value = {
+    country_code: c.country_code,
+    country_name_en: c.country_name_en,
+    country_name_zh: c.country_name_zh,
+    flag_emoji: c.flag_emoji || '🏳️',
+    capital_city: c.capital_city || '',
+    visa_types: [...(c.visa_types || [])],
+    form_template_url: c.form_template_url || '',
+    description: c.description || '',
+    enabled: c.enabled,
+  }
+  showModal.value = true
+}
 function closeModal() { showModal.value = false }
 
 async function submit() {
-  if (!form.value.code || !form.value.name) return
+  if (!form.value.country_code || !form.value.country_name_en) return
   submitting.value = true
   try {
-    if (editing.value) await http.put(`/v2/admin/config/countries/${editing.value.id}`, form.value)
-    else await http.post('/v2/admin/config/countries', form.value)
+    const payload = {
+      country_code: form.value.country_code,
+      country_name_en: form.value.country_name_en,
+      country_name_zh: form.value.country_name_zh || form.value.country_name_en,
+      flag_emoji: form.value.flag_emoji,
+      capital_city: form.value.capital_city || null,
+      visa_types: form.value.visa_types,
+      form_template_url: form.value.form_template_url || null,
+      description: form.value.description || null,
+      enabled: form.value.enabled,
+    }
+    if (editing.value) {
+      const { country_code, ...updatePayload } = payload
+      await http.put(`/v2/admin/config/countries/${editing.value.id}`, updatePayload)
+    } else {
+      await http.post('/v2/admin/config/countries', payload)
+    }
     closeModal(); await load()
   } catch (e) { alert(e.response?.data?.message || e.message) }
   finally { submitting.value = false }
@@ -133,7 +172,7 @@ async function toggle(c) {
 }
 
 async function confirmDelete(c) {
-  if (!confirm(t('admin.countries.confirm_delete', { name: c.name }))) return
+  if (!confirm(t('admin.countries.confirm_delete', { name: c.country_name_zh || c.country_name_en }))) return
   try { await http.delete(`/v2/admin/config/countries/${c.id}`); await load() } catch (e) { alert(e.response?.data?.message || e.message) }
 }
 
@@ -150,51 +189,42 @@ async function onDrop(target) {
   try { await http.post('/v2/admin/config/countries/reorder', { orders }) } catch (e) { alert('排序失败') }
 }
 
-
 onMounted(load)
 </script>
 
 <style scoped>
-.admin-main { padding: 24px; }
 .country-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
-.country-card { background: #fff; border: 1px solid #e4e7ed; border-radius: 8px; padding: 14px 16px; cursor: grab; transition: box-shadow 0.2s; }
-.country-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-.country-card.is-disabled { opacity: 0.55; }
-.country-card__header { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
-.country-card__flag { font-size: 22px; }
-.country-card__name { font-size: 15px; font-weight: 600; flex: 1; }
-.country-card__code { font-size: 11px; background: #f4f4f5; color: #909399; padding: 1px 6px; border-radius: 4px; }
-.country-card__handle { color: #c0c4cc; cursor: grab; font-size: 14px; }
-.country-card__types { display: flex; gap: 4px; margin-bottom: 8px; }
-.type-tag { font-size: 11px; background: #ecf5ff; color: #409eff; padding: 1px 6px; border-radius: 3px; }
-.country-card__desc { font-size: 12px; color: #909399; margin: 4px 0; line-height: 1.5; }
-.country-card__footer { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+.country-card { background: var(--admin-card-bg, #fff); border: 1px solid var(--admin-border, #e5e7eb); border-radius: 12px; padding: 16px; transition: opacity .2s; }
+.country-card.is-disabled { opacity: .45; }
+.country-card__header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.country-card__flag { font-size: 1.5rem; }
+.country-card__name { font-weight: 600; flex: 1; }
+.country-card__code { font-size: .75rem; color: #9ca3af; font-family: monospace; }
+.country-card__handle { cursor: grab; color: #d1d5db; }
+.country-card__types { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+.type-tag { font-size: .7rem; background: #eff6ff; color: #1d4ed8; padding: 2px 8px; border-radius: 999px; }
+.country-card__desc { font-size: .8rem; color: #6b7280; margin: 0 0 12px; }
+.country-card__footer { display: flex; align-items: center; justify-content: space-between; }
 .country-card__actions { display: flex; gap: 8px; }
-.switch { position: relative; display: inline-block; width: 36px; height: 20px; }
-.switch input { display: none; }
-.slider { position: absolute; cursor: pointer; inset: 0; background: #dcdfe6; border-radius: 20px; transition: 0.3s; }
-.slider::before { content: ''; position: absolute; width: 16px; height: 16px; left: 2px; top: 2px; background: #fff; border-radius: 50%; transition: 0.3s; }
-.switch input:checked + .slider { background: #67c23a; }
-.switch input:checked + .slider::before { transform: translateX(16px); }
-.btn-primary { background: #409eff; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
-.btn-secondary { background: #fff; border: 1px solid #dcdfe6; color: #606266; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
-.btn-text { background: none; border: none; color: #409eff; cursor: pointer; font-size: 13px; }
-.btn-text--danger { color: #f56c6c; }
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-.modal { background: #fff; border-radius: 12px; width: 540px; max-width: 90vw; max-height: 85vh; overflow-y: auto; }
-.modal__head, .modal__foot { padding: 14px 20px; }
-.modal__head { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e4e7ed; }
-.modal__head h2 { margin: 0; font-size: 16px; }
-.modal__close { background: none; border: none; font-size: 22px; cursor: pointer; color: #909399; }
+.btn-text { background: none; border: none; color: #3b82f6; cursor: pointer; font-size: .85rem; }
+.btn-text--danger { color: #ef4444; }
+.switch { position: relative; display: inline-block; width: 40px; height: 22px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; inset: 0; background: #d1d5db; border-radius: 22px; transition: .2s; }
+.slider::before { content: ''; position: absolute; width: 16px; height: 16px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: .2s; }
+.switch input:checked + .slider { background: #3b82f6; }
+.switch input:checked + .slider::before { transform: translateX(18px); }
+.empty { grid-column: 1 / -1; text-align: center; color: #9ca3af; padding: 40px; }
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+.modal { background: #fff; border-radius: 12px; width: 90%; max-width: 480px; max-height: 90vh; overflow-y: auto; }
+.modal__head { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #e5e7eb; }
+.modal__head h2 { margin: 0; font-size: 1.1rem; }
+.modal__close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #9ca3af; }
 .modal__body { padding: 20px; display: flex; flex-direction: column; gap: 12px; }
-.modal__foot { display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid #e4e7ed; }
-.form-field label { display: block; font-size: 13px; color: #606266; margin-bottom: 4px; }
-.form-input { width: 100%; box-sizing: border-box; border: 1px solid #dcdfe6; border-radius: 6px; padding: 6px 10px; font-size: 13px; }
-.form-input:focus { outline: none; border-color: #409eff; }
-.form-input:disabled { background: #f5f7fa; }
-.perm-grid { display: flex; gap: 16px; }
-.perm-check { display: flex; align-items: center; gap: 4px; font-size: 13px; cursor: pointer; }
-.empty { color: #909399; text-align: center; padding: 32px; }
-.admin-loading, .admin-error { padding: 20px; text-align: center; color: #909399; }
-.admin-error { color: #f56c6c; }
+.modal__foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid #e5e7eb; }
+.form-field { display: flex; flex-direction: column; gap: 4px; }
+.form-field label { font-size: .8rem; font-weight: 500; color: #374151; }
+.form-input { padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: .9rem; }
+.perm-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.perm-check { display: flex; align-items: center; gap: 4px; font-size: .85rem; }
 </style>

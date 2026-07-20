@@ -16,6 +16,7 @@ from app.core.product_scope import (
 )
 from app.schemas.common import ApiResponse
 from app.models.destination import VisaDestination
+from app.models.visa_countries import VisaCountry
 
 logger = get_logger()
 
@@ -149,8 +150,25 @@ async def list_destinations(
         if normalize_destination_code(r.country_code) in product_norm
     ]
 
+    # Admin「国家配置」is the publish switch (visa_countries.enabled).
+    # Merge with visa_destinations.enabled so a closed toggle hides the card
+    # even if the two tables briefly drift.
+    vc_rows = (await db.execute(select(VisaCountry))).scalars().all()
+    vc_enabled = {
+        normalize_destination_code(c.country_code): bool(c.enabled)
+        for c in vc_rows
+    }
+
     items = []
     for r in rows:
+        norm = normalize_destination_code(r.country_code)
+        if norm in vc_enabled:
+            effective_enabled = bool(r.enabled) and vc_enabled[norm]
+        else:
+            effective_enabled = bool(r.enabled)
+        # Closed in admin → do not offer on public picker / home / apply
+        if not effective_enabled:
+            continue
         # country_name_i18n 既可能是 JSON {"zh-CN":"...","en":"..."} (新格式)
         # 也可能是 legacy "美国 United States" 这种单字符串(老数据)
         try:
@@ -222,8 +240,7 @@ async def list_destinations(
             ),
             visa_types=json.loads(r.visa_types) if r.visa_types else [],
             image_url=r.image_url,
-            # Product destinations are always offered as available on this API
-            enabled=True,
+            enabled=True,  # only enabled rows reach this point
             visa_fee_usd=getattr(r, "visa_fee_usd", None),
             valid_days=getattr(r, "valid_days", None),
             process_days=getattr(r, "process_days", None),
