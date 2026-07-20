@@ -42,11 +42,11 @@ class TestItineraryRequirementAcceptsFlightHotelTypes:
         codes = [i.code for i in out.issues]
         assert "us.itinerary" not in codes
 
-    def test_hotel_type_satisfies_jp_itinerary(self):
+    def test_hotel_type_satisfies_us_itinerary(self):
         materials = [_material("passport"), _material("photo"), _material("form"), _material("hotel")]
-        out = VisaDiagnoser().diagnose(materials=materials, country_code="JP", visa_type="tourism")
+        out = VisaDiagnoser().diagnose(materials=materials, country_code="US", visa_type="tourism")
         codes = [i.code for i in out.issues]
-        assert "jp.itinerary" not in codes
+        assert "us.itinerary" not in codes
 
 
 class TestPassportExpiryReadsFlatOcrResult:

@@ -52,49 +52,6 @@ _REQUIRED: Dict[str, Dict[str, List[Dict[str, Any]]]] = {
             {"key": "us.financial",  "types": ["other", "bank"], "reason": "需要财力证明",         "reason_key": "diagnose.reason_financial_required"},
         ],
     },
-    "VN": {
-        "default": [
-            {"key": "vn.passport",   "types": ["passport"],   "reason": "需要有效期 ≥6 个月的护照", "reason_key": "diagnose.reason_passport_6m"},
-            {"key": "vn.photo",      "types": ["photo"],      "reason": "需要 2 寸白底照片",         "reason_key": "diagnose.reason_vn_photo"},
-            {"key": "vn.form",       "types": ["form"],       "reason": "需要签证申请表 (NA1)",      "reason_key": "diagnose.reason_vn_form"},
-        ],
-    },
-    "ID": {
-        "default": [
-            {"key": "id.passport",   "types": ["passport"],   "reason": "需要有效期 ≥6 个月的护照", "reason_key": "diagnose.reason_passport_6m"},
-            {"key": "id.photo",      "types": ["photo"],      "reason": "需要红底或白底 2 寸照片",   "reason_key": "diagnose.reason_id_photo"},
-        ],
-    },
-    "TH": {
-        "default": [
-            {"key": "th.passport",   "types": ["passport"],   "reason": "需要有效期 ≥6 个月的护照", "reason_key": "diagnose.reason_passport_6m"},
-            {"key": "th.photo",      "types": ["photo"],      "reason": "需要 2 寸白底照片",         "reason_key": "diagnose.reason_th_photo"},
-            {"key": "th.financial",  "types": ["other", "bank"], "reason": "建议提供财力证明",       "reason_key": "diagnose.reason_financial_suggested"},
-        ],
-    },
-    "JP": {
-        "default": [
-            {"key": "jp.passport",   "types": ["passport"],   "reason": "需要有效期 ≥6 个月的护照", "reason_key": "diagnose.reason_passport_6m"},
-            {"key": "jp.photo",      "types": ["photo"],      "reason": "需要 4.5×4.5cm 白底照片",   "reason_key": "diagnose.reason_jp_photo"},
-            {"key": "jp.form",       "types": ["form"],       "reason": "需要签证申请表",           "reason_key": "diagnose.reason_form_required"},
-            {"key": "jp.itinerary",  "types": ["other", "flight", "hotel"], "reason": "需要行程单",     "reason_key": "diagnose.reason_itinerary_required"},
-            {"key": "jp.financial",  "types": ["other", "bank"], "reason": "需要银行流水",           "reason_key": "diagnose.reason_financial_bank"},
-        ],
-    },
-    "KR": {
-        "default": [
-            {"key": "kr.passport",   "types": ["passport"],   "reason": "需要有效期 ≥6 个月的护照", "reason_key": "diagnose.reason_passport_6m"},
-            {"key": "kr.photo",      "types": ["photo"],      "reason": "需要白底 3.5×4.5cm 照片",  "reason_key": "diagnose.reason_kr_photo"},
-            {"key": "kr.form",       "types": ["form"],       "reason": "需要签证申请表",           "reason_key": "diagnose.reason_form_required"},
-        ],
-    },
-    "SG": {
-        "default": [
-            {"key": "sg.passport",   "types": ["passport"],   "reason": "需要有效期 ≥6 个月的护照", "reason_key": "diagnose.reason_passport_6m"},
-            {"key": "sg.photo",      "types": ["photo"],      "reason": "需要白底照片",             "reason_key": "diagnose.reason_sg_photo"},
-            {"key": "sg.form",       "types": ["form"],       "reason": "需要申请表 (V14A / V39A)", "reason_key": "diagnose.reason_sg_form"},
-        ],
-    },
     "GB": {
         "default": [
             {"key": "gb.passport",   "types": ["passport"],   "reason": "需要有效期 ≥6 个月的护照", "reason_key": "diagnose.reason_passport_6m"},
@@ -103,8 +60,7 @@ _REQUIRED: Dict[str, Dict[str, List[Dict[str, Any]]]] = {
             {"key": "gb.financial",  "types": ["other", "bank"], "reason": "需要财力证明",           "reason_key": "diagnose.reason_financial_required"},
         ],
     },
-    # W63: AU / CA / NZ — 主要英语国家签证照片均为白底,但 spec 各有微差。
-    # spec 措辞按各国移民局官网: AU 35×40mm, CA 35×45mm, NZ 35×45mm。
+    # AU — 35×40mm 白底 (Home Affairs)
     "AU": {
         "default": [
             {"key": "au.passport",   "types": ["passport"],   "reason": "需要有效期 ≥6 个月的护照", "reason_key": "diagnose.reason_passport_6m"},
@@ -112,21 +68,7 @@ _REQUIRED: Dict[str, Dict[str, List[Dict[str, Any]]]] = {
             {"key": "au.financial",  "types": ["other", "bank"], "reason": "建议提供财力证明",       "reason_key": "diagnose.reason_financial_suggested"},
         ],
     },
-    "CA": {
-        "default": [
-            {"key": "ca.passport",   "types": ["passport"],   "reason": "需要有效期 ≥6 个月的护照", "reason_key": "diagnose.reason_passport_6m"},
-            {"key": "ca.photo",      "types": ["photo"],      "reason": "需要 35×45mm 白底照片",     "reason_key": "diagnose.reason_ca_photo"},
-        ],
-    },
-    "NZ": {
-        "default": [
-            {"key": "nz.passport",   "types": ["passport"],   "reason": "需要有效期 ≥6 个月的护照", "reason_key": "diagnose.reason_passport_6m"},
-            {"key": "nz.photo",      "types": ["photo"],      "reason": "需要 35×45mm 白底照片",     "reason_key": "diagnose.reason_nz_photo"},
-        ],
-    },
-    # W63: 申根 26 国共用同一张照片规格 (35×45mm 白底, ICAO 9303 标准)。
-    # 按 EU 签证法典统一处理——_REQUIRED 里只为代表性国家(FR/DE/IT/ES/NL)建 rule,
-    # 其余申根国通过 _SCHENGEN_COUNTRIES 集合在 _photo_rule_for 里兜底匹配。
+    # 申根 26 国照片规格一致 (35×45mm 白底) — 经 _SCHENGEN_COUNTRIES 兜底。
 }
 
 
@@ -998,10 +940,12 @@ class VisaDiagnoser:
 # i18n label helpers                                                 #
 # ---------------------------------------------------------------- #
 _COUNTRY_NAMES = {
-    "US": "美国", "GB": "英国", "JP": "日本", "KR": "韩国", "SG": "新加坡",
-    "TH": "泰国", "VN": "越南", "ID": "印尼", "MY": "马来西亚", "PH": "菲律宾",
-    "AU": "澳大利亚", "CA": "加拿大", "DE": "德国", "FR": "法国", "IT": "意大利",
-    "ES": "西班牙", "RU": "俄罗斯", "TR": "土耳其", "AE": "阿联酋",
+    # Product destinations only (docs/PRODUCT_SCOPE.md)
+    "US": "美国", "GB": "英国", "AU": "澳大利亚",
+    "DE": "德国", "FR": "法国", "IT": "意大利", "ES": "西班牙",
+    "NL": "荷兰", "CH": "瑞士", "AT": "奥地利", "BE": "比利时",
+    "SE": "瑞典", "NO": "挪威", "DK": "丹麦", "FI": "芬兰",
+    "PT": "葡萄牙", "GR": "希腊", "IE": "爱尔兰",
 }
 
 _VISA_LABELS = {

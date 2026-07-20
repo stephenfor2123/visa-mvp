@@ -6,7 +6,10 @@
   "description": "Htex - Visa AI Web (User-facing)",
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 5173",
-    "build": "vite build",
+    "build": "vite build && node scripts/prerender-seo.mjs && node scripts/generate-seo-guides.mjs",
+    "seo:prerender": "node scripts/prerender-seo.mjs",
+    "seo:guides": "node scripts/generate-seo-guides.mjs",
+    "seo:submit-indexnow": "node scripts/submit-indexnow.mjs",
     "preview": "vite preview --host 0.0.0.0 --port 4173",
     "lint": "echo 'lint skipped for W1'",
     "test": "vitest run",

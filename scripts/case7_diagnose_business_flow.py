@@ -261,7 +261,7 @@ def main() -> int:
 
         data = diagnose(client, token, {
             "material_ids": [m_only_passport],
-            "country_code": "JP",  # Japan — needs many things
+            "country_code": "GB",
             "visa_type": "tourist",
         })
         log("DIAG", f"  overall_risk = {data['overall_risk']}  (score={data['risk_score']})")
@@ -272,11 +272,11 @@ def main() -> int:
         missing_codes = {i["code"] for i in data["issues"] if i["severity"] in ("warning", "error")}
         ok_c = (
             data["overall_risk"] in ("high", "critical")
-            and "jp.photo" in missing_codes
-            and "jp.form" in missing_codes
+            and "gb.photo" in missing_codes
+            and "gb.form" in missing_codes
         )
         log("DIAG", f"Scenario C {'PASS' if ok_c else 'FAIL'}")
-        results.append({"scenario": "bare_minimum_JP", "ok": ok_c, "risk": data["overall_risk"]})
+        results.append({"scenario": "bare_minimum_GB", "ok": ok_c, "risk": data["overall_risk"]})
 
         # ============================================================ #
         # 场景D: 边界 — 0 个 material                                    #

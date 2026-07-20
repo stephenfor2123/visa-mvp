@@ -229,7 +229,7 @@ assert_equal(cfg["rate_limits"]["max_concurrent_tasks"], 2, "max_concurrent_task
 # submit_visa_application requires country_code and visa_type
 task_id = scheduler.submit_visa_application(
     order_id="order-001",
-    country_code="ID",
+    country_code="US",
     visa_type="B211A",
     user_id="user-test",
     ip_address="127.0.0.1",

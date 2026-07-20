@@ -301,7 +301,7 @@ class DiagnoseRequest(BaseModel):
         ...,
         min_length=2,
         max_length=8,
-        description="Destination country code, e.g. 'US', 'VN', 'ID'",
+        description="Destination country code, e.g. 'US', 'GB', 'AU', 'FR'",
     )
     visa_type: Optional[str] = Field(
         None,

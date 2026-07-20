@@ -58,13 +58,14 @@ class PhotoRule:
     @classmethod
     def for_country(cls, country_code: str) -> "PhotoRule":
         cc = (country_code or "").upper()
-        # US / GB / JP / KR / SG / VN / TH / AU / CA / NZ  — all "白底"
-        if cc in ("US", "GB", "JP", "KR", "SG", "VN", "TH", "AU", "CA", "NZ", "FR", "DE", "IT", "ES"):
+        # Product destinations (US / GB / AU / Schengen) — all white-bg
+        if cc in (
+            "US", "GB", "AU",
+            "FR", "DE", "IT", "ES", "NL", "AT", "BE", "CH", "SE", "NO",
+            "DK", "FI", "PT", "GR", "PL", "CZ", "IE",
+        ):
             return cls(0.65, 0.90, 600, ("白底",))
-        # ID (印尼) — 红底或白底
-        if cc == "ID":
-            return cls(0.65, 0.90, 600, ("白底", "红底"))
-        # 兜底 — 通用白底
+        # Unknown destination — still advise white bg (do not special-case ID/VN/JP…)
         return cls(0.65, 0.90, 600, ("白底",))
 
 

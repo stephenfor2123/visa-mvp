@@ -3,10 +3,22 @@ import http from './http'
 
 const MOCK_MODE = import.meta.env.VITE_MOCK !== 'false' // 默认 mock
 
+// 产品口径 docs/PRODUCT_SCOPE.md:
+//   客户市场 = 越南 / 印尼护照持有人
+//   办理目的地 = 美国 / 英国 / 澳大利亚 / 申根(DE·FR 代表)
+// 印尼签证、越南签证、日/加/新/新西兰等都不在业务范围。
+export const PRODUCT_COUNTRY_CODES = new Set(['US', 'GB', 'UK', 'AU', 'DE', 'FR'])
+
+function normalizeCountryCode(cc) {
+  const c = String(cc || '').toUpperCase()
+  return c === 'UK' ? 'GB' : c
+}
+
+export function isProductDestination(cc) {
+  return PRODUCT_COUNTRY_CODES.has(normalizeCountryCode(cc)) || PRODUCT_COUNTRY_CODES.has(String(cc || '').toUpperCase())
+}
+
 // W37: 收紧到真实产品只在 4 国 + 申根 2 国代表.
-// 之前 W57 加了 JP/CA/SG/NZ/VN 是给 Diagnose 页 footer 兜底用的,
-// 但一直留在 FALLBACK 里 → /apply 页在 MOCK 模式下也会显示这些国家,
-// 用户会误以为是产品实际在做的目的地. 已下架.
 const FALLBACK_DESTINATIONS = [
   { id: 1,  country_code: 'US', country_name: '美国',      visa_types: ['tourism'], enabled: true },
   { id: 3,  country_code: 'GB', country_name: '英国',      visa_types: ['tourism'], enabled: true },
@@ -49,11 +61,10 @@ function localizeName(d, lang) {
 }
 
 function patchProductDestinations(list) {
-  return (list || []).map((d) => {
-    const cc = String(d.country_code || '').toUpperCase()
-    if (cc === 'UK' || cc === 'GB' || cc === 'AU') return { ...d, enabled: true }
-    return d
-  })
+  // 只保留产品线目的地; 印尼/越南/日/加/新/新西兰等一律剔除
+  return (list || [])
+    .filter((d) => isProductDestination(d.country_code))
+    .map((d) => ({ ...d, enabled: true }))
 }
 
 export async function listDestinations({ lang = 'zh-CN', visaType } = {}) {

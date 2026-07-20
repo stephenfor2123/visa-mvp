@@ -70,12 +70,12 @@ class TestSubmitVisaApplication:
 
         config_path = tmp_path / "rpa_config.yaml"
         with open(config_path, "w") as f:
-            yaml.dump({"mock_mode": True, "countries": {"ID": {"enabled": True}}}, f)
+            yaml.dump({"mock_mode": True, "countries": {"US": {"enabled": True}}}, f)
 
         scheduler = RPAScheduler(config_path=str(config_path))
         task_id = scheduler.submit_visa_application(
             order_id="V2-20260614-000001",
-            country_code="ID",
+            country_code="US",
             visa_type="visit_visa",
             user_id="user_123",
             ip_address="192.168.1.1",
@@ -87,7 +87,7 @@ class TestSubmitVisaApplication:
         status = scheduler.get_task_status(task_id)
         assert status["status"] == "submitting"
         assert status["order_id"] == "V2-20260614-000001"
-        assert status["country_code"] == "ID"
+        assert status["country_code"] == "US"
         assert status["progress"] > 0
 
     def test_submit_disabled_country_raises(self, tmp_path):
@@ -98,12 +98,12 @@ class TestSubmitVisaApplication:
 
         config_path = tmp_path / "rpa_config.yaml"
         with open(config_path, "w") as f:
-            yaml.dump({"mock_mode": True, "countries": {"ID": {"enabled": False}}}, f)
+            yaml.dump({"mock_mode": True, "countries": {"US": {"enabled": False}}}, f)
 
         scheduler = RPAScheduler(config_path=str(config_path))
 
         with pytest.raises(RPASchedulerError) as exc_info:
-            scheduler.submit_visa_application("order_1", "ID", "visit_visa")
+            scheduler.submit_visa_application("order_1", "US", "visit_visa")
         assert "not enabled" in str(exc_info.value)
 
 

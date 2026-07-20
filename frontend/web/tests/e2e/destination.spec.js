@@ -112,11 +112,11 @@ test.describe('S3 Web 选国家端到端', () => {
     const usApply = page.getByTestId('dest-apply-US')
     await expect(usApply).toBeVisible()
 
-    // 8. 日本卡片可见 + 无点击按钮(灰显)
-    const jpCard = page.getByTestId('dest-card-JP')
-    await expect(jpCard).toBeVisible()
-    const jpApply = page.getByTestId('dest-apply-JP')
-    await expect(jpApply).toHaveCount(0)
+    // 8. 非产品线目的地(JP/ID/VN)不得出现
+    await expect(page.getByTestId('dest-card-JP')).toHaveCount(0)
+    await expect(page.getByTestId('dest-card-ID')).toHaveCount(0)
+    await expect(page.getByTestId('dest-card-VN')).toHaveCount(0)
+    await expect(page.getByTestId('dest-apply-JP')).toHaveCount(0)
 
     // 9. 截图(测试期产出物)
     await page.screenshot({ path: 'screenshots/destinations.png', fullPage: true })

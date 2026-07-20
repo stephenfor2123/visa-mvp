@@ -8,8 +8,9 @@ Modules:
   rpa_scheduler    — Task state machine, rate limiting, and orchestration
 
 Providers:
-  providers/IndonesiaVisa  — Indonesia immigration portal automation
-  providers/VietnamVisa   — Vietnam e-visa portal automation
+  Historical IndonesiaVisa / VietnamVisa files remain under providers/ for
+  reference but are NOT registered — ID/VN are customer markets, not
+  destinations (docs/PRODUCT_SCOPE.md).
 """
 from app.services.rpa.captcha_solver import CaptchaSolver, CaptchaSolverError
 from app.services.rpa.form_filler import FormFiller, FormFillerError, FormSubmitResult

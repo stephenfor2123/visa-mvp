@@ -1,7 +1,7 @@
 """Integration tests for /api/v2/rpa/* — POST /submit, GET /status, POST /cancel.
 
 Covers:
-  - POST /rpa/submit: happy (ID enabled) / country-disabled / rate-limit /
+  - POST /rpa/submit: happy (US enabled) / country-disabled / rate-limit /
     unauthenticated / wrong-token-type
   - GET /rpa/status/{task_id}: happy / not-found / IDOR (other user's task)
   - POST /rpa/cancel/{task_id}: happy / not-found / IDOR / already-done
@@ -57,7 +57,7 @@ async def _register(client, phone: str) -> str:
     return r.json()["data"]["access_token"]
 
 
-def _build_submit_body(order_id: str = "ORD-001", country_code: str = "ID") -> dict:
+def _build_submit_body(order_id: str = "ORD-001", country_code: str = "US") -> dict:
     return {
         "order_id": order_id,
         "country_code": country_code,
@@ -77,9 +77,9 @@ def _build_submit_body(order_id: str = "ORD-001", country_code: str = "ID") -> d
 # ----------------------------------------------------------------- #
 class TestRPASubmit:
     async def test_submit_happy_returns_task_id(self, client):
-        """POST /rpa/submit → 200 + task_id + status=submitting (ID enabled)."""
+        """POST /rpa/submit → 200 + task_id + status=submitting (US enabled)."""
         token = await _register(client, "13800001101")
-        body = _build_submit_body("ORD-SUBMIT-HAPPY", "ID")
+        body = _build_submit_body("ORD-SUBMIT-HAPPY", "US")
 
         r = await client.post("/api/v2/rpa/submit", json=body, headers=_bearer(token))
         assert r.status_code == 200, r.text
@@ -89,9 +89,9 @@ class TestRPASubmit:
         assert data["order_id"] == "ORD-SUBMIT-HAPPY"
 
     async def test_submit_country_disabled_returns_4008(self, client):
-        """Country PH is enabled=false in rpa_config.yaml → 409 (BizException uses 409 Conflict)."""
+        """Schengen IT is in product scope but not enabled in rpa_config.yaml → 409."""
         token = await _register(client, "13800001102")
-        body = _build_submit_body("ORD-SUBMIT-PH", "PH")
+        body = _build_submit_body("ORD-SUBMIT-IT", "IT")
 
         r = await client.post("/api/v2/rpa/submit", json=body, headers=_bearer(token))
         # W22 fix: actual backend uses 409 (Conflict) for biz errors with code 4008
@@ -108,12 +108,12 @@ class TestRPASubmit:
         assert r.json()["code"] == "1005"
 
     async def test_submit_invalid_country_code_returns_400(self, client):
-        """Non-existent country → 409 BizException."""
+        """Non-product / unknown country → 400 INVALID_PARAMS."""
         token = await _register(client, "13800001103")
         body = _build_submit_body("ORD-SUBMIT-XX", "XX")
         r = await client.post("/api/v2/rpa/submit", json=body, headers=_bearer(token))
-        # W22 fix: 409 (Conflict) for biz errors
-        assert r.status_code == 409, r.text
+        assert r.status_code == 400, r.text
+        assert r.json()["code"] == "1001"
 
     async def test_submit_missing_field_returns_400(self, client):
         """W22 fix: backend returns 400 (Bad Request) not 422 for missing fields."""
@@ -125,13 +125,13 @@ class TestRPASubmit:
         )
         assert r.status_code == 400, r.text
 
-    async def test_submit_vietnam_country_succeeds(self, client):
-        """VN is also enabled in rpa_config.yaml."""
+    async def test_submit_non_product_country_rejected(self, client):
+        """ID/VN are customer markets — not visa destinations we file."""
         token = await _register(client, "13800001105")
         body = _build_submit_body("ORD-SUBMIT-VN", "VN")
         r = await client.post("/api/v2/rpa/submit", json=body, headers=_bearer(token))
-        assert r.status_code == 200, r.text
-        assert r.json()["data"]["status"] == "submitting"
+        assert r.status_code == 400, r.text
+        assert r.json()["code"] == "1001"
 
 
 # ----------------------------------------------------------------- #
@@ -141,7 +141,7 @@ class TestRPAStatus:
     async def test_status_happy(self, client):
         """Submit first, then query status."""
         token = await _register(client, "13800001201")
-        body = _build_submit_body("ORD-STATUS-001", "ID")
+        body = _build_submit_body("ORD-STATUS-001", "US")
         sr = await client.post("/api/v2/rpa/submit", json=body, headers=_bearer(token))
         task_id = sr.json()["data"]["task_id"]
 
@@ -151,7 +151,7 @@ class TestRPAStatus:
         assert data["task_id"] == task_id
         assert data["status"] == "submitting"
         assert data["progress"] == 0.1
-        assert data["country_code"] == "ID"
+        assert data["country_code"] == "US"
         # W22 fix: RPATaskStatus 不返回 visa_type (schema 不包含此字段)
 
     async def test_status_not_found_returns_404(self, client):
@@ -168,7 +168,7 @@ class TestRPAStatus:
         token_a = await _register(client, "13800001210")
         token_b = await _register(client, "13800001211")
 
-        body = _build_submit_body("ORD-STATUS-IDOR", "ID")
+        body = _build_submit_body("ORD-STATUS-IDOR", "US")
         sr = await client.post("/api/v2/rpa/submit", json=body, headers=_bearer(token_a))
         task_id = sr.json()["data"]["task_id"]
 
@@ -192,7 +192,7 @@ class TestRPACancel:
     async def test_cancel_happy(self, client):
         """Submit, then cancel a submitting task → 200 + status=cancelled."""
         token = await _register(client, "13800001301")
-        body = _build_submit_body("ORD-CANCEL-001", "ID")
+        body = _build_submit_body("ORD-CANCEL-001", "US")
         sr = await client.post("/api/v2/rpa/submit", json=body, headers=_bearer(token))
         task_id = sr.json()["data"]["task_id"]
 
@@ -213,7 +213,7 @@ class TestRPACancel:
         token_a = await _register(client, "13800001310")
         token_b = await _register(client, "13800001311")
 
-        body = _build_submit_body("ORD-CANCEL-IDOR", "ID")
+        body = _build_submit_body("ORD-CANCEL-IDOR", "US")
         sr = await client.post("/api/v2/rpa/submit", json=body, headers=_bearer(token_a))
         task_id = sr.json()["data"]["task_id"]
 
@@ -232,7 +232,7 @@ class TestRPACancel:
         token = await _register(client, "13800001320")
 
         # Submit
-        body = _build_submit_body("ORD-CANCEL-DONE", "ID")
+        body = _build_submit_body("ORD-CANCEL-DONE", "US")
         sr = await client.post("/api/v2/rpa/submit", json=body, headers=_bearer(token))
         task_id = sr.json()["data"]["task_id"]
 
@@ -258,9 +258,10 @@ class TestRPAConfigGet:
         assert "mock_mode" in data
         assert "rate_limits" in data
         assert "countries" in data
-        # countries uses ISO 3166-1 alpha-2 codes as keys
-        assert data["countries"].get("ID") is True
-        assert data["countries"].get("VN") is True
+        # Product destinations enabled; ID/VN are customer markets only
+        assert data["countries"].get("US") is True
+        assert data["countries"].get("ID") is False
+        assert data["countries"].get("VN") is False
 
 
 # ----------------------------------------------------------------- #
@@ -309,8 +310,8 @@ class TestRPAListTasks:
         scheduler._config["rate_limits"]["account_interval_minutes"] = 0
 
         token = await _register(client, "13800001401")
-        body1 = _build_submit_body("ORD-LIST-001", "ID")
-        body2 = _build_submit_body("ORD-LIST-002", "VN")
+        body1 = _build_submit_body("ORD-LIST-001", "US")
+        body2 = _build_submit_body("ORD-LIST-002", "GB")
 
         await client.post("/api/v2/rpa/submit", json=body1, headers=_bearer(token))
         await client.post("/api/v2/rpa/submit", json=body2, headers=_bearer(token))
@@ -327,7 +328,7 @@ class TestRPAListTasks:
     async def test_list_tasks_by_order_id(self, client):
         """Filter by order_id."""
         token = await _register(client, "13800001402")
-        body = _build_submit_body("ORD-FILTER-001", "ID")
+        body = _build_submit_body("ORD-FILTER-001", "US")
         await client.post("/api/v2/rpa/submit", json=body, headers=_bearer(token))
 
         r = await client.get(
@@ -361,7 +362,7 @@ class TestRPASchedulerSync:
         scheduler = get_scheduler()
         task_id = scheduler.submit_visa_application(
             order_id="ORD-DONE",
-            country_code="ID",
+            country_code="US",
             visa_type="visit_visa",
             user_id="test-user",
         )
@@ -376,7 +377,7 @@ class TestRPASchedulerSync:
         scheduler = get_scheduler()
         task_id = scheduler.submit_visa_application(
             order_id="ORD-FAIL",
-            country_code="ID",
+            country_code="US",
             visa_type="visit_visa",
             user_id="test-user",
         )
@@ -399,16 +400,16 @@ class TestRPASchedulerSync:
         scheduler._config["rate_limits"]["max_concurrent_tasks"] = 2
 
         scheduler.submit_visa_application(
-            "ORD-C1", "ID", "visit_visa", user_id="limit-user"
+            "ORD-C1", "US", "visit_visa", user_id="limit-user"
         )
         scheduler.submit_visa_application(
-            "ORD-C2", "ID", "visit_visa", user_id="limit-user"
+            "ORD-C2", "US", "visit_visa", user_id="limit-user"
         )
 
         import pytest as _pytest
         with _pytest.raises(Exception) as exc_info:
             scheduler.submit_visa_application(
-                "ORD-C3", "ID", "visit_visa", user_id="limit-user"
+                "ORD-C3", "US", "visit_visa", user_id="limit-user"
             )
         assert "max" in str(exc_info.value).lower() or "concurrent" in str(exc_info.value).lower()
 
@@ -421,16 +422,16 @@ class TestRPASchedulerSync:
         ip = "192.168.99.99"
 
         scheduler.submit_visa_application(
-            "ORD-IP1", "ID", "visit_visa", ip_address=ip
+            "ORD-IP1", "US", "visit_visa", ip_address=ip
         )
         scheduler.submit_visa_application(
-            "ORD-IP2", "ID", "visit_visa", ip_address=ip
+            "ORD-IP2", "US", "visit_visa", ip_address=ip
         )
 
         import pytest as _pytest
         with _pytest.raises(Exception) as exc_info:
             scheduler.submit_visa_application(
-                "ORD-IP3", "ID", "visit_visa", ip_address=ip
+                "ORD-IP3", "US", "visit_visa", ip_address=ip
             )
         assert "limit" in str(exc_info.value).lower()
 

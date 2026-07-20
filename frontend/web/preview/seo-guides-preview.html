@@ -1,0 +1,993 @@
+<!--
+  HTEX — SEO / GEO Guide Pages Preview
+  Open locally: frontend/web/preview/seo-guides-preview.html
+
+  ⚠️ PREVIEW ONLY — not wired into Vue router or production build.
+  Switch page / locale in the toolbar to see layout variants.
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HTEX SEO Guides — Preview</title>
+  <style>
+    :root {
+      --primary: #3B6EF5;
+      --primary-dark: #2c5dd9;
+      --primary-soft: #EEF2FF;
+      --accent: #6E59F0;
+      --ink: #0F172A;
+      --ink-2: #334155;
+      --ink-3: #64748B;
+      --line: #E2E8F0;
+      --bg: #F8FAFC;
+      --white: #fff;
+      --success: #10B981;
+      --warn: #F59E0B;
+      --radius: 14px;
+      --shadow: 0 4px 24px rgba(15, 23, 42, .08);
+      --toolbar: #0F172A;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif; background: #94A3B8; color: var(--ink); }
+
+    /* ── Dev toolbar ── */
+    .dev-toolbar {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--toolbar); color: #F8FAFC;
+      padding: 12px 20px; box-shadow: 0 2px 12px rgba(0,0,0,.25);
+    }
+    .dev-toolbar h1 { margin: 0; font-size: 14px; font-weight: 600; }
+    .dev-toolbar p { margin: 4px 0 0; font-size: 11px; opacity: .7; }
+    .dev-toolbar__row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+    .dev-label { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; opacity: .55; margin-right: 2px; }
+    .dev-btn {
+      border: 1px solid rgba(255,255,255,.22); background: transparent; color: #fff;
+      padding: 5px 11px; border-radius: 8px; font-size: 11px; cursor: pointer;
+    }
+    .dev-btn.is-active { background: var(--primary); border-color: var(--primary); }
+    .seo-hint {
+      margin: 12px 20px 0; padding: 10px 14px; background: #FEF3C7; border: 1px solid #FCD34D;
+      border-radius: 10px; font-size: 12px; color: #92400E; max-width: 960px;
+    }
+    .seo-hint code { background: rgba(0,0,0,.06); padding: 1px 5px; border-radius: 4px; font-size: 11px; }
+
+    /* ── Preview frame ── */
+    .preview-frame { max-width: 960px; margin: 16px auto 48px; background: var(--white); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow); }
+
+    /* ── Site header ── */
+    .site-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 24px; border-bottom: 1px solid var(--line); background: var(--white);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .brand { display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--ink); font-weight: 800; font-size: 18px; letter-spacing: -.03em; }
+    .brand__mark {
+      width: 28px; height: 28px; border-radius: 8px; background: #000;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-weight: 900; font-size: 16px;
+    }
+    .site-nav { display: flex; gap: 20px; font-size: 13px; font-weight: 500; }
+    .site-nav a { color: var(--ink-2); text-decoration: none; }
+    .site-nav a:hover { color: var(--primary); }
+    .header-cta {
+      background: var(--primary); color: #fff; border: none; padding: 8px 16px;
+      border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    .header-cta:hover { background: var(--primary-dark); }
+
+    /* ── Breadcrumb ── */
+    .breadcrumb {
+      padding: 12px 24px; font-size: 12px; color: var(--ink-3);
+      border-bottom: 1px solid var(--line); background: var(--bg);
+    }
+    .breadcrumb a { color: var(--primary); text-decoration: none; }
+
+    /* ── Guide hero ── */
+    .guide-hero {
+      padding: 40px 24px 32px;
+      background: linear-gradient(135deg, #EEF2FF 0%, #F8FAFC 60%, #fff 100%);
+      border-bottom: 1px solid var(--line);
+    }
+    .guide-hero__tag {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--white); border: 1px solid var(--line); border-radius: 999px;
+      padding: 4px 12px; font-size: 11px; font-weight: 600; color: var(--ink-2); margin-bottom: 14px;
+    }
+    .guide-hero__tag-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
+    .guide-hero h1 { margin: 0 0 12px; font-size: clamp(24px, 4vw, 32px); line-height: 1.25; letter-spacing: -.02em; }
+    .guide-hero__sub { margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: var(--ink-2); max-width: 640px; }
+    .guide-hero__meta { display: flex; flex-wrap: wrap; gap: 16px; font-size: 12px; color: var(--ink-3); }
+    .guide-hero__meta span { display: flex; align-items: center; gap: 5px; }
+
+    /* ── Layout ── */
+    .guide-layout { display: grid; grid-template-columns: 1fr 280px; gap: 0; }
+    @media (max-width: 768px) { .guide-layout { grid-template-columns: 1fr; } .guide-sidebar { display: none; } }
+
+    .guide-main { padding: 28px 24px 40px; min-width: 0; }
+    .guide-sidebar {
+      padding: 24px 20px; border-left: 1px solid var(--line); background: var(--bg);
+      position: sticky; top: 57px; align-self: start; max-height: calc(100vh - 57px); overflow-y: auto;
+    }
+
+    /* ── TOC ── */
+    .toc-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); margin: 0 0 12px; }
+    .toc-list { list-style: none; margin: 0; padding: 0; }
+    .toc-list li { margin-bottom: 4px; }
+    .toc-list a {
+      display: block; padding: 6px 10px; border-radius: 8px; font-size: 13px;
+      color: var(--ink-2); text-decoration: none; line-height: 1.4;
+    }
+    .toc-list a:hover, .toc-list a.is-active { background: var(--primary-soft); color: var(--primary); font-weight: 600; }
+
+    /* ── Content blocks ── */
+    .guide-main h2 { font-size: 20px; margin: 32px 0 12px; letter-spacing: -.01em; }
+    .guide-main h2:first-child { margin-top: 0; }
+    .guide-main p { font-size: 15px; line-height: 1.7; color: var(--ink-2); margin: 0 0 16px; }
+    .guide-main ul, .guide-main ol { margin: 0 0 16px; padding-left: 20px; color: var(--ink-2); font-size: 15px; line-height: 1.7; }
+    .guide-main li { margin-bottom: 6px; }
+
+    .callout {
+      padding: 16px 18px; border-radius: var(--radius); margin: 20px 0;
+      font-size: 14px; line-height: 1.6;
+    }
+    .callout--tip { background: #ECFDF5; border: 1px solid #A7F3D0; color: #065F46; }
+    .callout--warn { background: #FFFBEB; border: 1px solid #FDE68A; color: #92400E; }
+    .callout strong { display: block; margin-bottom: 4px; }
+
+    /* ── Checklist ── */
+    .checklist { list-style: none; padding: 0; margin: 0 0 20px; }
+    .checklist li {
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px;
+      margin-bottom: 8px; background: var(--white); font-size: 14px;
+    }
+    .checklist__icon {
+      flex-shrink: 0; width: 22px; height: 22px; border-radius: 6px;
+      background: var(--primary-soft); color: var(--primary);
+      display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;
+    }
+
+    /* ── Steps ── */
+    .steps { counter-reset: step; list-style: none; padding: 0; margin: 0 0 24px; }
+    .steps li {
+      counter-increment: step; position: relative; padding: 0 0 24px 48px;
+      border-left: 2px solid var(--line); margin-left: 15px;
+    }
+    .steps li:last-child { border-left-color: transparent; padding-bottom: 0; }
+    .steps li::before {
+      content: counter(step); position: absolute; left: -16px; top: 0;
+      width: 30px; height: 30px; border-radius: 50%; background: var(--primary); color: #fff;
+      font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+    }
+    .steps h3 { margin: 0 0 6px; font-size: 15px; }
+    .steps p { margin: 0; font-size: 14px; color: var(--ink-2); }
+
+    /* ── FAQ (schema preview) ── */
+    .faq { margin: 24px 0; }
+    .faq-item { border: 1px solid var(--line); border-radius: 12px; margin-bottom: 8px; overflow: hidden; }
+    .faq-q {
+      width: 100%; text-align: left; background: var(--white); border: none;
+      padding: 14px 16px; font-size: 14px; font-weight: 600; cursor: pointer;
+      display: flex; justify-content: space-between; align-items: center; color: var(--ink);
+    }
+    .faq-q:hover { background: var(--bg); }
+    .faq-a { padding: 0 16px 14px; font-size: 14px; line-height: 1.6; color: var(--ink-2); display: none; }
+    .faq-item.is-open .faq-a { display: block; }
+    .faq-item.is-open .faq-q { color: var(--primary); }
+
+    /* ── CTA card (sidebar + inline) ── */
+    .cta-card {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+      border-radius: var(--radius); padding: 20px; color: #fff; margin-top: 20px;
+    }
+    .cta-card h3 { margin: 0 0 8px; font-size: 16px; }
+    .cta-card p { margin: 0 0 16px; font-size: 13px; opacity: .9; line-height: 1.5; }
+    .cta-card__btn {
+      display: block; width: 100%; background: #fff; color: var(--primary);
+      border: none; padding: 11px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer;
+    }
+    .cta-card__btn:hover { background: #F8FAFC; }
+    .cta-card__fine { margin: 10px 0 0; font-size: 11px; opacity: .75; text-align: center; }
+
+    .inline-cta {
+      margin: 32px 0; padding: 24px; border-radius: var(--radius);
+      background: var(--primary-soft); border: 1px solid #C7D2FE;
+      display: flex; flex-wrap: wrap; align-items: center; gap: 16px; justify-content: space-between;
+    }
+    .inline-cta__text h3 { margin: 0 0 4px; font-size: 17px; }
+    .inline-cta__text p { margin: 0; font-size: 14px; color: var(--ink-2); }
+    .inline-cta__btn {
+      background: var(--primary); color: #fff; border: none; padding: 12px 24px;
+      border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap;
+    }
+
+    /* ── Related guides ── */
+    .related { padding: 24px; border-top: 1px solid var(--line); background: var(--bg); }
+    .related h2 { margin: 0 0 16px; font-size: 16px; }
+    .related-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+    .related-card {
+      background: var(--white); border: 1px solid var(--line); border-radius: 12px;
+      padding: 14px; text-decoration: none; color: inherit; transition: border-color .15s, box-shadow .15s;
+    }
+    .related-card:hover { border-color: var(--primary); box-shadow: 0 2px 12px rgba(59,110,245,.12); }
+    .related-card__flag { font-size: 20px; margin-bottom: 6px; }
+    .related-card__title { font-size: 13px; font-weight: 600; line-height: 1.4; margin-bottom: 4px; }
+    .related-card__sub { font-size: 11px; color: var(--ink-3); }
+
+    /* ── Guides index page ── */
+    .index-hero { padding: 48px 24px 32px; text-align: center; background: linear-gradient(180deg, #EEF2FF, #fff); }
+    .index-hero h1 { margin: 0 0 10px; font-size: 28px; letter-spacing: -.02em; }
+    .index-hero p { margin: 0 auto; max-width: 520px; font-size: 15px; color: var(--ink-2); line-height: 1.6; }
+    .index-filters { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 0 24px 24px; }
+    .filter-chip {
+      padding: 6px 14px; border-radius: 999px; border: 1px solid var(--line);
+      background: var(--white); font-size: 12px; font-weight: 600; cursor: pointer; color: var(--ink-2);
+    }
+    .filter-chip.is-active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .guides-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; padding: 0 24px 40px; }
+    .guide-card {
+      border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden;
+      text-decoration: none; color: inherit; transition: transform .15s, box-shadow .15s;
+    }
+    .guide-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+    .guide-card__img {
+      height: 120px; background: linear-gradient(135deg, #3B6EF5 0%, #6E59F0 100%);
+      display: flex; align-items: center; justify-content: center; font-size: 40px;
+    }
+    .guide-card__body { padding: 16px; }
+    .guide-card__locale { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--primary); margin-bottom: 6px; }
+    .guide-card__title { font-size: 15px; font-weight: 700; line-height: 1.35; margin-bottom: 6px; }
+    .guide-card__excerpt { font-size: 13px; color: var(--ink-3); line-height: 1.5; }
+
+    /* ── Tool page ── */
+    .tool-hero { text-align: center; padding: 40px 24px; }
+    .tool-widget {
+      margin: 0 24px 40px; padding: 24px; border: 1px solid var(--line);
+      border-radius: var(--radius); background: var(--bg);
+    }
+    .tool-row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+    .tool-select {
+      flex: 1; min-width: 160px; padding: 10px 12px; border: 1px solid var(--line);
+      border-radius: 10px; font-size: 14px; background: var(--white);
+    }
+
+    /* ── SEO meta panel (dev only) ── */
+    .seo-panel {
+      margin: 0 20px 16px; padding: 14px 16px; background: #1E293B; border-radius: 12px;
+      font-family: ui-monospace, monospace; font-size: 11px; color: #94A3B8; line-height: 1.6;
+      max-width: 960px;
+    }
+    .seo-panel strong { color: #E2E8F0; }
+    .seo-panel .val { color: #7DD3FC; }
+
+    .hidden { display: none !important; }
+    .site-footer {
+      padding: 20px 24px; border-top: 1px solid var(--line); font-size: 12px; color: var(--ink-3);
+      text-align: center; background: var(--bg);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="dev-toolbar">
+    <h1>HTEX SEO / GEO Guides — Layout Preview</h1>
+    <p>Preview only · not in production · switch page type &amp; locale below</p>
+    <div class="dev-toolbar__row">
+      <span class="dev-label">Page</span>
+      <button class="dev-btn is-active" data-page="guide">Guide article</button>
+      <button class="dev-btn" data-page="index">Guides index</button>
+      <button class="dev-btn" data-page="tool">Tool page</button>
+    </div>
+    <div class="dev-toolbar__row">
+      <span class="dev-label">Locale</span>
+      <button class="dev-btn is-active" data-locale="zh">🇨🇳 中文</button>
+      <button class="dev-btn" data-locale="id">🇮🇩 Indonesia</button>
+      <button class="dev-btn" data-locale="vi">🇻🇳 Vietnam</button>
+      <button class="dev-btn" data-locale="ph">🇵🇭 Philippines</button>
+      <button class="dev-btn" data-locale="in">🇮🇳 India</button>
+    </div>
+  </div>
+
+  <div class="seo-hint" id="seo-hint">
+    默认打开<strong>中文</strong>便于校正文案。切换 Locale 可看同一模板的当地语言版。下方深色面板为 Google / AI 爬虫会读到的 title、description、schema。
+  </div>
+
+  <div class="seo-panel" id="seo-panel"></div>
+
+  <div class="preview-frame" id="preview-root"></div>
+
+  <script>
+    const COPY = {
+      zh: {
+        flag: '🇨🇳',
+        country: '中国（示例对照）',
+        lang: '简体中文',
+        slug: '/guides/us-visa-zh-preview',
+        title: '美国旅游签（B1/B2）申请指南 — 完整版 2026',
+        description: '面向本地申请人的美签完整指南：所需材料、DS-160 填写、面签预约、常见拒签原因。本中文页仅供校正文案，正式投放以当地语言为准。',
+        h1: '美国旅游签（B1/B2）申请指南',
+        sub: '面向本地护照持有人的分步说明：材料清单、DS-160、面签预约与拒签风险提示。更新至 2026 年使领馆政策口径。',
+        updated: '更新于 2026年7月13日',
+        readTime: '约 8 分钟阅读',
+        breadcrumbGuide: '美签指南',
+        navGuides: '指南',
+        navTools: '工具',
+        navDest: '目的地',
+        ctaStart: '免费检查材料',
+        ctaSidebar: '用 Htex 开始',
+        ctaSidebarSub: '上传护照 → AI 检查材料 → 引导填写 DS-160',
+        ctaFine: '首次检查免费 · 无需信用卡',
+        ctaInlineTitle: '准备开始申请了吗？',
+        ctaInlineSub: 'Htex 帮你核对材料、填写表格，并跟踪订单状态。',
+        ctaInlineBtn: '立即开始 →',
+        tipLabel: '提示',
+        warnLabel: '重要',
+        tocTitle: '本页目录',
+        relatedTitle: '相关指南',
+        sections: {
+          requirements: '所需材料',
+          steps: '申请步骤',
+          ds160: '如何填写 DS-160',
+          interview: '面签准备',
+          rejection: '常见拒签原因',
+          faq: '常见问题',
+        },
+        intro: '美国旅游/商务访客签证（B1/B2）是当地申请人赴美观光、探亲或短期商务最常见的签证类型。流程通常包括：在线填写 DS-160、缴纳签证费、预约面签，并携带证明与本国联系紧密、资金充足的支持材料。',
+        tip: '建议在面签日期前至少 2 周完成 DS-160。必须先完成表格，才能预约面签。',
+        warn: '使领馆不保证签证获批。请警惕任何承诺「包过」的非正规中介。',
+        ds160Body: 'DS-160 是美国非移民签证的在线申请表。每一个字段都应与你的材料、面签回答保持一致。Htex 提供逐字段引导，并可用护照扫描结果预填部分信息。',
+        interviewBody: '面签通常很短。领事官员主要评估：出行目的、与本国的联系（工作/家庭/资产）、资金能力。回答要简短、诚实，并与 DS-160 一致。',
+        rejectionReasons: [
+          '资金证明不足或不一致',
+          '与本国联系薄弱（工作、家庭、资产）',
+          '面签回答与 DS-160 不一致',
+          '曾有逾期停留或其他签证违规记录',
+        ],
+        checklist: [
+          '护照有效期至少覆盖计划回国后 6 个月以上',
+          'DS-160 确认页（带条形码）',
+          '美签标准照片（白底，约 5×5 cm / 2×2 英寸）',
+          '签证费（MRV）缴费凭证',
+          '与本国联系证明：在职证明、工资单、营业注册等',
+          '近 3–6 个月银行流水',
+          '行程计划（不强制已购机票）',
+        ],
+        steps: [
+          { t: '在线填写 DS-160', d: '在 ceac.state.gov 完成填写。保存申请编号并打印确认页。' },
+          { t: '缴纳签证费（MRV）', d: '通过当地官方签证预约门户缴费，并保存收据。' },
+          { t: '预约面签', d: '登录官方预约系统，选择使领馆地点与可用日期。' },
+          { t: '整理材料', d: '准备护照、照片、资金证明，以及符合你个人情况的支持材料。' },
+          { t: '参加面签并等待结果', d: '面签通常 5–15 分钟。若获批，护照一般在数个工作日内寄回。' },
+        ],
+        faqs: [
+          { q: '从申请到出签大概要多久？', a: '面签档期因旺季/淡季而异，常见约 1–4 周。面签后若获批，护照通常在 3–7 个工作日内返还。' },
+          { q: '必须先买机票吗？', a: '不强制。很多人只提交行程计划、未购不可退机票。建议签证获批后再购买不可退票。' },
+          { q: 'B1 和 B2 有什么区别？', a: 'B1 用于短期商务（会议、短期洽谈）；B2 用于旅游和探亲。多数申请人提交 B1/B2 组合。' },
+          { q: '如果曾经被拒签怎么办？', a: '可以重新申请。先分析上次拒签原因，再加强与本国联系的证明，并保证面签回答与表格一致。' },
+        ],
+        related: [
+          { flag: '🇨🇳', title: '美签照片规格与常见错误', sub: '指南 · 中文对照' },
+          { flag: '🇨🇳', title: 'DS-160 逐字段填写说明', sub: '指南 · 中文对照' },
+          { flag: '🇮🇩', title: 'Cara apply visa Amerika dari Indonesia', sub: 'Panduan · Indonesia' },
+        ],
+      },
+      id: {
+        flag: '🇮🇩',
+        country: 'Indonesia',
+        lang: 'Bahasa Indonesia',
+        slug: '/guides/us-visa-indonesia',
+        title: 'Cara Apply Visa Amerika (B1/B2) dari Indonesia — Panduan Lengkap 2026',
+        description: 'Panduan lengkap pengajuan visa turis AS dari Indonesia: dokumen wajib, isi DS-160, jadwal wawancara di Kedutaan AS Jakarta, dan tips menghindari penolakan.',
+        h1: 'Cara Apply Visa Amerika dari Indonesia',
+        sub: 'Panduan step-by-step untuk warga Indonesia yang ingin mengajukan visa turis AS (B1/B2). Diperbarui untuk kebijakan Kedutaan AS Jakarta 2026.',
+        updated: 'Diperbarui 13 Jul 2026',
+        readTime: '8 menit baca',
+        breadcrumbGuide: 'Panduan Visa AS',
+        navGuides: 'Panduan',
+        navTools: 'Alat',
+        navDest: 'Negara Tujuan',
+        ctaStart: 'Cek kelengkapan dokumen gratis',
+        ctaSidebar: 'Mulai dengan Htex',
+        ctaSidebarSub: 'Upload paspor → AI cek dokumen → isi DS-160 dengan panduan',
+        ctaFine: 'Gratis untuk cek awal · Tanpa kartu kredit',
+        ctaInlineTitle: 'Siap mulai pengajuan?',
+        ctaInlineSub: 'Htex bantu cek dokumen, isi formulir, dan lacak status pesanan.',
+        ctaInlineBtn: 'Mulai sekarang →',
+        tipLabel: 'Tip',
+        warnLabel: 'Penting',
+        tocTitle: 'Di halaman ini',
+        relatedTitle: 'Panduan terkait',
+        sections: {
+          requirements: 'Dokumen yang dibutuhkan',
+          steps: 'Langkah pengajuan',
+          ds160: 'Cara isi DS-160',
+          interview: 'Persiapan wawancara',
+          rejection: 'Alasan penolakan umum',
+          faq: 'Pertanyaan sering diajukan',
+        },
+        intro: 'Visa turis Amerika Serikat (B1/B2) adalah jenis visa paling umum untuk warga Indonesia yang ingin berwisata, mengunjungi keluarga, atau menghadiri acara bisnis singkat. Prosesnya melibatkan pengisian formulir online DS-160, pembayaran biaya visa, penjadwalan wawancara di Kedutaan AS Jakarta atau Konsulat Surabaya, dan pembawaan dokumen pendukung.',
+        tip: 'Mulai isi DS-160 minimal 2 minggu sebelum jadwal wawancara. Formulir harus selesai sebelum Anda bisa membuat janji temu.',
+        warn: 'Kedutaan AS tidak menjamin persetujuan visa. Hindari klaim "jaminan lolos" dari agen tidak resmi.',
+        ds160Body: 'Formulir DS-160 adalah aplikasi visa non-imigran AS secara online. Setiap field harus konsisten dengan dokumen dan jawaban wawancara Anda. Htex menyediakan panduan field-by-field dan pre-fill dari scan paspor.',
+        interviewBody: 'Wawancara visa biasanya singkat. Petugas konsuler menilai tujuan perjalanan, ikatan ke negara asal, dan kemampuan finansial. Jawab singkat, jujur, dan konsisten dengan DS-160.',
+        rejectionReasons: [
+          'Bukti finansial tidak memadai atau tidak konsisten',
+          'Ikatan ke negara asal lemah (pekerjaan, keluarga, aset)',
+          'Jawaban wawancara tidak cocok dengan DS-160',
+          'Riwayat overstay atau pelanggaran visa sebelumnya',
+        ],
+        checklist: [
+          'Paspor valid minimal 6 bulan setelah tanggal rencana pulang',
+          'Konfirmasi formulir DS-160 (halaman konfirmasi dengan barcode)',
+          'Foto visa 5×5 cm (standar AS, latar putih)',
+          'Bukti pembayaran biaya visa (MRV fee)',
+          'Bukti ikatan ke Indonesia: slip gaji, NPWP, atau surat kerja',
+          'Rekening koran 3–6 bulan terakhir',
+          'Itinerary perjalanan (tidak wajib booking tiket)',
+        ],
+        steps: [
+          { t: 'Isi formulir DS-160 online', d: 'Lengkapi di ceac.state.gov. Simpan nomor aplikasi dan cetak halaman konfirmasi.' },
+          { t: 'Bayar biaya visa (MRV)', d: 'Bayar melalui portal resmi ustraveldocs.com/id. Simpan bukti pembayaran.' },
+          { t: 'Buat janji wawancara', d: 'Login ke akun ustraveldocs, pilih lokasi Jakarta atau Surabaya, pilih tanggal tersedia.' },
+          { t: 'Kumpulkan dokumen', d: 'Siapkan paspor, foto, bukti finansial, dan dokumen pendukung sesuai profil Anda.' },
+          { t: 'Hadir wawancara & tunggu hasil', d: 'Wawancara biasanya 5–15 menit. Paspor dikembalikan dalam beberapa hari jika disetujui.' },
+        ],
+        faqs: [
+          { q: 'Berapa lama proses visa AS dari Indonesia?', a: 'Wawancara bisa dijadwalkan dalam 1–4 minggu tergantung musim. Setelah wawancara, paspor biasanya kembali dalam 3–7 hari kerja jika disetujui.' },
+          { q: 'Apakah harus booking tiket pesawat dulu?', a: 'Tidak wajib. Banyak pelamar menggunakan itinerary rencana perjalanan tanpa tiket confirmed. Jangan beli tiket non-refundable sebelum visa disetujui.' },
+          { q: 'Apa perbedaan B1 dan B2?', a: 'B1 untuk bisnis singkat (rapat, konferensi). B2 untuk wisata dan kunjungan keluarga. Kebanyakan pelamar Indonesia mengajukan kombinasi B1/B2.' },
+          { q: 'Bagaimana jika pernah ditolak?', a: 'Anda bisa mengajukan ulang. Analisis alasan penolakan sebelumnya dan perbaiki bukti ikatan ke Indonesia serta konsistensi jawaban wawancara.' },
+        ],
+        related: [
+          { flag: '🇮🇩', title: 'Foto visa AS: spesifikasi & kesalahan umum', sub: 'Panduan · Indonesia' },
+          { flag: '🇮🇩', title: 'DS-160: panduan isi formulir bahasa Indonesia', sub: 'Panduan · Indonesia' },
+          { flag: '🇵🇭', title: 'US visa from the Philippines', sub: 'Guide · English' },
+        ],
+      },
+      vi: {
+        flag: '🇻🇳',
+        country: 'Việt Nam',
+        lang: 'Tiếng Việt',
+        slug: '/guides/xin-visa-my-vietnam',
+        title: 'Hướng dẫn xin visa Mỹ (B1/B2) cho người Việt Nam — Cập nhật 2026',
+        description: 'Hướng dẫn chi tiết xin visa du lịch Mỹ từ Việt Nam: hồ sơ cần thiết, điền DS-160, đặt lịch phỏng vấn tại Đại sứ quán Mỹ Hà Nội hoặc TP.HCM.',
+        h1: 'Hướng dẫn xin visa Mỹ cho người Việt Nam',
+        sub: 'Quy trình từng bước cho công dân Việt Nam xin visa du lịch Mỹ (B1/B2). Cập nhật theo chính sách Lãnh sự quán Mỹ 2026.',
+        updated: 'Cập nhật 13/07/2026',
+        readTime: '8 phút đọc',
+        breadcrumbGuide: 'Hướng dẫn visa Mỹ',
+        navGuides: 'Hướng dẫn',
+        navTools: 'Công cụ',
+        navDest: 'Điểm đến',
+        ctaStart: 'Kiểm tra hồ sơ miễn phí',
+        ctaSidebar: 'Bắt đầu với Htex',
+        ctaSidebarSub: 'Tải hộ chiếu → AI kiểm tra hồ sơ → điền DS-160 có hướng dẫn',
+        ctaFine: 'Miễn phí kiểm tra ban đầu · Không cần thẻ tín dụng',
+        ctaInlineTitle: 'Sẵn sàng nộp hồ sơ?',
+        ctaInlineSub: 'Htex giúp kiểm tra tài liệu, điền biểu mẫu và theo dõi đơn hàng.',
+        ctaInlineBtn: 'Bắt đầu ngay →',
+        tipLabel: 'Mẹo',
+        warnLabel: 'Quan trọng',
+        tocTitle: 'Trên trang này',
+        relatedTitle: 'Hướng dẫn liên quan',
+        sections: {
+          requirements: 'Hồ sơ cần chuẩn bị',
+          steps: 'Các bước xin visa',
+          ds160: 'Cách điền DS-160',
+          interview: 'Chuẩn bị phỏng vấn',
+          rejection: 'Lý do từ chối phổ biến',
+          faq: 'Câu hỏi thường gặp',
+        },
+        intro: 'Visa du lịch Mỹ (B1/B2) là loại visa phổ biến nhất cho công dân Việt Nam muốn du lịch, thăm thân hoặc tham dự sự kiện ngắn hạn. Quy trình gồm điền DS-160 trực tuyến, nộp lệ phí visa, đặt lịch phỏng vấn tại Đại sứ quán Mỹ Hà Nội hoặc Lãnh sự quán TP.HCM.',
+        tip: 'Nên hoàn thành DS-160 ít nhất 2 tuần trước ngày phỏng vấn. Bạn phải hoàn tất biểu mẫu trước khi đặt lịch hẹn.',
+        warn: 'Lãnh sự quán Mỹ không đảm bảo cấp visa. Tránh các dịch vụ cam kết "chắc chắn đậu" không chính thức.',
+        ds160Body: 'DS-160 là đơn xin visa không định cư trực tuyến của Mỹ. Mọi trường phải thống nhất với hồ sơ và câu trả lời phỏng vấn. Htex cung cấp hướng dẫn từng trường và điền sẵn từ ảnh hộ chiếu.',
+        interviewBody: 'Phỏng vấn thường ngắn. Viên chức lãnh sự đánh giá mục đích chuyến đi, ràng buộc với Việt Nam và khả năng tài chính. Trả lời ngắn gọn, trung thực và khớp với DS-160.',
+        rejectionReasons: [
+          'Chứng minh tài chính yếu hoặc không nhất quán',
+          'Ràng buộc với Việt Nam yếu (công việc, gia đình, tài sản)',
+          'Câu trả lời phỏng vấn không khớp DS-160',
+          'Từng quá hạn lưu trú hoặc vi phạm visa',
+        ],
+        checklist: [
+          'Hộ chiếu còn hạn ít nhất 6 tháng sau ngày dự kiến về',
+          'Xác nhận DS-160 (trang có mã vạch)',
+          'Ảnh visa 5×5 cm (nền trắng, chuẩn Mỹ)',
+          'Biên lai nộp lệ phí visa (MRV fee)',
+          'Giấy tờ chứng minh ràng buộc với Việt Nam: hợp đồng lao động, bảng lương',
+          'Sao kê ngân hàng 3–6 tháng',
+          'Lịch trình dự kiến (không bắt buộc vé máy bay)',
+        ],
+        steps: [
+          { t: 'Điền DS-160 trực tuyến', d: 'Hoàn thành tại ceac.state.gov. Lưu mã số đơn và in trang xác nhận.' },
+          { t: 'Nộp lệ phí visa', d: 'Thanh toán qua ustraveldocs.com. Giữ biên lai.' },
+          { t: 'Đặt lịch phỏng vấn', d: 'Đăng nhập ustraveldocs, chọn Hà Nội hoặc TP.HCM, chọn ngày còn trống.' },
+          { t: 'Chuẩn bị hồ sơ', d: 'Mang hộ chiếu, ảnh, giấy tờ tài chính và tài liệu hỗ trợ phù hợp hồ sơ của bạn.' },
+          { t: 'Phỏng vấn & chờ kết quả', d: 'Phỏng vấn thường 5–15 phút. Hộ chiếu trả lại trong vài ngày nếu được duyệt.' },
+        ],
+        faqs: [
+          { q: 'Xin visa Mỹ mất bao lâu từ Việt Nam?', a: 'Lịch phỏng vấn có thể đặt trong 1–4 tuần tùy mùa. Sau phỏng vấn, hộ chiếu thường trả trong 3–7 ngày làm việc nếu được duyệt.' },
+          { q: 'Có cần đặt vé máy bay trước không?', a: 'Không bắt buộc. Nhiều người nộp lịch trình dự kiến mà chưa mua vé. Tránh mua vé không hoàn tiền trước khi có visa.' },
+          { q: 'B1 và B2 khác nhau thế nào?', a: 'B1 cho công tác ngắn hạn. B2 cho du lịch và thăm thân. Đa số người Việt xin kết hợp B1/B2.' },
+          { q: 'Từng bị từ chối thì làm sao?', a: 'Có thể nộp lại. Phân tích lý do từ chối trước và cải thiện hồ sơ chứng minh ràng buộc với Việt Nam.' },
+        ],
+        related: [
+          { flag: '🇻🇳', title: 'Ảnh visa Mỹ: tiêu chuẩn & lỗi thường gặp', sub: 'Hướng dẫn · Việt Nam' },
+          { flag: '🇻🇳', title: 'DS-160: hướng dẫn điền form tiếng Việt', sub: 'Hướng dẫn · Việt Nam' },
+          { flag: '🇮🇩', title: 'Cara apply visa Amerika dari Indonesia', sub: 'Panduan · Indonesia' },
+        ],
+      },
+      ph: {
+        flag: '🇵🇭',
+        country: 'Philippines',
+        lang: 'English',
+        slug: '/guides/us-visa-philippines',
+        title: 'How to Apply for a US Tourist Visa (B1/B2) from the Philippines — 2026 Guide',
+        description: 'Complete guide for Filipino citizens applying for a US tourist visa: required documents, DS-160 form, embassy interview at US Embassy Manila, and common rejection reasons.',
+        h1: 'US Tourist Visa Application Guide for Filipinos',
+        sub: 'Step-by-step process for Philippine passport holders applying for a US B1/B2 visa. Updated for US Embassy Manila policies in 2026.',
+        updated: 'Updated Jul 13, 2026',
+        readTime: '8 min read',
+        breadcrumbGuide: 'US Visa Guides',
+        navGuides: 'Guides',
+        navTools: 'Tools',
+        navDest: 'Destinations',
+        ctaStart: 'Check documents free',
+        ctaSidebar: 'Start with Htex',
+        ctaSidebarSub: 'Upload passport → AI document check → guided DS-160',
+        ctaFine: 'Free initial check · No credit card',
+        ctaInlineTitle: 'Ready to start your application?',
+        ctaInlineSub: 'Htex helps you verify documents, fill forms, and track your order.',
+        ctaInlineBtn: 'Get started →',
+        tipLabel: 'Tip',
+        warnLabel: 'Important',
+        tocTitle: 'On this page',
+        relatedTitle: 'Related guides',
+        sections: {
+          requirements: 'Required documents',
+          steps: 'Application steps',
+          ds160: 'How to fill DS-160',
+          interview: 'Interview preparation',
+          rejection: 'Common rejection reasons',
+          faq: 'Frequently asked questions',
+        },
+        intro: 'The US B1/B2 tourist visa is the most common visa type for Filipino citizens traveling to the United States for tourism, family visits, or short business trips. The process involves completing the DS-160 online, paying the visa fee, scheduling an interview at the US Embassy in Manila, and bringing supporting documents.',
+        tip: 'Complete your DS-160 at least 2 weeks before your interview date. The form must be finished before you can schedule an appointment.',
+        warn: 'The US Embassy does not guarantee visa approval. Avoid unofficial agents promising guaranteed approval.',
+        ds160Body: 'The DS-160 is the online US nonimmigrant visa application. Every field should match your documents and interview answers. Htex provides field-by-field guidance and passport-scan prefill.',
+        interviewBody: 'Visa interviews are usually short. Consular officers assess travel purpose, ties to the Philippines, and financial ability. Keep answers brief, honest, and consistent with your DS-160.',
+        rejectionReasons: [
+          'Insufficient or inconsistent financial proof',
+          'Weak ties to the Philippines (job, family, assets)',
+          'Interview answers that do not match the DS-160',
+          'Prior overstay or visa violations',
+        ],
+        checklist: [
+          'Valid passport (6+ months beyond intended return date)',
+          'DS-160 confirmation page with barcode',
+          'US visa photo 2×2 inches (white background)',
+          'MRV fee payment receipt',
+          'Proof of ties to the Philippines: employment letter, ITR, business registration',
+          'Bank statements (3–6 months)',
+          'Travel itinerary (flight booking not required)',
+        ],
+        steps: [
+          { t: 'Complete DS-160 online', d: 'Fill out at ceac.state.gov. Save your application ID and print the confirmation page.' },
+          { t: 'Pay the visa fee (MRV)', d: 'Pay through ustraveldocs.com/ph. Keep your receipt.' },
+          { t: 'Schedule your interview', d: 'Log in to ustraveldocs, select US Embassy Manila, pick an available date.' },
+          { t: 'Gather documents', d: 'Prepare passport, photo, financial proof, and supporting docs matching your profile.' },
+          { t: 'Attend interview & wait', d: 'Interviews typically last 5–15 minutes. Passport returned in a few days if approved.' },
+        ],
+        faqs: [
+          { q: 'How long does US visa processing take from the Philippines?', a: 'Interview slots may be available within 1–4 weeks depending on season. After interview, passport return typically takes 3–7 business days if approved.' },
+          { q: 'Do I need a booked flight ticket?', a: 'Not required. Many applicants submit a planned itinerary without confirmed tickets. Avoid non-refundable purchases before visa approval.' },
+          { q: 'What is the difference between B1 and B2?', a: 'B1 is for short business visits. B2 is for tourism and family visits. Most Filipino applicants apply for B1/B2 combination.' },
+          { q: 'What if I was previously denied?', a: 'You may reapply. Analyze the previous denial reason and strengthen proof of ties to the Philippines.' },
+        ],
+        related: [
+          { flag: '🇵🇭', title: 'US visa photo requirements for Filipinos', sub: 'Guide · Philippines' },
+          { flag: '🇵🇭', title: 'DS-160 walkthrough for Philippine applicants', sub: 'Guide · Philippines' },
+          { flag: '🇮🇳', title: 'US visa from India: complete guide', sub: 'Guide · India' },
+        ],
+      },
+      in: {
+        flag: '🇮🇳',
+        country: 'India',
+        lang: 'English',
+        slug: '/guides/us-visa-india',
+        title: 'US Tourist Visa (B1/B2) Application from India — Complete 2026 Guide',
+        description: 'Step-by-step US visa guide for Indian citizens: documents, DS-160, CGI Federal appointment, embassy interview tips, and common rejection reasons for B1/B2 applicants.',
+        h1: 'US Visa Application Guide for Indian Citizens',
+        sub: 'Complete walkthrough for Indian passport holders applying for a US B1/B2 tourist visa. Covers CGI Federal portal and embassy interview at Delhi, Mumbai, Chennai, Hyderabad, or Kolkata.',
+        updated: 'Updated Jul 13, 2026',
+        readTime: '9 min read',
+        breadcrumbGuide: 'US Visa Guides',
+        navGuides: 'Guides',
+        navTools: 'Tools',
+        navDest: 'Destinations',
+        ctaStart: 'Free document check',
+        ctaSidebar: 'Start with Htex',
+        ctaSidebarSub: 'Upload passport → AI check → guided DS-160 filling',
+        ctaFine: 'Free initial check · No credit card',
+        ctaInlineTitle: 'Ready to apply?',
+        ctaInlineSub: 'Htex helps verify documents, fill forms, and track your application.',
+        ctaInlineBtn: 'Get started →',
+        tipLabel: 'Tip',
+        warnLabel: 'Important',
+        tocTitle: 'On this page',
+        relatedTitle: 'Related guides',
+        sections: {
+          requirements: 'Documents required',
+          steps: 'Application steps',
+          ds160: 'Filling DS-160',
+          interview: 'Interview tips',
+          rejection: 'Why visas get rejected',
+          faq: 'FAQ',
+        },
+        intro: 'The US B1/B2 visa is the standard tourist and business visitor visa for Indian citizens. India has one of the highest US visa application volumes globally, with interviews conducted at US embassies and consulates in New Delhi, Mumbai, Chennai, Hyderabad, and Kolkata via the CGI Federal portal.',
+        tip: 'DS-160 and appointment scheduling are separate steps. Complete DS-160 first, then book your OFC (biometrics) and consular interview appointments.',
+        warn: 'US consular officers focus heavily on ties to India. Weak financial documentation and inconsistent answers are top rejection factors.',
+        ds160Body: 'The DS-160 is the online US nonimmigrant visa application. Every field should match your documents and interview answers. Htex provides field-by-field guidance and passport-scan prefill.',
+        interviewBody: 'Visa interviews are usually short. Consular officers assess travel purpose, ties to India, and financial ability. Keep answers brief, honest, and consistent with your DS-160.',
+        rejectionReasons: [
+          'Insufficient or inconsistent financial proof',
+          'Weak ties to India (job, family, assets)',
+          'Interview answers that do not match the DS-160',
+          'Prior overstay or visa violations',
+        ],
+        checklist: [
+          'Valid passport (6+ months validity beyond travel date)',
+          'DS-160 confirmation page',
+          'US visa photo 2×2 inches',
+          'Visa fee (MRV) payment confirmation',
+          'ITR (Income Tax Returns) for last 3 years',
+          'Bank statements (6 months)',
+          'Employment letter with salary and leave approval',
+        ],
+        steps: [
+          { t: 'Complete DS-160', d: 'Fill at ceac.state.gov. Print confirmation page with barcode.' },
+          { t: 'Pay visa fee via CGI Federal', d: 'Pay at designated banks or online. Keep receipt number.' },
+          { t: 'Book OFC + interview', d: 'Schedule biometrics at OFC center, then consular interview at your chosen post.' },
+          { t: 'Prepare documents', d: 'Organize financial docs, employment proof, and travel purpose evidence.' },
+          { t: 'Attend OFC & interview', d: 'Biometrics first, then consular interview. Decision often given same day.' },
+        ],
+        faqs: [
+          { q: 'How long is the wait time for US visa interview in India?', a: 'Wait times vary by city and season — from a few days to several months. Check the US Embassy website for current appointment availability.' },
+          { q: 'Is travel insurance required?', a: 'Not required for the visa application itself, but recommended for your trip.' },
+          { q: 'Can I apply if I was refused before?', a: 'Yes. Address the previous refusal reason directly. Strengthen financial and ties-to-home-country evidence.' },
+          { q: 'Do I need an agent?', a: 'No. The entire process can be done online. Tools like Htex help with document preparation and form filling.' },
+        ],
+        related: [
+          { flag: '🇮🇳', title: 'DS-160 guide for Indian applicants', sub: 'Guide · India' },
+          { flag: '🇮🇳', title: 'US visa interview questions for Indians', sub: 'Guide · India' },
+          { flag: '🇵🇭', title: 'US visa from the Philippines', sub: 'Guide · Philippines' },
+        ],
+      },
+    }
+
+    const INDEX_COPY = {
+      zh: {
+        title: '签证指南与工具',
+        sub: '面向印尼、越南、菲律宾、印度等本地申请人的美签 / 申根 / 英签 / 澳签分步指南。',
+        filters: ['全部', '🇮🇩 印尼', '🇻🇳 越南', '🇵🇭 菲律宾', '🇮🇳 印度', '美签', 'DS-160'],
+        seoTitle: '签证指南与工具 — Htex',
+        seoDesc: '免费签证申请指南：印尼、越南、菲律宾、印度等本地申请人可用。',
+        cards: [
+          { flag: '🇮🇩', locale: '印尼', title: '从印尼申请美国签证完整指南', excerpt: '材料、DS-160、雅加达使馆面签 — 2026 完整版。' },
+          { flag: '🇻🇳', locale: '越南', title: '越南公民申请美签指南', excerpt: '材料、DS-160、河内 / 胡志明市面签说明。' },
+          { flag: '🇵🇭', locale: '菲律宾', title: '菲律宾申请人美签旅游签指南', excerpt: '材料、DS-160、马尼拉使馆面签要点。' },
+          { flag: '🇮🇳', locale: '印度', title: '印度公民申请美签指南', excerpt: 'CGI Federal、生物采集、领馆面签流程。' },
+          { flag: '🌐', locale: '通用', title: 'DS-160 逐字段填写指南', excerpt: '美国非移民签证在线申请表通用说明。' },
+          { flag: '🌐', locale: '工具', title: '签证材料清单生成器', excerpt: '选择国籍 + 目的地 → 生成个性化清单。' },
+        ],
+      },
+      en: {
+        title: 'Visa Guides & Tools',
+        sub: 'Step-by-step guides for US, Schengen, UK & Australia visa applications — written for local applicants in Southeast Asia and beyond.',
+        filters: ['All', '🇮🇩 Indonesia', '🇻🇳 Vietnam', '🇵🇭 Philippines', '🇮🇳 India', 'US Visa', 'DS-160'],
+        seoTitle: 'Visa Guides & Tools — Htex',
+        seoDesc: 'Free visa application guides for Indonesia, Vietnam, Philippines, India and more.',
+        cards: [
+          { flag: '🇮🇩', locale: 'Indonesia', title: 'Cara Apply Visa Amerika dari Indonesia', excerpt: 'Dokumen, DS-160, wawancara Kedutaan Jakarta — panduan lengkap 2026.' },
+          { flag: '🇻🇳', locale: 'Vietnam', title: 'Hướng dẫn xin visa Mỹ cho người Việt Nam', excerpt: 'Hồ sơ, DS-160, phỏng vấn ĐSQ Mỹ Hà Nội / TP.HCM.' },
+          { flag: '🇵🇭', locale: 'Philippines', title: 'US Tourist Visa Guide for Filipinos', excerpt: 'Documents, DS-160, US Embassy Manila interview tips.' },
+          { flag: '🇮🇳', locale: 'India', title: 'US Visa Application from India', excerpt: 'CGI Federal, OFC biometrics, consular interview walkthrough.' },
+          { flag: '🌐', locale: 'All markets', title: 'DS-160 Form: Complete Field-by-Field Guide', excerpt: 'Universal walkthrough for the US nonimmigrant visa application.' },
+          { flag: '🌐', locale: 'Tool', title: 'Visa Document Checklist Generator', excerpt: 'Pick your nationality + destination → get a personalized checklist.' },
+        ],
+      },
+    }
+
+    const TOOL_COPY = {
+      zh: {
+        title: '签证材料清单生成器',
+        sub: '选择国籍与目的地，即时生成个性化材料清单 — 免费，无需注册。',
+        nationality: '你的国籍',
+        destination: '签证目的地',
+        cta: '生成清单',
+        resultTitle: '你的美签 B1/B2 材料清单',
+        breadcrumb: '指南 / 工具 / 清单生成器',
+        seoTitle: '免费美签材料清单生成器 — Htex',
+        seoDesc: '选择国籍与目的地，立即获得个性化签证材料清单。',
+        upsellTitle: '想让 AI 帮你核对材料吗？',
+        upsellSub: '上传护照与证明材料 — Htex 在递交前检查完整度。',
+        upsellBtn: '开始免费检查 →',
+      },
+      en: {
+        title: 'Visa Document Checklist Generator',
+        sub: 'Select your nationality and destination to get a personalized document checklist — free, no sign-up required.',
+        nationality: 'Your nationality',
+        destination: 'Visa destination',
+        cta: 'Generate checklist',
+        resultTitle: 'Your checklist for US B1/B2 visa',
+        breadcrumb: 'Guides / Tools / Checklist Generator',
+        seoTitle: 'Free US Visa Document Checklist Generator — Htex',
+        seoDesc: 'Pick nationality + destination, get a personalized visa document checklist instantly.',
+        upsellTitle: 'Want AI to verify your documents?',
+        upsellSub: 'Upload your passport and supporting docs — Htex checks completeness before you apply.',
+        upsellBtn: 'Start free check →',
+      },
+    }
+
+    let currentPage = 'guide'
+    let currentLocale = 'zh'
+
+    function uiBundle() {
+      return currentLocale === 'zh' ? 'zh' : 'en'
+    }
+
+    function esc(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+    }
+
+    function renderSeoPanel(c) {
+      const schema = {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: c.faqs.map(f => ({
+          '@type': 'Question',
+          name: f.q,
+          acceptedAnswer: { '@type': 'Answer', text: f.a },
+        })),
+      }
+      document.getElementById('seo-panel').innerHTML = `
+        <strong>What crawlers see</strong> (each guide page gets unique values)<br>
+        &lt;title&gt; <span class="val">${esc(c.title)}</span><br>
+        &lt;meta name="description"&gt; <span class="val">${esc(c.description)}</span><br>
+        &lt;link rel="canonical"&gt; <span class="val">https://htexvisa.com${c.slug}</span><br>
+        &lt;link rel="alternate" hreflang&gt; <span class="val">zh · id · vi · en</span> (per locale version)<br>
+        &lt;script type="application/ld+json"&gt; FAQPage with ${c.faqs.length} questions<br>
+        <span style="color:#64748B">${esc(JSON.stringify(schema, null, 2).slice(0, 200))}…</span>
+      `
+    }
+
+    function header(c) {
+      return `
+        <header class="site-header">
+          <a class="brand" href="#"><span class="brand__mark">H</span> Htex</a>
+          <nav class="site-nav">
+            <a href="#">${c.navGuides}</a>
+            <a href="#">${c.navTools}</a>
+            <a href="#">${c.navDest}</a>
+          </nav>
+          <button class="header-cta">${c.ctaStart}</button>
+        </header>
+      `
+    }
+
+    function renderGuide() {
+      const c = COPY[currentLocale]
+      renderSeoPanel(c)
+      document.documentElement.lang = currentLocale === 'zh' ? 'zh-CN' : currentLocale === 'vi' ? 'vi' : currentLocale === 'id' ? 'id' : 'en'
+
+      const toc = [
+        ['requirements', c.sections.requirements],
+        ['steps', c.sections.steps],
+        ['ds160', c.sections.ds160],
+        ['interview', c.sections.interview],
+        ['rejection', c.sections.rejection],
+        ['faq', c.sections.faq],
+      ]
+
+      document.getElementById('preview-root').innerHTML = `
+        ${header(c)}
+        <div class="breadcrumb">
+          <a href="#">${c.navGuides}</a> / <a href="#">${c.breadcrumbGuide}</a> / ${c.country}
+        </div>
+        <div class="guide-hero">
+          <div class="guide-hero__tag"><span class="guide-hero__tag-dot"></span> ${c.flag} ${c.country} · ${c.lang}</div>
+          <h1>${esc(c.h1)}</h1>
+          <p class="guide-hero__sub">${esc(c.sub)}</p>
+          <div class="guide-hero__meta">
+            <span>📅 ${c.updated}</span>
+            <span>⏱ ${c.readTime}</span>
+            <span>🔗 htexvisa.com${c.slug}</span>
+          </div>
+        </div>
+        <div class="guide-layout">
+          <article class="guide-main">
+            <p>${esc(c.intro)}</p>
+
+            <div class="callout callout--tip"><strong>💡 ${esc(c.tipLabel || 'Tip')}</strong>${esc(c.tip)}</div>
+
+            <h2 id="requirements">${esc(c.sections.requirements)}</h2>
+            <ul class="checklist">
+              ${c.checklist.map(item => `<li><span class="checklist__icon">✓</span><span>${esc(item)}</span></li>`).join('')}
+            </ul>
+
+            <h2 id="steps">${esc(c.sections.steps)}</h2>
+            <ol class="steps">
+              ${c.steps.map(s => `<li><h3>${esc(s.t)}</h3><p>${esc(s.d)}</p></li>`).join('')}
+            </ol>
+
+            <div class="inline-cta">
+              <div class="inline-cta__text">
+                <h3>${esc(c.ctaInlineTitle)}</h3>
+                <p>${esc(c.ctaInlineSub)}</p>
+              </div>
+              <button class="inline-cta__btn">${esc(c.ctaInlineBtn)}</button>
+            </div>
+
+            <h2 id="ds160">${esc(c.sections.ds160)}</h2>
+            <p>${esc(c.ds160Body)}</p>
+
+            <h2 id="interview">${esc(c.sections.interview)}</h2>
+            <p>${esc(c.interviewBody)}</p>
+
+            <div class="callout callout--warn"><strong>⚠️ ${esc(c.warnLabel || 'Important')}</strong>${esc(c.warn)}</div>
+
+            <h2 id="rejection">${esc(c.sections.rejection)}</h2>
+            <ul>
+              ${(c.rejectionReasons || []).map(r => `<li>${esc(r)}</li>`).join('')}
+            </ul>
+
+            <h2 id="faq">${esc(c.sections.faq)}</h2>
+            <div class="faq">
+              ${c.faqs.map((f, i) => `
+                <div class="faq-item${i === 0 ? ' is-open' : ''}">
+                  <button class="faq-q" type="button" onclick="toggleFaq(this)">${esc(f.q)} <span>▾</span></button>
+                  <div class="faq-a">${esc(f.a)}</div>
+                </div>
+              `).join('')}
+            </div>
+          </article>
+
+          <aside class="guide-sidebar">
+            <p class="toc-title">${esc(c.tocTitle || 'On this page')}</p>
+            <ul class="toc-list">
+              ${toc.map(([id, label], i) => `<li><a href="#${id}" class="${i === 0 ? 'is-active' : ''}">${esc(label)}</a></li>`).join('')}
+            </ul>
+            <div class="cta-card">
+              <h3>${esc(c.ctaSidebar)}</h3>
+              <p>${esc(c.ctaSidebarSub)}</p>
+              <button class="cta-card__btn">${esc(c.ctaStart)}</button>
+              <p class="cta-card__fine">${esc(c.ctaFine)}</p>
+            </div>
+          </aside>
+        </div>
+
+        <section class="related">
+          <h2>${esc(c.relatedTitle || 'Related guides')}</h2>
+          <div class="related-grid">
+            ${c.related.map(r => `
+              <a class="related-card" href="#">
+                <div class="related-card__flag">${r.flag}</div>
+                <div class="related-card__title">${esc(r.title)}</div>
+                <div class="related-card__sub">${esc(r.sub)}</div>
+              </a>
+            `).join('')}
+          </div>
+        </section>
+
+        <footer class="site-footer">© 2026 Htex · htexvisa.com · Preview only</footer>
+      `
+    }
+
+    function renderIndex() {
+      const idx = INDEX_COPY[uiBundle()]
+      const c = COPY[currentLocale]
+      document.getElementById('seo-panel').innerHTML = `
+        <strong>Index page SEO</strong><br>
+        &lt;title&gt; <span class="val">${esc(idx.seoTitle)}</span><br>
+        &lt;meta name="description"&gt; <span class="val">${esc(idx.seoDesc)}</span><br>
+        &lt;link rel="canonical"&gt; <span class="val">https://htexvisa.com/guides</span>
+      `
+      document.getElementById('preview-root').innerHTML = `
+        ${header(c)}
+        <div class="index-hero">
+          <h1>${esc(idx.title)}</h1>
+          <p>${esc(idx.sub)}</p>
+        </div>
+        <div class="index-filters">
+          ${idx.filters.map((f, i) => `<button class="filter-chip${i === 0 ? ' is-active' : ''}">${esc(f)}</button>`).join('')}
+        </div>
+        <div class="guides-grid">
+          ${idx.cards.map(card => `
+            <a class="guide-card" href="#">
+              <div class="guide-card__img">${card.flag}</div>
+              <div class="guide-card__body">
+                <div class="guide-card__locale">${esc(card.locale)}</div>
+                <div class="guide-card__title">${esc(card.title)}</div>
+                <div class="guide-card__excerpt">${esc(card.excerpt)}</div>
+              </div>
+            </a>
+          `).join('')}
+        </div>
+        <footer class="site-footer">© 2026 Htex · htexvisa.com/guides · Preview only</footer>
+      `
+    }
+
+    function renderTool() {
+      const c = COPY[currentLocale]
+      const t = TOOL_COPY[uiBundle()]
+      document.getElementById('seo-panel').innerHTML = `
+        <strong>Tool page SEO</strong><br>
+        &lt;title&gt; <span class="val">${esc(t.seoTitle)}</span><br>
+        &lt;meta name="description"&gt; <span class="val">${esc(t.seoDesc)}</span><br>
+        Schema: <span class="val">HowTo</span> + <span class="val">WebApplication</span>
+      `
+      document.getElementById('preview-root').innerHTML = `
+        ${header(c)}
+        <div class="breadcrumb">${esc(t.breadcrumb)}</div>
+        <div class="tool-hero">
+          <h1>${esc(t.title)}</h1>
+          <p style="max-width:480px;margin:10px auto 0;color:var(--ink-2);font-size:15px;line-height:1.6">${esc(t.sub)}</p>
+        </div>
+        <div class="tool-widget">
+          <div class="tool-row">
+            <select class="tool-select"><option>${esc(t.nationality)}</option><option>🇮🇩 Indonesia</option><option>🇻🇳 Vietnam</option><option>🇵🇭 Philippines</option><option>🇮🇳 India</option></select>
+            <select class="tool-select"><option>${esc(t.destination)}</option><option>🇺🇸 United States (B1/B2)</option><option>🇬🇧 United Kingdom</option><option>🇪🇺 Schengen</option><option>🇦🇺 Australia</option></select>
+            <button class="header-cta">${esc(t.cta)}</button>
+          </div>
+          <h3 style="margin:0 0 12px;font-size:15px">${esc(t.resultTitle)}</h3>
+          <ul class="checklist">
+            ${c.checklist.slice(0, 5).map(item => `<li><span class="checklist__icon">✓</span><span>${esc(item)}</span></li>`).join('')}
+          </ul>
+          <div class="cta-card" style="margin-top:16px">
+            <h3>${esc(t.upsellTitle)}</h3>
+            <p>${esc(t.upsellSub)}</p>
+            <button class="cta-card__btn">${esc(t.upsellBtn)}</button>
+          </div>
+        </div>
+        <footer class="site-footer">© 2026 Htex · htexvisa.com/tools/checklist · Preview only</footer>
+      `
+    }
+
+    function render() {
+      if (currentPage === 'guide') renderGuide()
+      else if (currentPage === 'index') renderIndex()
+      else renderTool()
+    }
+
+    function toggleFaq(btn) {
+      const item = btn.closest('.faq-item')
+      const open = item.classList.contains('is-open')
+      document.querySelectorAll('.faq-item').forEach(el => el.classList.remove('is-open'))
+      if (!open) item.classList.add('is-open')
+    }
+    window.toggleFaq = toggleFaq
+
+    document.querySelectorAll('[data-page]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-page]').forEach(b => b.classList.remove('is-active'))
+        btn.classList.add('is-active')
+        currentPage = btn.dataset.page
+        render()
+      })
+    })
+
+    document.querySelectorAll('[data-locale]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-locale]').forEach(b => b.classList.remove('is-active'))
+        btn.classList.add('is-active')
+        currentLocale = btn.dataset.locale
+        render()
+      })
+    })
+
+    render()
+  </script>
+</body>
+</html>

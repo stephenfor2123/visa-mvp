@@ -133,7 +133,7 @@ class TestInsuranceQuoteBind:
         order_id = "V2-20260612-00002"
         rq = await client.post(
             "/api/v2/insurance/quote",
-            json={"order_id": order_id, "applicant_age": 35, "destination_country": "JP"},
+            json={"order_id": order_id, "applicant_age": 35, "destination_country": "US"},
             headers=_auth(token),
         )
         quote_id = rq.json()["data"]["quote_id"]

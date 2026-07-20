@@ -321,7 +321,7 @@
     "passport_no_suspicious_fix": "Vui lòng xác nhận bạn đã tải lên trang thông tin hộ chiếu (không phải trang thị thực hoặc bìa sau).",
     "photo_bg_uncertain_title": "Vui lòng kiểm tra nền ảnh",
     "photo_bg_uncertain_detail": "Hầu hết các nước yêu cầu nền trắng; một số nước Đông Nam Á chấp nhận nền xanh.",
-    "photo_bg_uncertain_fix": "Nếu nộp cho Mỹ / Anh / Nhật / Hàn, nền phải là trắng.",
+    "photo_bg_uncertain_fix": "Nếu nộp cho Mỹ / Anh / Úc / Schengen, nền phải là trắng.",
     "photo_bg_country_title": "Vui lòng xác nhận ảnh đúng quy cách {country_name}",
     "photo_bg_country_detail": "{country_name} yêu cầu {spec}. Hệ thống không nhận diện được màu nền ảnh từ hình — hãy xác nhận ảnh của bạn đúng quy cách trước khi gửi.",
     "photo_bg_country_fix": "Chụp lại ảnh {spec} hoặc tới tiệm chụp ảnh visa chuyên nghiệp để có ảnh đúng chuẩn ngay từ đầu.",

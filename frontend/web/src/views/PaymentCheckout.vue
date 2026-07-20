@@ -1,7 +1,6 @@
 <!--
-  PaymentCheckout.vue — Web 支付/checkout 页
-  Mock: 创建支付单后 1s 自动回调 → 轮询跳转结果页
-  Stripe: Stripe.js Elements 收集卡号 → confirmPayment → 轮询/跳转
+  PaymentCheckout.vue — 完整申请服务包支付页
+  展示非会员/会员权益对照 + 平台定价 + 隐私同意 → Mock 轮询 / Stripe Elements
 -->
 <template>
   <div class="paymentcheckout-page">
@@ -14,73 +13,107 @@
 
       <section v-else-if="loadError" class="state-block state-block--err">
         <p>{{ loadError }}</p>
-        <AppButton variant="outline" size="md" @click="initCheckout">{{ t('common.retry') }}</AppButton>
+        <AppButton variant="outline" size="md" @click="prepareCheckout">{{ t('common.retry') }}</AppButton>
       </section>
 
       <template v-else>
+        <button type="button" class="checkout-back" @click="goBack">{{ t('payment.checkout_back') }}</button>
+
         <header class="checkout-header">
-          <h1>{{ t('payment.checkout_title') }}</h1>
-          <p class="checkout-sub">{{ t('payment.checkout_subtitle') }}</p>
+          <h1>{{ pageTitle }}</h1>
+          <p class="checkout-sub" v-html="t('payment.checkout_package_sub')"></p>
         </header>
 
-        <div class="checkout-card">
-          <div class="checkout-row">
-            <span class="checkout-label">{{ t('payment.order_id') }}</span>
-            <span class="checkout-value mono">{{ orderNo }}</span>
-          </div>
-          <div class="checkout-row">
-            <span class="checkout-label">{{ t('payment.amount') }}</span>
-            <span class="checkout-value amount">{{ formattedAmount }}</span>
-          </div>
-          <div class="checkout-row">
-            <span class="checkout-label">{{ t('payment.method') }}</span>
-            <span class="checkout-value">
-              {{ channel === 'stripe' ? t('payment.method_stripe') : t('payment.method_mock') }}
-            </span>
-          </div>
+        <PaymentBenefitsCompare />
+
+        <div class="price-bar">
+          <span v-if="showStrike" class="price-list">{{ symbol }}{{ formatUsd(listPrice) }}</span>
+          <span class="price-now">{{ symbol }}{{ formatUsd(chargeUsd) }}</span>
+          <span v-if="showStrike" class="price-tag">{{ t('home.pricing.promo_tag') }}</span>
+        </div>
+        <p class="price-hint">{{ t('payment.checkout_price_hint') }}</p>
+
+        <div class="note note--embassy">
+          <p>
+            <strong>{{ t('payment.checkout_embassy_title') }}</strong>
+            {{ t('payment.checkout_embassy_body') }}
+          </p>
         </div>
 
-        <!-- Stripe card form -->
-        <div v-if="channel === 'stripe' && clientSecret" class="stripe-wrap">
+        <label class="consent">
+          <input v-model="consentChecked" type="checkbox" data-testid="paymentcheckout-consent" />
+          <span>{{ t('payment.checkout_consent') }}</span>
+        </label>
+        <div class="consent-links">
+          <button type="button" class="link-btn" @click="dataModalOpen = true">{{ t('payment.checkout_data_how') }}</button>
+          <span>·</span>
+          <router-link to="/privacy" target="_blank">{{ t('payment.checkout_privacy') }}</router-link>
+        </div>
+
+        <div v-if="channel === 'stripe' && paymentStarted && clientSecret" class="stripe-wrap">
           <div ref="stripeMountRef" class="stripe-element" data-testid="paymentcheckout-stripe-element"></div>
           <p v-if="stripeError" class="stripe-error">{{ stripeError }}</p>
-          <AppButton
-            variant="primary"
-            size="lg"
-            style="width: 100%; margin-top: 16px;"
-            :loading="paying"
-            data-testid="paymentcheckout-stripe-pay"
-            @click="onStripePay"
-          >{{ t('payment.checkout_pay_now') }}</AppButton>
         </div>
 
-        <!-- Mock: waiting for auto-notify -->
-        <div v-else class="mock-wrap">
+        <div v-if="paying && channel !== 'stripe'" class="mock-wrap">
           <p class="mock-hint">{{ t('payment.checkout_mock_hint') }}</p>
-          <div class="polling-bar">
+          <div class="polling-bar" aria-hidden="true">
             <span class="polling-dot"></span>
             <span class="polling-dot"></span>
             <span class="polling-dot"></span>
           </div>
         </div>
 
-        <div class="checkout-actions">
-          <AppButton variant="ghost" size="md" @click="goBack">{{ t('common.cancel') }}</AppButton>
-        </div>
+        <AppButton
+          v-if="channel !== 'stripe' || !paymentStarted"
+          variant="primary"
+          size="lg"
+          style="width: 100%;"
+          :loading="paying"
+          :disabled="!consentChecked || paying"
+          data-testid="paymentcheckout-pay"
+          @click="onPayClick"
+        >{{ payButtonLabel }}</AppButton>
+
+        <AppButton
+          v-else
+          variant="primary"
+          size="lg"
+          style="width: 100%; margin-top: 16px;"
+          :loading="paying"
+          :disabled="!consentChecked || paying"
+          data-testid="paymentcheckout-stripe-pay"
+          @click="onStripePay"
+        >{{ t('payment.checkout_pay_now') }}</AppButton>
+
+        <button type="button" class="btn-cancel" @click="goBack">{{ t('payment.checkout_skip') }}</button>
+        <p class="checkout-foot">{{ t('payment.checkout_foot', { orderNo }) }}</p>
       </template>
     </main>
+
+    <div v-if="dataModalOpen" class="modal-mask" @click.self="dataModalOpen = false">
+      <div class="modal" role="dialog" aria-modal="true" :aria-label="t('payment.checkout_data_modal_title')">
+        <h3>{{ t('payment.checkout_data_modal_title') }}</h3>
+        <p>{{ t('payment.checkout_data_modal_p1') }}</p>
+        <p>{{ t('payment.checkout_data_modal_p2') }}</p>
+        <p>{{ t('payment.checkout_data_modal_p3') }}</p>
+        <AppButton variant="outline" size="md" @click="dataModalOpen = false">{{ t('common.close') }}</AppButton>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { loadStripe } from '@stripe/stripe-js'
 import AppHeader from '@/components/AppHeader.vue'
 import AppButton from '@/components/AppButton.vue'
+import PaymentBenefitsCompare from '@/components/PaymentBenefitsCompare.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
+import { usePlatformPricing } from '@/composables/usePlatformPricing'
 import { getOrder, syncPendingApplicantAfterPayment } from '@/api/orders'
 import { createPayment, getPaymentConfig, queryPaymentStatus } from '@/api/payment'
 import { FEATURE_RPA, postPaymentRoute } from '@/config/features'
@@ -90,13 +123,43 @@ const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 const toast = useToast()
+const {
+  listPrice,
+  displayCents,
+  symbol,
+  load: loadPricing,
+  formatUsd,
+} = usePlatformPricing()
 
 const orderNo = computed(() => route.params.orderNo || route.query.orderNo || '')
 const nextRoute = computed(() => route.query.next || '')
+const entryFrom = computed(() => {
+  const raw = String(route.query.from || '').toLowerCase()
+  return raw === 'diagnosis' ? 'diagnosis' : 'template'
+})
+
+const pageTitle = computed(() => (
+  entryFrom.value === 'diagnosis'
+    ? t('payment.checkout_entry_diagnosis_title')
+    : t('payment.checkout_entry_template_title')
+))
+
+const payButtonLabel = computed(() => (
+  t('payment.checkout_pay_cta', { price: `${symbol.value}${formatUsd(chargeUsd.value)}` })
+))
+
+const chargeUsd = ref(0)
+const showStrike = computed(() => {
+  const list = Number(listPrice.value)
+  return list > 0 && chargeUsd.value > 0 && chargeUsd.value < list
+})
 
 const loading = ref(true)
 const loadError = ref('')
 const paying = ref(false)
+const paymentStarted = ref(false)
+const consentChecked = ref(false)
+const dataModalOpen = ref(false)
 const channel = ref('mock')
 const amountCents = ref(0)
 const currency = ref('USD')
@@ -106,21 +169,13 @@ const stripeMountRef = ref(null)
 let stripeInstance = null
 let stripeElements = null
 let pollTimer = null
-
-const formattedAmount = computed(() => {
-  const cents = amountCents.value || 0
-  const cur = (currency.value || 'USD').toUpperCase()
-  const val = (cents / 100).toFixed(2)
-  const symbols = { USD: '$', CNY: '¥', EUR: '€' }
-  return `${symbols[cur] || cur + ' '}${val}`
-})
+let stripePublishableKey = ''
 
 function goBack() {
   router.back()
 }
 
 async function goNext() {
-  // A-01: attach browser-held applicant draft now that payment is confirmed
   try {
     await syncPendingApplicantAfterPayment(orderNo.value)
   } catch (e) {
@@ -136,7 +191,7 @@ async function goNext() {
     const { countryCode, visaType } = route.query
     router.push({
       name: 'RpaSubmit',
-      query: { orderNo: orderNo.value, countryCode, visaType }
+      query: { orderNo: orderNo.value, countryCode, visaType },
     }).catch(() => router.push({ name: 'PaymentResult', query: q }))
     return
   }
@@ -144,7 +199,7 @@ async function goNext() {
     router.push({
       name: 'OrderPrecheck',
       params: { orderNo: orderNo.value },
-      query: route.query
+      query: route.query,
     }).catch(() => router.push({ name: 'PaymentResult', query: q }))
     return
   }
@@ -160,13 +215,10 @@ function stopPolling() {
 
 async function pollUntilPaid() {
   stopPolling()
-  // Immediate sync attempt (Stripe may already show succeeded)
   try {
     const first = await queryPaymentStatus(orderNo.value)
     const st0 = first?.data?.status
-    if (st0 === 'paid' || st0 === 'success') {
-      return true
-    }
+    if (st0 === 'paid' || st0 === 'success') return true
   } catch (_) { /* keep polling */ }
 
   return await new Promise((resolve) => {
@@ -190,9 +242,9 @@ async function pollUntilPaid() {
   })
 }
 
-async function mountStripe(publishableKey) {
-  if (!publishableKey || !clientSecret.value || !stripeMountRef.value) return
-  stripeInstance = await loadStripe(publishableKey)
+async function mountStripe() {
+  if (!stripePublishableKey || !clientSecret.value || !stripeMountRef.value) return
+  stripeInstance = await loadStripe(stripePublishableKey)
   if (!stripeInstance) {
     stripeError.value = t('payment.checkout_stripe_load_fail')
     return
@@ -200,6 +252,23 @@ async function mountStripe(publishableKey) {
   stripeElements = stripeInstance.elements({ clientSecret: clientSecret.value })
   const paymentElement = stripeElements.create('payment')
   paymentElement.mount(stripeMountRef.value)
+}
+
+async function createCheckoutPayment() {
+  const payResp = await createPayment({
+    order_no: orderNo.value,
+    amount_cents: amountCents.value,
+    currency: currency.value,
+    desc: `Visa order ${orderNo.value}`,
+  })
+  const data = payResp?.data || {}
+  clientSecret.value = data.client_secret || data.prepay_id || ''
+  if (data.provider) channel.value = data.provider
+  paymentStarted.value = true
+  if (channel.value === 'stripe' && clientSecret.value) {
+    await nextTick()
+    await mountStripe()
+  }
 }
 
 async function onStripePay() {
@@ -211,14 +280,17 @@ async function onStripePay() {
     const { error } = await stripeInstance.confirmPayment({
       elements: stripeElements,
       confirmParams: { return_url: returnUrl },
-      redirect: 'if_required'
+      redirect: 'if_required',
     })
     if (error) {
       stripeError.value = error.message || t('payment.failed_reason_unknown')
       return
     }
-    // Confirm ok → poll once so backend can sync PaymentIntent → paid
-    await pollUntilPaid()
+    const paid = await pollUntilPaid()
+    if (!paid) {
+      stripeError.value = t('payment.pending_message')
+      return
+    }
     toast.success(t('payment.success_title'))
     goNext()
   } catch (e) {
@@ -228,7 +300,33 @@ async function onStripePay() {
   }
 }
 
-async function initCheckout() {
+async function onPayClick() {
+  if (!consentChecked.value || paying.value) return
+  paying.value = true
+  stripeError.value = ''
+  try {
+    if (!paymentStarted.value) {
+      await createCheckoutPayment()
+    }
+    if (channel.value === 'stripe') {
+      paying.value = false
+      return
+    }
+    const paid = await pollUntilPaid()
+    if (paid) {
+      toast.success(t('payment.success_title'))
+      goNext()
+    } else {
+      toast.error(t('payment.pending_message'))
+    }
+  } catch (e) {
+    loadError.value = e?.message || t('payment.load_failed')
+  } finally {
+    paying.value = false
+  }
+}
+
+async function prepareCheckout() {
   if (!orderNo.value) {
     loadError.value = t('payment.not_found_message', { orderId: '—' })
     loading.value = false
@@ -237,46 +335,30 @@ async function initCheckout() {
   loading.value = true
   loadError.value = ''
   try {
-    const [configResp, order] = await Promise.all([
+    const [configResp, , order] = await Promise.all([
       getPaymentConfig(),
-      getOrder(orderNo.value)
+      loadPricing(),
+      getOrder(orderNo.value),
     ])
     channel.value = configResp?.data?.channel || 'mock'
-    const total = Number(order?.total_amount || 0)
-    amountCents.value = total > 0 ? Math.round(total) : 9900
+    stripePublishableKey = configResp?.data?.stripe_publishable_key
+      || import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
+      || ''
+
+    const orderCents = Math.round(Number(order?.total_amount || 0) * 100)
+    amountCents.value = orderCents > 0 ? orderCents : displayCents.value
+    chargeUsd.value = amountCents.value / 100
     currency.value = order?.currency || 'USD'
-
-    const payResp = await createPayment({
-      order_no: orderNo.value,
-      amount_cents: amountCents.value,
-      currency: currency.value,
-      desc: `Visa order ${orderNo.value}`
-    })
-    const data = payResp?.data || {}
-    clientSecret.value = data.client_secret || data.prepay_id || ''
-    if (data.provider) channel.value = data.provider
-
-    loading.value = false
-    if (channel.value === 'stripe' && clientSecret.value) {
-      const pk = configResp?.data?.stripe_publishable_key
-        || import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
-      await mountStripe(pk)
-    } else {
-      const paid = await pollUntilPaid()
-      if (paid) {
-        toast.success(t('payment.success_title'))
-        goNext()
-      }
-    }
   } catch (e) {
     loadError.value = e?.message || t('payment.load_failed')
+  } finally {
     loading.value = false
   }
 }
 
 onMounted(async () => {
   auth.hydrate()
-  await initCheckout()
+  await prepareCheckout()
 })
 
 onBeforeUnmount(() => {
@@ -286,32 +368,102 @@ onBeforeUnmount(() => {
 
 <style scoped lang="scss">
 .paymentcheckout-page { min-height: 100vh; background: #fff; }
-.paymentcheckout-shell { max-width: 560px; margin: 0 auto; padding: 28px 20px 60px; }
+.paymentcheckout-shell { max-width: 600px; margin: 0 auto; padding: 28px 20px 64px; }
+
+.checkout-back {
+  border: 0;
+  background: none;
+  padding: 0;
+  font-size: 13px;
+  color: #3b6ef5;
+  font-weight: 600;
+  cursor: pointer;
+}
+.checkout-back:hover { text-decoration: underline; }
 
 .checkout-header {
-  margin-bottom: 20px;
-  h1 { font-size: 1.5rem; margin: 0 0 6px; color: #0f172a; }
+  margin: 16px 0;
+  h1 { font-size: 22px; margin: 0 0 6px; color: #0f172a; font-weight: 700; }
 }
-.checkout-sub { color: #64748b; margin: 0; font-size: 0.95rem; }
+.checkout-sub {
+  color: #64748b;
+  margin: 0;
+  font-size: 14px;
+  :deep(strong) { color: #0f172a; }
+}
 
-.checkout-card {
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 18px 20px;
-  margin-bottom: 20px;
-  background: #f8fafc;
-}
-.checkout-row {
+.price-bar {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 0;
-  &:not(:last-child) { border-bottom: 1px dashed #e2e8f0; }
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-bottom: 8px;
 }
-.checkout-label { color: #64748b; font-size: 0.9rem; }
-.checkout-value { font-weight: 600; color: #0f172a; }
-.checkout-value.mono { font-family: ui-monospace, monospace; font-size: 0.85rem; }
-.checkout-value.amount { font-size: 1.25rem; color: #16a34a; }
+.price-list {
+  color: #94a3b8;
+  text-decoration: line-through;
+  font-size: 16px;
+  font-weight: 600;
+}
+.price-now {
+  font-size: 28px;
+  font-weight: 800;
+  color: #0f172a;
+}
+.price-tag {
+  font-size: 11px;
+  font-weight: 700;
+  color: #1d4ed8;
+  background: #eaf0fe;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+.price-hint { margin: 0 0 16px; font-size: 13px; color: #64748b; }
+
+.note--embassy {
+  margin: 0 0 12px;
+  padding: 14px 16px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #78350f;
+  p { margin: 0; line-height: 1.55; }
+  strong { color: #92400e; }
+}
+
+.consent {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 16px 0;
+  font-size: 13px;
+  color: #334155;
+  cursor: pointer;
+  input {
+    margin-top: 2px;
+    width: 16px;
+    height: 16px;
+    accent-color: #3b6ef5;
+    flex-shrink: 0;
+  }
+}
+.consent-links {
+  margin: -8px 0 16px;
+  font-size: 13px;
+  a, .link-btn {
+    color: #3b6ef5;
+    font-weight: 600;
+    background: none;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  a:hover, .link-btn:hover { text-decoration: underline; }
+  span { color: #cbd5e1; margin: 0 8px; }
+}
 
 .stripe-wrap { margin-bottom: 16px; }
 .stripe-element {
@@ -322,12 +474,11 @@ onBeforeUnmount(() => {
 }
 .stripe-error { color: #dc2626; font-size: 0.9rem; margin-top: 8px; }
 
-.mock-wrap { text-align: center; padding: 24px 0; }
-.mock-hint { color: #64748b; margin-bottom: 16px; }
-
+.mock-wrap { text-align: center; padding: 16px 0; }
+.mock-hint { color: #64748b; margin-bottom: 12px; }
 .polling-bar { display: flex; gap: 8px; justify-content: center; }
 .polling-dot {
-  width: 8px; height: 8px; border-radius: 50%; background: #d97706;
+  width: 8px; height: 8px; border-radius: 50%; background: #3b6ef5;
   animation: pulse 1.2s ease-in-out infinite;
   &:nth-child(2) { animation-delay: 0.2s; }
   &:nth-child(3) { animation-delay: 0.4s; }
@@ -337,7 +488,46 @@ onBeforeUnmount(() => {
   50% { opacity: 1; transform: scale(1); }
 }
 
-.checkout-actions { margin-top: 20px; text-align: center; }
+.btn-cancel {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  border: 0;
+  background: transparent;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px;
+  cursor: pointer;
+}
+.checkout-foot {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.modal-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 30;
+}
+.modal {
+  background: #fff;
+  border-radius: 12px;
+  max-width: 440px;
+  width: 100%;
+  max-height: 80vh;
+  overflow: auto;
+  padding: 20px;
+  h3 { margin: 0 0 12px; font-size: 16px; }
+  p { margin: 0 0 10px; font-size: 13px; color: #475569; }
+}
 
 .state-block {
   text-align: center;

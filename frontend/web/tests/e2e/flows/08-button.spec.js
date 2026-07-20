@@ -236,36 +236,38 @@ test.describe('S4.2 /destinations 立即申请按钮 (Destinations.vue)', () => 
     expect(bgAfter.replace(/\s/g, '')).toMatch(/^rgb\(44,\s*93,\s*224\)$/)
   })
 
-  test('C14: 未启用国家 (JP) 没有 "立即申请" 按钮', async ({ page, request }) => {
+  test('C14: 非产品线国家 (JP) 不出现在目的地列表', async ({ page, request }) => {
     const { phone } = await registerFreshUser(request)
     const auth = await loginAndGetAuth(request, phone)
     await injectAuth(page, auth)
     await page.goto('/destinations', { waitUntil: 'networkidle' })
-    const jpApply = page.getByTestId('dest-apply-JP')
-    // JP enabled=false,按钮不渲染 (v-if)
-    await expect(jpApply).toHaveCount(0)
+    await expect(page.getByTestId('dest-card-JP')).toHaveCount(0)
+    await expect(page.getByTestId('dest-apply-JP')).toHaveCount(0)
   })
 
-  test('C15: 灰显国家卡片有 .is-disabled 类', async ({ page, request }) => {
+  test('C15: 产品线国家均可申请 (无灰显 Coming Soon)', async ({ page, request }) => {
     const { phone } = await registerFreshUser(request)
     const auth = await loginAndGetAuth(request, phone)
     await injectAuth(page, auth)
     await page.goto('/destinations', { waitUntil: 'networkidle' })
-    const jpCard = page.getByTestId('dest-card-JP')
-    await jpCard.waitFor({ state: 'visible', timeout: 15_000 })
-    const cls = await jpCard.getAttribute('class')
-    expect(cls).toContain('is-disabled')
+    for (const cc of ['US', 'GB', 'AU', 'DE', 'FR']) {
+      const card = page.getByTestId(`dest-card-${cc}`)
+      // DE/FR 可能因 mock/API 略有差异; US 必须在
+      if (cc === 'US') {
+        await expect(card).toBeVisible({ timeout: 15_000 })
+        await expect(page.getByTestId('dest-apply-US')).toBeVisible()
+      }
+    }
+    await expect(page.locator('.dest-card.is-disabled')).toHaveCount(0)
   })
 
-  test('C16: 灰显卡片显示 🔒 + "即将上线" 文案', async ({ page, request }) => {
+  test('C16: 目的地页不展示印尼/越南签证卡片', async ({ page, request }) => {
     const { phone } = await registerFreshUser(request)
     const auth = await loginAndGetAuth(request, phone)
     await injectAuth(page, auth)
     await page.goto('/destinations', { waitUntil: 'networkidle' })
-    const jpCard = page.getByTestId('dest-card-JP')
-    await jpCard.waitFor({ state: 'visible', timeout: 15_000 })
-    const text = await jpCard.textContent()
-    expect(text).toMatch(/🔒/)
+    await expect(page.getByTestId('dest-card-ID')).toHaveCount(0)
+    await expect(page.getByTestId('dest-card-VN')).toHaveCount(0)
   })
 })
 

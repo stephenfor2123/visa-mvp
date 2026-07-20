@@ -337,8 +337,11 @@ function countryName(code) {
 }
 
 // 按签证体系分组 (W27): 国别签证 / 申根签证
+// 与 /apply 对齐:只展示 enabled 产品线(美/英/澳 + 申根 DE/FR),
+// 种子里的 JP/CA/SG/NZ 等 Coming Soon 国不得出现在诊断选国.
 const groupedCountries = computed(() => {
-  const g = groupCountriesByVisaType(countries.value)
+  const visible = countries.value.filter((c) => c.enabled !== false)
+  const g = groupCountriesByVisaType(visible)
   // 顺序:国别签证在前 (US/AU/GB,数量少,精挑细选)
   return { national: g.national, schengen: g.schengen }
 })

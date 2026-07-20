@@ -489,18 +489,15 @@ class TestEvaluateBalance:
         # 数字可能带千分位 (1,280.00) 或不带 (1280.00)
         assert ("1280" in v.detail) or ("1,280" in v.detail)
 
-    def test_vietnam_no_hard_requirement(self):
-        """越南签证没有 daily_min,默认通过(缺汇率时也不应 block)。"""
-        # 用 USD→VND 场景(VN 签证的源国/目的国都是 VN 时,不会触发汇率换算)
-        # 这里改测:Currency-same 场景 — 让 source=VN, dest=VND, identity rate
+    def test_au_no_hard_block_without_stay_days(self):
+        """澳签有 daily_min_aud,但未传 stay_days 时不强行 block。"""
         v = evaluate_balance(
-            ending_balance_src=10_000_000.0,  # 1000万 VND
-            source_country="VN",
-            destination="VN",
-            stay_days=7,
+            ending_balance_src=10_000.0,
+            source_country="CN",
+            destination="AU",
+            stay_days=None,
         )
         assert v.meets_minimum is True
-        # 落地:同币种,identity rate,无需换算
 
     def test_us_soft_recommendation(self):
         """美签: 有 recommend_balance 但非 hard_block。"""

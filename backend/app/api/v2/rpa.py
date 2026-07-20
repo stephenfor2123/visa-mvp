@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import get_settings
 from app.core.db import get_db
 from app.core.errors import BizException, ErrorCode
+from app.core.product_scope import is_allowed_destination, normalize_destination_code
 from app.core.security import get_current_user
 from app.models.user import User
 # W19: import the shared ApiResponse envelope from app.schemas.common
@@ -44,7 +45,7 @@ class RPASubmitRequest(BaseModel):
     order_id: str = Field(..., min_length=1, description="Order ID to submit")
     country_code: str = Field(
         ..., min_length=2, max_length=2,
-        description="ISO 3166-1 alpha-2 country code (e.g. ID, VN)"
+        description="ISO 3166-1 alpha-2 destination (US/GB/AU/Schengen). Not ID/VN.",
     )
     visa_type: str = Field(
         ...,
@@ -121,12 +122,23 @@ async def rpa_submit(
 
     Requires JWT bearer authentication.
     """
+    cc = normalize_destination_code(req.country_code)
+    if not is_allowed_destination(cc):
+        raise BizException(
+            ErrorCode.INVALID_PARAMS,
+            message=(
+                f"country_code '{cc}' is outside product scope "
+                "(US / GB / AU / Schengen only)"
+            ),
+            data={"country_code": cc},
+        )
+
     scheduler = get_scheduler()
 
     try:
         task_id = scheduler.submit_visa_application(
             order_id=req.order_id,
-            country_code=req.country_code,
+            country_code=cc,
             visa_type=req.visa_type,
             user_id=str(current_user.id),
             ip_address=x_forwarded_for,

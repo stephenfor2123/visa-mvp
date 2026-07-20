@@ -255,7 +255,7 @@ test.describe('S5.3 选国家流程 (/destinations → /materials)', () => {
     expect(page.url()).toMatch(/type=tourism/)
   })
 
-  test('D16: /destinations 加载时 US 卡片显示 + JP 灰显', async ({ page }) => {
+  test('D16: /destinations 仅产品线国家 (美/英/澳/申根), 无 JP', async ({ page }) => {
     await page.goto('/home', { waitUntil: 'domcontentloaded' })
     await injectAuth(page, {
       accessToken: 'fake.token.d16',
@@ -264,9 +264,12 @@ test.describe('S5.3 选国家流程 (/destinations → /materials)', () => {
     })
     await page.goto('/destinations', { waitUntil: 'networkidle' })
     await expect(page.getByTestId('dest-card-US')).toBeVisible({ timeout: 15_000 })
-    await expect(page.getByTestId('dest-card-JP')).toBeVisible()
-    // JP enabled=false → 没有 dest-apply-JP
-    await expect(page.getByTestId('dest-apply-JP')).toHaveCount(0)
+    await expect(page.getByTestId('dest-card-GB')).toBeVisible()
+    await expect(page.getByTestId('dest-card-AU')).toBeVisible()
+    // 非产品线目的地不得出现 (含 JP / ID / VN)
+    await expect(page.getByTestId('dest-card-JP')).toHaveCount(0)
+    await expect(page.getByTestId('dest-card-ID')).toHaveCount(0)
+    await expect(page.getByTestId('dest-card-VN')).toHaveCount(0)
   })
 
   test('D17: 已登录访 /destinations 不要求 token (无需重新登录)', async ({ page }) => {

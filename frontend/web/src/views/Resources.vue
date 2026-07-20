@@ -38,6 +38,9 @@
 
       <!-- W47d: 4 张子页入口卡片(签证百科/政策查询/材料模板/常见问答) -->
       <section class="resources-section resources-curated-entry">
+        <a class="resources-guide-link" href="/en/visa-guides/">
+          Visa application guides for US, UK, Australia and Schengen visas →
+        </a>
         <div class="resources-curated-entry__grid">
           <router-link
             v-for="card in curatedEntries"
@@ -249,6 +252,17 @@ watch(locale, () => { loadCountries() })
 </script>
 
 <style scoped lang="scss">
+.resources-guide-link {
+  display: inline-flex;
+  margin: 0 0 18px;
+  color: var(--primary, #3b6ef5);
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.resources-guide-link:hover {
+  text-decoration: underline;
+}
 .resources-page {
   min-height: 100vh;
   background: #fff;

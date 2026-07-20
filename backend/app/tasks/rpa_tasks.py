@@ -22,17 +22,16 @@ from typing import Any, Optional
 
 from celery import shared_task
 
-from app.services.rpa.providers.IndonesiaVisa import IndonesiaVisaProvider
-from app.services.rpa.providers.VietnamVisa import VietnamVisaProvider
+# Legacy Indonesia/Vietnam providers remain on disk for reference but are NOT
+# registered — those countries are customer markets, not visa destinations
+# (docs/PRODUCT_SCOPE.md). Re-enable only if product scope expands.
 from app.services.rpa.rpa_scheduler import RPAScheduler, TaskStatus
 
 logger = logging.getLogger(__name__)
 
 # Provider registry — country_code (upper) -> provider class
-_PROVIDER_MAP: dict[str, type] = {
-    "ID": IndonesiaVisaProvider,
-    "VN": VietnamVisaProvider,
-}
+# Empty while FEATURE_RPA is off and no product-destination providers ship.
+_PROVIDER_MAP: dict[str, type] = {}
 
 
 def _get_scheduler() -> RPAScheduler:

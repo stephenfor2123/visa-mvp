@@ -146,18 +146,13 @@ import AppHeader from '@/components/AppHeader.vue'
 const { t } = useI18n()
 const auth = useAuthStore()
 
+// 与产品口径对齐: 美国 / 英国 / 澳大利亚 / 申根(DE·FR)
 const countries = [
   { code: 'US', name: '美国 🇺🇸' },
   { code: 'GB', name: '英国 🇬🇧' },
-  { code: 'JP', name: '日本 🇯🇵' },
-  { code: 'KR', name: '韩国 🇰🇷' },
-  { code: 'SG', name: '新加坡 🇸🇬' },
-  { code: 'TH', name: '泰国 🇹🇭' },
-  { code: 'VN', name: '越南 🇻🇳' },
-  { code: 'ID', name: '印尼 🇮🇩' },
   { code: 'AU', name: '澳大利亚 🇦🇺' },
-  { code: 'DE', name: '德国 🇩🇪' },
-  { code: 'FR', name: '法国 🇫🇷' },
+  { code: 'DE', name: '德国(申根) 🇩🇪' },
+  { code: 'FR', name: '法国(申根) 🇫🇷' },
 ]
 
 const countryCode = ref('US')

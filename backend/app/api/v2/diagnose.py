@@ -17,6 +17,8 @@ from typing import List, Optional
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
+from app.core.errors import BizException, ErrorCode
+from app.core.product_scope import is_allowed_destination, normalize_destination_code
 from app.schemas.common import ApiResponse
 from app.services.diagnose_rules import compute_diagnose
 
@@ -27,7 +29,12 @@ router = APIRouter(prefix="/diagnose", tags=["diagnose"])
 # Schemas                                                                     #
 # --------------------------------------------------------------------------- #
 class DiagnoseRequest(BaseModel):
-    country_code: str = Field(..., min_length=1, max_length=8, description="US / GB / AU / FR(及申根 26 国) / JP / KR / SG / TH / VN / ID")
+    country_code: str = Field(
+        ...,
+        min_length=1,
+        max_length=8,
+        description="US / GB / AU / Schengen member (e.g. DE, FR). Not ID/VN/JP/…",
+    )
     # 婚姻
     marital_status: str = Field(..., description="single | married | divorced | widowed")
     # 收入分档 (人民币月收入)
@@ -98,6 +105,18 @@ class DiagnoseOut(BaseModel):
     summary="Visa eligibility quick-check (rule engine, W58 4 国差异化)",
 )
 async def diagnose(body: DiagnoseRequest) -> ApiResponse[DiagnoseOut]:
+    cc = normalize_destination_code(body.country_code)
+    if not is_allowed_destination(cc):
+        raise BizException(
+            ErrorCode.INVALID_PARAMS,
+            message=(
+                f"country_code '{cc}' is outside product scope "
+                "(US / GB / AU / Schengen only; Indonesia/Vietnam are customer markets, not destinations)"
+            ),
+            data={"country_code": cc},
+        )
+    # Normalise UK → GB before scoring
+    body.country_code = cc
     result = compute_diagnose(body)
 
     # dataclass Factor -> pydantic FactorOut

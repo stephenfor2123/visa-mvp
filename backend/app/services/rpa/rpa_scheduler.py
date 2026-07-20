@@ -247,11 +247,9 @@ class RPAScheduler:
         # Legacy support: also resolve by full English country name (back-compat).
         countries = self._config.get("countries", {})
         ISO_TO_NAME = {
-            "ID": "Indonesia", "VN": "Vietnam", "PH": "Philippines",
-            "TH": "Thailand", "MY": "Malaysia", "SG": "Singapore",
-            "CN": "China", "JP": "Japan", "KR": "Korea",
-            "US": "United States", "FR": "France", "GB": "United Kingdom",
-            "AU": "Australia", "DE": "Germany", "CA": "Canada",
+            "US": "United States", "GB": "United Kingdom",
+            "AU": "Australia", "FR": "France", "DE": "Germany",
+            "IT": "Italy", "ES": "Spain", "NL": "Netherlands",
         }
         country_config = (
             countries.get(country_code)               # ISO 2-letter (preferred)

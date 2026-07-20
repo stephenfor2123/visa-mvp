@@ -199,10 +199,11 @@ class MockInsuranceProvider(InsuranceProvider):
     BASE_PREMIUM_CENTS = 9900
     MAX_COVERAGE_CENTS = 50_0000  # ¥5000.00
     # V2 §4.6 spec: 国家风险等级
+    # Product destinations only (US / GB / AU / Schengen members)
     LOW_RISK_COUNTRIES = frozenset(
-        ["US", "GB", "JP", "AU", "SG", "CA", "DE", "FR", "IT", "ES",
-         "NL", "CH", "SE", "NO", "FI", "DK", "BE", "AT", "IE", "NZ",
-         "KR", "MY", "TH", "VN", "ID", "PH"]
+        ["US", "GB", "AU", "DE", "FR", "IT", "ES",
+         "NL", "CH", "SE", "NO", "FI", "DK", "BE", "AT", "IE",
+         "PT", "GR", "PL", "CZ"]
     )
     HIGH_RISK_MULTIPLIER = 1.2
     AGE_SURCHARGE_PER_YEAR = 100  # cents

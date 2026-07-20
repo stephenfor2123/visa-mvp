@@ -321,7 +321,7 @@
     "passport_no_suspicious_fix": "Pastikan Anda mengunggah halaman biodata paspor (bukan halaman visa atau sampul belakang).",
     "photo_bg_uncertain_title": "Mohon periksa latar foto",
     "photo_bg_uncertain_detail": "Sebagian besar negara memerlukan latar putih; beberapa negara Asia Tenggara menerima latar biru.",
-    "photo_bg_uncertain_fix": "Untuk pengajuan ke AS / Inggris / Jepang / Korea, latar harus putih.",
+    "photo_bg_uncertain_fix": "Untuk pengajuan ke AS / Inggris / Australia / Schengen, latar harus putih.",
     "photo_bg_country_title": "Mohon pastikan foto sesuai syarat {country_name}",
     "photo_bg_country_detail": "{country_name} mensyaratkan {spec}. Sistem tidak dapat mendeteksi warna latar foto dari gambar — harap pastikan foto Anda sesuai spesifikasi sebelum mengirim.",
     "photo_bg_country_fix": "Ambil ulang foto {spec} atau datang ke studio foto visa profesional untuk hasil yang tepat.",

@@ -13,7 +13,9 @@
 <template>
   <section class="pricing" :class="{ 'pricing--standalone': standalone }" data-testid="home-pricing">
     <header class="pricing__head">
-      <h2 class="pricing__title">{{ t('home.pricing.title') }}</h2>
+      <component :is="standalone ? 'h1' : 'h2'" class="pricing__title">
+        {{ t('home.pricing.title') }}
+      </component>
       <p class="pricing__sub">{{ t('home.pricing.sub') }}</p>
     </header>
 

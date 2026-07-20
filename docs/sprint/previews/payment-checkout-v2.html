@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Htex · 解锁完整申请服务 — 支付页预览 v2</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", sans-serif;
+      color: #0F172A;
+      background: #fff;
+      line-height: 1.5;
+      font-size: 14px;
+    }
+
+    .preview-bar {
+      position: sticky; top: 0; z-index: 10;
+      display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between;
+      padding: 10px 16px; background: #0F172A; color: #E2E8F0; font-size: 12px;
+    }
+    .preview-bar button {
+      border: 1px solid #475569; background: transparent; color: #E2E8F0;
+      border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer;
+    }
+    .preview-bar button.on { background: #3B6EF5; border-color: #3B6EF5; }
+
+    .wrap { max-width: 600px; margin: 0 auto; padding: 28px 20px 64px; }
+    .back { font-size: 13px; color: #3B6EF5; text-decoration: none; font-weight: 600; }
+    .back:hover { text-decoration: underline; }
+
+    h1 { margin: 16px 0 6px; font-size: 22px; font-weight: 700; color: #0F172A; }
+    .sub { margin: 0 0 16px; color: #64748B; font-size: 14px; }
+
+    /* 权益对比标题区 */
+    .cmp-head {
+      margin-bottom: 12px;
+      padding: 14px 16px;
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 10px;
+    }
+    .cmp-head__title {
+      margin: 0 0 6px;
+      font-size: 15px;
+      font-weight: 700;
+      color: #0F172A;
+    }
+    .cmp-head__desc {
+      margin: 0;
+      font-size: 13px;
+      color: #64748B;
+    }
+    .cmp-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 20px;
+      margin-top: 10px;
+      font-size: 12px;
+      color: #475569;
+    }
+    .cmp-legend span::before {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 2px;
+      margin-right: 6px;
+      content: "";
+      vertical-align: middle;
+    }
+    .cmp-legend .l-free::before { background: #94A3B8; }
+    .cmp-legend .l-paid::before { background: #3B6EF5; }
+
+    /* 对比表 */
+    .cmp {
+      width: 100%;
+      border-collapse: collapse;
+      border: 2px solid #E2E8F0;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 20px;
+      background: #fff;
+    }
+    .cmp th, .cmp td {
+      padding: 11px 12px;
+      border-bottom: 1px solid #F1F5F9;
+      vertical-align: middle;
+    }
+    .cmp thead th {
+      background: #F1F5F9;
+      font-size: 13px;
+      font-weight: 700;
+      color: #475569;
+    }
+    .cmp thead th.col-free {
+      width: 22%;
+      text-align: center;
+    }
+    .cmp thead th.col-paid {
+      width: 22%;
+      text-align: center;
+      background: #3B6EF5;
+      color: #fff;
+    }
+    .cmp thead th.col-feat { text-align: left; }
+
+    .cmp .section td {
+      background: #F8FAFC;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #64748B;
+      padding: 8px 12px;
+      border-bottom: 1px solid #E2E8F0;
+    }
+
+    .cmp .feat {
+      font-weight: 600;
+      color: #0F172A;
+    }
+    .cmp .feat span {
+      display: block;
+      font-weight: 400;
+      font-size: 12px;
+      color: #94A3B8;
+      margin-top: 2px;
+    }
+    .cmp .cell {
+      text-align: center;
+      font-size: 13px;
+      color: #64748B;
+    }
+    .cmp .cell-paid {
+      background: #F0F5FF;
+    }
+    .cmp .yes { color: #047857; font-weight: 800; font-size: 15px; }
+    .cmp .no { color: #CBD5E1; font-weight: 700; }
+    .cmp .partial {
+      color: #B45309;
+      font-weight: 600;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .cmp .highlight .cell-paid {
+      background: #EAF0FE;
+      font-weight: 700;
+      color: #1D4ED8;
+    }
+    .cmp tbody tr:last-child td { border-bottom: 0; }
+
+  .badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+  .badge--paid { background: rgba(255,255,255,.25); color: #fff; }
+
+    .price-bar {
+      display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px 12px;
+      margin-bottom: 8px;
+    }
+    .price-list { color: #94A3B8; text-decoration: line-through; font-size: 16px; font-weight: 600; }
+    .price-now { font-size: 28px; font-weight: 800; color: #0F172A; }
+    .price-tag { font-size: 11px; font-weight: 700; color: #1D4ED8; background: #EAF0FE; padding: 2px 8px; border-radius: 4px; }
+    .price-hint { margin: 0 0 16px; font-size: 13px; color: #64748B; }
+
+    .note {
+      margin: 0 0 12px;
+      padding: 14px 16px;
+      background: #FFFBEB;
+      border: 1px solid #FDE68A;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #78350F;
+    }
+    .note strong { color: #92400E; }
+    .note p { margin: 6px 0 0; }
+
+    .note--muted {
+      background: #F8FAFC;
+      border-color: #E2E8F0;
+      color: #475569;
+    }
+    .note--muted strong { color: #0F172A; }
+
+    .consent {
+      display: flex; gap: 10px; align-items: flex-start;
+      margin: 16px 0; font-size: 13px; color: #334155; cursor: pointer;
+    }
+    .consent input { margin-top: 2px; width: 16px; height: 16px; accent-color: #3B6EF5; flex-shrink: 0; }
+    .links { margin: -8px 0 16px; font-size: 13px; }
+    .links a, .links button {
+      color: #3B6EF5; font-weight: 600; background: none; border: 0; padding: 0;
+      font: inherit; cursor: pointer; text-decoration: none;
+    }
+    .links a:hover, .links button:hover { text-decoration: underline; }
+    .links span { color: #CBD5E1; margin: 0 8px; }
+
+    .btn {
+      display: block; width: 100%; border: 0; border-radius: 8px;
+      padding: 14px 16px; font-size: 15px; font-weight: 700; cursor: pointer;
+      background: #3B6EF5; color: #fff;
+    }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn:not(:disabled):hover { background: #2D5BFF; }
+    .btn-cancel {
+      display: block; width: 100%; margin-top: 10px; border: 0; background: transparent;
+      color: #64748B; font-size: 14px; font-weight: 600; padding: 10px; cursor: pointer;
+    }
+    .foot { margin-top: 16px; text-align: center; font-size: 12px; color: #94A3B8; }
+
+    .mask {
+      display: none; position: fixed; inset: 0; background: rgba(15,23,42,.4);
+      align-items: center; justify-content: center; padding: 20px; z-index: 20;
+    }
+    .mask.on { display: flex; }
+    .modal {
+      background: #fff; border-radius: 12px; max-width: 440px; width: 100%;
+      max-height: 80vh; overflow: auto; padding: 20px;
+    }
+    .modal h3 { margin: 0 0 12px; font-size: 16px; }
+    .modal p { margin: 0 0 10px; font-size: 13px; color: #475569; }
+    .modal .close {
+      margin-top: 12px; border: 1px solid #E2E8F0; background: #fff;
+      border-radius: 6px; padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+
+    body[data-src="template"] .t-diag { display: none; }
+    body[data-src="diagnosis"] .t-tpl { display: none; }
+  </style>
+</head>
+<body data-src="template">
+
+  <div class="preview-bar">
+    <span>预览 · 非会员 / 会员权益对照（通用模板）</span>
+    <span>
+      <button type="button" class="on" data-src="template">入口：模板</button>
+      <button type="button" data-src="diagnosis">入口：诊断</button>
+    </span>
+  </div>
+
+  <div class="wrap">
+    <a class="back" href="#">← 返回</a>
+
+    <h1 class="t-tpl">解锁正式模板</h1>
+    <h1 class="t-diag">查看完整 AI 诊断</h1>
+    <p class="sub">一次支付开通<strong>完整申请服务包</strong>，下方会员列全部权益同时生效，无需重复购买。</p>
+
+    <div class="cmp-head">
+      <p class="cmp-head__title">非会员 vs 会员 · 权益对照</p>
+      <p class="cmp-head__desc">非会员可免费体验准备流程；升级为会员后解锁正式交付与浏览器辅助办理。</p>
+      <div class="cmp-legend">
+        <span class="l-free">非会员：免费体验 / 预览</span>
+        <span class="l-paid">会员：完整服务包</span>
+      </div>
+    </div>
+
+    <table class="cmp" aria-label="非会员与会员权益对比">
+      <thead>
+        <tr>
+          <th class="col-feat">功能</th>
+          <th class="col-free">非会员</th>
+          <th class="col-paid">会员 <span class="badge badge--paid">推荐</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="section"><td colspan="3">基础准备（免费）</td></tr>
+        <tr>
+          <td class="feat">材料清单与在线填表<span>选国家、填资料、本地草稿</span></td>
+          <td class="cell yes">✓</td>
+          <td class="cell cell-paid yes">✓</td>
+        </tr>
+        <tr>
+          <td class="feat">OCR 识别与材料分类<span>上传、自动归类</span></td>
+          <td class="cell yes">✓</td>
+          <td class="cell cell-paid yes">✓</td>
+        </tr>
+        <tr>
+          <td class="feat">免费签证条件评估<span>未上传材料前的准备度参考</span></td>
+          <td class="cell yes">✓</td>
+          <td class="cell cell-paid yes">✓</td>
+        </tr>
+
+        <tr class="section"><td colspan="3">模板与诊断（付费解锁）</td></tr>
+        <tr class="highlight">
+          <td class="feat">正式申请模板<span>解释信、行程等 Word/PDF</span></td>
+          <td class="cell partial">仅水印<br>预览</td>
+          <td class="cell cell-paid yes">无水印<br>下载</td>
+        </tr>
+        <tr class="highlight">
+          <td class="feat">材料体检报告<span>缺件、格式、过期等</span></td>
+          <td class="cell partial">仅摘要<br>分数</td>
+          <td class="cell cell-paid yes">完整<br>报告</td>
+        </tr>
+        <tr class="highlight">
+          <td class="feat">问题详情与修改建议<span>证据、原因、可执行建议</span></td>
+          <td class="cell no">—</td>
+          <td class="cell cell-paid yes">✓</td>
+        </tr>
+        <tr class="highlight">
+          <td class="feat">材料与表单一致性检查<span>跨材料冲突、流水异常</span></td>
+          <td class="cell no">—</td>
+          <td class="cell cell-paid yes">✓</td>
+        </tr>
+        <tr>
+          <td class="feat">重新生成模板 / 再次诊断<span>服务有效期内</span></td>
+          <td class="cell no">—</td>
+          <td class="cell cell-paid yes">✓</td>
+        </tr>
+
+        <tr class="section"><td colspan="3">浏览器办理（会员专享）</td></tr>
+        <tr class="highlight">
+          <td class="feat">辅助填写<span>浏览器插件协助填入使馆官网表单</span></td>
+          <td class="cell no">—</td>
+          <td class="cell cell-paid yes">✓</td>
+        </tr>
+        <tr class="highlight">
+          <td class="feat">辅助提交<span>浏览器插件协助完成官网提交步骤</span></td>
+          <td class="cell no">—</td>
+          <td class="cell cell-paid yes">✓</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="price-bar">
+      <span class="price-list">$99.90</span>
+      <span class="price-now">$19.90</span>
+      <span class="price-tag">限时</span>
+    </div>
+    <p class="price-hint">以上为 Htex 平台服务费 · 按订单价格快照锁定</p>
+
+    <div class="note">
+      <strong>关于使馆费用（重要）：</strong>
+      <p>本次支付<strong>仅含 Htex 平台服务费</strong>，用于开通上表「会员」列权益。<strong>使馆费 / 签证中心官方费用须另行向官方缴纳</strong>（金额与方式以公示为准），Htex <strong>不代收、不代缴</strong>，两笔费用相互独立。拒签时平台服务费可按政策退回；<strong>使馆费是否退还，以官方规则为准</strong>。</p>
+    </div>
+
+    <label class="consent">
+      <input type="checkbox" id="consent" />
+      <span>我已了解数据处理方式，并同意按隐私政策处理必要信息。</span>
+    </label>
+    <div class="links">
+      <button type="button" id="how">了解资料如何处理</button>
+      <span>·</span>
+      <a href="/privacy" target="_blank">隐私政策</a>
+    </div>
+
+    <button type="button" class="btn" id="pay" disabled>支付 $19.90 · 升级为会员</button>
+    <button type="button" class="btn-cancel">暂不支付</button>
+    <p class="foot">订单号示例 · VISA_APPLICATION_PACKAGE · 适用所有目的地</p>
+  </div>
+
+  <div class="mask" id="mask">
+    <div class="modal">
+      <h3>资料如何处理</h3>
+      <p>付款前：护照、流水等主要留在本机。</p>
+      <p>支付后：经你确认后，加密上传生成正式模板、诊断与插件填表所需信息。</p>
+      <p>用途：履约与客服；期限见隐私政策；可申请删除。</p>
+      <button type="button" class="close" id="close">关闭</button>
+    </div>
+  </div>
+
+  <script>
+    document.querySelectorAll('[data-src]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.body.setAttribute('data-src', btn.getAttribute('data-src'))
+        document.querySelectorAll('[data-src]').forEach((b) => b.classList.toggle('on', b === btn))
+      })
+    })
+    const consent = document.getElementById('consent')
+    const pay = document.getElementById('pay')
+    consent.addEventListener('change', () => { pay.disabled = !consent.checked })
+    document.getElementById('how').onclick = () => document.getElementById('mask').classList.add('on')
+    document.getElementById('close').onclick = () => document.getElementById('mask').classList.remove('on')
+    document.getElementById('mask').onclick = (e) => {
+      if (e.target.id === 'mask') e.target.classList.remove('on')
+    }
+  </script>
+</body>
+</html>

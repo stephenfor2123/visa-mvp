@@ -48,60 +48,27 @@ _log = logging.getLogger(__name__)
 # 这里的数据是 v1 估算值,实际部署前务必 review。
 
 FINANCIAL_STANDARD_TABLE: Dict[Tuple[str, str], Dict[str, Any]] = {
-    # 申根 (统一标准,源国不限)
+    # Product destinations only: US / Schengen / GB / AU
     ("*", "SCHENGEN"): {
         "min_coverage_months": 3,
         "daily_min_eur": 65.0,           # 申根按行程天数 × EUR 45~100
         "need_balance_cert": True,
         "hard_block": True,              # 余额不足会直接被拒
     },
-    # 美国 (B1/B2)
     ("*", "US"): {
         "min_coverage_months": 6,        # 6 个月流水 + 余额证明
         "recommend_balance": True,
         "hard_block": False,             # 美签看综合,余额不足不直接拒
     },
-    # 日本
-    ("*", "JP"): {
-        "min_coverage_months": 3,
-        "daily_min_jpy": 10000.0,        # 估算 ¥500/天
-        "need_balance_cert": False,
-        "hard_block": False,
-    },
-    # 韩国
-    ("*", "KR"): {
-        "min_coverage_months": 3,
-        "need_balance_cert": False,
-        "hard_block": False,
-    },
-    # 新加坡
-    ("*", "SG"): {
-        "min_coverage_months": 3,
-        "need_balance_cert": False,
-        "hard_block": False,
-    },
-    # 英国
     ("*", "GB"): {
         "min_coverage_months": 3,
         "daily_min_gbp": 70.0,
         "need_balance_cert": False,
         "hard_block": False,
     },
-    # 越南 (去越南,中国护照免签,主要给其他源国用)
-    ("*", "VN"): {
-        "min_coverage_months": 1,        # 越南签证材料简单
-        "need_balance_cert": False,
-        "hard_block": False,
-    },
-    # 印尼
-    ("*", "ID"): {
-        "min_coverage_months": 1,
-        "need_balance_cert": False,
-        "hard_block": False,
-    },
-    # 泰国
-    ("*", "TH"): {
-        "min_coverage_months": 1,
+    ("*", "AU"): {
+        "min_coverage_months": 3,
+        "daily_min_aud": 100.0,
         "need_balance_cert": False,
         "hard_block": False,
     },
@@ -117,19 +84,17 @@ SOURCE_COUNTRY_CCY = {
     "*": "USD",
 }
 
-# 目的国 -> 货币
+# 目的国 -> 货币 (产品线 only)
 DESTINATION_CCY = {
     "US": "USD",
-    "JP": "JPY",
-    "KR": "KRW",
-    "SG": "SGD",
     "GB": "GBP",
+    "AU": "AUD",
     "SCHENGEN": "EUR",
     "FR": "EUR",
     "DE": "EUR",
-    "VN": "VND",
-    "ID": "IDR",
-    "TH": "THB",
+    "IT": "EUR",
+    "ES": "EUR",
+    "NL": "EUR",
 }
 
 
@@ -141,17 +106,20 @@ DESTINATION_CCY = {
 # 例: 1 CNY = 0.128 EUR (汇率随市场波动)
 #
 # 2026-07-01 业务同学核实值 (示意值,部署前必须再 review):
+# 源币含 VND/IDR: 客户市场(越南/印尼护照)换算到目的地货币,不是「办越/印尼签」
 FX_RATES_TABLE: Dict[Tuple[str, str], Dict[str, Any]] = {
     ("CNY", "EUR"): {"rate": 0.128, "as_of": "2026-07-01", "source": "static@business"},
     ("CNY", "USD"): {"rate": 0.139, "as_of": "2026-07-01", "source": "static@business"},
-    ("CNY", "JPY"): {"rate": 21.5, "as_of": "2026-07-01", "source": "static@business"},
     ("CNY", "GBP"): {"rate": 0.110, "as_of": "2026-07-01", "source": "static@business"},
-    ("CNY", "KRW"): {"rate": 192.0, "as_of": "2026-07-01", "source": "static@business"},
-    ("CNY", "SGD"): {"rate": 0.187, "as_of": "2026-07-01", "source": "static@business"},
+    ("CNY", "AUD"): {"rate": 0.210, "as_of": "2026-07-01", "source": "static@business"},
     ("VND", "EUR"): {"rate": 0.0000357, "as_of": "2026-07-01", "source": "static@business"},
     ("VND", "USD"): {"rate": 0.0000388, "as_of": "2026-07-01", "source": "static@business"},
+    ("VND", "GBP"): {"rate": 0.0000305, "as_of": "2026-07-01", "source": "static@business"},
+    ("VND", "AUD"): {"rate": 0.0000585, "as_of": "2026-07-01", "source": "static@business"},
     ("IDR", "EUR"): {"rate": 0.0000563, "as_of": "2026-07-01", "source": "static@business"},
     ("IDR", "USD"): {"rate": 0.0000613, "as_of": "2026-07-01", "source": "static@business"},
+    ("IDR", "GBP"): {"rate": 0.0000482, "as_of": "2026-07-01", "source": "static@business"},
+    ("IDR", "AUD"): {"rate": 0.0000925, "as_of": "2026-07-01", "source": "static@business"},
 }
 
 
@@ -201,10 +169,10 @@ def get_financial_standard(source_country: str, destination: str) -> FinancialSt
     if cfg is None:
         cfg = {"min_coverage_months": 3, "need_balance_cert": False, "hard_block": False}
 
-    # 提取 daily_min (申根 EUR, 日本 JPY, 英国 GBP ...)
+    # 提取 daily_min (申根 EUR / 英国 GBP / 澳洲 AUD ...)
     daily_min = None
     daily_min_ccy = None
-    for k in ("daily_min_eur", "daily_min_jpy", "daily_min_gbp", "daily_min"):
+    for k in ("daily_min_eur", "daily_min_gbp", "daily_min_aud", "daily_min"):
         if k in cfg:
             daily_min = float(cfg[k])
             daily_min_ccy = k.replace("daily_min_", "").upper()

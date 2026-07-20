@@ -163,8 +163,8 @@ class Settings(BaseSettings):
     minimax_model: str = "MiniMax-Text-01"
 
     # --- Product scope ---
-    # Customer markets: Vietnam + Indonesia (overseas Web, not WeChat miniprogram).
-    # Visa destinations (US/Schengen/GB/AU etc.) are unchanged — see docs/PRODUCT_SCOPE.md.
+    # Customer markets: Vietnam + Indonesia passport holders (overseas Web).
+    # Visa destinations we file: US / Schengen / GB / AU only — see docs/PRODUCT_SCOPE.md.
     # RPA / insurance deferred — flip to true when ready.
     feature_rpa_enabled: bool = False
     feature_insurance_enabled: bool = False

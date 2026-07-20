@@ -1,8 +1,9 @@
 /**
  * Product feature flags.
  *
- * Customer market: Vietnam + Indonesia (overseas Web).
- * Visa destinations: US / Schengen / GB / AU — NOT limited here.
+ * Customer market: Vietnam + Indonesia passport holders (overseas Web).
+ * Visa destinations we file: US / Schengen / GB / AU only
+ *   — NOT Indonesia or Vietnam visas (see docs/PRODUCT_SCOPE.md).
  *
  * Override via frontend/web/.env:
  *   VITE_FEATURE_RPA=false

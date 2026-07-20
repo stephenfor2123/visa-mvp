@@ -27,40 +27,25 @@ from app.services.rag.embedder import embed
 # W46: per-destination recommended minimum bank-statement balance, in the
 # destination country's local currency. The RAG curated content used to
 # hardcode "余额建议 ≥ 5万元" for every country, which made no sense for
-# applicants targeting the US / GB / VN / ID etc. We rewrite the canonical
+# applicants targeting the US / GB / AU / Schengen etc. We rewrite the canonical
 # phrase in `localize_curated_text` below before chunking.
 _BANK_BALANCE_BY_COUNTRY = {
     "US": "US$7,000",
     "GB": "£5,500",
+    "AU": "AU$10,000",
     "FR": "€6,500", "DE": "€6,500", "IT": "€6,500", "ES": "€6,500",
     "NL": "€6,500", "CH": "€6,500", "AT": "€6,500", "BE": "€6,500",
-    "JP": "¥1,000,000",
-    "AU": "AU$10,000",
-    "CA": "CA$10,000",
-    "KR": "₩10,000,000",
-    "SG": "S$10,000",
-    "TH": "฿200,000",
-    "VN": "₫150,000,000",
-    "ID": "Rp 100.000.000",
-    "IN": "₹500,000",
+    "PT": "€6,500", "GR": "€6,500", "IE": "€6,500",
 }
 
-# 申根法定保险下限 3 万欧元，US/GB 等没有法定下限但业内常见 5 万美元
+# 申根法定保险下限 3 万欧元；US/GB/AU 业内常见保额
 _INSURANCE_MIN_BY_COUNTRY = {
     "US": "US$50,000",
     "GB": "£30,000",
-    # Schengen 法定下限
+    "AU": "AU$50,000",
     "FR": "€30,000", "DE": "€30,000", "IT": "€30,000", "ES": "€30,000",
     "NL": "€30,000", "CH": "€30,000", "AT": "€30,000", "BE": "€30,000",
-    "JP": "¥5,000,000",
-    "AU": "AU$50,000",
-    "CA": "CA$50,000",
-    "KR": "₩30,000,000",
-    "SG": "S$30,000",
-    "TH": "฿1,000,000",
-    "VN": "₫500,000,000",
-    "ID": "Rp 500.000.000",
-    "IN": "₹3,000,000",
+    "PT": "€30,000", "GR": "€30,000", "IE": "€30,000",
 }
 
 

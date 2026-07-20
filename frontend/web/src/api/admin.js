@@ -268,7 +268,7 @@ export async function listAdminOrders(params = {}) {
       { id: 1041, order_no: 'V2-20260629-000041', user_id: 12, destination_id: 1, visa_type: 'tourism',
         status: 'reviewing', total_amount: 18500, currency: 'USD', aff_code: 'SUMMER10',
         created_at: '2026-06-29T07:42:00Z', updated_at: '2026-06-29T08:55:00Z' },
-      { id: 1040, order_no: 'V2-20260628-000128', user_id: 8, destination_id: 2, visa_type: 'tourism',
+      { id: 1040, order_no: 'V2-20260628-000128', user_id: 8, destination_id: 4, visa_type: 'tourism',
         status: 'approved', total_amount: 14500, currency: 'USD', aff_code: null,
         created_at: '2026-06-28T22:10:00Z', updated_at: '2026-06-29T03:20:00Z' },
       { id: 1039, order_no: 'V2-20260628-000127', user_id: 22, destination_id: 1, visa_type: 'tourism',
@@ -623,14 +623,11 @@ export async function getDashboardTopCountries({ range = '7d', limit = 10 } = {}
     return {
       range,
       items: [
-        { destination_id: 1, country_code: 'US', country_name: '美国',   order_count: 38, revenue_usd: 7600,  conversion_pct: 28.8 },
-        { destination_id: 2, country_code: 'JP', country_name: '日本',   order_count: 24, revenue_usd: 4800,  conversion_pct: 18.2 },
-        { destination_id: 3, country_code: 'GB', country_name: '英国',   order_count: 18, revenue_usd: 3600,  conversion_pct: 13.6 },
-        { destination_id: 4, country_code: 'TH', country_name: '泰国',   order_count: 14, revenue_usd: 2240,  conversion_pct: 10.6 },
-        { destination_id: 5, country_code: 'SG', country_name: '新加坡', order_count: 12, revenue_usd: 1920,  conversion_pct: 9.1 },
-        { destination_id: 6, country_code: 'AU', country_name: '澳大利亚', order_count:  9, revenue_usd: 1440, conversion_pct: 6.8 },
-        { destination_id: 7, country_code: 'DE', country_name: '德国',   order_count:  7, revenue_usd: 1120,  conversion_pct: 5.3 },
-        { destination_id: 8, country_code: 'FR', country_name: '法国',   order_count:  5, revenue_usd: 800,   conversion_pct: 3.8 },
+        { destination_id: 1, country_code: 'US', country_name: '美国',     order_count: 38, revenue_usd: 7600,  conversion_pct: 32.5 },
+        { destination_id: 3, country_code: 'GB', country_name: '英国',     order_count: 24, revenue_usd: 4800,  conversion_pct: 20.5 },
+        { destination_id: 4, country_code: 'AU', country_name: '澳大利亚', order_count: 18, revenue_usd: 3600,  conversion_pct: 15.4 },
+        { destination_id: 6, country_code: 'DE', country_name: '德国',     order_count: 14, revenue_usd: 2240,  conversion_pct: 12.0 },
+        { destination_id: 7, country_code: 'FR', country_name: '法国',     order_count: 12, revenue_usd: 1920,  conversion_pct: 10.3 },
       ],
       generated_at: new Date().toISOString(),
     }

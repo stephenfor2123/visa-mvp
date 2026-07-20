@@ -91,20 +91,13 @@
 import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
-import http from '@/api/http'
+import { listDestinations } from '@/api/destinations'
 
 const { locale } = useI18n()
 async function fetchDestinationsDirect() {
-  // search modal 需要 i18n 后的国家名; listDestinations wrapper 默认 MOCK_MODE
-  // 返回的是 fallback (含 country_name),但我们要的是 API 的真数据;
-  // 直接调 http 拿真实列表(支持 lang 参数)
-  const lang = (locale.value || 'zh-CN').startsWith('en') ? 'en'
-            : (locale.value || 'zh-CN').startsWith('id') ? 'id'
-            : (locale.value || 'zh-CN').startsWith('vi') ? 'vi'
-            : 'zh-CN'
-  const env = await http.get('/v2/destinations', { params: { lang }, __silent: true })
-  if (env.code !== '1000') throw new Error(env.message || 'destinations fetch failed')
-  return env.data || []
+  // 走 listDestinations 统一口径(产品线 force-enable, 非产品线灰显),
+  // 避免直连 API 时把 JP/CA/SG/NZ 等 Coming Soon 国当成可办选项露出.
+  return listDestinations({ lang: locale.value || 'zh-CN' })
 }
 
 const props = defineProps({
@@ -130,7 +123,8 @@ const tabs = computed(() => [
 ])
 
 const filtered = computed(() => {
-  let rows = allCountries.value
+  // listDestinations 已按产品线过滤; 再丢掉 enabled=false 兜底
+  let rows = allCountries.value.filter((c) => c.enabled !== false)
   if (activeTab.value !== 'all' && activeTab.value !== 'SCHENGEN') {
     rows = rows.filter(c => c.country_code === activeTab.value)
   }

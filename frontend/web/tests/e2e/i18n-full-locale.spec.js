@@ -144,8 +144,11 @@ for (const locale of SUPPORTED) {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify([
-          { id: 1, country_code: 'US', country_name: 'United States', visa_types: ['tourism', 'student'], enabled: true },
-          { id: 2, country_code: 'JP', country_name: 'Japan', visa_types: ['tourism', 'student'], enabled: false }
+          { id: 1, country_code: 'US', country_name: 'United States', visa_types: ['tourism'], enabled: true },
+          { id: 3, country_code: 'GB', country_name: 'United Kingdom', visa_types: ['tourism'], enabled: true },
+          { id: 4, country_code: 'AU', country_name: 'Australia', visa_types: ['tourism'], enabled: true },
+          { id: 6, country_code: 'DE', country_name: 'Germany (Schengen)', visa_types: ['tourism'], enabled: true },
+          { id: 7, country_code: 'FR', country_name: 'France (Schengen)', visa_types: ['tourism'], enabled: true },
         ])
       })
     })

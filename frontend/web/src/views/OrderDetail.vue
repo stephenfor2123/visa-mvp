@@ -274,6 +274,14 @@
         <section class="card" data-testid="orderdetail-actions">
           <h2 class="card__title">{{ t('orderdetail.section_actions') }}</h2>
           <div class="actions-row">
+            <AppButton
+              v-if="order.status === 'created'"
+              variant="primary"
+              size="md"
+              data-testid="orderdetail-pay-btn"
+              @click="goPay"
+            >{{ t('orderdetail.pay_btn') }}</AppButton>
+
             <!-- Cancel order: only clickable in created state -->
             <AppButton
               v-if="order.status === 'created'"
@@ -514,8 +522,7 @@ import { buildApplicantProfile } from '@/composables/useApplicantProfile'
 import { buildVisaGuide } from '@/data/visaFieldMaps.js'
 
 const DESTINATION_COUNTRY_MAP = {
-  1: 'US', 2: 'JP', 3: 'GB', 4: 'AU', 5: 'CA',
-  6: 'DE', 7: 'FR', 8: 'SG', 9: 'NZ',
+  1: 'US', 3: 'GB', 4: 'AU', 6: 'DE', 7: 'FR',
 }
 
 function parseApplicantData(order) {
@@ -637,14 +644,10 @@ const destinationName = computed(() => {
   if (!order.value) return '—'
   // mock mode: from destinations cache or hardcode guess (L4 i18n: use t() with i18n key)
   if (order.value.destination_id === 1) return t('country.us')
-  if (order.value.destination_id === 2) return t('country.jp')
   if (order.value.destination_id === 3) return t('country.uk')
   if (order.value.destination_id === 4) return t('country.au')
-  if (order.value.destination_id === 5) return t('country.ca')
   if (order.value.destination_id === 6) return t('country.de_schengen')
   if (order.value.destination_id === 7) return t('country.fr_schengen')
-  if (order.value.destination_id === 8) return t('country.sg')
-  if (order.value.destination_id === 9) return t('country.nz')
   return `#${order.value.destination_id}`
 })
 
@@ -938,6 +941,15 @@ function onDownloadPdf() {
 function onReapply() {
   // Jump back to /destinations to re-select
   router.push('/destinations')
+}
+
+function goPay() {
+  if (!orderNo.value) return
+  router.push({
+    name: 'PaymentCheckout',
+    params: { orderNo: orderNo.value },
+    query: { from: 'template', next: 'detail' },
+  })
 }
 
 // W48 v0.2: DS-160 辅助填充 — 后端发 12 位 code + 复制粘贴到插件的流程。

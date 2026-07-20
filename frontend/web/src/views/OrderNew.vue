@@ -942,17 +942,13 @@ async function loadAll() {
   }
 }
 
-// Fallback: when B backend /v2/destinations not ready or DB missing table (V2 first batch 9 countries)
+// Fallback: product destinations only (US / GB / AU / Schengen DE·FR)
 const FALLBACK_DESTINATIONS = [
   { id: 1, country_code: 'US', country_name_key: 'country.us', visa_types: ['tourism'], enabled: true },
-  { id: 2, country_code: 'JP', country_name_key: 'country.jp', visa_types: ['tourism'], enabled: false },
-  { id: 3, country_code: 'UK', country_name_key: 'country.uk', visa_types: ['tourism'], enabled: false },
-  { id: 4, country_code: 'AU', country_name_key: 'country.au', visa_types: ['tourism'], enabled: false },
-  { id: 5, country_code: 'CA', country_name_key: 'country.ca', visa_types: ['tourism'], enabled: false },
-  { id: 6, country_code: 'DE', country_name_key: 'country.de_schengen', visa_types: ['tourism'], enabled: false },
-  { id: 7, country_code: 'FR', country_name_key: 'country.fr_schengen', visa_types: ['tourism'], enabled: false },
-  { id: 8, country_code: 'SG', country_name_key: 'country.sg', visa_types: ['tourism'], enabled: false },
-  { id: 9, country_code: 'NZ', country_name_key: 'country.nz', visa_types: ['tourism'], enabled: false }
+  { id: 3, country_code: 'GB', country_name_key: 'country.gb', visa_types: ['tourism'], enabled: true },
+  { id: 4, country_code: 'AU', country_name_key: 'country.au', visa_types: ['tourism'], enabled: true },
+  { id: 6, country_code: 'DE', country_name_key: 'country.de_schengen', visa_types: ['tourism'], enabled: true },
+  { id: 7, country_code: 'FR', country_name_key: 'country.fr_schengen', visa_types: ['tourism'], enabled: true },
 ]
 
 // W29: 登录回跳后从 localStorage 恢复游客填的 draft
@@ -1067,7 +1063,12 @@ async function onSubmit() {
       } catch (e) { /* sessionStorage may be unavailable */ }
 
       // W74: 提交后走支付 checkout；RPA 关闭时支付完成进订单详情
-      const payQuery = { next: FEATURE_RPA ? 'rpa' : 'detail', countryCode: destCountry, visaType: visa }
+      const payQuery = {
+        from: FEATURE_RPA && destCountry === 'US' ? 'diagnosis' : 'template',
+        next: FEATURE_RPA ? 'rpa' : 'detail',
+        countryCode: destCountry,
+        visaType: visa,
+      }
       if (FEATURE_RPA && destCountry === 'US') {
         const fieldsPayload = {
           surname: form.surname.trim().toUpperCase(),

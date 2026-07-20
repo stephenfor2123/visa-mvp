@@ -23,14 +23,18 @@ session:
   user_agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML,
     like Gecko) Chrome/120.0.0.0 Safari/537.36
 countries:
-  ID: true
-  VN: true
+  # Product destinations only (docs/PRODUCT_SCOPE.md).
+  # ID/VN are customer markets — NOT visa destinations we file.
   US: true
-  FR: true
-  JP: true
-  KR: true
-  SG: true
   GB: true
-  TH: true
+  AU: true
+  DE: true
+  FR: true
+  ID: false
+  VN: false
+  JP: false
+  KR: false
+  SG: false
+  TH: false
   PH: false
 mock_mode: false

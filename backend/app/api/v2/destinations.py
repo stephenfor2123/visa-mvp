@@ -10,6 +10,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_db
 from app.core.logging import get_logger
+from app.core.product_scope import (
+    PRODUCT_DESTINATION_CODES,
+    normalize_destination_code,
+)
 from app.schemas.common import ApiResponse
 from app.models.destination import VisaDestination
 
@@ -76,10 +80,6 @@ _COUNTRY_NAME_EN_FALLBACK = {
     "US": {"zh-CN": "美国", "en": "United States", "id": "Amerika Serikat", "vi": "Hoa Kỳ"},
     "AU": {"zh-CN": "澳大利亚", "en": "Australia", "id": "Australia", "vi": "Úc"},
     "GB": {"zh-CN": "英国", "en": "United Kingdom", "id": "Inggris", "vi": "Vương quốc Anh"},
-    "JP": {"zh-CN": "日本", "en": "Japan", "id": "Jepang", "vi": "Nhật Bản"},
-    "CA": {"zh-CN": "加拿大", "en": "Canada", "id": "Kanada", "vi": "Canada"},
-    "SG": {"zh-CN": "新加坡", "en": "Singapore", "id": "Singapura", "vi": "Singapore"},
-    "NZ": {"zh-CN": "新西兰", "en": "New Zealand", "id": "Selandia Baru", "vi": "New Zealand"},
     "DE": {"zh-CN": "德国(申根)", "en": "Germany", "id": "Jerman", "vi": "Đức"},
     "FR": {"zh-CN": "法国(申根)", "en": "France", "id": "Prancis", "vi": "Pháp"},
     "AT": {"zh-CN": "奥地利(申根)", "en": "Austria", "id": "Austria", "vi": "Áo"},
@@ -132,13 +132,22 @@ async def list_destinations(
     lang: str = Query("zh-CN", description="返回国家名的语种: zh-CN | en | id | vi"),
 ):
     """返回国家列表。
-    Spec: V2 范围 = 美国 enabled=true,其他 8 国 enabled=false(灰显,V3+ 开放)。
+
+    产品口径(docs/PRODUCT_SCOPE.md): 仅美 / 英 / 澳 / 申根代表(DE·FR)。
+    日本/加拿大/新加坡/新西兰/印尼/越南等不在办理范围,不出现在公开列表。
     """
     stmt = select(VisaDestination).order_by(VisaDestination.display_order)
     if visa_type:
         # visa_types 字段是 JSON 字符串,需要客户端或 DB 层过滤;这里只过滤 enabled
         pass
     rows = (await db.execute(stmt)).scalars().all()
+
+    # Public product surface — drop non-product destinations entirely
+    product_norm = {normalize_destination_code(c) for c in PRODUCT_DESTINATION_CODES}
+    rows = [
+        r for r in rows
+        if normalize_destination_code(r.country_code) in product_norm
+    ]
 
     items = []
     for r in rows:
@@ -213,7 +222,8 @@ async def list_destinations(
             ),
             visa_types=json.loads(r.visa_types) if r.visa_types else [],
             image_url=r.image_url,
-            enabled=r.enabled,
+            # Product destinations are always offered as available on this API
+            enabled=True,
             visa_fee_usd=getattr(r, "visa_fee_usd", None),
             valid_days=getattr(r, "valid_days", None),
             process_days=getattr(r, "process_days", None),

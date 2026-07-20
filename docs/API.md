@@ -692,11 +692,11 @@ If-None-Match: "abc123def..."
 ```json
 {
   "order_id": "V2-20260614-000001",
-  "country_code": "ID",
-  "visa_type": "visit_visa",
+  "country_code": "US",
+  "visa_type": "B1B2",
   "passport_data": {
-    "surname": "SANTOSO",
-    "given_name": "BUDI",
+    "surname": "NGUYEN",
+    "given_name": "AN",
     "dob": "1990-05-12",
     "passport_no": "E12345678"
   }

@@ -98,7 +98,7 @@ flowchart TB
 | **Redis** | Celery broker + result backend + 限流 | 端口 6379, 命名空间分 DB |
 | **Stripe** | 国际卡支付 + 退款 + Transfer 分账 | `STRIPE_SECRET_KEY` 缺失时降级为 mock |
 | **Twilio / 短信通道** | 手机验证码下发 | dev 默认 mock, prod 切换 `SMS_CHANNEL=twilio` |
-| **RPA 官方门户** | 印尼 / 越南电子签证提交 | 通过 `app.services.rpa.providers` 适配 |
+| **RPA 官方门户** | 目的地使领馆/电子签门户递交（美/英/澳/申根；当前功能关闭） | `FEATURE_RPA_ENABLED`；历史 ID/VN provider 已下线注册 |
 
 ---
 

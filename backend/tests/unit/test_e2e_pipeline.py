@@ -134,8 +134,8 @@ class TestE2ECleanStatement:
              "ocr_result": rev},
         ]
         out = VisaDiagnoser().diagnose(
-            materials=materials, country_code="VN", visa_type="tourism",
-            fields={"destination": "VN"}
+            materials=materials, country_code="US", visa_type="tourism",
+            fields={"destination": "US"}
         )
         codes = [i.code for i in out.issues]
         # 干净流水不应触发 critical
@@ -276,8 +276,8 @@ class TestE2EMissingMonth:
              "ocr_result": rev},
         ]
         out = VisaDiagnoser().diagnose(
-            materials=materials, country_code="VN", visa_type="tourism",
-            fields={"destination": "VN"}
+            materials=materials, country_code="US", visa_type="tourism",
+            fields={"destination": "US"}
         )
         codes = [i.code for i in out.issues]
         assert "bank.months_missing" in codes
@@ -315,8 +315,8 @@ class TestE2EBalanceChainBreak:
              "ocr_result": rev},
         ]
         out = VisaDiagnoser().diagnose(
-            materials=materials, country_code="VN", visa_type="tourism",
-            fields={"destination": "VN"}
+            materials=materials, country_code="US", visa_type="tourism",
+            fields={"destination": "US"}
         )
         codes = [i.code for i in out.issues]
         assert "bank.balance_chain_break" in codes

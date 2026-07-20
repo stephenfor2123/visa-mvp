@@ -50,12 +50,18 @@ class _DiagnosePageState extends State<DiagnosePage> {
     setState(() => _loading = true);
     try {
       final list = await _destSvc.list(lang: 'zh-CN');
+      // 产品口径: 美/英/澳 + 申根 DE·FR(与 web PRODUCT_COUNTRY_CODES 对齐)
+      const product = {'US', 'GB', 'UK', 'AU', 'DE', 'FR'};
+      final visible = list.where((d) => product.contains(d.countryCode)).toList();
       setState(() {
-        _allCountries = list;
-        _grouped = _destSvc.groupByVisaType(list);
+        _allCountries = visible;
+        _grouped = _destSvc.groupByVisaType(visible);
       });
     } catch (_) {
-      setState(() => _allCountries = DestinationsService.fallback());
+      setState(() {
+        _allCountries = DestinationsService.fallback();
+        _grouped = _destSvc.groupByVisaType(_allCountries);
+      });
     } finally {
       if (mounted) setState(() => _loading = false);
     }

@@ -29,6 +29,14 @@ Disallow: /register
 Disallow: /forgot-password
 
 # AI / LLM crawlers — explicitly allowed on public pages (opt-in for GEO).
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /admin
+Disallow: /profile
+Disallow: /orders
+Disallow: /payment
+Disallow: /materials
+
 User-agent: GPTBot
 Allow: /resources
 Allow: /home

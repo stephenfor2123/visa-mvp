@@ -186,34 +186,29 @@ async function register({ phone, phoneCountry, password, smsCode, nickname, lang
   }
 }
 
-// V2 首批 9 国(W1 fallback 列表,跟 web 端 src/api/destinations.js 一致)
+// 产品口径 docs/PRODUCT_SCOPE.md — 跟 web 端 src/api/destinations.js 一致
 const FALLBACK_DESTINATIONS = [
-  { id: 1, country_code: 'US', country_name: '美国', visa_types: ['tourism', 'student'], enabled: true },
-  { id: 2, country_code: 'JP', country_name: '日本', visa_types: ['tourism', 'student'], enabled: false },
-  { id: 3, country_code: 'UK', country_name: '英国', visa_types: ['tourism', 'student'], enabled: false },
-  { id: 4, country_code: 'AU', country_name: '澳大利亚', visa_types: ['tourism', 'student'], enabled: false },
-  { id: 5, country_code: 'CA', country_name: '加拿大', visa_types: ['tourism', 'student'], enabled: false },
-  { id: 6, country_code: 'DE', country_name: '德国(申根)', visa_types: ['tourism', 'student'], enabled: false },
-  { id: 7, country_code: 'FR', country_name: '法国(申根)', visa_types: ['tourism', 'student'], enabled: false },
-  { id: 8, country_code: 'SG', country_name: '新加坡', visa_types: ['tourism', 'student'], enabled: false },
-  { id: 9, country_code: 'NZ', country_name: '新西兰', visa_types: ['tourism', 'student'], enabled: false }
+  { id: 1, country_code: 'US', country_name: '美国', visa_types: ['tourism'], enabled: true },
+  { id: 3, country_code: 'GB', country_name: '英国', visa_types: ['tourism'], enabled: true },
+  { id: 4, country_code: 'AU', country_name: '澳大利亚', visa_types: ['tourism'], enabled: true },
+  { id: 6, country_code: 'DE', country_name: '德国(申根)', visa_types: ['tourism'], enabled: true },
+  { id: 7, country_code: 'FR', country_name: '法国(申根)', visa_types: ['tourism'], enabled: true },
 ]
 
 function localizeName(d, lang) {
   if (lang && lang.startsWith('en')) {
     const enMap = {
-      US: 'United States', JP: 'Japan', UK: 'United Kingdom',
-      AU: 'Australia', CA: 'Canada', DE: 'Germany (Schengen)',
-      FR: 'France (Schengen)', SG: 'Singapore', NZ: 'New Zealand'
+      US: 'United States', GB: 'United Kingdom', UK: 'United Kingdom',
+      AU: 'Australia', DE: 'Germany (Schengen)', FR: 'France (Schengen)',
     }
     return enMap[d.country_code] || d.country_name
   }
   if (lang && lang.startsWith('id')) {
-    const idMap = { US: 'Amerika Serikat', JP: 'Jepang', UK: 'Inggris', AU: 'Australia', CA: 'Kanada', DE: 'Jerman', FR: 'Prancis', SG: 'Singapura', NZ: 'Selandia Baru' }
+    const idMap = { US: 'Amerika Serikat', GB: 'Inggris', UK: 'Inggris', AU: 'Australia', DE: 'Jerman', FR: 'Prancis' }
     return idMap[d.country_code] || d.country_name
   }
   if (lang && lang.startsWith('vi')) {
-    const viMap = { US: 'Hoa Kỳ', JP: 'Nhật Bản', UK: 'Vương quốc Anh', AU: 'Úc', CA: 'Canada', DE: 'Đức', FR: 'Pháp', SG: 'Singapore', NZ: 'New Zealand' }
+    const viMap = { US: 'Hoa Kỳ', GB: 'Vương quốc Anh', UK: 'Vương quốc Anh', AU: 'Úc', DE: 'Đức', FR: 'Pháp' }
     return viMap[d.country_code] || d.country_name
   }
   return d.country_name
@@ -263,9 +258,9 @@ const ORDER_STATUS_LABEL = {
 // Mock 订单数据(5 单,覆盖 5 个状态 — 跟 W6-1 SMS Mock + W6-2 支付集成对齐)
 const MOCK_ORDERS = [
   { id: 'O-2026-0001', order_no: 'O-2026-0001', country_code: 'US', country_name: '美国', visa_type: 'tourism', amount: 59900, currency: 'CNY', status: 'pending_payment', created_at: '2026-06-10 14:23:00' },
-  { id: 'O-2026-0002', order_no: 'O-2026-0002', country_code: 'JP', country_name: '日本', visa_type: 'student', amount: 79900, currency: 'CNY', status: 'paid', created_at: '2026-06-08 09:15:00' },
+  { id: 'O-2026-0002', order_no: 'O-2026-0002', country_code: 'GB', country_name: '英国', visa_type: 'student', amount: 79900, currency: 'CNY', status: 'paid', created_at: '2026-06-08 09:15:00' },
   { id: 'O-2026-0003', order_no: 'O-2026-0003', country_code: 'DE', country_name: '德国(申根)', visa_type: 'tourism', amount: 89900, currency: 'CNY', status: 'reviewing', created_at: '2026-06-05 16:42:00' },
-  { id: 'O-2026-0004', order_no: 'O-2026-0004', country_code: 'SG', country_name: '新加坡', visa_type: 'tourism', amount: 49900, currency: 'CNY', status: 'approved', created_at: '2026-05-28 11:05:00' },
+  { id: 'O-2026-0004', order_no: 'O-2026-0004', country_code: 'AU', country_name: '澳大利亚', visa_type: 'tourism', amount: 49900, currency: 'CNY', status: 'approved', created_at: '2026-05-28 11:05:00' },
   { id: 'O-2026-0005', order_no: 'O-2026-0005', country_code: 'FR', country_name: '法国(申根)', visa_type: 'student', amount: 99900, currency: 'CNY', status: 'rejected', created_at: '2026-05-20 13:30:00', reject_reason: '材料不完整,缺银行流水' }
 ]
 

@@ -28,6 +28,8 @@ import hashlib
 import json
 import uuid
 from collections.abc import Iterable
+
+from app.core.product_scope import is_allowed_destination, normalize_destination_code
 from decimal import Decimal
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
@@ -53,6 +55,7 @@ from app.models.order import (
     VISA_TYPES,
 )
 from app.services.audit import record_audit
+from app.services.pricing_service import PricingService
 
 
 _log = get_logger()
@@ -96,6 +99,19 @@ class OrderService:
                 message=f"destination {dest.country_code} is not currently available",
                 data={"destination_id": destination_id, "country_code": dest.country_code},
             )
+        # Product scope guard — refuse ID/VN/JP/… even if a row was re-enabled in admin
+        if not is_allowed_destination(dest.country_code):
+            raise BizException(
+                ErrorCode.ORDER_DESTINATION_DISABLED,
+                message=(
+                    f"destination {normalize_destination_code(dest.country_code)} "
+                    "is outside product scope (US / GB / AU / Schengen only)"
+                ),
+                data={
+                    "destination_id": destination_id,
+                    "country_code": dest.country_code,
+                },
+            )
 
         # 2) Legacy material association (optional — privacy-first flow uses applicant_data only)
         materials = []
@@ -120,11 +136,9 @@ class OrderService:
                     )
                 normalised_aff_code = stripped.upper()
 
-        # W63: 从 destination 拿价 (visa_fee_usd 存的是 cents), 写到 order.total_amount (USD 元)
-        # 如果 dest 没设 visa_fee_usd (新加 destination 漏了), 用 0 — 跟之前行为兼容
-        order_total_usd = (
-            Decimal(dest.visa_fee_usd) / Decimal(100) if dest.visa_fee_usd else Decimal(0)
-        )
+        # Platform service fee snapshot at order creation (not consular/visa_fee_usd).
+        pricing = await PricingService(self.db).get_current()
+        order_total_usd = Decimal(str(pricing["display_price_usd"]))
         order_currency = "USD"
 
         # A-01: unpaid (created) orders must NOT persist applicant PII.
@@ -185,6 +199,7 @@ class OrderService:
                 "visa_type": visa_type,
                 "material_ids": material_ids,
                 "aff_code": normalised_aff_code,
+                "service_fee_usd": str(order_total_usd),
             },
         )
         await self.db.commit()

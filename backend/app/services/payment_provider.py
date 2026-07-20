@@ -1038,7 +1038,12 @@ class StripePaymentProvider(PaymentProvider):
             # We do NOT set `confirm=True` here — the front-end confirms
             # via Stripe.js after collecting card details. The webhook
             # is the source of truth for "paid".
-            automatic_payment_methods={"enabled": True},
+            # allow_redirects=never: card-only Elements checkout; avoids
+            # Stripe "missing return_url" failures on redirect PMs.
+            automatic_payment_methods={
+                "enabled": True,
+                "allow_redirects": "never",
+            },
         )
 
         trade_no = intent.id  # `pi_3Nx...`
