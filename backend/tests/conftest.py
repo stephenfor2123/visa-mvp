@@ -177,6 +177,7 @@ async def app():
         ("app.api.v2.voice", "get_db"),
         ("app.api.v2.scheduler", "get_db"),
         ("app.api.v2.affiliate", "get_db"),
+        ("app.api.v2.analytics", "get_db"),
         ("app.api.v2.ds160", "get_db"),
         ("app.core.security", "get_db"),
     ]:

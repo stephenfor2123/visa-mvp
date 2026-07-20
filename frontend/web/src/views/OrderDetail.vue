@@ -514,6 +514,7 @@ import {
 import { useOrderUserStatus } from '@/composables/useOrderUserStatus'
 // A-W9-2: query order commission, detail page shows "Affiliate source: PARTNER001 (5% commission)"
 import { getCommission } from '@/api/affiliate'
+import { track, Events } from '@/api/analytics'
 // W48 v0.2: DS-160 辅助填充 — 改成后端 12 位 code 兑换流程
 import { issueDs160Code, formatDs160Code, describeDs160Error } from '@/api/ds160'
 import AppHeader from '@/components/AppHeader.vue'
@@ -778,6 +779,10 @@ async function loadInitial() {
     const r = await getOrder(orderNo.value, { etag: null })
     if (r.data) {
       order.value = r.data
+      track(Events.ORDER_DETAIL_VIEWED, {
+        order_no: orderNo.value,
+        status: r.data.status,
+      })
     } else if (r.notModified) {
       // Rare: first is 304, keep current
     }

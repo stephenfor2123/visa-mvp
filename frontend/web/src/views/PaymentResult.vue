@@ -217,6 +217,7 @@ import AppHeader from '@/components/AppHeader.vue'
 import LangSwitch from '@/components/LangSwitch.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
+import { track, Events } from '@/api/analytics'
 import {
   queryPaymentStatus,
   cancelPayment,
@@ -236,6 +237,7 @@ const loadError = ref('')
 const notFound = ref(false)
 const retrying = ref(false)
 const recontinuing = ref(false)
+const _paymentResultTracked = ref(false)
 const countdownSec = ref(30)
 const POLLING_INTERVAL_MS = 30000
 
@@ -295,6 +297,17 @@ async function refreshStatus({ showLoading = false } = {}) {
       // 终态:停止轮询
       if (TERMINAL_STATUSES.includes(data.status)) {
         stopPolling()
+        if (!_paymentResultTracked.value) {
+          _paymentResultTracked.value = true
+          if (data.status === 'success') {
+            track(Events.PAYMENT_SUCCEEDED, { order_no: orderId.value })
+          } else if (data.status === 'failed') {
+            track(Events.PAYMENT_FAILED, {
+              order_no: orderId.value,
+              reason: data.reason || data.reason_message || null,
+            })
+          }
+        }
       } else {
         countdownSec.value = 30
       }

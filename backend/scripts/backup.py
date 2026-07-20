@@ -23,12 +23,28 @@ from typing import Optional
 SCRIPT_DIR = Path(__file__).resolve().parent
 BACKEND_DIR = SCRIPT_DIR.parent
 
-DB_PATH = BACKEND_DIR / "data" / "visa_mvp.db"
+# Docker prod mounts SQLite at backend/.data/visa_mvp.db (see docker-compose.yml).
+# Local/dev default is backend/data/visa_mvp.db. Prefer the live file that exists.
+def resolve_db_path() -> Path:
+    candidates = [
+        BACKEND_DIR / ".data" / "visa_mvp.db",  # docker bind mount (prod)
+        BACKEND_DIR / "data" / "visa_mvp.db",   # local / legacy
+    ]
+    for p in candidates:
+        if p.is_file() and p.stat().st_size > 0:
+            return p
+    return candidates[0]
+
+
+DB_PATH = resolve_db_path()
 # Project's uploaded files live under data/materials/. The parent spec called this
 # "uploads/" colloquially — same path, just a different name.
 UPLOADS_PATH = BACKEND_DIR / "data" / "materials"
-DEFAULT_BACKUP_DIR = BACKEND_DIR / "data" / "backups"
-RETENTION_COUNT = 7
+# Prefer a path OUTSIDE the git/rsync tree so a careless --delete sync
+# cannot wipe backups together with the app. Fall back to data/backups/.
+_OFFSITE = Path("/var/backups/htexvisa")
+DEFAULT_BACKUP_DIR = _OFFSITE if _OFFSITE.parent.is_dir() else (BACKEND_DIR / "data" / "backups")
+RETENTION_COUNT = 14  # early-stage: keep two weeks of daily snapshots
 
 
 def timestamp() -> str:
@@ -97,13 +113,15 @@ def run_backup(dry_run: bool = False, backup_dir: Optional[Path] = None) -> None
     ts = timestamp()
     ensure_dir(bdir)
 
+    db_src = resolve_db_path()
     print(f"\n{'[DRY-RUN] ' if dry_run else ''}Backup started at {datetime.now():%Y-%m-%d %H:%M:%S}")
+    print(f"  Source database:  {db_src}")
     print(f"  Backup directory: {bdir}")
 
     # --- 1. Database backup ---
     db_dest = bdir / f"visa_mvp-{ts}.db.gz"
     try:
-        backup_file(DB_PATH, db_dest, dry_run=dry_run)
+        backup_file(db_src, db_dest, dry_run=dry_run)
         if not dry_run:
             size = db_dest.stat().st_size
             print(f"  Database backed up: {db_dest.name} ({size:,} bytes)")

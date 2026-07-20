@@ -1123,6 +1123,7 @@ import { savePrecheckSnapshot, clearAllLocalVisaData } from '@/utils/localPrivac
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import { FEATURE_RPA } from '@/config/features'
+import { track, Events, setEntrySource } from '@/api/analytics'
 import { buildApplicantDataPayload } from '@/composables/useApplicantProfile'
 import { normalizeDestinationCode } from '@/data/visaFieldMaps.js'
 import {
@@ -1162,6 +1163,12 @@ function onClearLocalData() {
 // W54 dev/QA 便利: ?step=financial&step=travel 等强制跳到指定 category (跳过 goToCategory 限制)。
 // 仅在 query 含 step 时生效；不影响常规用户流程。
 onMounted(() => {
+  setEntrySource(route.query.from?.toString() || 'wizard')
+  track(Events.WIZARD_STARTED, {
+    country_code: countryCode,
+    visa_type: visaType || 'tourism',
+    entry_source: route.query.from?.toString() || 'wizard',
+  })
   const stepKey = (route.query.step || '').toString()
   if (!stepKey) return
   // 把所有 category 标 validated, 让 goToCategory 不被 "下一未完成" 卡住
@@ -2034,6 +2041,10 @@ async function onSubmitForm() {
   // 登录墙：未登录时先保存 draft,跳 Login,登录后回跳续提
   if (!auth.isLoggedIn) {
     saveFormDraft() // 确保最后一次必填内容存住
+    track(Events.LOGIN_WALL_SHOWN, {
+      country_code: countryCode,
+      intent: 'submit_form',
+    })
     return router.push({
       name: 'Login',
       query: {
@@ -2051,7 +2062,16 @@ async function onSubmitForm() {
       material_ids: [],
       applicant_data: buildApplicantDataPayload(form, { dna, itineraryText: itineraryText.value }),
     }
+    track(Events.FORM_COMPLETED, {
+      country_code: countryCode,
+      visa_type: form.visa_type,
+    })
     const order = await createOrder(payload)
+    track(Events.ORDER_CREATED, {
+      order_no: order.order_no,
+      country_code: countryCode,
+      visa_type: form.visa_type,
+    })
     if (FEATURE_RPA) {
       const destCountry = countryCode || (destinations.value.find((d) => d.id === Number(form.destination_id))?.country_code) || ''
       if (destCountry === 'US') {
@@ -2139,30 +2159,36 @@ const CategoryIcon = {
 </script>
 
 <style scoped lang="scss">
-.mw-page { min-height: 100vh; background: #FFFFFF; }
+.mw-page { min-height: 100vh; background: #F8FAFC; }
 .mw-main { max-width: 1200px; margin: 0 auto; padding: 32px 24px 80px; }
 
-.mw-hero { text-align: center; margin-bottom: 24px; }
+.mw-hero { text-align: left; margin-bottom: 32px; }
 .mw-hero__title {
-  font-size: 30px; font-weight: 800; margin: 0 0 6px; letter-spacing: -.5px;
-  background: linear-gradient(135deg, #0f172a 0%, #3B6EF5 120%);
-  -webkit-background-clip: text; background-clip: text; color: transparent;
+  font-size: 30px; font-weight: 700; margin: 0 0 12px; letter-spacing: -.5px;
+  color: #0F172A; line-height: 1.25;
 }
 .mw-hero__privacy {
-  margin: 0 auto 10px;
-  max-width: 520px;
-  font-size: 13px;
+  margin: 0 0 12px;
+  max-width: 640px;
+  font-size: 14px;
   color: #64748b;
-  line-height: 1.5;
+  line-height: 1.45;
 }
 .mw-hero__clear {
-  border: 1px solid #e2e8f0;
+  border: 1px solid #E2E8F0;
   background: #fff;
-  color: #64748b;
-  font-size: 12px;
-  padding: 6px 12px;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 500;
+  min-height: 40px;
+  padding: 10px 20px;
   border-radius: 8px;
   cursor: pointer;
+}
+.mw-hero__clear:hover {
+  color: #2563EB;
+  border-color: #2563EB;
+  background: #EFF6FF;
 }
 .mw-clear-modal {
   position: fixed; inset: 0; z-index: 200;
@@ -2181,34 +2207,57 @@ const CategoryIcon = {
 .mw-clear-modal__btn--danger { border-color: #fecaca; color: #b91c1c; background: #fef2f2; }
 .mw-hero__sub { font-size: 14px; color: #64748b; margin: 0; }
 
-.mw-progress { margin-bottom: 24px; }
-.mw-progress__bar { height: 6px; background: #e2e8f0; border-radius: 999px; overflow: hidden; }
-.mw-progress__fill { height: 100%; background: linear-gradient(90deg, #3B6EF5, #6E59F0); border-radius: 999px; transition: width .4s ease; }
-.mw-progress__text { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: #94a3b8; text-align: center; margin-top: 8px; }
+.mw-progress {
+  margin-bottom: 32px;
+  padding: 20px;
+  border: 1px solid #F1F5F9;
+  border-radius: 16px;
+  background: #fff;
+}
+.mw-progress__bar { height: 8px; background: #F1F5F9; border-radius: 999px; overflow: hidden; }
+.mw-progress__fill { height: 100%; background: #2563EB; border-radius: 999px; transition: width .4s ease; }
+.mw-progress__text {
+  font-size: 13px; font-weight: 600; color: #64748b;
+  text-align: right; margin-top: 10px;
+}
 
-.mw-steps { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 24px; }
+.mw-steps {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
 .mw-step {
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
-  padding: 12px 6px; border-radius: 12px; border: 1.5px solid transparent; background: transparent;
+  display: flex; flex-direction: row; align-items: center; gap: 10px;
+  padding: 12px 14px; border-radius: 12px;
+  border: 1px solid #E2E8F0; background: #fff;
   cursor: pointer; transition: all .15s ease; position: relative;
-  &.is-active { background: #eff6ff; border-color: #3b6ef5; }
-  &.is-done .mw-step__icon { background: #ecfdf3; color: #16a34a; }
+  &.is-active {
+    border-color: #2563EB;
+    background: #EFF6FF;
+    .mw-step__icon { background: #2563EB; color: #fff; }
+    .mw-step__label { color: #2563EB; }
+  }
+  &.is-done .mw-step__icon { background: #0F172A; color: #fff; }
 }
 .mw-step__icon {
-  width: 30px; height: 30px; border-radius: 9px; background: #f1f5f9; color: #64748b;
+  width: 36px; height: 36px; border-radius: 50%; flex: 0 0 auto;
+  background: #0F172A; color: #fff;
   display: flex; align-items: center; justify-content: center;
 }
-.mw-step__label { font-size: 11px; font-weight: 600; color: #475569; text-align: center; }
+.mw-step__label {
+  font-size: 13px; font-weight: 600; color: #0F172A; text-align: left; line-height: 1.3;
+}
 .mw-step__check {
-  position: absolute; top: 4px; right: 4px; width: 14px; height: 14px; border-radius: 50%;
+  position: absolute; top: 6px; right: 6px; width: 14px; height: 14px; border-radius: 50%;
   background: #16a34a; color: #fff; font-size: 9px; display: flex; align-items: center; justify-content: center;
 }
 
 .mw-panel {
-  background: #fff; border: 1px solid #e9edf5; border-radius: 20px;
-  padding: 28px 30px; box-shadow: 0 8px 28px rgba(15,23,42,.06);
+  background: #fff; border: 1px solid #E2E8F0; border-radius: 16px;
+  padding: 28px 30px;
 }
-.mw-panel__title { font-size: 19px; font-weight: 700; color: #0f172a; margin: 0 0 18px; }
+.mw-panel__title { font-size: 20px; font-weight: 700; color: #0f172a; margin: 0 0 18px; }
 
 .mw-items { display: flex; flex-direction: column; gap: 14px; }
 
@@ -2218,16 +2267,16 @@ const CategoryIcon = {
 }
 .mw-item-tab {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 7px 14px; font-size: 13px; font-weight: 500;
-  background: #fff; border: 1px solid var(--border, #E2E8F0);
-  border-radius: 999px; color: var(--ink-3, #64748B); cursor: pointer;
+  padding: 8px 16px; font-size: 13px; font-weight: 500;
+  background: #F8FAFC; border: 1px solid #E2E8F0;
+  border-radius: 8px; color: #64748B; cursor: pointer;
   transition: all .15s;
 }
-.mw-item-tab:hover { border-color: #3B6EF5; color: #2D5BFF; }
-.mw-item-tab.on { background: #3B6EF5; color: #fff; border-color: #3B6EF5; font-weight: 600; }
-.mw-item-tab.done { background: rgba(59, 110, 245, .08); color: #3B6EF5; border-color: rgba(59, 110, 245, .35); font-weight: 600; }
-.mw-item-tab.done .mw-item-tab__check { color: #3B6EF5; }
-.mw-item-tab.on.done { background: #3B6EF5; color: #fff; border-color: #3B6EF5; }
+.mw-item-tab:hover { border-color: #2563EB; color: #2563EB; background: #EFF6FF; }
+.mw-item-tab.on { background: #0F172A; color: #fff; border-color: #0F172A; font-weight: 600; }
+.mw-item-tab.done { background: #EFF6FF; color: #2563EB; border-color: #BFDBFE; font-weight: 600; }
+.mw-item-tab.done .mw-item-tab__check { color: #2563EB; }
+.mw-item-tab.on.done { background: #0F172A; color: #fff; border-color: #0F172A; }
 .mw-item-tab.on.done .mw-item-tab__check { color: #fff; }
 
 .mw-finish { text-align: center; padding: 20px 0; }
@@ -2247,20 +2296,28 @@ const CategoryIcon = {
   &.is-info { background: #eff6ff; color: #1e40af; }
 }
 
-.mw-footer { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; }
+.mw-footer {
+  display: flex; gap: 12px; justify-content: flex-end;
+  margin-top: 24px; padding-top: 20px; border-top: 1px solid #F1F5F9;
+}
 .mw-footer__skip {
-  background: transparent; border: 1px solid #cbd5e1; color: #64748b;
-  padding: 12px 20px; border-radius: 12px; font-size: 13.5px; font-weight: 600; cursor: pointer;
+  background: transparent; border: 1px solid #E2E8F0; color: #64748b;
+  padding: 12px 20px; border-radius: 8px; font-size: 13.5px; font-weight: 600; cursor: pointer;
 }
 .mw-footer__next {
-  background: linear-gradient(135deg, #3B6EF5 0%, #6E59F0 100%); color: #fff; border: 0;
-  padding: 12px 26px; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer;
-  box-shadow: 0 8px 20px rgba(59,110,245,.25);
-  &.is-disabled { background: #e2e8f0; color: #94a3b8; box-shadow: none; cursor: not-allowed; }
+  background: #2563EB; color: #fff; border: 0;
+  padding: 12px 26px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer;
+  &.is-disabled { background: #E2E8F0; color: #94a3b8; cursor: not-allowed; }
+  &:not(.is-disabled):hover { background: #1D4ED8; }
 }
 
+@media (max-width: 900px) {
+  .mw-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
 @media (max-width: 640px) {
-  .mw-steps { grid-template-columns: repeat(3, 1fr); }
+  .mw-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mw-step { padding: 10px 12px; }
+  .mw-step__label { font-size: 12px; }
 }
 
 // ============================================================ //

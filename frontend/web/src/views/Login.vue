@@ -90,6 +90,7 @@ import { useToast } from '@/composables/useToast'
 import { useGoogleAuthButton } from '@/composables/useGoogleAuthButton'
 import { validateAccount, validatePassword } from '@/utils/validation'
 import AppHeader from '@/components/AppHeader.vue'
+import { track, Events } from '@/api/analytics'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -110,6 +111,10 @@ async function handleGoogleCredential(response) {
   googleLoading.value = true
   try {
     await auth.loginWithGoogle(response.credential)
+    track(Events.AUTH_SUCCEEDED, {
+      method: 'google',
+      intent: route.query.intent?.toString() || null,
+    })
     toast.success(t('toast.login_success'))
     const redirect = route.query.redirect || '/destinations'
     router.push(redirect)
@@ -136,6 +141,10 @@ async function onPwdSubmit() {
   submitting.value = true
   try {
     await auth.loginByPassword({ account: account.value.trim(), password: password.value })
+    track(Events.AUTH_SUCCEEDED, {
+      method: 'password',
+      intent: route.query.intent?.toString() || null,
+    })
     toast.success(t('toast.login_success'))
     const redirect = route.query.redirect || '/destinations'
     router.push(redirect)

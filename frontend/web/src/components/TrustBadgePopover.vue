@@ -72,8 +72,8 @@
               <path d="M24 27 V29.5" stroke="#3B6EF5" stroke-width="1.6" stroke-linecap="round" />
             </svg>
           </div>
-          <h3 class="trust-popover__title">{{ t('trust.popover_title', 'Htex 不在云上存储任何敏感信息') }}</h3>
-          <p class="trust-popover__sub">{{ t('trust.popover_sub', '您的个人信息会进行加密处理,本地完成识别后立即清除') }}</p>
+          <h3 class="trust-popover__title">{{ t('trust.popover_title', '敏感证件内容优先在本地处理') }}</h3>
+          <p class="trust-popover__sub">{{ t('trust.popover_sub', '传输全程加密，仅处理完成服务所必需的数据') }}</p>
         </div>
 
         <!-- 底部 CTA:了解更多 (W57b 简化后,CTA 升级为唯一行动入口) -->

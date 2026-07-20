@@ -166,6 +166,7 @@ import { listDestinations } from '@/api/destinations'
 import http from '@/api/http'
 import { useToast } from '@/composables/useToast'
 import { groupCountriesByVisaType } from '@/utils/countries'
+import { track, Events, setEntrySource } from '@/api/analytics'
 
 const { t, locale } = useI18n()
 const router = useRouter()
@@ -307,6 +308,8 @@ const totalMaterialsCount = computed(() => materialItems.value.length)
 function selectCountry(cc) {
   form.country_code = cc
   step.value = 2
+  setEntrySource('apply')
+  track(Events.COUNTRY_SELECTED, { country_code: cc, entry_source: 'apply' })
   loadChecklist()
 }
 
@@ -366,6 +369,8 @@ function formatChecklistTime(iso) {
 function goOrderNew() {
   if (!form.country_code) return
   // W36: 先进材料收集向导（分大类强校验），完成后向导会带着 material_ids 跳 OrderNew
+  setEntrySource('apply')
+  track(Events.WIZARD_STARTED, { country_code: form.country_code, entry_source: 'apply' })
   router.push({
     name: 'MaterialWizard',
     query: { country: form.country_code, visa_type: 'tourism' },

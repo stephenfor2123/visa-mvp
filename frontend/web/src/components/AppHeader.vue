@@ -91,7 +91,7 @@
         </svg>
       </button>
       <!-- W57: 加密隐私保护徽章 — 点击弹出 popover(简化:仅大锁+标题+副标题+CTA,W57b) -->
-      <TrustBadgePopover :scope="props.scope" learn-more-to="/resources/policy" />
+      <TrustBadgePopover :scope="props.scope" learn-more-to="/security" />
       <LangSwitch />
       <!-- W47: 人物头像下拉菜单(整合"我的申请" + profile + 退出登录) -->
       <div

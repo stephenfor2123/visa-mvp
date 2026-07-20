@@ -597,12 +597,12 @@ export async function getDashboardFunnel({ range = '7d' } = {}) {
   if (MOCK_MODE) {
     await _delay(80)
     const steps = [
-      { key: 'register',       label: '注册',          count: 320, conversion_pct: 100 },
-      { key: 'order_create',   label: '创建订单',      count: 240, conversion_pct: 75 },
-      { key: 'order_submit',   label: '提交订单',      count: 168, conversion_pct: 70 },
-      { key: 'order_finish',   label: '完成 (approved/closed)', count: 96, conversion_pct: 57.14 },
+      { key: 'order_create', label: '创建订单', count: 240, conversion_pct: 100 },
+      { key: 'checkout_viewed', label: '进入支付页', count: 200, conversion_pct: 83.33 },
+      { key: 'payment_success', label: '支付成功', count: 168, conversion_pct: 84 },
+      { key: 'order_completed', label: '履约完成', count: 96, conversion_pct: 57.14 },
     ]
-    return { range, steps, overall_conversion_pct: 30, generated_at: new Date().toISOString() }
+    return { range, steps, overall_conversion_pct: 40, generated_at: new Date().toISOString() }
   }
   try {
     return await _unwrap(

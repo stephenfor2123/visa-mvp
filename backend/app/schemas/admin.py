@@ -764,7 +764,13 @@ class DashboardTrendOut(BaseModel):
 
 
 class DashboardFunnelStep(BaseModel):
-    key: str = Field(..., description="register | country_select | order_create | order_submit | payment_success")
+    key: str = Field(
+        ...,
+        description=(
+            "country_selected | wizard_started | order_create | "
+            "checkout_viewed | payment_success | order_completed"
+        ),
+    )
     label: str
     count: int = Field(..., ge=0)
     conversion_pct: float = Field(..., ge=0.0, le=100.0, description="相对上一步的转化率")

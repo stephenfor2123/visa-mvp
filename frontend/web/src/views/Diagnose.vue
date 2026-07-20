@@ -3,7 +3,7 @@
     <AppHeader scope="diagnose" />
 
     <main class="app-container app-page diagnose-main">
-      <header class="diagnose-hero">
+      <header v-if="step !== 2" class="diagnose-hero">
         <h1 class="diagnose-hero__title">{{ t('diagnose.title') }}</h1>
         <p class="diagnose-hero__sub">{{ t('diagnose.sub') }}</p>
       </header>
@@ -40,145 +40,163 @@
         </div>
       </section>
 
-      <!-- Step 2: 表单 -->
-      <section v-else-if="step === 2" class="diagnose-section" data-testid="diagnose-step-2">
+      <!-- Step 2: 表单（对齐 diagnose-income-redesign） -->
+      <section v-else-if="step === 2" class="diagnose-step2" data-testid="diagnose-step-2">
         <button class="diagnose-back" data-testid="diagnose-back" @click="step = 1">
           ← {{ t('diagnose.back') }}
         </button>
-        <h2 class="diagnose-section__title">
-          {{ t('diagnose.step_form') }} · <span class="diagnose-section__cc">{{ selectedCountryName }}</span>
-        </h2>
 
-        <form class="diagnose-form" @submit.prevent="onSubmit">
-          <!-- 婚姻 -->
-          <div class="diagnose-field">
-            <label class="diagnose-field__label">{{ t('diagnose.marital') }}</label>
-            <div class="diagnose-pills">
-              <button
-                v-for="opt in MARITAL_OPTS"
-                :key="opt.value"
-                type="button"
-                class="diagnose-pill"
-                :class="{ 'is-selected': form.marital_status === opt.value }"
-                :data-testid="`diagnose-marital-${opt.value}`"
-                @click="form.marital_status = opt.value"
-              >{{ t(`diagnose.marital_${opt.value}`) }}</button>
+        <div class="diagnose-card">
+          <header class="diagnose-card__header">
+            <h2 class="diagnose-card__title">
+              {{ t('diagnose.step_form') }} · <span>{{ selectedCountryName }}</span>
+            </h2>
+          </header>
+
+          <form class="diagnose-form" @submit.prevent="onSubmit">
+            <div class="diagnose-form__grid">
+              <!-- 婚姻 -->
+              <div class="diagnose-field">
+                <label class="diagnose-field__label">{{ t('diagnose.marital') }}</label>
+                <div class="diagnose-pills">
+                  <button
+                    v-for="opt in MARITAL_OPTS"
+                    :key="opt.value"
+                    type="button"
+                    class="diagnose-pill"
+                    :class="{ 'is-selected': form.marital_status === opt.value }"
+                    :data-testid="`diagnose-marital-${opt.value}`"
+                    @click="form.marital_status = opt.value"
+                  >{{ t(`diagnose.marital_${opt.value}`) }}</button>
+                </div>
+              </div>
+
+              <!-- 收入 -->
+              <div class="diagnose-field">
+                <label class="diagnose-field__label">{{ t('diagnose.income', { cur: t('diagnose.cur') }) }}</label>
+                <div class="diagnose-pills">
+                  <button
+                    v-for="opt in INCOME_OPTS"
+                    :key="opt.value"
+                    type="button"
+                    class="diagnose-pill"
+                    :class="{ 'is-selected': form.income_bucket === opt.value }"
+                    :data-testid="`diagnose-income-${opt.value}`"
+                    @click="form.income_bucket = opt.value"
+                  >{{ incomeLabel(opt.value) }}</button>
+                </div>
+              </div>
+
+              <!-- 出行目的 -->
+              <div class="diagnose-field">
+                <label class="diagnose-field__label">{{ t('diagnose.purpose') }}</label>
+                <div class="diagnose-pills">
+                  <button
+                    v-for="opt in PURPOSE_OPTS"
+                    :key="opt.value"
+                    type="button"
+                    class="diagnose-pill"
+                    :class="{ 'is-selected': form.travel_purpose === opt.value }"
+                    :data-testid="`diagnose-purpose-${opt.value}`"
+                    @click="form.travel_purpose = opt.value"
+                  >{{ t(`diagnose.purpose_${opt.value}`) }}</button>
+                </div>
+              </div>
+
+              <!-- 出行记录 -->
+              <div class="diagnose-field">
+                <label class="diagnose-field__label">{{ t('diagnose.travel_history') }}</label>
+                <p class="diagnose-field__tip">{{ t('diagnose.travel_history_tip') }}</p>
+                <div class="diagnose-pills">
+                  <button
+                    v-for="opt in TRAVEL_OPTS"
+                    :key="opt.value"
+                    type="button"
+                    class="diagnose-pill"
+                    :class="{ 'is-selected': form.travel_history === opt.value }"
+                    :data-testid="`diagnose-travel-${opt.value}`"
+                    @click="form.travel_history = opt.value"
+                  >{{ t(`diagnose.travel_${opt.value}`) }}</button>
+                </div>
+              </div>
+
+              <!-- 签证历史 -->
+              <div class="diagnose-field">
+                <label class="diagnose-field__label">{{ t('diagnose.visa_history') }}</label>
+                <p class="diagnose-field__tip">{{ t('diagnose.visa_history_tip') }}</p>
+                <div class="diagnose-pills">
+                  <button
+                    v-for="opt in VISA_OPTS"
+                    :key="opt.value"
+                    type="button"
+                    class="diagnose-pill"
+                    :class="{ 'is-selected': form.visa_history === opt.value }"
+                    :data-testid="`diagnose-visa-${opt.value}`"
+                    @click="form.visa_history = opt.value"
+                  >{{ t(`diagnose.visa_${opt.value}`) }}</button>
+                </div>
+              </div>
+
+              <!-- 在职 -->
+              <div class="diagnose-field">
+                <label class="diagnose-field__label">{{ t('diagnose.employment') }}</label>
+                <p class="diagnose-field__tip">{{ t('diagnose.employment_tip') }}</p>
+                <div class="diagnose-pills">
+                  <button
+                    v-for="opt in EMP_OPTS"
+                    :key="opt.value"
+                    type="button"
+                    class="diagnose-pill"
+                    :class="{ 'is-selected': form.employment === opt.value }"
+                    :data-testid="`diagnose-emp-${opt.value}`"
+                    @click="form.employment = opt.value"
+                  >{{ t(`diagnose.emp_${opt.value}`) }}</button>
+                </div>
+              </div>
+
+              <!-- 年龄 + 单身女性 -->
+              <div class="diagnose-field">
+                <label class="diagnose-field__label">{{ t('diagnose.extras') }}</label>
+                <div class="diagnose-extras">
+                  <label class="diagnose-extras__age">
+                    <span>{{ t('diagnose.age') }}</span>
+                    <input
+                      v-model.number="form.age"
+                      type="number"
+                      min="10" max="90"
+                      :placeholder="t('diagnose.age_ph')"
+                      data-testid="diagnose-age"
+                    />
+                  </label>
+                  <label class="diagnose-extras__check">
+                    <input v-model="form.is_solo_female" type="checkbox" data-testid="diagnose-solo" />
+                    <span>{{ t('diagnose.solo_female') }}</span>
+                  </label>
+                </div>
+              </div>
             </div>
-          </div>
 
-          <!-- 收入 -->
-          <div class="diagnose-field">
-            <label class="diagnose-field__label">{{ t('diagnose.income', { cur: t('diagnose.cur') }) }}</label>
-            <div class="diagnose-pills">
-              <button
-                v-for="opt in INCOME_OPTS"
-                :key="opt.value"
-                type="button"
-                class="diagnose-pill"
-                :class="{ 'is-selected': form.income_bucket === opt.value }"
-                :data-testid="`diagnose-income-${opt.value}`"
-                @click="form.income_bucket = opt.value"
-              >{{ incomeLabel(opt.value) }}</button>
+            <div class="diagnose-actions">
+              <span class="diagnose-save">{{ t('diagnose.autosaved') }}</span>
+              <div class="diagnose-actions__btns">
+                <button
+                  type="button"
+                  class="diagnose-btn diagnose-btn--secondary"
+                  data-testid="diagnose-prev"
+                  @click="step = 1"
+                >{{ t('diagnose.prev') }}</button>
+                <button
+                  type="submit"
+                  class="diagnose-btn diagnose-btn--primary"
+                  :disabled="!canSubmit || loading"
+                  data-testid="diagnose-submit"
+                >
+                  {{ loading ? t('diagnose.analyzing') : t('diagnose.next') }}
+                </button>
+              </div>
             </div>
-          </div>
-
-          <!-- 出行目的 -->
-          <div class="diagnose-field">
-            <label class="diagnose-field__label">{{ t('diagnose.purpose') }}</label>
-            <div class="diagnose-pills">
-              <button
-                v-for="opt in PURPOSE_OPTS"
-                :key="opt.value"
-                type="button"
-                class="diagnose-pill"
-                :class="{ 'is-selected': form.travel_purpose === opt.value }"
-                :data-testid="`diagnose-purpose-${opt.value}`"
-                @click="form.travel_purpose = opt.value"
-              >{{ t(`diagnose.purpose_${opt.value}`) }}</button>
-            </div>
-          </div>
-
-          <!-- 出行记录 -->
-          <div class="diagnose-field">
-            <label class="diagnose-field__label">{{ t('diagnose.travel_history') }}</label>
-            <p class="diagnose-field__tip">{{ t('diagnose.travel_history_tip') }}</p>
-            <div class="diagnose-pills">
-              <button
-                v-for="opt in TRAVEL_OPTS"
-                :key="opt.value"
-                type="button"
-                class="diagnose-pill"
-                :class="{ 'is-selected': form.travel_history === opt.value }"
-                :data-testid="`diagnose-travel-${opt.value}`"
-                @click="form.travel_history = opt.value"
-              >{{ t(`diagnose.travel_${opt.value}`) }}</button>
-            </div>
-          </div>
-
-          <!-- 签证历史 -->
-          <div class="diagnose-field">
-            <label class="diagnose-field__label">{{ t('diagnose.visa_history') }}</label>
-            <p class="diagnose-field__tip">{{ t('diagnose.visa_history_tip') }}</p>
-            <div class="diagnose-pills">
-              <button
-                v-for="opt in VISA_OPTS"
-                :key="opt.value"
-                type="button"
-                class="diagnose-pill"
-                :class="{ 'is-selected': form.visa_history === opt.value }"
-                :data-testid="`diagnose-visa-${opt.value}`"
-                @click="form.visa_history = opt.value"
-              >{{ t(`diagnose.visa_${opt.value}`) }}</button>
-            </div>
-          </div>
-
-          <!-- 在职 -->
-          <div class="diagnose-field">
-            <label class="diagnose-field__label">{{ t('diagnose.employment') }}</label>
-            <p class="diagnose-field__tip">{{ t('diagnose.employment_tip') }}</p>
-            <div class="diagnose-pills">
-              <button
-                v-for="opt in EMP_OPTS"
-                :key="opt.value"
-                type="button"
-                class="diagnose-pill"
-                :class="{ 'is-selected': form.employment === opt.value }"
-                :data-testid="`diagnose-emp-${opt.value}`"
-                @click="form.employment = opt.value"
-              >{{ t(`diagnose.emp_${opt.value}`) }}</button>
-            </div>
-          </div>
-
-          <!-- 年龄 + 单身女性 -->
-          <div class="diagnose-field">
-            <label class="diagnose-field__label">{{ t('diagnose.extras') }}</label>
-            <div class="diagnose-extras">
-              <label class="diagnose-extras__age">
-                <span>{{ t('diagnose.age') }}</span>
-                <input
-                  v-model.number="form.age"
-                  type="number"
-                  min="10" max="90"
-                  :placeholder="t('diagnose.age_ph')"
-                  data-testid="diagnose-age"
-                />
-              </label>
-              <label class="diagnose-extras__check">
-                <input v-model="form.is_solo_female" type="checkbox" data-testid="diagnose-solo" />
-                <span>{{ t('diagnose.solo_female') }}</span>
-              </label>
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            class="diagnose-submit"
-            :disabled="!canSubmit || loading"
-            data-testid="diagnose-submit"
-          >
-            {{ loading ? t('diagnose.analyzing') : t('diagnose.submit') }}
-          </button>
-        </form>
+          </form>
+        </div>
       </section>
 
       <!-- Step 3: 结果 -->
@@ -396,7 +414,7 @@ watch(() => locale.value, () => loadCountries())
 </script>
 
 <style scoped lang="scss">
-.diagnose-page { min-height: 100vh; background: #fff; display: flex; flex-direction: column; }
+.diagnose-page { min-height: 100vh; background: #F8FAFC; display: flex; flex-direction: column; }
 .diagnose-main {
   flex: 1;
   max-width: 1200px;
@@ -405,23 +423,41 @@ watch(() => locale.value, () => loadCountries())
   padding: 32px 24px 80px;
 }
 .diagnose-hero {
-  text-align: center;
+  text-align: left;
   margin-bottom: 28px;
   &__title {
-    font-size: 32px; font-weight: 700; color: #0f172a;
+    font-size: 28px; font-weight: 700; color: #0F172A;
     margin: 0 0 8px; letter-spacing: -.5px;
   }
-  &__sub { font-size: 15px; color: #64748b; margin: 0; }
+  &__sub { font-size: 15px; color: #64748B; margin: 0; }
 }
-.diagnose-section { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px 28px; margin-bottom: 18px; }
+.diagnose-section { background: #fff; border: 1px solid #F1F5F9; border-radius: 16px; padding: 24px 28px; margin-bottom: 18px; }
 .diagnose-section__title {
-  font-size: 18px; font-weight: 600; color: #0f172a; margin: 0 0 16px;
+  font-size: 18px; font-weight: 600; color: #0F172A; margin: 0 0 16px;
 }
-.diagnose-section__cc { color: #3b6ef5; font-weight: 500; }
+.diagnose-section__cc { color: #2563EB; font-weight: 500; }
 .diagnose-back {
-  background: transparent; border: 0; color: #64748b; font-size: 13px; padding: 0 0 12px;
-  cursor: pointer;
-  &:hover { color: #3b6ef5; }
+  display: inline-flex; align-items: center; gap: 6px;
+  background: transparent; border: 0; color: #64748B; font-size: 14px;
+  padding: 0; margin: 0 0 20px; cursor: pointer;
+  &:hover { color: #2563EB; }
+}
+
+.diagnose-step2 { margin-bottom: 18px; }
+.diagnose-card {
+  overflow: hidden;
+  border: 1px solid #F1F5F9;
+  border-radius: 16px;
+  background: #fff;
+}
+.diagnose-card__header { padding: 40px 40px 32px; }
+.diagnose-card__title {
+  margin: 0;
+  color: #0F172A;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: normal;
+  span { color: #2563EB; }
 }
 
 .diagnose-countries {
@@ -459,53 +495,119 @@ watch(() => locale.value, () => loadCountries())
 }
 .diagnose-country {
   display: flex; align-items: center; gap: 10px;
-  background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;
+  background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px;
   padding: 14px 16px; cursor: pointer; transition: all .15s ease;
-  font-size: 14px; color: #0f172a;
-  &:hover { border-color: #3b6ef5; transform: translateY(-1px); }
-  &.is-selected { background: #eff6ff; border-color: #3b6ef5; }
+  font-size: 14px; color: #0F172A;
+  &:hover { border-color: #2563EB; background: #EFF6FF; }
+  &.is-selected { background: #EFF6FF; border-color: #2563EB; }
   &__flag { font-size: 22px; }
   &__name { font-weight: 500; }
 }
 
-.diagnose-form { display: flex; flex-direction: column; gap: 22px; }
-.diagnose-field { display: flex; flex-direction: column; gap: 8px; }
+.diagnose-form { display: flex; flex-direction: column; }
+.diagnose-form__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: 32px;
+  padding: 0 40px 40px;
+}
+.diagnose-field { display: flex; flex-direction: column; gap: 0; min-width: 0; }
 .diagnose-field__label {
-  font-size: 13px; font-weight: 500; color: #475569;
+  margin: 0 0 12px;
+  font-size: 16px; font-weight: 700; color: #0F172A; line-height: 1.3;
 }
 .diagnose-field__tip {
-  font-size: 12px; color: #94a3b8; margin: 0 0 2px;
-  line-height: 1.5;
+  min-height: 0;
+  margin: -6px 0 12px;
+  font-size: 12px; color: #94A3B8;
+  line-height: 18px;
 }
-.diagnose-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.diagnose-pills { display: flex; flex-wrap: wrap; gap: 12px; }
 .diagnose-pill {
-  background: #f8fafc; border: 1px solid #e2e8f0; color: #475569;
-  padding: 8px 16px; border-radius: 999px; font-size: 13px; cursor: pointer;
+  min-height: 40px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: #F8FAFC; border: 1px solid #E2E8F0; color: #475569;
+  padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer;
   transition: all .15s ease;
-  &:hover { border-color: #3b6ef5; color: #0f172a; }
+  &:hover { border-color: #2563EB; color: #2563EB; background: #EFF6FF; }
   &.is-selected {
-    background: #3b6ef5; color: #fff; border-color: #3b6ef5;
+    background: #EFF6FF; color: #2563EB; border-color: #2563EB;
   }
 }
 .diagnose-extras { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
 .diagnose-extras__age {
   display: flex; align-items: center; gap: 8px; font-size: 13px; color: #475569;
   input {
-    width: 80px; padding: 7px 10px; border: 1px solid #e2e8f0; border-radius: 8px;
-    font-size: 14px; outline: none; color: #0f172a;
-    &:focus { border-color: #3b6ef5; }
+    width: 80px; padding: 7px 10px; border: 1px solid #E2E8F0; border-radius: 8px;
+    font-size: 14px; outline: none; color: #0F172A; background: #F8FAFC;
+    &:focus { border-color: #2563EB; }
   }
 }
 .diagnose-extras__check {
   display: flex; align-items: center; gap: 6px; font-size: 13px; color: #475569;
   input { width: 16px; height: 16px; cursor: pointer; }
 }
-.diagnose-submit {
-  background: #3b6ef5; color: #fff; border: 0; padding: 14px;
-  border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer;
-  margin-top: 8px;
-  &:hover { background: #2553d6; }
-  &:disabled { background: #cbd5e1; cursor: not-allowed; }
+
+.diagnose-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin: 0 40px;
+  padding: 32px 0 40px;
+  border-top: 1px solid #F1F5F9;
+}
+.diagnose-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #64748B;
+  font-size: 13px;
+  &::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #2563EB;
+  }
+}
+.diagnose-actions__btns { display: flex; gap: 10px; }
+.diagnose-btn {
+  min-height: 40px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.diagnose-btn--secondary {
+  color: #475569;
+  border: 1px solid #E2E8F0;
+  background: #fff;
+  &:hover { color: #1D4ED8; border-color: #1D4ED8; background: #EFF6FF; }
+}
+.diagnose-btn--primary {
+  color: #fff;
+  border: 1px solid #2563EB;
+  background: #2563EB;
+  &:hover { border-color: #1D4ED8; background: #1D4ED8; }
+  &:disabled { background: #E2E8F0; border-color: #E2E8F0; color: #94A3B8; cursor: not-allowed; }
+}
+
+@media (max-width: 560px) {
+  .diagnose-card__header { padding: 32px 20px; }
+  .diagnose-form__grid { padding: 0 20px 32px; }
+  .diagnose-actions {
+    margin: 0 20px;
+    padding: 32px 0;
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .diagnose-actions__btns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .diagnose-btn { width: 100%; }
 }
 
 .diagnose-result-hero {

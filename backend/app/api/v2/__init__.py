@@ -8,6 +8,7 @@ from app.api.v2 import admin_rag
 # W37 — Cleanup & 72h user destroy endpoints (V2 §4.1.4 / §4.3.5)
 from app.api.v2 import admin_cleanup
 from app.api.v2 import affiliate
+from app.api.v2 import analytics
 from app.api.v2 import auth
 from app.api.v2 import destinations
 # W31 — Visa eligibility quick-check (rule engine)
@@ -46,6 +47,7 @@ api_v2_router.include_router(admin_rag.router, tags=["admin-rag"])
 # W37 — Cleanup & 72h user destroy (sub-router under /admin/cleanup)
 api_v2_router.include_router(admin_cleanup.router, tags=["admin-cleanup"])
 api_v2_router.include_router(affiliate.router, prefix="/affiliate", tags=["affiliate"])
+api_v2_router.include_router(analytics.router, prefix="/analytics", tags=["analytics"])
 api_v2_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_v2_router.include_router(destinations.router, prefix="/destinations", tags=["destinations"])
 # W31 — Visa eligibility quick-check (rule engine over personal profile)

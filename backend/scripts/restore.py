@@ -32,9 +32,23 @@ from typing import Optional
 SCRIPT_DIR = Path(__file__).resolve().parent
 BACKEND_DIR = SCRIPT_DIR.parent
 
-DB_PATH = BACKEND_DIR / "data" / "visa_mvp.db"
+
+def resolve_db_path() -> Path:
+    """Match backup.py: docker prod uses .data/, local uses data/."""
+    candidates = [
+        BACKEND_DIR / ".data" / "visa_mvp.db",
+        BACKEND_DIR / "data" / "visa_mvp.db",
+    ]
+    for p in candidates:
+        if p.is_file():
+            return p
+    return candidates[0]
+
+
+DB_PATH = resolve_db_path()
 UPLOADS_PATH = BACKEND_DIR / "data" / "materials"
-DEFAULT_BACKUP_DIR = BACKEND_DIR / "data" / "backups"
+_OFFSITE = Path("/var/backups/htexvisa")
+DEFAULT_BACKUP_DIR = _OFFSITE if _OFFSITE.parent.is_dir() else (BACKEND_DIR / "data" / "backups")
 
 # Filename pattern: visa_mvp-<ts>.db.gz  /  uploads-<ts>.tar.gz
 _TS_RE = re.compile(r"^\d{8}-\d{6}$")

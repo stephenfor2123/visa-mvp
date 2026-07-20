@@ -1,6 +1,7 @@
 """SQLAlchemy ORM models package."""
 from app.models.admin_role import AdminRole  # noqa: F401
 from app.models.admin_user import AdminUser  # noqa: F401
+from app.models.analytics_event import AnalyticsEvent  # noqa: F401
 from app.models.applicant import Applicant  # noqa: F401
 from app.models.audit_log import AuditLog  # noqa: F401
 from app.models.destination import VisaDestination  # noqa: F401

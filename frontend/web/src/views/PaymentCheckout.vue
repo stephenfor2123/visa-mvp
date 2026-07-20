@@ -117,6 +117,7 @@ import { usePlatformPricing } from '@/composables/usePlatformPricing'
 import { getOrder, syncPendingApplicantAfterPayment } from '@/api/orders'
 import { createPayment, getPaymentConfig, queryPaymentStatus } from '@/api/payment'
 import { FEATURE_RPA, postPaymentRoute } from '@/config/features'
+import { track, Events } from '@/api/analytics'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -302,6 +303,12 @@ async function onStripePay() {
 
 async function onPayClick() {
   if (!consentChecked.value || paying.value) return
+  track(Events.CHECKOUT_STARTED, {
+    order_no: orderNo.value,
+    country_code: route.query.countryCode?.toString() || undefined,
+    visa_type: route.query.visaType?.toString() || undefined,
+    channel: channel.value,
+  })
   paying.value = true
   stripeError.value = ''
   try {
@@ -358,6 +365,11 @@ async function prepareCheckout() {
 
 onMounted(async () => {
   auth.hydrate()
+  track(Events.CHECKOUT_VIEWED, {
+    order_no: orderNo.value,
+    country_code: route.query.countryCode?.toString() || undefined,
+    visa_type: route.query.visaType?.toString() || undefined,
+  })
   await prepareCheckout()
 })
 

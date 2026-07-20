@@ -183,6 +183,7 @@ import LangSwitch from '@/components/LangSwitch.vue'
 import { useAuthStore } from '@/stores/auth'
 import AppHeader from '@/components/AppHeader.vue'
 import { listDestinations } from '@/api/destinations'
+import { track, Events, setEntrySource } from '@/api/analytics'
 
 const { t, locale } = useI18n()
 const router = useRouter()
@@ -502,6 +503,8 @@ function onCountry(countryCode) {
   // - 单一国家(US/AU/GB)→ 直接进 MaterialWizard,带 country + 默认 visa_type
   // - 申根(26 国)→ 跳专门"申根 26 国"页选具体哪个,因为一个卡不能代表 26 国
   // W47: /orders/new 已合并到 MaterialWizard 第 6 大类"签证表格",无跳页体验
+  setEntrySource('home')
+  track(Events.COUNTRY_SELECTED, { country_code: countryCode, entry_source: 'home' })
   if (countryCode === 'SCHENGEN') {
     router.push({ name: 'SchengenCountries' })
   } else {

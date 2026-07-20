@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/auth'
 import { adminRoutes, adminGuard } from './admin'
 import { FEATURE_RPA } from '@/config/features'
 import { applyRouteSeo, rememberRouteForSeo } from '@/seo/applySeo'
+import { track, Events } from '@/api/analytics'
 
 function rpaDisabledRedirect() {
   return FEATURE_RPA ? true : { name: 'Orders' }
@@ -222,6 +223,12 @@ const routes = [
     meta: { title: 'nav.mega.contact' }
   },
   {
+    path: '/security',
+    name: 'SecurityPractices',
+    component: () => import('@/views/SecurityPractices.vue'),
+    meta: { title: 'trust.page_title' }
+  },
+  {
     // W56: 产品定价页 — 从首页迁出来的 4 国使馆费 + 平台服务费 + 退款规则详情页
     path: '/pricing',
     name: 'Pricing',
@@ -291,6 +298,13 @@ router.beforeEach((to, from, next) => {
 router.afterEach((to) => {
   rememberRouteForSeo(to)
   applyRouteSeo(to, i18n)
+  // Product analytics — skip admin routes (noise + auth surface)
+  if (!to.path.startsWith('/admin')) {
+    track(Events.PAGE_VIEW, {
+      path: to.fullPath,
+      name: to.name ? String(to.name) : null,
+    })
+  }
 })
 
 export default router

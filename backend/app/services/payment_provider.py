@@ -442,6 +442,25 @@ class PaymentProvider:
                 order_no, exc,
             )
 
+        # Product analytics — payment succeeded
+        try:
+            from app.services.analytics import EVENT_PAYMENT_SUCCEEDED, record_event_safe
+
+            await record_event_safe(
+                db,
+                event_name=EVENT_PAYMENT_SUCCEEDED,
+                user_id=order.user_id,
+                order_no=order_no,
+                props={
+                    "trade_no": blob.get("trade_no"),
+                    "status": order.status,
+                },
+                source="server",
+                commit=True,
+            )
+        except Exception as exc:  # noqa: BLE001
+            _log.warning("analytics payment_succeeded failed: {}", exc)
+
         return True
 
     # ------------------------------------------------------------------ #
@@ -1392,6 +1411,49 @@ class StripePaymentProvider(PaymentProvider):
                     "order_no={} err={}",
                     order_no, exc,
                 )
+            try:
+                from app.services.analytics import (
+                    EVENT_PAYMENT_SUCCEEDED,
+                    record_event_safe,
+                )
+
+                await record_event_safe(
+                    db,
+                    event_name=EVENT_PAYMENT_SUCCEEDED,
+                    user_id=order.user_id,
+                    order_no=order_no,
+                    props={
+                        "trade_no": blob.get("trade_no"),
+                        "event_type": event_type,
+                        "status": order.status,
+                    },
+                    source="server",
+                    commit=True,
+                )
+            except Exception as exc:  # noqa: BLE001
+                _log.warning("analytics payment_succeeded failed: {}", exc)
+        elif event_type == "payment_intent.payment_failed":
+            try:
+                from app.services.analytics import (
+                    EVENT_PAYMENT_FAILED,
+                    record_event_safe,
+                )
+
+                await record_event_safe(
+                    db,
+                    event_name=EVENT_PAYMENT_FAILED,
+                    user_id=order.user_id,
+                    order_no=order_no,
+                    props={
+                        "trade_no": blob.get("trade_no"),
+                        "event_type": event_type,
+                        "failure_message": blob.get("failure_message"),
+                    },
+                    source="server",
+                    commit=True,
+                )
+            except Exception as exc:  # noqa: BLE001
+                _log.warning("analytics payment_failed failed: {}", exc)
 
         return True
 

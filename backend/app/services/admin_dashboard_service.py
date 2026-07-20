@@ -6,7 +6,7 @@
 接口清单 (前端 /admin/dashboard 用):
   - get_summary()             → 4 张 KPI 卡 + 与上周同期对比
   - get_trend(metric, range)  → N 天每日序列 (orders / revenue / users)
-  - get_funnel(range)         → 4 步转化漏斗 (注册 → 创建 → 提交 → 完成)
+  - get_funnel(range)         → 支付优先漏斗 (下单 → 支付页 → 支付成功 → 履约)
   - get_top_countries(range)  → 按 destination_id 分组 + join Destination
   - get_alerts()              → 规则驱动, 命中即入列, 不达阈值不出
 
@@ -22,7 +22,7 @@ import json
 from datetime import datetime, timedelta
 from typing import Any
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.audit_log import AuditLog
@@ -230,29 +230,37 @@ class AdminDashboardService:
     # funnel                                                               #
     # ------------------------------------------------------------------ #
     async def get_funnel(self, range_key: str = "7d") -> dict[str, Any]:
-        """4 步漏斗: 注册 → 创建订单 → 提交(支付成功) → 完成 (approved/closed)."""
+        """Pay-first funnel: order_create → checkout → paid → completed.
+
+        Early client steps (country_selected / wizard_started) are prepended
+        when analytics_events has data in the window.
+        """
+        from app.models.analytics_event import AnalyticsEvent
+        from app.services.analytics import (
+            EVENT_CHECKOUT_VIEWED,
+            EVENT_COUNTRY_SELECTED,
+            EVENT_WIZARD_STARTED,
+        )
+
         days = _RANGE_DAYS.get(range_key, 7)
         now = datetime.utcnow()
         start = now - timedelta(days=days)
 
-        # 1) 注册
-        register = await self._qcount(
-            select(func.count()).select_from(User).where(User.created_at >= start)
-        )
-        # 兜底: 如果 User 表很空, 用 audit_log user.register
-        if register == 0:
-            register = await self._qcount(
-                select(func.count()).select_from(AuditLog).where(
-                    AuditLog.action == "user.register",
-                    AuditLog.created_at >= start,
+        async def _event_count(name: str) -> int:
+            return await self._qcount(
+                select(func.count()).select_from(AnalyticsEvent).where(
+                    AnalyticsEvent.event_name == name,
+                    AnalyticsEvent.created_at >= start,
                 )
             )
 
-        # 2) 创建订单
+        country_selected = await _event_count(EVENT_COUNTRY_SELECTED)
+        wizard_started = await _event_count(EVENT_WIZARD_STARTED)
+
+        # 1) 创建订单
         create = await self._qcount(
             select(func.count()).select_from(Order).where(Order.created_at >= start)
         )
-        # 兜底 audit_log order.create
         if create == 0:
             create = await self._qcount(
                 select(func.count()).select_from(AuditLog).where(
@@ -261,28 +269,54 @@ class AdminDashboardService:
                 )
             )
 
-        # 3) 提交订单 (submitted_at 非空 ≈ 已支付)
-        submit = await self._qcount(
+        # 2) 进入支付页 (client checkout_viewed)
+        checkout = await _event_count(EVENT_CHECKOUT_VIEWED)
+
+        # 3) 支付成功 — paid / submitted(legacy) / paid_at / submitted_at
+        paid = await self._qcount(
             select(func.count()).select_from(Order).where(
                 Order.created_at >= start,
-                Order.submitted_at.isnot(None),
+                or_(
+                    Order.status.in_(
+                        ("paid", "completed", "submitted", "reviewing", "approved", "closed")
+                    ),
+                    Order.paid_at.isnot(None),
+                    Order.submitted_at.isnot(None),
+                ),
             )
         )
 
-        # 4) 走完流程 (approved/closed 成功终态)
+        # 4) 履约完成
         finish = await self._qcount(
             select(func.count()).select_from(Order).where(
                 Order.created_at >= start,
-                Order.status.in_(("approved", "closed")),
+                Order.status.in_(("completed", "approved", "closed")),
             )
         )
 
-        steps = [
-            {"key": "register", "label": "注册", "count": register},
+        steps: list[dict[str, Any]] = []
+        # Prepend acquisition steps only when we have client telemetry
+        if country_selected > 0 or wizard_started > 0:
+            if country_selected > 0:
+                steps.append({
+                    "key": "country_selected",
+                    "label": "选国家",
+                    "count": country_selected,
+                })
+            if wizard_started > 0:
+                steps.append({
+                    "key": "wizard_started",
+                    "label": "进入向导",
+                    "count": wizard_started,
+                })
+
+        steps.extend([
             {"key": "order_create", "label": "创建订单", "count": create},
-            {"key": "order_submit", "label": "提交订单", "count": submit},
-            {"key": "order_finish", "label": "完成 (approved/closed)", "count": finish},
-        ]
+            {"key": "checkout_viewed", "label": "进入支付页", "count": checkout},
+            {"key": "payment_success", "label": "支付成功", "count": paid},
+            {"key": "order_completed", "label": "履约完成", "count": finish},
+        ])
+
         for i, s in enumerate(steps):
             if i == 0:
                 s["conversion_pct"] = 100.0
@@ -291,7 +325,8 @@ class AdminDashboardService:
                 raw_pct = round((s["count"] / prev * 100.0), 2) if prev > 0 else 0.0
                 s["conversion_pct"] = min(100.0, raw_pct)
 
-        overall = min(100.0, round((finish / register * 100.0), 2)) if register > 0 else 0.0
+        # Overall: first money-relevant step → finish (order_create → completed)
+        overall = min(100.0, round((finish / create * 100.0), 2)) if create > 0 else 0.0
 
         return {
             "range": range_key,

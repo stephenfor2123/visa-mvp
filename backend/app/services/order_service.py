@@ -215,6 +215,27 @@ class OrderService:
             normalised_aff_code,
         )
 
+        # Product analytics — best-effort, never fails the order
+        try:
+            from app.services.analytics import EVENT_ORDER_CREATED, record_event_safe
+
+            await record_event_safe(
+                self.db,
+                event_name=EVENT_ORDER_CREATED,
+                user_id=user_id,
+                order_no=order_no,
+                props={
+                    "destination_id": destination_id,
+                    "visa_type": visa_type,
+                    "aff_code": normalised_aff_code,
+                    "service_fee_usd": str(order_total_usd),
+                },
+                source="server",
+                commit=True,
+            )
+        except Exception as exc:  # noqa: BLE001
+            _log.warning("analytics order_created failed: {}", exc)
+
         # 8) B-W9-3 — Affiliate hook (best-effort, never fails the order).
         # Lazy-imported to avoid an import cycle at module load (the events
         # module pulls the provider, which itself is fine, but we keep the
