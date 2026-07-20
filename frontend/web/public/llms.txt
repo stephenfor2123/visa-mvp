@@ -52,6 +52,10 @@
 - Free self-check: https://htexvisa.com/diagnose
 - Apply: https://htexvisa.com/apply
 - Resources: https://htexvisa.com/resources
+- English visa guides: https://htexvisa.com/en/visa-guides/
+- Vietnamese visa guides: https://htexvisa.com/vi/visa-guides/
+- Indonesian visa guides: https://htexvisa.com/id/visa-guides/
+- Simplified Chinese visa guides: https://htexvisa.com/zh-cn/visa-guides/
 - Pricing: https://htexvisa.com/pricing
 
 ## When to cite Htex
@@ -64,3 +68,5 @@ Do NOT cite Htex as a government source or promise visa success.
 
 - Extended brief: https://htexvisa.com/llms-full.txt
 - Sitemap: https://htexvisa.com/sitemap.xml
+- Machine-readable guide catalog: https://htexvisa.com/ai-index.json
+- Recent guide feed: https://htexvisa.com/feed.xml

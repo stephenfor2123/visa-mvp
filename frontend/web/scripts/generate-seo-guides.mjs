@@ -21,6 +21,11 @@ const locales = {
     updated: 'Last reviewed',
     cta: 'Check your documents with Htex',
     home: 'All visa guides',
+    faq: 'Frequently asked questions',
+    qCurrent: 'Are these requirements always current?',
+    aCurrent: 'Requirements and local procedures can change. Use the official links on this page and confirm the checklist for the location where you apply.',
+    qGuarantee: 'Does preparing these documents guarantee approval?',
+    aGuarantee: 'No. Complete preparation can reduce avoidable errors, but only the responsible government authority decides the application.',
   },
   vi: {
     lang: 'vi',
@@ -36,6 +41,11 @@ const locales = {
     updated: 'Ngày kiểm tra gần nhất',
     cta: 'Kiểm tra hồ sơ với Htex',
     home: 'Tất cả hướng dẫn',
+    faq: 'Câu hỏi thường gặp',
+    qCurrent: 'Các yêu cầu này có luôn mới nhất không?',
+    aCurrent: 'Quy định và thủ tục địa phương có thể thay đổi. Hãy mở các liên kết chính thức trên trang và xác nhận danh sách tại nơi bạn nộp hồ sơ.',
+    qGuarantee: 'Chuẩn bị đủ giấy tờ có bảo đảm được cấp visa không?',
+    aGuarantee: 'Không. Chuẩn bị đầy đủ giúp giảm lỗi có thể tránh, nhưng chỉ cơ quan chính phủ có thẩm quyền mới quyết định hồ sơ.',
   },
   id: {
     lang: 'id',
@@ -51,6 +61,11 @@ const locales = {
     updated: 'Terakhir ditinjau',
     cta: 'Periksa dokumen dengan Htex',
     home: 'Semua panduan visa',
+    faq: 'Pertanyaan umum',
+    qCurrent: 'Apakah persyaratan ini selalu terbaru?',
+    aCurrent: 'Aturan dan prosedur lokal dapat berubah. Buka tautan resmi pada halaman ini dan konfirmasikan daftar untuk lokasi tempat Anda mengajukan.',
+    qGuarantee: 'Apakah dokumen lengkap menjamin persetujuan?',
+    aGuarantee: 'Tidak. Persiapan yang lengkap dapat mengurangi kesalahan, tetapi hanya otoritas pemerintah terkait yang memutuskan aplikasi.',
   },
   'zh-cn': {
     lang: 'zh-CN',
@@ -66,6 +81,11 @@ const locales = {
     updated: '最后核验',
     cta: '使用 Htex 检查申请材料',
     home: '全部签证指南',
+    faq: '常见问题',
+    qCurrent: '这些要求是否始终是最新的？',
+    aCurrent: '政策和当地流程可能变化。请打开本页列出的官方链接，并核对实际申请地对应的最新清单。',
+    qGuarantee: '材料准备完整能保证获签吗？',
+    aGuarantee: '不能。完整准备可以减少可避免的错误，但申请结果只能由相关政府部门决定。',
   },
 }
 
@@ -159,7 +179,9 @@ footer{font-size:14px;color:#647087}@media(max-width:640px){header{align-items:f
 <body><header><a href="${origin}/home">Htex</a><nav class="langs" aria-label="Languages">${Object.entries(alternates).map(([code, href]) => `<a href="${href}" lang="${locales[code]?.lang || code}">${locales[code]?.label || code}</a>`).join('')}</nav></header>${body}<footer>© Htex · <a href="${origin}/agreement">Terms & privacy</a> · <a href="${origin}/llms.txt">AI site guide</a></footer></body></html>`
 }
 
-const sitemapPaths = ['/', '/home', '/destinations', '/schengen-countries', '/apply', '/diagnose', '/resources', '/resources/wiki', '/resources/policy', '/resources/templates', '/resources/faq', '/contact', '/pricing', '/agreement']
+const sitemapEntries = ['/', '/home', '/destinations', '/schengen-countries', '/apply', '/diagnose', '/resources', '/resources/wiki', '/resources/policy', '/resources/templates', '/resources/faq', '/contact', '/pricing', '/agreement']
+  .map((path) => ({ path }))
+const aiCatalog = []
 
 for (const [localeKey, l] of Object.entries(locales)) {
   const indexPath = pagePath(localeKey)
@@ -174,26 +196,38 @@ for (const [localeKey, l] of Object.entries(locales)) {
   const indexTarget = join(dist, localeKey, 'visa-guides', 'index.html')
   await mkdir(dirname(indexTarget), { recursive: true })
   await writeFile(indexTarget, indexHtml)
-  sitemapPaths.push(indexPath)
+  sitemapEntries.push({ path: indexPath, alternates: indexAlternates })
 
   for (const topic of topics) {
     const [title, desc, docs, steps] = topic.copy[localeKey]
     const path = pagePath(localeKey, topic.slug)
     const alternates = Object.fromEntries(Object.keys(locales).map((key) => [key, `${origin}${pagePath(key, topic.slug)}`]))
-    const body = `<main><p><a href="${pagePath(localeKey)}">← ${esc(l.home)}</a></p><article><h1>${esc(title)}</h1><p class="lead">${esc(desc)}</p><p class="meta">${esc(l.updated)}: ${updated}</p><h2>${esc(l.requirements)}</h2><ul>${docs.map((x) => `<li>${esc(x)}</li>`).join('')}</ul><h2>${esc(l.steps)}</h2><ol>${steps.map((x) => `<li>${esc(x)}</li>`).join('')}</ol><h2>${esc(l.sources)}</h2><ul>${topic.official.map(([name, url]) => `<li><a rel="noopener" href="${url}">${esc(name)}</a></li>`).join('')}</ul><p class="notice">${esc(l.disclaimer)}</p><a class="cta" href="${origin}/diagnose">${esc(l.cta)}</a></article></main>`
-    const schema = { '@context': 'https://schema.org', '@type': 'Article', headline: title, description: desc, dateModified: updated, datePublished: updated, inLanguage: l.lang, mainEntityOfPage: `${origin}${path}`, author: { '@type': 'Organization', name: 'Htex' }, publisher: { '@type': 'Organization', name: 'Htex', url: origin, logo: { '@type': 'ImageObject', url: `${origin}/icons/icon-512.png` } }, citation: topic.official.map(([, url]) => url) }
+    const faqItems = [{ question: l.qCurrent, answer: l.aCurrent }, { question: l.qGuarantee, answer: l.aGuarantee }]
+    const body = `<main><p><a href="${pagePath(localeKey)}">← ${esc(l.home)}</a></p><article><h1>${esc(title)}</h1><p class="lead">${esc(desc)}</p><p class="meta">${esc(l.updated)}: ${updated}</p><h2>${esc(l.requirements)}</h2><ul>${docs.map((x) => `<li>${esc(x)}</li>`).join('')}</ul><h2>${esc(l.steps)}</h2><ol>${steps.map((x) => `<li>${esc(x)}</li>`).join('')}</ol><h2>${esc(l.sources)}</h2><ul>${topic.official.map(([name, url]) => `<li><a rel="noopener" href="${url}">${esc(name)}</a></li>`).join('')}</ul><h2>${esc(l.faq)}</h2>${faqItems.map((item) => `<details><summary><strong>${esc(item.question)}</strong></summary><p>${esc(item.answer)}</p></details>`).join('')}<p class="notice">${esc(l.disclaimer)}</p><a class="cta" href="${origin}/diagnose">${esc(l.cta)}</a></article></main>`
+    const schema = {
+      '@context': 'https://schema.org',
+      '@graph': [
+        { '@type': 'Article', headline: title, description: desc, dateModified: updated, datePublished: updated, inLanguage: l.lang, mainEntityOfPage: `${origin}${path}`, author: { '@type': 'Organization', name: 'Htex', url: origin }, publisher: { '@type': 'Organization', name: 'Htex', url: origin, logo: { '@type': 'ImageObject', url: `${origin}/icons/icon-512.png` } }, citation: topic.official.map(([, url]) => url) },
+        { '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: l.guides, item: `${origin}${pagePath(localeKey)}` }, { '@type': 'ListItem', position: 2, name: title, item: `${origin}${path}` }] },
+        { '@type': 'FAQPage', mainEntity: faqItems.map((item) => ({ '@type': 'Question', name: item.question, acceptedAnswer: { '@type': 'Answer', text: item.answer } })) },
+      ],
+    }
     const html = layout({ localeKey, title, description: desc, path, body, schema, alternates })
     const target = join(dist, localeKey, 'visa-guides', topic.slug, 'index.html')
     await mkdir(dirname(target), { recursive: true })
     await writeFile(target, html)
-    sitemapPaths.push(path)
+    sitemapEntries.push({ path, alternates })
+    aiCatalog.push({ url: `${origin}${path}`, language: l.lang, title, summary: desc, lastReviewed: updated, officialSources: topic.official.map(([name, url]) => ({ name, url })) })
   }
 }
 
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
-${sitemapPaths.map((path) => `  <url><loc>${origin}${path}</loc><lastmod>${updated}</lastmod></url>`).join('\n')}
+${sitemapEntries.map(({ path, alternates }) => `  <url><loc>${origin}${path}</loc><lastmod>${updated}</lastmod>${alternates ? Object.entries(alternates).map(([key, href]) => `<xhtml:link rel="alternate" hreflang="${locales[key].hrefLang}" href="${href}"/>`).join('') : ''}</url>`).join('\n')}
 </urlset>
 `
 await writeFile(join(dist, 'sitemap.xml'), sitemap)
-console.log(`generated ${Object.keys(locales).length * (topics.length + 1)} localized guide pages and ${sitemapPaths.length} sitemap URLs`)
+await writeFile(join(dist, 'ai-index.json'), JSON.stringify({ name: 'Htex visa guide catalog', generatedAt: updated, disclaimer: locales.en.disclaimer, pages: aiCatalog }, null, 2))
+const feedItems = aiCatalog.filter((item) => item.language === 'en').map((item) => `<item><title>${esc(item.title)}</title><link>${item.url}</link><guid>${item.url}</guid><description>${esc(item.summary)}</description><pubDate>Mon, 20 Jul 2026 00:00:00 GMT</pubDate></item>`).join('')
+await writeFile(join(dist, 'feed.xml'), `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>Htex Visa Guides</title><link>${origin}/en/visa-guides/</link><description>Source-linked visa application guides</description>${feedItems}</channel></rss>`)
+console.log(`generated ${Object.keys(locales).length * (topics.length + 1)} localized guide pages and ${sitemapEntries.length} sitemap URLs`)

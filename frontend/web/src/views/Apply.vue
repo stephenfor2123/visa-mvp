@@ -5,7 +5,7 @@
     <main class="app-container app-page apply-main">
       <!-- Step 1: 国家选 -->
       <section v-if="step === 1" class="apply-section" data-testid="apply-step-1">
-        <h2 class="apply-section__title">{{ t('apply.step_country') }}</h2>
+        <h1 class="apply-section__title">{{ t('apply.step_country') }}</h1>
         <div class="apply-countries">
           <div
             v-for="(group, gKey) in groupedCountries"
@@ -46,10 +46,10 @@
           ← {{ t('apply.back') }}
         </button>
         <div class="apply-section__head">
-          <h2 class="apply-section__title">
+          <h1 class="apply-section__title">
             <span class="apply-section__flag">{{ flagOf(form.country_code) }}</span>
             {{ selectedCountryName }} <span class="apply-section__sep">·</span> {{ t('apply.checklist') }}
-          </h2>
+          </h1>
           <p v-if="checklist" class="apply-section__sub">
             {{ t('apply.summary', { count: totalMaterialsCount, groups: groupedMaterials.length }) }}
           </p>

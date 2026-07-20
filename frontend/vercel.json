@@ -4,7 +4,7 @@
   "installCommand": "cd web && npm install",
   "framework": "vite",
   "rewrites": [
-    { "source": "/((?!robots\\.txt|sitemap\\.xml|llms\\.txt|llms-full\\.txt|favicon\\.svg|manifest\\.json|icons/).*)", "destination": "/index.html" }
+    { "source": "/((?!robots\\.txt|sitemap\\.xml|llms\\.txt|llms-full\\.txt|ai-index\\.json|feed\\.xml|favicon\\.svg|manifest\\.json|icons/|en/visa-guides/|vi/visa-guides/|id/visa-guides/|zh-cn/visa-guides/).*)", "destination": "/index.html" }
   ],
   "headers": [
     {

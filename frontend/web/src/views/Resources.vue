@@ -441,7 +441,7 @@ watch(locale, () => { loadCountries() })
     white-space: pre-wrap;
   }
   &__line { margin-bottom: 6px; }
-  :deep(&__cite) { color: #64748b; font-size: 12.5px; margin-left: 4px; }
+  :deep(.resources-answer__cite) { color: #64748b; font-size: 12.5px; margin-left: 4px; }
   &__sources {
     margin-top: 16px;
     border-top: 1px solid #f1f5f9;
