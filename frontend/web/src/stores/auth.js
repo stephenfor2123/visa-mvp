@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { login as apiLogin, register as apiRegister, loginWithGoogle as apiLoginWithGoogle, refresh as apiRefresh } from '@/api/auth'
+import { clearAllLocalVisaData } from '@/utils/localPrivacyStorage'
 
 const STORAGE_KEY = 'visa.auth'
 
@@ -106,6 +107,8 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   function logout() {
+    // A-07: clear local drafts / OCR / previews on logout
+    try { clearAllLocalVisaData() } catch { /* ignore */ }
     clear()
   }
 

@@ -22,6 +22,7 @@ import AuthExpiredBanner from '@/components/AuthExpiredBanner.vue'
 // has previously picked one manually). The actual toast is shown by
 // LangSwitch via the onLocaleChange event bus.
 import { useGeoLocale } from '@/composables/useGeoLocale'
+import { purgeExpiredLocalVisaData } from '@/utils/localPrivacyStorage'
 
 useGeoLocale()
 
@@ -55,8 +56,8 @@ function goLogin() {
 
 onMounted(() => {
   window.addEventListener('htex:auth-expired', onAuthExpired)
-  // 页面刷新时 auth.hydrate() 后 isAuthExpired 已经是 true(从 store 拿到),
-  // 这里不用手动触发,响应式会自动渲染。
+  // A-06: purge expired local drafts on startup (TTL is otherwise lazy-on-read)
+  try { purgeExpiredLocalVisaData() } catch { /* ignore */ }
 })
 onBeforeUnmount(() => {
   window.removeEventListener('htex:auth-expired', onAuthExpired)

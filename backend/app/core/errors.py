@@ -109,6 +109,8 @@ class ErrorCode(str, Enum):
     DS160_CODE_INVALID_FORMAT = "11004"   # /redeem: not 12 base30 chars
     DS160_PROFILE_INCOMPLETE = "11005"    # /code: applicant_data missing required fields
     DS160_ORDER_NOT_READY = "11006"       # /code: order status doesn't allow code generation
+    DS160_CODE_EXPIRED = "11007"          # /redeem: code past TTL (default 10 min)
+    DS160_CODE_USED = "11008"             # /redeem: single-use code already consumed
 
 
 # HTTP status mapping (defaults; can be overridden when raising)
@@ -187,6 +189,8 @@ _ERROR_HTTP_STATUS: dict[ErrorCode, int] = {
     ErrorCode.DS160_CODE_INVALID_FORMAT: status.HTTP_400_BAD_REQUEST,
     ErrorCode.DS160_PROFILE_INCOMPLETE: status.HTTP_422_UNPROCESSABLE_ENTITY,
     ErrorCode.DS160_ORDER_NOT_READY: status.HTTP_409_CONFLICT,
+    ErrorCode.DS160_CODE_EXPIRED: status.HTTP_410_GONE,
+    ErrorCode.DS160_CODE_USED: status.HTTP_409_CONFLICT,
 }
 
 

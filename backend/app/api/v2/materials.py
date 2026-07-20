@@ -85,6 +85,7 @@ _log = get_logger()
     summary="Process a material in memory (OCR / bank parse, no storage)",
 )
 async def process_material(
+    response: Response,
     file: UploadFile = File(..., description="Binary file content"),
     material_type: str = Form(
         ..., description="passport / id_card / household / enrollment / photo / form / bank / other"
@@ -104,6 +105,10 @@ async def process_material(
             message="file too large for process (max 20MB)",
         )
 
+    # B-02: magic-byte check before OCR / image parsers see the payload
+    from app.core.file_validation import validate_upload_bytes
+    validate_upload_bytes(data, file.content_type or "")
+
     out = process_bytes(
         data,
         material_type=material_type,
@@ -117,6 +122,9 @@ async def process_material(
         out.get("pages_processed"),
         out.get("ocr_status"),
     )
+    # B-04: never cache OCR / material responses
+    response.headers["Cache-Control"] = "no-store, private"
+    response.headers["Pragma"] = "no-cache"
     payload = ProcessMaterialResponse(**out)
     return ApiResponse[ProcessMaterialResponse](code="1000", message="OK", data=payload)
 

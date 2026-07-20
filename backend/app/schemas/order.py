@@ -27,8 +27,8 @@ class CreateOrderRequest(BaseModel):
     applicant_data: dict[str, Any] = Field(
         default_factory=dict,
         description=(
-            "Structured applicant form fields "
-            "(name, gender, dob, nationality, passport_no, etc.)"
+            "DEPRECATED on create: ignored and NOT persisted (A-01 privacy). "
+            "Attach full profile after payment via PUT /orders/{order_no}/applicant-data."
         ),
     )
     aff_code: Optional[str] = Field(
@@ -47,6 +47,23 @@ class CreateOrderRequest(BaseModel):
         if v not in VISA_TYPES:
             raise ValueError(f"visa_type must be one of {sorted(VISA_TYPES)}")
         return v
+
+
+class SetApplicantDataRequest(BaseModel):
+    """PUT /orders/{order_no}/applicant-data — only after payment (A-01)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    applicant_data: dict[str, Any] = Field(
+        ...,
+        description="Full applicant profile for plugin/DS-160 after payment",
+    )
+
+
+class SetApplicantDataResponse(BaseModel):
+    order_no: str
+    status: str
+    fingerprint_prefix: str = ""
 
 
 # --------------------------------------------------------------------------- #

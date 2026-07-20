@@ -81,7 +81,7 @@ import AppHeader from '@/components/AppHeader.vue'
 import AppButton from '@/components/AppButton.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
-import { getOrder } from '@/api/orders'
+import { getOrder, syncPendingApplicantAfterPayment } from '@/api/orders'
 import { createPayment, getPaymentConfig, queryPaymentStatus } from '@/api/payment'
 import { FEATURE_RPA, postPaymentRoute } from '@/config/features'
 
@@ -119,7 +119,13 @@ function goBack() {
   router.back()
 }
 
-function goNext() {
+async function goNext() {
+  // A-01: attach browser-held applicant draft now that payment is confirmed
+  try {
+    await syncPendingApplicantAfterPayment(orderNo.value)
+  } catch (e) {
+    console.warn('[payment] sync applicant_data failed', e)
+  }
   const q = { orderId: orderNo.value }
   if (!FEATURE_RPA || nextRoute.value === 'detail') {
     const dest = postPaymentRoute(orderNo.value)

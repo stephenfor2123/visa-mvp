@@ -137,7 +137,8 @@ class TestCreateOrder:
         assert body["data"]["order"]["user_id"] > 0
         assert body["data"]["order"]["visa_type"] == "tourism"
         assert body["data"]["order"]["material_ids"] == [mid]
-        assert body["data"]["order"]["applicant_data"]["name"] == "Alice"
+        # A-01: unpaid create must not persist applicant PII
+        assert body["data"]["order"]["applicant_data"] == {}
 
     async def test_unauthenticated_returns_1005(self, client):
         r = await client.post(
@@ -263,7 +264,7 @@ class TestListOrders:
         assert body["items"][0]["order_no"] == no2
 
         r = await client.get(
-            "/api/v2/orders?status=closed", headers=_bearer(token)
+            "/api/v2/orders?status=cancelled", headers=_bearer(token)
         )
         assert r.status_code == 200
         body = r.json()["data"]
@@ -308,7 +309,11 @@ class TestGetOrderDetail:
         body = r2.json()["data"]
         assert body["order_no"] == order_no
         assert body["status"] == "created"
-        assert body["applicant_data"]["name"] == "Alice"
+        # A-01: applicant_data not stored on unpaid create
+        assert body["applicant_data"] == {} or body["applicant_data"] is None or body["applicant_data"] == {}
+        if body.get("applicant_data"):
+            assert "passport_no" not in body["applicant_data"]
+            assert "name" not in body["applicant_data"]
         # status_history
         assert len(body["status_history"]) == 1
         h0 = body["status_history"][0]

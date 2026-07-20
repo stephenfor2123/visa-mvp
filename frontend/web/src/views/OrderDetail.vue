@@ -499,6 +499,7 @@ import {
   deleteOrder,
   pollOrderStatus,
   markPortalSubmitted,
+  syncPendingApplicantAfterPayment,
   TIMELINE_STEPS,
   BRANCH_STEPS
 } from '@/api/orders'
@@ -945,6 +946,12 @@ async function onGetDs160Code() {
   if (!order.value || !order.value.id) return
   exportingDs160.value = true
   try {
+    // A-01: ensure server has post-payment applicant profile before issuing code
+    try {
+      await syncPendingApplicantAfterPayment(order.value.order_no)
+    } catch (syncErr) {
+      console.warn('[ds160] sync applicant before code failed', syncErr)
+    }
     const data = await issueDs160Code(order.value.id, { forceRotate: false })
     ds160Code.value = data.code || ''
     ds160Fingerprint.value = (data.fingerprint || '').slice(0, 8) || ''
@@ -954,7 +961,6 @@ async function onGetDs160Code() {
     if (!data.unchanged) {
       toast.success(t('orderdetail.ds160_get_code_ok'))
     } else {
-      // 幂等:档案没变 → 复用旧 code
       toast.info(t('orderdetail.ds160_unchanged_hint'))
     }
   } catch (err) {

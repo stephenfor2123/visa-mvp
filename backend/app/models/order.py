@@ -213,7 +213,11 @@ class Order(Base):
     # See backend/app/core/ds160.py + browser-extension/DESIGN-v0.2.md.
     ds160_code: Mapped[Optional[str]] = mapped_column(
         String(12), nullable=True, index=True,
-        comment="12-char base30 code; null until user requests it via /api/v2/ds160/code",
+        comment="DEPRECATED: plaintext cleared; use ds160_code_hash. Kept for migration compat.",
+    )
+    ds160_code_hash: Mapped[Optional[str]] = mapped_column(
+        String(64), nullable=True, index=True,
+        comment="SHA-256 hex of 12-char base30 redeem code; plaintext never persisted",
     )
     ds160_fingerprint: Mapped[Optional[str]] = mapped_column(
         String(64), nullable=True,

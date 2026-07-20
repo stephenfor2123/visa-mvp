@@ -59,6 +59,24 @@ async def lifespan(app: FastAPI):
             "JWT_SECRET is still the dev placeholder. "
             "Set JWT_SECRET env var before deploying to prod."
         )
+    # C-02: never allow mock payment in production.
+    if settings.env == "prod" and settings.payment_channel == "mock":
+        raise ValueError(
+            "PAYMENT_CHANNEL=mock is forbidden in prod. "
+            "Set PAYMENT_CHANNEL=stripe and Stripe secrets before deploying."
+        )
+    # A-02: never allow material persistence in production.
+    if settings.env == "prod" and settings.material_storage_enabled:
+        raise ValueError(
+            "MATERIAL_STORAGE_ENABLED must be false in prod. "
+            "C-side materials are ephemeral (/materials/process only)."
+        )
+    # System key must not use the published default in prod.
+    if settings.env == "prod" and settings.system_api_key == "dev-system-key-change-me-in-prod-visa-mvp-2026":
+        raise ValueError(
+            "SYSTEM_API_KEY is still the dev placeholder. "
+            "Set SYSTEM_API_KEY env var before deploying to prod."
+        )
     # Seed 6 个内置 admin 角色 (idempotent, 每次启动对齐 PERMISSIONS 注册表)
     try:
         async with async_session_maker() as db:
@@ -76,11 +94,19 @@ def create_app() -> FastAPI:
     configure_logging()
     log = get_logger()
 
+    # I-06: hide OpenAPI surface in production.
+    docs_url = None if settings.env == "prod" else "/docs"
+    redoc_url = None if settings.env == "prod" else "/redoc"
+    openapi_url = None if settings.env == "prod" else "/openapi.json"
+
     app = FastAPI(
         title=settings.app_name,
         version=settings.app_version,
         description="Htex API (V2) — Auth, Orders, Materials, RPA, Payments.",
         lifespan=lifespan,
+        docs_url=docs_url,
+        redoc_url=redoc_url,
+        openapi_url=openapi_url,
     )
 
     # --- Security headers (X-Content-Type-Options, CSP, X-Frame-Options, etc.) ---
@@ -89,9 +115,19 @@ def create_app() -> FastAPI:
     # --- Request body size limit (max 10 MB, configurable via MAX_REQUEST_SIZE_MB) ---
     app.add_middleware(RequestSizeLimitMiddleware, max_size_mb=settings.max_request_size_mb)
 
-    # --- CORS (tightened: explicit allowlist, no wildcard in prod) ---
+    # --- Request logging ---
+    app.add_middleware(RequestLoggingMiddleware)
+
+    # --- Rate limiting (per-IP, per route class) ---
+    app.add_middleware(
+        RateLimitMiddleware,
+        global_per_min=settings.rate_limit_per_ip_per_min,
+        slow_per_min=settings.rate_limit_slow_api_per_ip_per_min,
+    )
+
+    # --- CORS must be outermost so 4xx/5xx from handlers still get ACAO ---
     # Origins are parsed from CORS_ALLOWED_ORIGINS env var (comma-separated).
-    # Dev default covers localhost:5173 (Vite), :4173 (preview), :3000 ( CRA).
+    # Dev default covers localhost:5173 (Vite), :4173 (preview), :3000 (CRA).
     # In prod, set CORS_ALLOWED_ORIGINS to the exact frontend domain(s).
     allowed_origins = [
         origin.strip()
@@ -114,17 +150,9 @@ def create_app() -> FastAPI:
             "X-System-Key",
             "X-Requested-With",
             "Accept-Language",
+            "Accept",
+            "Content-Language",
         ],
-    )
-
-    # --- Request logging ---
-    app.add_middleware(RequestLoggingMiddleware)
-
-    # --- Rate limiting (per-IP, per route class) ---
-    app.add_middleware(
-        RateLimitMiddleware,
-        global_per_min=settings.rate_limit_per_ip_per_min,
-        slow_per_min=settings.rate_limit_slow_api_per_ip_per_min,
     )
 
     # --- Routers ---
@@ -158,16 +186,26 @@ def create_app() -> FastAPI:
 
     @app.get("/", tags=["meta"])
     async def root() -> dict:
-        return {
+        payload = {
             "app": settings.app_name,
             "version": settings.app_version,
-            "docs": "/docs",
             "api": settings.api_prefix,
         }
+        if settings.env != "prod":
+            payload["docs"] = "/docs"
+        return payload
 
     # --- Metrics (Prometheus scrape target) ---
     @app.get("/metrics", tags=["meta"], include_in_schema=False)
-    async def metrics():
+    async def metrics(request: Request):
+        # I-07: prod requires X-System-Key; never expose anonymously.
+        if settings.env == "prod":
+            key = request.headers.get("x-system-key", "")
+            if not key or key != settings.system_api_key:
+                return JSONResponse(
+                    status_code=404,
+                    content=build_error_payload(ErrorCode.NOT_FOUND, message="Not found"),
+                )
         from starlette.responses import Response
         return Response(content=metrics_bytes(), media_type=METRICS_CONTENT_TYPE)
 
@@ -201,18 +239,15 @@ def create_app() -> FastAPI:
     @app.exception_handler(RequestValidationError)
     async def _validation_handler(_: Request, exc: RequestValidationError) -> JSONResponse:
         # Pydantic 422 -> V2 1001 INVALID_PARAMS.
-        # `errors()` may contain non-JSON-serializable objects (e.g. ValueError
-        # instances raised inside field validators). Sanitize to str.
-        log.info("validation error: {}", exc.errors())
+        # Never echo / log submitted PII (passport, email, etc.) — H-02.
         safe_errors = []
         for err in exc.errors():
             safe = {k: (str(v) if k == "ctx" and v is not None else v) for k, v in err.items()}
-            # ctx can still have non-serializable values — flatten to strings
             if isinstance(safe.get("ctx"), dict):
                 safe["ctx"] = {ck: str(cv) for ck, cv in safe["ctx"].items()}
-            # Never echo submitted PII back in validation errors (passport, email, etc.)
             safe.pop("input", None)
             safe_errors.append(safe)
+        log.info("validation error: {}", safe_errors)
         return JSONResponse(
             status_code=400,
             content=build_error_payload(

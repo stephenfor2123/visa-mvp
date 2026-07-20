@@ -54,6 +54,8 @@ from app.schemas.order import (
     PortalSubmittedResponse,
     RefundRequestBody,
     RefundRequestResponse,
+    SetApplicantDataRequest,
+    SetApplicantDataResponse,
     SubmitOrderRequest,
     SubmitOrderResponse,
 )
@@ -148,7 +150,7 @@ async def create_order(
                     "destination_url": order.destination_url,
                     "aff_code": order.aff_code,
                     "material_ids": body.material_ids,
-                    "applicant_data": body.applicant_data,
+                    "applicant_data": {},
                     "submitted_at": order.submitted_at,
                     "reviewed_at": order.reviewed_at,
                     "closed_at": order.closed_at,
@@ -158,6 +160,40 @@ async def create_order(
             ),
             order_no=order.order_no,
             status=order.status,
+        ),
+    )
+
+
+# --------------------------------------------------------------------------- #
+# PUT /orders/{order_no}/applicant-data  (A-01: post-payment only)            #
+# --------------------------------------------------------------------------- #
+@router.put(
+    "/{order_no}/applicant-data",
+    response_model=ApiResponse[SetApplicantDataResponse],
+    summary="Attach applicant profile after payment (not allowed on unpaid orders)",
+)
+async def set_order_applicant_data(
+    order_no: Annotated[str, Path(min_length=8, max_length=64)],
+    body: SetApplicantDataRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> ApiResponse[SetApplicantDataResponse]:
+    service = OrderService(db)
+    order = await service.set_applicant_data(
+        user_id=current_user.id,
+        order_no=order_no,
+        applicant_data=body.applicant_data,
+    )
+    from app.core.ds160 import compute_fingerprint, load_applicant_profile
+    profile = load_applicant_profile(order.applicant_data)
+    fp = compute_fingerprint(profile)[:8] if profile else ""
+    return ApiResponse[SetApplicantDataResponse](
+        code="1000",
+        message="OK",
+        data=SetApplicantDataResponse(
+            order_no=order.order_no,
+            status=order.status,
+            fingerprint_prefix=fp,
         ),
     )
 

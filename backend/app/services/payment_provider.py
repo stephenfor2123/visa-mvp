@@ -582,6 +582,18 @@ class PaymentProvider:
                 "refund_amount_cents": refund_cents,
             },
         )
+        # C-05: refund immediately cancels plugin authorization
+        from app.core.ds160 import revoke_order_ds160
+        if revoke_order_ds160(order):
+            await record_audit(
+                db,
+                actor_type="system",
+                actor_id=0,
+                action="ds160.code.revoked_on_refund",
+                target_type="order",
+                target_id=order.id,
+                payload={"order_no": order_no},
+            )
         await db.commit()
         await db.refresh(order)
         _log.info(
@@ -1561,6 +1573,17 @@ class StripePaymentProvider(PaymentProvider):
                 "provider": "stripe",
             },
         )
+        from app.core.ds160 import revoke_order_ds160
+        if revoke_order_ds160(order):
+            await record_audit(
+                db,
+                actor_type="system",
+                actor_id=0,
+                action="ds160.code.revoked_on_refund",
+                target_type="order",
+                target_id=order.id,
+                payload={"order_no": order_no, "provider": "stripe"},
+            )
         await db.commit()
         await db.refresh(order)
         _log.info(

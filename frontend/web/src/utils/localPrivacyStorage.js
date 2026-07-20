@@ -162,6 +162,30 @@ export function listDiagnosableMaterials() {
   return items
 }
 
+export function purgeExpiredLocalVisaData(ttl = WIZARD_TTL_MS) {
+  /** A-06: sweep expired TTL-wrapped keys on app start (not only on next read). */
+  const toRemove = []
+  for (let i = 0; i < localStorage.length; i += 1) {
+    const k = localStorage.key(i)
+    if (!k) continue
+    if (!(k.startsWith('visa.') || k.startsWith('wizard.orderForm.') || k === 'ordernew_draft')) {
+      continue
+    }
+    try {
+      const raw = localStorage.getItem(k)
+      if (!raw) continue
+      const parsed = JSON.parse(raw)
+      if (parsed && typeof parsed._savedAt === 'number' && Date.now() - parsed._savedAt > ttl) {
+        toRemove.push(k)
+      }
+    } catch { /* ignore */ }
+  }
+  toRemove.forEach((k) => {
+    try { localStorage.removeItem(k) } catch { /* ignore */ }
+  })
+  return toRemove.length
+}
+
 /** Remove all browser-local visa drafts, OCR cache, and previews. */
 export function clearAllLocalVisaData() {
   const lsKeys = []

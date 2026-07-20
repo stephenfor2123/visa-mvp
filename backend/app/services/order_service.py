@@ -127,7 +127,10 @@ class OrderService:
         )
         order_currency = "USD"
 
-        # 5) Persist
+        # A-01: unpaid (created) orders must NOT persist applicant PII.
+        # Client may still send applicant_data for local UX; it is discarded here.
+        # Full profile is attached only after payment via set_applicant_data.
+        _ = applicant_data
         order = Order(
             order_no=order_no,
             user_id=user_id,
@@ -136,7 +139,7 @@ class OrderService:
             status="created",
             total_amount=order_total_usd,
             currency=order_currency,
-            applicant_data=json.dumps(applicant_data or {}, ensure_ascii=False),
+            applicant_data=None,
             material_ids=json.dumps(material_ids, ensure_ascii=False),
             aff_code=normalised_aff_code,
             locked_until=self._utcnow() + timedelta(seconds=ORDER_LOCK_SECONDS),
@@ -206,15 +209,51 @@ class OrderService:
 
             try:
                 await on_order_created(order)
-            except Exception as exc:  # noqa: BLE001 — defensive
-                # on_order_created already swallows provider errors, but
-                # belt-and-braces: never let an affiliate glitch kill the
-                # user's order creation response.
-                _log.warning(
-                    "order_service.create affiliate hook swallowed order_no={} err={}",
-                    order.order_no, exc,
-                )
+            except Exception as exc:  # pragma: no cover
+                _log.warning("affiliate on_order_created failed: {}", exc)
 
+        return order
+
+    # Statuses that may hold applicant PII on the server (post-payment only).
+    _APPLICANT_ATTACH_STATUSES = frozenset({
+        "paid", "completed", "submitted", "reviewing", "approved",
+    })
+
+    async def set_applicant_data(
+        self,
+        *,
+        user_id: int,
+        order_no: str,
+        applicant_data: Dict[str, Any],
+    ) -> Order:
+        """Attach full applicant profile after payment (A-01 gate)."""
+        order = await self._get_owned_order(user_id, order_no)
+        if order.status not in self._APPLICANT_ATTACH_STATUSES:
+            raise BizException(
+                ErrorCode.ORDER_INVALID_STATE,
+                message="Applicant data can only be attached after payment",
+                data={"status": order.status},
+            )
+        if not isinstance(applicant_data, dict) or not applicant_data:
+            raise BizException(
+                ErrorCode.INVALID_PARAMS,
+                message="applicant_data must be a non-empty object",
+            )
+        order.applicant_data = json.dumps(applicant_data, ensure_ascii=False)
+        # Profile change invalidates any outstanding plugin code.
+        from app.core.ds160 import revoke_order_ds160
+        revoke_order_ds160(order)
+        await record_audit(
+            self.db,
+            actor_type="user",
+            actor_id=user_id,
+            action="order.applicant_data.set",
+            target_type="order",
+            target_id=order.id,
+            payload={"order_no": order_no, "field_count": len(applicant_data)},
+        )
+        await self.db.commit()
+        await self.db.refresh(order)
         return order
 
     # ------------------------------------------------------------------ #

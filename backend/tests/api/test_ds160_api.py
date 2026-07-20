@@ -115,6 +115,36 @@ async def _create_order(
             "destination_id": dest_id,
             "visa_type": visa_type,
             "material_ids": [material_id],
+            "applicant_data": applicant,  # discarded until paid (A-01)
+        },
+        headers=_bearer(token),
+    )
+    assert r.status_code == 201, r.text
+    order_no = r.json()["data"]["order_no"]
+    # C-01 / A-01: DS-160 requires paid + attached applicant profile
+    async with AsyncSessionLocal() as s:
+        await s.execute(
+            update(Order)
+            .where(Order.order_no == order_no)
+            .values(
+                status="paid",
+                applicant_data=json.dumps(applicant, ensure_ascii=False),
+            )
+        )
+        await s.commit()
+    return order_no
+
+
+async def _create_unpaid_order(
+    client, token: str, dest_id: int, material_id: int,
+    applicant: dict, visa_type: str = "tourism",
+) -> str:
+    r = await client.post(
+        "/api/v2/orders",
+        json={
+            "destination_id": dest_id,
+            "visa_type": visa_type,
+            "material_ids": [material_id],
             "applicant_data": applicant,
         },
         headers=_bearer(token),
@@ -128,14 +158,14 @@ async def _create_order(
 # --------------------------------------------------------------------------- #
 
 class TestIssueCode:
-    async def test_idempotent_when_archive_unchanged(self, client):
+    async def test_reissue_rotates_code(self, client):
+        """Plaintext is not stored — second /code call mints a new code."""
         get_default_rate_limiter().reset()
         dest_id = await _seed_destination()
         token = await _register(client, "13900000001")
         mid = await _upload_material(client, token)
         order_no = await _create_order(client, token, dest_id, mid, _full_applicant())
 
-        # Get order id from order_no (need it for the API)
         async with AsyncSessionLocal() as s:
             order = await s.scalar(select(Order).where(Order.order_no == order_no))
             order_id = order.id
@@ -149,6 +179,12 @@ class TestIssueCode:
         body1 = r1.json()["data"]
         assert body1["unchanged"] is False
         assert len(body1["code"]) == 12
+        assert "expires_at" in body1
+
+        async with AsyncSessionLocal() as s:
+            order = await s.scalar(select(Order).where(Order.id == order_id))
+            assert order.ds160_code is None
+            assert order.ds160_code_hash and len(order.ds160_code_hash) == 64
 
         r2 = await client.post(
             "/api/v2/ds160/code",
@@ -156,9 +192,29 @@ class TestIssueCode:
             headers=_bearer(token),
         )
         body2 = r2.json()["data"]
-        assert body2["code"] == body1["code"]
-        assert body2["unchanged"] is True
+        assert body2["code"] != body1["code"]
+        assert body2["unchanged"] is False
         assert body2["fingerprint"] == body1["fingerprint"]
+
+    async def test_rejects_unpaid_created_order(self, client):
+        get_default_rate_limiter().reset()
+        dest_id = await _seed_destination()
+        token = await _register(client, "13900000099")
+        mid = await _upload_material(client, token)
+        order_no = await _create_unpaid_order(client, token, dest_id, mid, _full_applicant())
+        async with AsyncSessionLocal() as s:
+            order = await s.scalar(select(Order).where(Order.order_no == order_no))
+            order_id = order.id
+            assert order.status == "created"
+            assert not order.applicant_data
+
+        r = await client.post(
+            "/api/v2/ds160/code",
+            json={"order_id": order_id},
+            headers=_bearer(token),
+        )
+        assert r.status_code == 409
+        assert r.json()["code"] == "11006"
 
     async def test_regenerates_when_field_changes(self, client):
         get_default_rate_limiter().reset()
@@ -307,6 +363,13 @@ class TestRedeemCode:
         assert body["profile"]["passport"]["number"] == "B1234567"
         assert len(body["fingerprint"]) == 32
 
+        # E-03: single-use — second redeem fails
+        r2 = await client.post(
+            "/api/v2/ds160/code/redeem", json={"code": code},
+        )
+        assert r2.status_code == 409
+        assert r2.json()["code"] in ("11008", "11002")
+
     async def test_rejects_invalid_format(self, client):
         get_default_rate_limiter().reset()
         # Pydantic min_length=12 catches "too-short" before our format check;
@@ -381,18 +444,15 @@ class TestRedeemCode:
         )
         code = r_issue.json()["data"]["code"]
 
-        # 5 successful redeems, 6th should be blocked (RATE_LIMITED)
-        for _ in range(5):
-            r = await client.post(
-                "/api/v2/ds160/code/redeem", json={"code": code},
-            )
-            assert r.status_code == 200
-
-        r_blocked = await client.post(
-            "/api/v2/ds160/code/redeem", json={"code": code},
-        )
-        assert r_blocked.status_code == 429
-        assert r_blocked.json()["code"] == "1009"
+        # 1st redeem succeeds (single-use); next 4 return USED; 6th is rate-limited
+        r1 = await client.post("/api/v2/ds160/code/redeem", json={"code": code})
+        assert r1.status_code == 200, r1.text
+        for _ in range(4):
+            r = await client.post("/api/v2/ds160/code/redeem", json={"code": code})
+            assert r.status_code == 409
+        r6 = await client.post("/api/v2/ds160/code/redeem", json={"code": code})
+        assert r6.status_code == 429
+        assert r6.json()["code"] == "1009"
 
     async def test_no_session_required(self, client):
         """The /redeem endpoint MUST work without Authorization header."""

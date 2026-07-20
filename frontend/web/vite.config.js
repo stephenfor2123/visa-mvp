@@ -36,16 +36,8 @@ export default defineConfig({
               cacheName: 'gstatic-fonts-cache',
               expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 }
             }
-          },
-          {
-            urlPattern: /\/api\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'api-cache',
-              networkTimeoutSeconds: 5,
-              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 }
-            }
           }
+          // D-08: deliberately do NOT cache /api/* — auth + PII must not enter SW Cache Storage
         ]
       }
     })

@@ -262,7 +262,61 @@ export async function createOrder({
     e.code = envelope.code
     throw e
   }
+  const data = envelope?.data || envelope
+  // A-01: server discards applicant_data on unpaid create — keep a browser-only
+  // copy keyed by order_no so we can attach it after payment / before DS-160.
+  const orderNo = data?.order_no || data?.order?.order_no
+  if (orderNo && applicant_data && typeof applicant_data === 'object') {
+    try {
+      sessionStorage.setItem(
+        `applicant_pending_${orderNo}`,
+        JSON.stringify(applicant_data),
+      )
+    } catch { /* quota */ }
+  }
+  return data
+}
+
+/**
+ * A-01: attach full applicant profile after payment (server rejects unpaid).
+ */
+export async function setApplicantData(orderNo, applicant_data) {
+  if (!orderNo) throw new Error('order_no required')
+  if (!applicant_data || typeof applicant_data !== 'object') {
+    throw new Error('applicant_data required')
+  }
+  if (MOCK_MODE) {
+    await delay(120)
+    return { order_no: orderNo, status: 'paid', fingerprint_prefix: '' }
+  }
+  const envelope = await http.put(`/v2/orders/${encodeURIComponent(orderNo)}/applicant-data`, {
+    applicant_data,
+  })
+  if (envelope?.code && envelope.code !== '1000') {
+    const e = new Error(envelope.message || 'set applicant_data failed')
+    e.code = envelope.code
+    throw e
+  }
   return envelope?.data || envelope
+}
+
+/**
+ * Push browser-pending applicant draft to server after payment succeeds.
+ * Returns true if attached (or nothing to attach).
+ */
+export async function syncPendingApplicantAfterPayment(orderNo) {
+  if (!orderNo) return false
+  let pending = null
+  try {
+    const raw = sessionStorage.getItem(`applicant_pending_${orderNo}`)
+    if (raw) pending = JSON.parse(raw)
+  } catch { pending = null }
+  if (!pending || typeof pending !== 'object' || !Object.keys(pending).length) {
+    return false
+  }
+  await setApplicantData(orderNo, pending)
+  try { sessionStorage.removeItem(`applicant_pending_${orderNo}`) } catch { /* ignore */ }
+  return true
 }
 
 // ============== GET /api/v2/orders/{order_no} (W2 占位,详情页 W2-D3 接入) ==============

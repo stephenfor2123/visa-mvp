@@ -672,6 +672,21 @@ def generate_code() -> str:
     return "".join(secrets.choice(_DS160_ALPHABET) for _ in range(_DS160_CODE_LEN))
 
 
+def hash_code(code: str) -> str:
+    """SHA-256 hex of a normalized DS-160 code (never store plaintext)."""
+    normalized = normalize_code_input(code)
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+
+def code_log_prefix(code_or_hash: str) -> str:
+    """Safe log fragment: first 8 chars of the hash (never the raw code)."""
+    if not code_or_hash:
+        return ""
+    if len(code_or_hash) == 64 and all(c in "0123456789abcdef" for c in code_or_hash.lower()):
+        return code_or_hash[:8]
+    return hash_code(code_or_hash)[:8]
+
+
 def normalize_code_input(raw: str) -> str:
     """User-friendly: strip dashes/spaces, uppercase, validate charset."""
     if not raw:
@@ -682,6 +697,44 @@ def normalize_code_input(raw: str) -> str:
 
 def is_valid_code_format(code: str) -> bool:
     return bool(code and _DS160_CODE_RE.match(code))
+
+
+# Plugin authorization TTL — short window reduces leak blast radius (E-04).
+DS160_CODE_TTL_SECONDS = 10 * 60
+
+
+def revoke_order_ds160(order: Any) -> bool:
+    """Invalidate plugin authorization on an Order ORM row. Returns True if changed.
+
+    Used by refund / cancel / disable paths (C-05). Accepts any object with the
+    ds160_* attributes to avoid circular imports with the API layer.
+    """
+    changed = False
+    code_hash = getattr(order, "ds160_code_hash", None)
+    revoked_raw = getattr(order, "ds160_revoked_codes", None)
+    revoked: list = []
+    if revoked_raw:
+        try:
+            parsed = json.loads(revoked_raw)
+            if isinstance(parsed, list):
+                revoked = parsed
+        except (ValueError, TypeError):
+            revoked = []
+    if code_hash and not getattr(order, "ds160_code_revoked", False):
+        if code_hash not in revoked:
+            revoked.append(code_hash)
+        order.ds160_revoked_codes = json.dumps(revoked[-50:], ensure_ascii=False)
+        order.ds160_code_revoked = True
+        changed = True
+    elif code_hash and code_hash not in revoked:
+        revoked.append(code_hash)
+        order.ds160_revoked_codes = json.dumps(revoked[-50:], ensure_ascii=False)
+        order.ds160_code_revoked = True
+        changed = True
+    if getattr(order, "ds160_code", None) is not None:
+        order.ds160_code = None
+        changed = True
+    return changed
 
 
 # --------------------------------------------------------------------------- #
