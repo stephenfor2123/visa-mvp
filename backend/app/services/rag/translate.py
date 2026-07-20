@@ -38,6 +38,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import re
 from typing import Optional
 
 from sqlalchemy import select
@@ -101,12 +102,48 @@ async def to_english(
 
     translated = await _call_llm_translate(text, source_lang or "zh-CN", target="en")
     if not translated:
-        # Last-ditch fallback: pass through the original. The English-side
-        # retrieval will still try to find English chunks using keyword match.
+        # Deterministic fallback when MiniMax is not configured / fails.
+        # Without this, CJK queries never match English-authoritative chunks.
+        translated = _rule_based_query_to_english(text)
+    if not translated:
         return text
 
     await _put_cached(db, source_hash=hash_source(text), target_lang="en", kind="query", text=translated)
     return translated
+
+
+def _rule_based_query_to_english(text: str) -> str:
+    """Cheap keyword map so popular materials questions work without an LLM.
+
+    Returns empty string when no pattern matches (caller then passes through).
+    """
+    t = (text or "").strip()
+    if not t:
+        return ""
+    lower = t.lower()
+    materials = bool(
+        re.search(
+            r"材料清单|所需材料|required\s*documents|materials?\s*checklist|"
+            r"dokumen|persyaratan|hồ\s*sơ|giấy\s*tờ",
+            lower,
+            re.I,
+        )
+    )
+    if not materials:
+        return ""
+
+    country_hints = [
+        (r"美国|usa|u\.?s\.?|united\s+states", "US"),
+        (r"英国|uk|united\s+kingdom|britain|gb", "GB"),
+        (r"澳大利亚|澳洲|australia|au\b", "AU"),
+        (r"申根|schengen|法国|france|fr\b", "Schengen"),
+    ]
+    country = "visa"
+    for pat, label in country_hints:
+        if re.search(pat, lower, re.I):
+            country = label
+            break
+    return f"{country} visa required documents materials checklist"
 
 
 async def to_display(

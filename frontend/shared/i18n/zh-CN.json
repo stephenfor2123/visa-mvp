@@ -447,7 +447,9 @@
     "answer": "答案",
     "sources": "引用来源",
     "no_answer": "未找到相关答案,请换个问法。",
-    "err_network": "网络异常,请稍后重试"
+    "err_network": "网络异常,请稍后重试",
+    "view_in_wiki": "在签证百科中查看完整说明 →",
+    "wiki_checklist_intro": "以下材料清单与「开始申请」页同源，来自官方资料整理。"
   },
   "login": {
     "title": "欢迎回来",

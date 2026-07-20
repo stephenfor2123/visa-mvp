@@ -64,7 +64,7 @@
             :key="i"
             class="resources-popular__card"
             :data-testid="`resources-popular-${i}`"
-            @click="askPreset(item.q, item.cc)"
+            @click="askPreset(item.q, item.cc, item.tag)"
           >
             <span class="resources-popular__flag" :data-cc="item.cc">{{ flagOf(item.cc) }}</span>
             <div>
@@ -75,8 +75,23 @@
         </div>
       </section>
 
-      <!-- 答案区 -->
-      <section v-if="answer" class="resources-section resources-answer" data-testid="resources-answer">
+      <!-- 答案区：结构化材料清单 -->
+      <section
+        v-if="checklistCountry"
+        class="resources-section resources-answer"
+        data-testid="resources-checklist-answer"
+      >
+        <h2 class="resources-section__title">{{ t('resources.answer') }}</h2>
+        <RagMaterialsChecklist :country-code="checklistCountry" />
+        <p class="resources-checklist-wiki-hint">
+          <router-link :to="wikiLinkFor(checklistCountry)">
+            {{ t('resources.view_in_wiki', '在签证百科中查看完整说明 →') }}
+          </router-link>
+        </p>
+      </section>
+
+      <!-- 答案区：RAG 文本回答 -->
+      <section v-else-if="answer" class="resources-section resources-answer" data-testid="resources-answer">
         <h2 class="resources-section__title">{{ t('resources.answer') }}</h2>
         <div class="resources-answer__body">
           <div v-for="(line, i) in answerLines" :key="i" class="resources-answer__line" v-html="line" />
@@ -102,8 +117,10 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppHeader from '@/components/AppHeader.vue'
+import RagMaterialsChecklist from '@/components/RagMaterialsChecklist.vue'
 import { listDestinations } from '@/api/destinations'
 import http from '@/api/http'
+import { isMaterialsChecklistQuery } from '@/utils/ragChecklist'
 
 const { t, tm, locale } = useI18n()
 const q = ref('')
@@ -113,6 +130,8 @@ const answer = ref('')
 const chunks = ref([])
 const error = ref('')
 const countries = ref([])
+/** When set, answer panel shows structured checklist instead of RAG prose. */
+const checklistCountry = ref('')
 
 const flagMap = {
   US: '🇺🇸', JP: '🇯🇵', KR: '🇰🇷', SG: '🇸🇬', GB: '🇬🇧', FR: '🇫🇷',
@@ -183,17 +202,30 @@ async function onAsk() {
   await ask(query, country.value)
 }
 
-async function askPreset(query, cc) {
+async function askPreset(query, cc, tag = '') {
   country.value = cc
   q.value = query
-  await ask(query, cc)
+  await ask(query, cc, tag)
 }
 
-async function ask(query, cc) {
-  loading.value = true
+function wikiLinkFor(cc) {
+  const map = { US: 'US', GB: 'GB', AU: 'AU', FR: 'schengen' }
+  const key = map[String(cc || '').toUpperCase()] || 'US'
+  return { path: '/resources/wiki', query: { country: key } }
+}
+
+async function ask(query, cc, tag = '') {
   error.value = ''
   answer.value = ''
   chunks.value = []
+  // Material-checklist hot questions → structured checklist (same source as /apply & wiki).
+  // Avoids broken Chinese→English RAG translation for "材料清单" presets.
+  if (cc && isMaterialsChecklistQuery(query, tag)) {
+    checklistCountry.value = cc
+    return
+  }
+  checklistCountry.value = ''
+  loading.value = true
   try {
     const env = await http.post('/v2/rag/query', {
       query,
@@ -430,5 +462,15 @@ watch(locale, () => { loadCountries() })
   background: #fef2f2;
   border-radius: 10px;
   margin-top: 16px;
+}
+.resources-checklist-wiki-hint {
+  margin: 14px 0 0;
+  font-size: 13px;
+  a {
+    color: #3b6ef5;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  a:hover { text-decoration: underline; }
 }
 </style>

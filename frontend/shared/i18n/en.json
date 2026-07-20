@@ -447,7 +447,9 @@
     "answer": "Answer",
     "sources": "Sources",
     "no_answer": "No answer found. Try rephrasing your question.",
-    "err_network": "Network error. Please try again later."
+    "err_network": "Network error. Please try again later.",
+    "view_in_wiki": "See full details in Visa Encyclopedia →",
+    "wiki_checklist_intro": "This materials checklist matches the Apply page and is curated from official sources."
   },
   "login": {
     "title": "Welcome Back",

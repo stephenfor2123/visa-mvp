@@ -83,6 +83,19 @@
         </div>
       </section>
 
+      <!-- 签证百科：同源 RAG 材料清单（与热门问题 /apply 一致） -->
+      <section
+        v-if="section === 'wiki'"
+        class="resources-section resources-wiki-checklist"
+        data-testid="wiki-materials-checklist"
+      >
+        <h2 class="resources-section__title">{{ t('apply.checklist') }}</h2>
+        <p class="resources-section__lead">
+          {{ t('resources.wiki_checklist_intro', '以下材料清单与「开始申请」页同源，来自官方资料整理。') }}
+        </p>
+        <RagMaterialsChecklist :country-code="checklistApiCountry" />
+      </section>
+
       <p class="resources-curated-back">
         <router-link to="/resources" class="resources-curated-back__link">
           ← {{ backToResources }}
@@ -93,9 +106,12 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRoute, useRouter } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
+import RagMaterialsChecklist from '@/components/RagMaterialsChecklist.vue'
+import { resolveChecklistCountry } from '@/utils/ragChecklist'
 
 // Curated payload files — one per locale, kept under @shared/i18n/_curated_payloads/.
 // Imported once per build, scoped by file name. Render-time resolution: when the
@@ -117,9 +133,13 @@ const props = defineProps({
 })
 
 const { t, locale } = useI18n()
+const route = useRoute()
+const router = useRouter()
 const activeCountry = ref('US')
 
 const headerScope = 'resources'
+
+const checklistApiCountry = computed(() => resolveChecklistCountry(activeCountry.value))
 
 // 4 个子页 tab
 const tabs = computed(() => [
@@ -190,9 +210,24 @@ const verifiedAt = computed(() => {
 
 onMounted(() => {
   window.scrollTo({ top: 0, behavior: 'instant' })
+  const q = String(route.query.country || '').trim()
+  if (q) {
+    const upper = q.toUpperCase()
+    if (upper === 'FR' || upper === 'SCHENGEN' || q.toLowerCase() === 'schengen') {
+      activeCountry.value = 'schengen'
+    } else if (['US', 'GB', 'AU'].includes(upper)) {
+      activeCountry.value = upper
+    }
+  }
   // debug expose for browser-side introspection during W47d dev — no production impact
   if (typeof window !== 'undefined') {
     window.__curatedDebug = { locale: locale.value, section: props.section, country: activeCountry.value, hasRoot: !!curatedRoot.value, hasSec: !!curatedRoot.value?.[props.section], hasCountry: !!curatedRoot.value?.[props.section]?.[activeCountry.value], secKeys: Object.keys(curatedRoot.value || {}), rootKeys: Object.keys(curatedRoot.value?.[props.section] || {}) }
+  }
+})
+
+watch(activeCountry, (cc) => {
+  if (props.section === 'wiki') {
+    router.replace({ path: route.path, query: { ...route.query, country: cc } })
   }
 })
 </script>
@@ -346,6 +381,14 @@ onMounted(() => {
   color: #6b7280; text-decoration: none; font-size: 14px;
 }
 .resources-curated-back__link:hover { color: #2563eb; }
+
+.resources-wiki-checklist {
+  margin-top: 8px;
+  padding-top: 8px;
+}
+.resources-wiki-checklist .resources-section__lead {
+  margin-bottom: 16px;
+}
 
 @media (max-width: 768px) {
   .resources-curated-tabs { grid-template-columns: repeat(2, 1fr); }

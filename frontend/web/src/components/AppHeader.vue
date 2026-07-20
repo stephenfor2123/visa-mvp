@@ -91,7 +91,7 @@
         </svg>
       </button>
       <!-- W57: 加密隐私保护徽章 — 点击弹出 popover(简化:仅大锁+标题+副标题+CTA,W57b) -->
-      <TrustBadgePopover :scope="props.scope" learn-more-to="/resources?focus=policy" />
+      <TrustBadgePopover :scope="props.scope" learn-more-to="/resources/policy" />
       <LangSwitch />
       <!-- W47: 人物头像下拉菜单(整合"我的申请" + profile + 退出登录) -->
       <div
@@ -343,7 +343,7 @@ const megaMenus = [
       // 4. 一键生成行程单   5. 母语填写     6. 智能审核
       { to: '/apply',           nameKey: 'nav.mega.apply_i1', descKey: 'nav.mega.apply_i1_d', icon: SVG_DOC,     tone: 'blue' },
       { to: '/apply?step=ocr',  nameKey: 'nav.mega.apply_i2', descKey: 'nav.mega.apply_i2_d', icon: SVG_SCAN,    tone: 'indigo' },
-      { to: '/resources?focus=template', nameKey: 'nav.mega.apply_i3', descKey: 'nav.mega.apply_i3_d', icon: SVG_FILE, tone: 'cyan' },
+      { to: '/resources/templates', nameKey: 'nav.mega.apply_i3', descKey: 'nav.mega.apply_i3_d', icon: SVG_FILE, tone: 'cyan' },
       { to: '/apply?step=itinerary', nameKey: 'nav.mega.apply_i4', descKey: 'nav.mega.apply_i4_d', icon: SVG_GLOBE, tone: 'amber' },
       { to: '/apply?step=lang',      nameKey: 'nav.mega.apply_i5', descKey: 'nav.mega.apply_i5_d', icon: SVG_BOOK, tone: 'emerald' },
       { to: '/apply?step=review',    nameKey: 'nav.mega.apply_i6', descKey: 'nav.mega.apply_i6_d', icon: SVG_PULSE, tone: 'rose' },
@@ -366,10 +366,10 @@ const megaMenus = [
     titleKey: 'nav.mega.resources_title',
     descKey: 'nav.mega.resources_desc',
     items: [
-      { to: '/resources',       nameKey: 'nav.mega.resources_i1', descKey: 'nav.mega.resources_i1_d', icon: SVG_BOOK,     tone: 'amber' },
-      { to: '/resources?focus=policy',  nameKey: 'nav.mega.resources_i2', descKey: 'nav.mega.resources_i2_d', icon: SVG_GLOBE,    tone: 'orange' },
-      { to: '/resources?focus=template', nameKey: 'nav.mega.resources_i3', descKey: 'nav.mega.resources_i3_d', icon: SVG_FILE,    tone: 'rose' },
-      { to: '/resources?focus=faq',     nameKey: 'nav.mega.resources_i4', descKey: 'nav.mega.resources_i4_d', icon: SVG_QUESTION, tone: 'pink' },
+      { to: '/resources/wiki',      nameKey: 'nav.mega.resources_i1', descKey: 'nav.mega.resources_i1_d', icon: SVG_BOOK,     tone: 'amber' },
+      { to: '/resources/policy',    nameKey: 'nav.mega.resources_i2', descKey: 'nav.mega.resources_i2_d', icon: SVG_GLOBE,    tone: 'orange' },
+      { to: '/resources/templates', nameKey: 'nav.mega.resources_i3', descKey: 'nav.mega.resources_i3_d', icon: SVG_FILE,    tone: 'rose' },
+      { to: '/resources/faq',       nameKey: 'nav.mega.resources_i4', descKey: 'nav.mega.resources_i4_d', icon: SVG_QUESTION, tone: 'pink' },
     ],
   },
   {
