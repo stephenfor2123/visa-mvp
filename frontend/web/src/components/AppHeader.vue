@@ -321,13 +321,7 @@ const SVG_QUESTION = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><c
 const SVG_GLOBE = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" stroke="currentColor" stroke-width="1.6"/></svg>`
 const SVG_FILE = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 2h9l5 5v15H6z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M14 2v6h6" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 14h7M9 18h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`
 
-// W31: contact icons
-// W57: 商业合作 — 公文包图标
-const SVG_BRIEFCASE = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M3 12h18" stroke="currentColor" stroke-width="1.6"/></svg>`
-
 const SVG_MAIL = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 7l9 6 9-6" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`
-const SVG_PHONE = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 4h3l2 5-2 1a11 11 0 0 0 6 6l1-2 5 2v3a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`
-const SVG_WECHAT = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 4C5 4 2 6.7 2 10c0 1.7.8 3.3 2 4.3l-.5 2 2.2-1.1c.7.2 1.4.3 2.3.3.3 0 .5 0 .8-.1a5.4 5.4 0 0 1 5.4-5.4c.3 0 .6 0 .9.1C14.5 6.5 12 4 9 4z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="6.5" cy="9" r="0.8" fill="currentColor"/><circle cx="10" cy="9" r="0.8" fill="currentColor"/><path d="M22 14.5c0-2.8-2.5-5-5.5-5s-5.5 2.2-5.5 5 2.5 5 5.5 5c.6 0 1.2-.1 1.7-.2l1.8.9-.4-1.6c1.4-.9 2.4-2.4 2.4-4.1z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="14.5" cy="14" r="0.7" fill="currentColor"/><circle cx="17.5" cy="14" r="0.7" fill="currentColor"/></svg>`
 
 const megaMenus = [
   {
@@ -378,10 +372,9 @@ const megaMenus = [
     titleKey: 'nav.mega.contact_title',
     descKey: 'nav.mega.contact_desc',
     items: [
-      // W56: 全平台只留邮件 — WhatsApp 已下线
-      // W57: 加「商业合作」入口 — 共用同一邮箱,按用途分流
-      { to: '/contact',         nameKey: 'nav.mega.contact_i1', descKey: 'nav.mega.contact_i1_d', icon: SVG_MAIL,        tone: 'blue' },
-      { to: '/contact?focus=partner', nameKey: 'nav.mega.contact_i2', descKey: 'nav.mega.contact_i2_d', icon: SVG_BRIEFCASE,  tone: 'indigo' },
+      // 联系菜单保留邮件入口，第二位改为产品定价。
+      { to: '/contact', nameKey: 'nav.mega.contact_i1', descKey: 'nav.mega.contact_i1_d', icon: SVG_MAIL, tone: 'blue' },
+      { to: '/pricing', nameKey: 'nav.mega.pricing', descKey: 'nav.mega.pricing_i1_d', icon: SVG_FILE, tone: 'amber' },
     ],
   },
   {

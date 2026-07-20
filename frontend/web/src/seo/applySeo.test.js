@@ -57,4 +57,21 @@ describe('applyRouteSeo', () => {
 
     expect(document.querySelector('meta[name="robots"]')?.getAttribute('content')).toBe('noindex,nofollow')
   })
+
+  it('does not duplicate canonical/alternate links on Agreement route', () => {
+    // Simulate production index.html baseline tags.
+    document.head.innerHTML = `
+      <title>Htex</title>
+      <link rel="canonical" href="https://htexvisa.com/" />
+      <link rel="alternate" type="text/plain" href="https://htexvisa.com/llms.txt" title="LLM site summary" />
+    `
+
+    const i18n = makeI18n()
+    applyRouteSeo({ name: 'Agreement', path: '/agreement', meta: {} }, i18n)
+
+    expect(document.head.querySelectorAll('link[rel="canonical"]').length).toBe(1)
+    expect(document.head.querySelectorAll('link[rel="alternate"]').length).toBe(1)
+    expect(document.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe('https://htexvisa.com/agreement')
+    expect(document.querySelector('link[rel="alternate"]')?.getAttribute('href')).toBe('https://htexvisa.com/llms.txt')
+  })
 })

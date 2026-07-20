@@ -29,13 +29,22 @@ function upsertMeta(attr, key, content) {
 
 function upsertLink(rel, href, extra = {}) {
   if (!href) return
+  // Avoid duplicating <link rel="canonical"> / <link rel="alternate"> when
+  // index.html already contains a baseline element (prevents schema/link
+  // validators from throwing "Invalid ... format").
   let el = document.head.querySelector(`link[rel="${rel}"][${MANAGED}]`)
+  if (!el) {
+    // Reuse an existing element by rel+href first; otherwise fallback to
+    // "first matching rel" (typically the baseline one in index.html).
+    el = document.head.querySelector(`link[rel="${rel}"][href="${href}"]`)
+  }
+  if (!el) el = document.head.querySelector(`link[rel="${rel}"]`)
   if (!el) {
     el = document.createElement('link')
     el.setAttribute('rel', rel)
-    el.setAttribute(MANAGED, '')
     document.head.appendChild(el)
   }
+  if (!el.hasAttribute(MANAGED)) el.setAttribute(MANAGED, '')
   el.setAttribute('href', href)
   for (const [k, v] of Object.entries(extra)) {
     if (v != null) el.setAttribute(k, v)
