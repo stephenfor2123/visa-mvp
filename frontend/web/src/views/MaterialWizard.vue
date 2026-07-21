@@ -2288,7 +2288,7 @@ const CategoryIcon = {
 </script>
 
 <style scoped lang="scss">
-.mw-page { min-height: 100vh; background: #F8FAFC; }
+.mw-page { min-height: 100vh; background: #fff; }
 .mw-main { max-width: 1200px; margin: 0 auto; padding: 32px 24px 80px; }
 
 .mw-hero { text-align: left; margin-bottom: 32px; }
