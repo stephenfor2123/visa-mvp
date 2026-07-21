@@ -2805,7 +2805,7 @@
     "country_notes_title": "目的国特殊要求",
     "warning_disclaimer": "本页样本仅供参考，实际办理请以使领馆最新要求为准；建议在开具前咨询银行 / 公司 HR / 翻译机构。",
     "month_label": "第 {n} 个月",
-    "export_word": "导出 Word（付费解锁）",
+    "export_word": "导出 Word",
     "exporting_word": "正在生成 Word…",
     "export_word_success": "在职证明 Word 已导出",
     "export_word_error": "暂时无法导出，请稍后重试",

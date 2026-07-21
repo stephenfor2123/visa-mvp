@@ -20,7 +20,6 @@
         :data-testid="`mtp-toggle-${categoryKey}`"
         @click="toggle"
       >
-        <span class="mtp-header__icon" aria-hidden="true">📄</span>
         <span class="mtp-header__title">
           <span class="mtp-header__primary">{{ t('mtp.preview_title') }}</span>
           <span class="mtp-header__secondary">{{ categoryTitle }}</span>
@@ -35,7 +34,6 @@
         data-testid="mtp-export-employment-word"
         @click="$emit('export-word')"
       >
-        <span aria-hidden="true">🔒</span>
         {{ props.exporting ? t('mtp.exporting_word') : t('mtp.export_word') }}
       </button>
     </div>
@@ -47,14 +45,6 @@
            改为在下方直接显示银行流水样本(参考第 2 张图的标准) -->
       <template v-if="props.categoryKey === 'work' && currentTpl?.primary">
         <div class="mtp-lang-col mtp-lang-col--single">
-          <!-- W63-d: 去掉 ✍️ flag + 英文标题 "Employment Certificate",只保留中文标题 -->
-          <header class="mtp-lang-col__head">
-            <h4 class="mtp-lang-col__title">{{ primaryTitleOnly }}</h4>
-          </header>
-          <!-- 副标题: 用户要求"中文保留,英文 Employer 去掉"。
-               EMPLOYMENT_TEMPLATE.bankName = "工作单位 / Employer",手动切成只取中文部分 -->
-          <p class="mtp-lang-col__sub">{{ primarySubOnly }}</p>
-
           <!-- 文字模板：跟随 UI 语言的本地语版 + 永远英文对照版 -->
           <div v-if="currentTpl?.primary?.templates" class="mtp-word-templates">
             <!-- 本地语模板 (跟随 UI 语言: zh / vi / id; en UI 时不显示) -->
@@ -377,34 +367,6 @@ const countryFlag = computed(() => {
   if (schengen.includes(cc)) return '🇪🇺'
   const flag = cc.toUpperCase().replace(/./g, (c) => String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65))
   return flag
-})
-
-// W63-d: 工作证明卡片头只显示 shortTitle(去掉 ✍️ flag + 英文 "Employment Certificate")
-// W63-g: shortTitle 按 UI 语言切 (zh/在职证明, en/Employment Certificate, vi/…, id/…),
-//        避免 en UI 模式下还是显示"在职证明"
-const primaryTitleOnly = computed(() => {
-  const p = currentTpl.value?.primary
-  if (!p) return ''
-  if (props.categoryKey === 'work') {
-    const localized = p.i18n?.[currentLang.value]?.shortTitle
-    return localized || p.shortTitle || p.title || ''
-  }
-  return p.title || ''
-})
-
-// W63-d: 副标题 "工作单位 / Employer" → 切掉英文部分
-// W63-g: 直接按 UI 语言取 EMPLOYMENT_TEMPLATE.i18n[lang].bankName,en UI 显示 "Employer"
-const primarySubOnly = computed(() => {
-  const p = currentTpl.value?.primary
-  if (!p) return ''
-  if (props.categoryKey === 'work') {
-    const localized = p.i18n?.[currentLang.value]?.bankName
-    if (localized) return localized
-    // 兜底:切 " / " 前面的中文部分
-    return (p.bankName || '').split(/\s*\/\s*/)[0].trim()
-  }
-  const raw = p.bankName || ''
-  return raw.split(/\s*\/\s*/)[0].trim()
 })
 
 // 工作证明 banner: 用 ✍️ emoji,不要国家旗帜(因为 1 套模板通用所有目的地)
@@ -772,7 +734,6 @@ function renderPlaceholder(text) {
 }
 .mtp-export:hover { color: #fff; background: #2563eb; }
 .mtp-export:disabled { opacity: .6; cursor: wait; }
-.mtp-header__icon { font-size: 18px; flex-shrink: 0; }
 .mtp-header__title { flex: 1; display: flex; flex-direction: column; gap: 2px; }
 .mtp-header__primary {
   font-size: 13px; font-weight: 600; color: #4338ca; line-height: 1.2;
@@ -803,8 +764,11 @@ function renderPlaceholder(text) {
   background: #fafafa;
 }
 .mtp-lang-col--single {
-  max-width: 720px;
-  margin: 0 auto;
+  width: 100%;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
 }
 .mtp-lang-col__head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 .mtp-lang-col__flag { font-size: 20px; }

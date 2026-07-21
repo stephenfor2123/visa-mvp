@@ -28,10 +28,7 @@
     <!-- idle: 选文件 or 摄像头拍摄 -->
     <div v-if="!record.collected && phase === 'idle'" class="uic__actions">
       <button class="uic__btn uic__btn--primary" data-testid="uic-pick-file" @click="pickFile">
-        📁 {{ t('wizard.pick_file') }}
-      </button>
-      <button class="uic__btn uic__btn--ghost" data-testid="uic-scan" @click="startCamera">
-        📷 {{ t('wizard.scan_camera') }}
+        {{ t('wizard.pick_file') }}
       </button>
       <input ref="fileInput" type="file" :accept="isPhoto ? 'image/jpeg,image/png,image/webp' : 'image/jpeg,image/png,image/webp,application/pdf'" style="display:none" @change="onFilePicked" />
     </div>

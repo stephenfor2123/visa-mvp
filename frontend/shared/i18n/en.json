@@ -2782,7 +2782,7 @@
     "country_notes_title": "Destination-Specific Requirements",
     "warning_disclaimer": "These samples are for reference only. Please follow the latest consulate/embassy requirements. Before issuing, consult your bank / HR / certified translation agency.",
     "month_label": "Month {n}",
-    "export_word": "Export Word (paid)",
+    "export_word": "Export Word",
     "exporting_word": "Generating Word…",
     "export_word_success": "Employment certificate exported",
     "export_word_error": "Unable to export right now. Please try again.",

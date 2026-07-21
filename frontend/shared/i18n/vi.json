@@ -2332,7 +2332,7 @@
     "country_notes_title": "Yêu Cầu Riêng Của Quốc Gia Đến",
     "warning_disclaimer": "Các mẫu này chỉ mang tính tham khảo. Vui lòng tuân theo yêu cầu mới nhất của lãnh sự / đại sứ quán. Trước khi phát hành, hãy tham khảo ngân hàng / bộ phận HR / cơ quan dịch thuật được chứng nhận.",
     "month_label": "Tháng {n}",
-    "export_word": "Xuất Word (trả phí)",
+    "export_word": "Xuất Word",
     "exporting_word": "Đang tạo Word…",
     "export_word_success": "Đã xuất giấy xác nhận công việc",
     "export_word_error": "Hiện không thể xuất. Vui lòng thử lại.",
