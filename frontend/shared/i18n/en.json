@@ -86,6 +86,10 @@
         "title": "Contact us",
         "description": "Get in touch with the Htex team for visa application support."
       },
+      "about": {
+        "title": "About us",
+        "description": "Learn about Htex, our global AI visa services, locations, and commitment to security and efficiency."
+      },
       "pricing": {
         "title": "Pricing",
         "description": "Transparent embassy fees and Htex service pricing for supported visa destinations."
@@ -160,13 +164,13 @@
       "resources_i4_d": "Refusal, interview, fees",
       "contact": "Contact",
       "contact_title": "We're here for you",
-      "contact_desc": "Email support and pricing, right where you need them",
+      "contact_desc": "Email support, pricing, and company information",
       "contact_i1": "Email",
       "contact_i1_d": "Detailed questions / review",
       "contact_i2": "Pricing",
       "contact_i2_d": "Service fees by country",
-      "contact_i3": "WeChat",
-      "contact_i3_d": "Daily chat / instant reply",
+      "contact_i3": "About us",
+      "contact_i3_d": "Learn about Htex and our mission",
       "contact_i4": "WhatsApp",
       "contact_i4_d": "Cross-border / overseas",
       "pricing": "Pricing",
@@ -453,7 +457,9 @@
     "no_answer": "No answer found. Try rephrasing your question.",
     "err_network": "Network error. Please try again later.",
     "view_in_wiki": "See full details in Visa Encyclopedia →",
-    "wiki_checklist_intro": "This materials checklist matches the Apply page and is curated from official sources."
+    "wiki_checklist_intro": "View the required application materials, listed one item per line.",
+    "wiki_checklist_expand": "Expand full checklist",
+    "wiki_checklist_collapse": "Collapse checklist"
   },
   "login": {
     "title": "Welcome Back",
@@ -2539,6 +2545,24 @@
     "partner_subject": "Partnership inquiry",
     "support_note": "Questions about products, orders, and visa applications",
     "partner_note": "Brand partnerships, distribution, and press inquiries"
+  },
+  "about": {
+    "title": "About us",
+    "lead": "Using technology to remove complexity and uncertainty from visa applications.",
+    "who_title": "Who we are",
+    "who_prefix": "Htex is a ",
+    "who_highlight": "global leader in AI-powered visa services",
+    "who_suffix": ", making visa applications simpler and clearer.",
+    "global_title": "Global presence",
+    "global_prefix": "Headquartered in ",
+    "global_highlight": "Hong Kong",
+    "global_suffix": ", with our U.S. headquarters ",
+    "construction": "in development",
+    "global_after": ", serving applicants around the world.",
+    "advantage_title": "Our advantage",
+    "advantage_prefix": "Built for ",
+    "advantage_highlight": "security and efficiency",
+    "advantage_suffix": ", our AI technology and proprietary models power visa guides, templates, intelligent reviews, submissions, and more."
   },
   "wizard": {
     "title": "Material Collection",

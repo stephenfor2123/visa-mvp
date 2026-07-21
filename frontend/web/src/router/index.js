@@ -223,6 +223,12 @@ const routes = [
     meta: { title: 'nav.mega.contact' }
   },
   {
+    path: '/about',
+    name: 'About',
+    component: () => import('@/views/AboutView.vue'),
+    meta: { title: 'about.title' }
+  },
+  {
     path: '/security',
     name: 'SecurityPractices',
     component: () => import('@/views/SecurityPractices.vue'),

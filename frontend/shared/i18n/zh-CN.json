@@ -86,6 +86,10 @@
         "title": "联系我们",
         "description": "联系 Htex 团队获取签证申请相关支持。"
       },
+      "about": {
+        "title": "关于我们",
+        "description": "了解 Htex 的全球 AI 签证服务、团队布局与安全高效的产品理念。"
+      },
       "pricing": {
         "title": "价格说明",
         "description": "各支持目的地的使馆费用与 Htex 服务定价说明。"
@@ -160,13 +164,13 @@
       "resources_i4_d": "拒签/面签/费用常见问题",
       "contact": "联系我们",
       "contact_title": "我们随时在线",
-      "contact_desc": "邮件咨询与产品定价,按需直达",
+      "contact_desc": "邮件咨询、产品定价与品牌信息,按需直达",
       "contact_i1": "邮件咨询",
       "contact_i1_d": "详细问题 / 资料审核",
       "contact_i2": "产品定价",
       "contact_i2_d": "各国签证服务费一览",
-      "contact_i3": "微信客服",
-      "contact_i3_d": "日常沟通 / 实时响应",
+      "contact_i3": "关于我们",
+      "contact_i3_d": "了解 Htex 与我们的使命",
       "contact_i4": "WhatsApp",
       "contact_i4_d": "跨境咨询 / 海外用户",
       "pricing": "产品定价",
@@ -453,7 +457,9 @@
     "no_answer": "未找到相关答案,请换个问法。",
     "err_network": "网络异常,请稍后重试",
     "view_in_wiki": "在签证百科中查看完整说明 →",
-    "wiki_checklist_intro": "以下材料清单与「开始申请」页同源，来自官方资料整理。"
+    "wiki_checklist_intro": "查看申请所需材料，每项材料单独列出。",
+    "wiki_checklist_expand": "展开查看完整清单",
+    "wiki_checklist_collapse": "收起材料清单"
   },
   "login": {
     "title": "欢迎回来",
@@ -2565,6 +2571,24 @@
     "partner_subject": "商业合作咨询",
     "support_note": "产品使用、订单与签证申请问题",
     "partner_note": "品牌合作、渠道合作与媒体咨询"
+  },
+  "about": {
+    "title": "关于我们",
+    "lead": "用技术消除签证申请中的复杂与不确定。",
+    "who_title": "我们是谁",
+    "who_prefix": "Htex 是",
+    "who_highlight": "全球领先的 AI 签证服务网站",
+    "who_suffix": "，致力于让签证申请变得更简单、更清晰。",
+    "global_title": "全球布局",
+    "global_prefix": "总部位于",
+    "global_highlight": "香港",
+    "global_suffix": "，美国总部",
+    "construction": "建设中",
+    "global_after": "，面向全球用户提供专业、便捷的签证服务。",
+    "advantage_title": "核心优势",
+    "advantage_prefix": "坚持",
+    "advantage_highlight": "安全与高效",
+    "advantage_suffix": "，利用 AI 技术和自研大模型，提供签证攻略、材料模板、智能审核和申请提交等全流程服务。"
   },
   "wizard": {
     "title": "材料收集",

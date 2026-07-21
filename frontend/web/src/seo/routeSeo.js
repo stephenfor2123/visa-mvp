@@ -16,6 +16,7 @@ export const ROUTE_SEO_KEYS = {
   ResourcesTemplates: 'resources_templates',
   ResourcesFaq: 'resources_faq',
   Contact: 'contact',
+  About: 'about',
   Pricing: 'pricing',
   Agreement: 'agreement',
 }

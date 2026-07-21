@@ -86,6 +86,10 @@
         "title": "Hubungi kami",
         "description": "Hubungi tim Htex untuk dukungan aplikasi visa."
       },
+      "about": {
+        "title": "Tentang kami",
+        "description": "Pelajari layanan visa AI global Htex, lokasi kami, serta komitmen terhadap keamanan dan efisiensi."
+      },
       "pricing": {
         "title": "Harga",
         "description": "Biaya kedutaan dan harga layanan Htex yang transparan untuk destinasi visa yang didukung."
@@ -160,13 +164,13 @@
       "resources_i4_d": "Penolakan, wawancara, biaya",
       "contact": "Kontak",
       "contact_title": "Kami siap membantu",
-      "contact_desc": "Dukungan email dan harga, langsung sesuai kebutuhan",
+      "contact_desc": "Dukungan email, harga, dan informasi perusahaan",
       "contact_i1": "Email",
       "contact_i1_d": "Pertanyaan detail / tinjauan",
       "contact_i2": "Harga",
       "contact_i2_d": "Biaya layanan per negara",
-      "contact_i3": "WeChat",
-      "contact_i3_d": "Harian / instan",
+      "contact_i3": "Tentang kami",
+      "contact_i3_d": "Kenali Htex dan misi kami",
       "contact_i4": "WhatsApp",
       "contact_i4_d": "Lintas negara / luar negeri",
       "pricing": "Harga",
@@ -451,7 +455,10 @@
     "answer": "Jawaban",
     "sources": "Sumber",
     "no_answer": "Tidak ada jawaban. Coba pertanyaan lain.",
-    "err_network": "Kesalahan jaringan, coba lagi"
+    "err_network": "Kesalahan jaringan, coba lagi",
+    "wiki_checklist_intro": "Lihat dokumen aplikasi yang diperlukan, satu dokumen per baris.",
+    "wiki_checklist_expand": "Buka daftar lengkap",
+    "wiki_checklist_collapse": "Tutup daftar dokumen"
   },
   "login": {
     "title": "Selamat Datang Kembali",
@@ -2089,6 +2096,24 @@
     "partner_subject": "Pertanyaan kemitraan",
     "support_note": "Pertanyaan tentang produk, pesanan, dan aplikasi visa",
     "partner_note": "Kemitraan merek, distribusi, dan pertanyaan media"
+  },
+  "about": {
+    "title": "Tentang kami",
+    "lead": "Menggunakan teknologi untuk menghilangkan kerumitan dan ketidakpastian dalam aplikasi visa.",
+    "who_title": "Siapa kami",
+    "who_prefix": "Htex adalah ",
+    "who_highlight": "pemimpin global layanan visa berbasis AI",
+    "who_suffix": ", yang membuat aplikasi visa lebih mudah dan jelas.",
+    "global_title": "Kehadiran global",
+    "global_prefix": "Berkantor pusat di ",
+    "global_highlight": "Hong Kong",
+    "global_suffix": ", dengan kantor pusat AS ",
+    "construction": "dalam pembangunan",
+    "global_after": ", melayani pemohon di seluruh dunia.",
+    "advantage_title": "Keunggulan kami",
+    "advantage_prefix": "Dibangun untuk ",
+    "advantage_highlight": "keamanan dan efisiensi",
+    "advantage_suffix": ", teknologi AI dan model milik kami menyediakan panduan visa, templat, pemeriksaan cerdas, pengajuan, dan lainnya."
   },
   "wizard": {
     "title": "Pengumpulan Dokumen",

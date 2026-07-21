@@ -34,6 +34,7 @@ export const SITEMAP_PATHS = [
   '/resources/templates',
   '/resources/faq',
   '/contact',
+  '/about',
   '/pricing',
   '/agreement',
 ]
@@ -51,6 +52,7 @@ export const INDEXABLE_ROUTE_NAMES = new Set([
   'ResourcesTemplates',
   'ResourcesFaq',
   'Contact',
+  'About',
   'Pricing',
   'Agreement',
 ])

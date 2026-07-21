@@ -86,6 +86,10 @@
         "title": "Liên hệ",
         "description": "Liên hệ đội ngũ Htex để được hỗ trợ xin visa."
       },
+      "about": {
+        "title": "Về chúng tôi",
+        "description": "Tìm hiểu về dịch vụ thị thực AI toàn cầu, vị trí và cam kết bảo mật, hiệu quả của Htex."
+      },
       "pricing": {
         "title": "Bảng giá",
         "description": "Phí lãnh sự và giá dịch vụ Htex minh bạch cho các điểm đến được hỗ trợ."
@@ -160,13 +164,13 @@
       "resources_i4_d": "Từ chối, phỏng vấn, phí",
       "contact": "Liên hệ",
       "contact_title": "Chúng tôi luôn sẵn sàng",
-      "contact_desc": "Hỗ trợ qua email và bảng giá, truy cập ngay khi cần",
+      "contact_desc": "Hỗ trợ email, bảng giá và thông tin công ty",
       "contact_i1": "Email",
       "contact_i1_d": "Câu hỏi chi tiết / xét duyệt",
       "contact_i2": "Bảng giá",
       "contact_i2_d": "Phí dịch vụ theo từng nước",
-      "contact_i3": "WeChat",
-      "contact_i3_d": "Hằng ngày / tức thì",
+      "contact_i3": "Về chúng tôi",
+      "contact_i3_d": "Tìm hiểu về Htex và sứ mệnh của chúng tôi",
       "contact_i4": "WhatsApp",
       "contact_i4_d": "Xuyên biên giới / hải ngoại",
       "pricing": "Bảng giá",
@@ -451,7 +455,10 @@
     "answer": "Trả lời",
     "sources": "Nguồn",
     "no_answer": "Không tìm thấy. Thử câu hỏi khác.",
-    "err_network": "Lỗi mạng, vui lòng thử lại"
+    "err_network": "Lỗi mạng, vui lòng thử lại",
+    "wiki_checklist_intro": "Xem các giấy tờ cần thiết, mỗi giấy tờ trên một dòng.",
+    "wiki_checklist_expand": "Mở danh sách đầy đủ",
+    "wiki_checklist_collapse": "Thu gọn danh sách"
   },
   "login": {
     "title": "Chào mừng trở lại",
@@ -2089,6 +2096,24 @@
     "partner_subject": "Yêu cầu hợp tác",
     "support_note": "Câu hỏi về sản phẩm, đơn hàng và hồ sơ xin thị thực",
     "partner_note": "Hợp tác thương hiệu, phân phối và truyền thông"
+  },
+  "about": {
+    "title": "Về chúng tôi",
+    "lead": "Dùng công nghệ để loại bỏ sự phức tạp và bất định trong hồ sơ thị thực.",
+    "who_title": "Chúng tôi là ai",
+    "who_prefix": "Htex là ",
+    "who_highlight": "nền tảng dịch vụ thị thực AI hàng đầu toàn cầu",
+    "who_suffix": ", giúp việc xin thị thực đơn giản và rõ ràng hơn.",
+    "global_title": "Hiện diện toàn cầu",
+    "global_prefix": "Trụ sở chính tại ",
+    "global_highlight": "Hồng Kông",
+    "global_suffix": ", trụ sở tại Hoa Kỳ đang ",
+    "construction": "được xây dựng",
+    "global_after": ", phục vụ người dùng trên toàn thế giới.",
+    "advantage_title": "Lợi thế cốt lõi",
+    "advantage_prefix": "Được xây dựng vì ",
+    "advantage_highlight": "bảo mật và hiệu quả",
+    "advantage_suffix": ", công nghệ AI và mô hình độc quyền cung cấp hướng dẫn, mẫu tài liệu, kiểm tra thông minh, nộp hồ sơ và nhiều hơn nữa."
   },
   "wizard": {
     "title": "Thu thập hồ sơ",

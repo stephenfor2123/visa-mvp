@@ -47,6 +47,36 @@
         </p>
 
         <div class="resources-curated-list" v-if="items.length">
+          <!-- 签证百科：材料清单作为首张内容卡片展示，视觉与百科条目一致。 -->
+          <article
+            v-if="section === 'wiki'"
+            class="resources-curated-item resources-wiki-checklist-card"
+            data-testid="wiki-materials-checklist"
+          >
+            <h3 class="resources-curated-item__title">{{ t('apply.checklist') }}</h3>
+            <p class="resources-curated-item__desc">
+              {{ t('resources.wiki_checklist_intro', '以下材料清单与「开始申请」页同源，来自官方资料整理。') }}
+            </p>
+            <div v-if="checklistExpanded" class="resources-wiki-checklist-card__body">
+              <RagMaterialsChecklist :country-code="checklistApiCountry" />
+            </div>
+            <div class="resources-curated-item__meta">
+              <button
+                type="button"
+                class="resources-curated-item__link resources-wiki-checklist-card__toggle"
+                :aria-expanded="checklistExpanded"
+                @click="checklistExpanded = !checklistExpanded"
+              >
+                {{ checklistExpanded
+                  ? t('resources.wiki_checklist_collapse')
+                  : t('resources.wiki_checklist_expand') }} {{ checklistExpanded ? '↑' : '↓' }}
+              </button>
+              <span v-if="verifiedAt" class="resources-curated-item__verified">
+                {{ verifiedAtLabel.replace('{date}', verifiedAt) }}
+              </span>
+            </div>
+          </article>
+
           <article
             v-for="(item, i) in items"
             :key="i"
@@ -81,19 +111,6 @@
           <p>{{ emptyCountry }}</p>
           <p class="resources-curated-empty__hint">{{ tryOtherCountry }}</p>
         </div>
-      </section>
-
-      <!-- 签证百科：同源 RAG 材料清单（与热门问题 /apply 一致） -->
-      <section
-        v-if="section === 'wiki'"
-        class="resources-section resources-wiki-checklist"
-        data-testid="wiki-materials-checklist"
-      >
-        <h2 class="resources-section__title">{{ t('apply.checklist') }}</h2>
-        <p class="resources-section__lead">
-          {{ t('resources.wiki_checklist_intro', '以下材料清单与「开始申请」页同源，来自官方资料整理。') }}
-        </p>
-        <RagMaterialsChecklist :country-code="checklistApiCountry" />
       </section>
 
       <p class="resources-curated-back">
@@ -136,6 +153,7 @@ const { t, locale } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const activeCountry = ref('US')
+const checklistExpanded = ref(false)
 
 const headerScope = 'resources'
 
@@ -226,6 +244,7 @@ onMounted(() => {
 })
 
 watch(activeCountry, (cc) => {
+  checklistExpanded.value = false
   if (props.section === 'wiki') {
     router.replace({ path: route.path, query: { ...route.query, country: cc } })
   }
@@ -382,12 +401,37 @@ watch(activeCountry, (cc) => {
 }
 .resources-curated-back__link:hover { color: #2563eb; }
 
-.resources-wiki-checklist {
-  margin-top: 8px;
-  padding-top: 8px;
+.resources-wiki-checklist-card :deep(.rag-checklist) {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
 }
-.resources-wiki-checklist .resources-section__lead {
-  margin-bottom: 16px;
+.resources-wiki-checklist-card__body {
+  margin: 4px 0 16px;
+}
+.resources-wiki-checklist-card__toggle {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+}
+.resources-wiki-checklist-card :deep(.rag-checklist__head),
+.resources-wiki-checklist-card :deep(.rag-checklist__group-title) {
+  display: none;
+}
+.resources-wiki-checklist-card :deep(.rag-checklist__group),
+.resources-wiki-checklist-card :deep(.rag-checklist__notes) {
+  margin-top: 8px;
+}
+.resources-wiki-checklist-card :deep(.rag-checklist__list) {
+  gap: 6px;
+}
+.resources-wiki-checklist-card :deep(.rag-checklist__item) {
+  min-height: 38px;
+  padding: 8px 12px;
 }
 
 @media (max-width: 768px) {

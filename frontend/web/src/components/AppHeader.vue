@@ -372,9 +372,10 @@ const megaMenus = [
     titleKey: 'nav.mega.contact_title',
     descKey: 'nav.mega.contact_desc',
     items: [
-      // 联系菜单: 邮件 + 产品定价（电话直拨已下线）
+      // 联系菜单: 邮件 + 产品定价 + 关于我们（电话直拨已下线）
       { to: '/contact', nameKey: 'nav.mega.contact_i1', descKey: 'nav.mega.contact_i1_d', icon: SVG_MAIL, tone: 'blue' },
       { to: '/pricing', nameKey: 'nav.mega.contact_i2', descKey: 'nav.mega.contact_i2_d', icon: SVG_FILE, tone: 'amber' },
+      { to: '/about', nameKey: 'nav.mega.contact_i3', descKey: 'nav.mega.contact_i3_d', icon: SVG_GLOBE, tone: 'indigo' },
     ],
   },
 ]

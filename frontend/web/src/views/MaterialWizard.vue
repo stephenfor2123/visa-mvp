@@ -2466,28 +2466,22 @@ const CategoryIcon = {
 }
 .mw-form-ocr-icon { color: #16A34A; }
 
-// ---- Tabs (与 OrderNew 同款) ----
+// ---- Tabs ----
+// 与身份证明的 .mw-item-tab 同一套视觉:选中 = 深色填充,完成 = 浅蓝,默认 = 浅灰胶囊
 .form-tabs { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; align-items: center; }
 .form-tab {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 7px 14px; font-size: 13px; font-weight: 500;
-  background: #fff; border: 1px solid var(--border, #E2E8F0);
+  padding: 8px 16px; font-size: 13px; font-weight: 500;
+  background: #F8FAFC; border: 1px solid #E2E8F0;
   border-radius: 999px; color: var(--ink-3, #64748B); cursor: pointer;
   transition: all .15s;
 }
-.form-tab:hover { border-color: #3B6EF5; color: #2D5BFF; }
-/* W47c: 统一品牌主色蓝 (跟步骤条 .mw-step.is-active 同源 #3B6EF5)。
-   之前 done 用绿 (#16A34A) + active 用蓝 (#3B6EF5), 两种语义两种色 → 割裂。
-   现在:
-   - active: 蓝填充 + 白字
-   - done:   蓝填充(浅) + 蓝字 + 蓝勾 (浅一档, 跟 active 形成层级差但不抢色)
-   - todo:   白底灰字
-*/
-.form-tab.on { background: #3B6EF5; color: #fff; border-color: #3B6EF5; font-weight: 600; }
-.form-tab.done { background: rgba(59, 110, 245, .08); color: #3B6EF5; border-color: rgba(59, 110, 245, .35); font-weight: 600; }
-.form-tab.done .form-tab__check { color: #3B6EF5; }
-.form-tab.on.done { background: #3B6EF5; color: #fff; border-color: #3B6EF5; }
-.form-tabs__counter { margin-left: auto; font-size: 12px; font-weight: 600; color: #3B6EF5; background: rgba(59, 110, 245, .08); padding: 6px 12px; border-radius: 999px; letter-spacing: 0.2px; }
+.form-tab:hover { border-color: #2563EB; color: #2563EB; background: #EFF6FF; }
+.form-tab.on { background: #0F172A; color: #fff; border-color: #0F172A; font-weight: 600; }
+.form-tab.done { background: #EFF6FF; color: #2563EB; border-color: #BFDBFE; font-weight: 600; }
+.form-tab.done .form-tab__check { color: #2563EB; }
+.form-tab.on.done { background: #0F172A; color: #fff; border-color: #0F172A; }
+.form-tabs__counter { margin-left: auto; font-size: 12px; font-weight: 600; color: #0F172A; background: #F1F5F9; padding: 6px 12px; border-radius: 999px; letter-spacing: 0.2px; }
 .form-tab.on.done .form-tab__check { color: #fff; }
 .form-tab__check--empty { color: #94A3B8; }
 
