@@ -69,8 +69,7 @@ const navItems = computed(() => {
   if (admin.hasPermission('settings')) items.push({ path: '/admin/rate-limit', label: 'admin.menu_settings', perm: 'settings' })
   if (admin.hasPermission('ai_rules.edit')) items.push({ path: '/admin/ai-rules', label: 'admin.menu_ai_rules', perm: 'ai_rules.edit' })
   if (admin.hasPermission('rag.review')) items.push({ path: '/admin/rag-review', label: 'admin.menu_rag_review', perm: 'rag.review' })
-  // W63: system.cleanup 是独立 perm, 不跟 settings 嵌套
-  if (admin.hasPermission('system.cleanup')) items.push({ path: '/admin/cleanup', label: 'admin.menu_cleanup', perm: 'system.cleanup' })
+  // 文件清理不进后台菜单 — 由定时任务 / 运维脚本处理（见 scripts/backup.py + cleanup cron）
   if (admin.hasPermission('role.manage')) items.push({ path: '/admin/roles', label: 'admin.menu_roles', perm: 'role.manage' })
   if (admin.hasPermission('dashboard.view')) items.push({ path: '/admin/logs', label: 'admin.menu_logs', perm: 'dashboard.view' })
   return items

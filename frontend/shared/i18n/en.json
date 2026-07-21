@@ -163,6 +163,8 @@
       "contact_desc": "Email support and pricing, right where you need them",
       "contact_i1": "Email",
       "contact_i1_d": "Detailed questions / review",
+      "contact_i2": "Pricing",
+      "contact_i2_d": "Service fees by country",
       "contact_i3": "WeChat",
       "contact_i3_d": "Daily chat / instant reply",
       "contact_i4": "WhatsApp",
@@ -716,7 +718,7 @@
     "menu_logs": "Audit Logs",
     "menu_cleanup": "Cleanup",
     "menu_settings": "Settings",
-    "menu_payments": "Payment Flow",
+    "menu_payments": "Payments",
     "menu_pricing": "Pricing & Promo",
     "orders": {
       "page_title": "Order Management",
@@ -835,7 +837,7 @@
       "portal_failed": "Failed to mark portal submission"
     },
     "payments": {
-      "page_title": "Payment Flow",
+      "page_title": "Payments",
       "page_subtitle": "Independent payment ledger, separate from order status",
       "stat_total": "Total",
       "stat_total_hint": "All payment records",
@@ -2482,7 +2484,9 @@
     "copy": "Copy",
     "copied": "Copied",
     "partner_label": "Business",
-    "partner_subject": "Partnership inquiry"
+    "partner_subject": "Partnership inquiry",
+    "support_note": "Questions about products, orders, and visa applications",
+    "partner_note": "Brand partnerships, distribution, and press inquiries"
   },
   "wizard": {
     "title": "Material Collection",

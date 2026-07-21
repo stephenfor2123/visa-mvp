@@ -639,9 +639,18 @@ async def list_countries(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
     enabled: Optional[bool] = Query(None),
+    product_only: bool = Query(
+        True,
+        description="Only return homepage product destinations (US/AU/GB/DE/FR)",
+    ),
 ) -> ApiResponse[PaginatedCountryList]:
     svc = AdminService(db)
-    out = await svc.list_countries(page=page, page_size=page_size, enabled=enabled)
+    out = await svc.list_countries(
+        page=page,
+        page_size=page_size,
+        enabled=enabled,
+        product_only=product_only,
+    )
     return ApiResponse[PaginatedCountryList](
         code="1000",
         message="OK",

@@ -5,16 +5,15 @@
     <main class="app-container app-page contact-page__main">
       <header class="contact-page__head">
         <h1 class="contact-page__title">{{ t('contact.title') }}</h1>
-        <!-- W47d+ : 副标题 "邮件咨询 1 小时内回复..." 划掉,产品决定页面只
-             保留主标题 + 卡片,信息密度更聚焦 -->
+        <p class="contact-page__intro">{{ t('contact.sub') }}</p>
       </header>
 
-    <ul class="contact-page__list">
-      <li class="contact-page__row contact-page__row--email" data-testid="contact-row-email">
-        <span class="contact-page__chip contact-page__chip--blue" v-html="SVG_MAIL" />
+    <ul class="contact-page__list" aria-label="Contact options">
+      <li class="contact-page__row" data-testid="contact-row-email">
         <div class="contact-page__row-body">
           <div class="contact-page__row-label">{{ t('contact.email') }}</div>
           <a class="contact-page__row-value" :href="`mailto:${CONTACT.support}`" data-testid="contact-email-value">{{ CONTACT.support }}</a>
+          <p class="contact-page__row-note">{{ t('contact.support_note') }}</p>
         </div>
         <button
           type="button"
@@ -27,11 +26,11 @@
         </button>
       </li>
 
-      <li class="contact-page__row contact-page__row--partner" data-testid="contact-row-partner">
-        <span class="contact-page__chip contact-page__chip--indigo" v-html="SVG_BRIEFCASE" />
+      <li class="contact-page__row" :class="{ 'is-focused': focusPartner }" data-testid="contact-row-partner">
         <div class="contact-page__row-body">
           <div class="contact-page__row-label">{{ t('contact.partner_label') }}</div>
           <a class="contact-page__row-value" :href="`mailto:${CONTACT.business}?subject=${encodeURIComponent(t('contact.partner_subject'))}`" data-testid="contact-partner-value">{{ CONTACT.business }}</a>
+          <p class="contact-page__row-note">{{ t('contact.partner_note') }}</p>
         </div>
         <button
           type="button"
@@ -52,11 +51,15 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRoute } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
 
 const { t } = useI18n()
+const route = useRoute()
+
+const focusPartner = computed(() => route.query.focus === 'partner')
 
 // W31: 联系信息(品牌统一,可后续改为后端配置)
 // W54: 只保留邮件渠道 — 电话/微信/WhatsApp 已被产品决策下线。
@@ -64,9 +67,6 @@ const CONTACT = {
   support: 'support@htexvisa.com',
   business: 'business@htexvisa.com',
 }
-
-const SVG_MAIL = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 7l9 6 9-6" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`
-const SVG_BRIEFCASE = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M3 12h18" stroke="currentColor" stroke-width="1.6"/></svg>`
 
 // 复制到剪贴板
 const copyState = ref('')
@@ -93,7 +93,7 @@ async function copyToClipboard(key, value) {
 <style scoped lang="scss">
 .contact-page {
   min-height: 100vh;
-  background: var(--bg, #f9fafb);
+  background: #fff;
   display: flex;
   flex-direction: column;
 
@@ -101,109 +101,120 @@ async function copyToClipboard(key, value) {
     flex: 1;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    padding: 72px 24px 80px;
+    padding: 56px 24px 96px;
   }
   &__head {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto 36px;
     text-align: center;
-    margin-bottom: 32px;
-    max-width: 520px;
   }
   &__title {
-    font-size: 28px;
+    font-size: clamp(36px, 4vw, 52px);
+    line-height: 1.1;
     font-weight: 700;
-    color: #0f172a;
-    margin: 0 0 4px;
-    letter-spacing: -.3px;
+    color: #101828;
+    margin: 0;
+    letter-spacing: -.04em;
   }
-  // 副标题已删 (W47d+),保留空选择器避免外部 override 失效
+  &__intro {
+    max-width: 480px;
+    margin: 16px auto 0;
+    color: #667085;
+    font-size: 16px;
+    line-height: 1.6;
+  }
   &__list {
     list-style: none;
     padding: 0;
     margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
     width: 100%;
-    max-width: 880px;
+    max-width: 1200px;
+    margin: 0 auto;
   }
   &__row {
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding: 18px 20px;
-    border: 1px solid #e2e8f0;
-    border-radius: 16px;
-    background: #fff;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
-    transition: all .2s ease;
+    gap: 18px;
+    min-height: 210px;
+    padding: clamp(24px, 3vw, 34px);
+    border: 1px solid #e3e8f2;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, .94);
+    box-shadow: 0 8px 24px rgba(22, 48, 92, .06);
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
     &:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 16px rgba(15, 23, 42, .08);
+      transform: translateY(-3px);
+      border-color: #cbd8ff;
+      box-shadow: 0 16px 34px rgba(31, 73, 161, .12);
     }
-    &--email {
-      background: linear-gradient(135deg, #eff6ff 0%, #ffffff 60%);
-      border-color: #bfdbfe;
-    }
-    &--partner {
-      background: linear-gradient(135deg, #eef2ff 0%, #ffffff 60%);
-      border-color: #c7d2fe;
-    }
-  }
-  &__chip {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    svg { width: 24px; height: 24px; }
-    &--blue    { background: #dbeafe; color: #2563eb; }
-    &--indigo  { background: #e0e7ff; color: #4f46e5; }
+    &.is-focused { border-color: #9bb2ff; box-shadow: 0 0 0 3px rgba(78, 111, 228, .10); }
   }
   &__row-body {
     flex: 1;
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 8px;
   }
   &__row-label {
-    font-size: 12px;
-    color: #64748b;
-    font-weight: 500;
-    letter-spacing: .3px;
+    font-size: 13px;
+    color: #718096;
+    font-weight: 600;
   }
   &__row-value {
-    font-size: 17px;
-    font-weight: 600;
-    color: #0f172a;
+    font-size: clamp(18px, 2vw, 25px);
+    font-weight: 400;
+    color: #111827;
+    font-weight: 650;
     text-decoration: none;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    letter-spacing: -.2px;
-    &:hover { color: #3b6ef5; }
+    letter-spacing: -.03em;
+    &:hover { color: #4567db; }
+  }
+  &__row-note {
+    margin: 6px 0 0;
+    color: #7b8494;
+    font-size: 14px;
+    line-height: 1.5;
   }
   &__copy {
-    background: #fff;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    padding: 8px 16px;
-    font-size: 12px;
-    color: #475569;
+    align-self: flex-start;
+    background: #4c6ee4;
+    border: 1px solid #4c6ee4;
+    border-radius: 999px;
+    padding: 10px 18px;
+    font-size: 13px;
+    color: #fff;
     cursor: pointer;
     flex-shrink: 0;
     transition: all .15s;
     font-weight: 500;
-    &:hover { background: #3b6ef5; border-color: #3b6ef5; color: #fff; }
+    &:hover { background: #3858c8; border-color: #3858c8; }
     &.is-copied {
       background: #16a34a;
       border-color: #16a34a;
       color: #fff;
     }
   }
-  // 页脚已删 (W47d+)
+
+  @media (max-width: 760px) {
+    &__main { padding: 42px 16px 64px; }
+    &__head { margin-bottom: 28px; }
+    &__title { font-size: 36px; }
+    &__intro { margin-top: 14px; font-size: 15px; }
+    &__list { grid-template-columns: 1fr; }
+    &__row {
+      min-height: 190px;
+      padding: 24px 18px;
+      gap: 16px;
+    }
+    &__copy { padding: 9px 14px; }
+  }
 }
 </style>

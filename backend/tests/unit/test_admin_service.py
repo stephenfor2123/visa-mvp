@@ -94,12 +94,40 @@ class TestAdminOrderManagement:
 # --------------------------------------------------------------------------- #
 
 class TestAdminCountryConfig:
-    async def test_list_countries_empty(self, tmp_db: Any):
-        """Empty visa_countries table returns zero items."""
+    async def test_list_countries_auto_seeds_product(self, tmp_db: Any):
+        """Empty table is auto-seeded with homepage product destinations."""
         svc = AdminService(tmp_db)
         result = await svc.list_countries(page=1, page_size=50)
-        assert result["items"] == []
-        assert result["total"] == 0
+        codes = {c["country_code"] for c in result["items"]}
+        assert codes == {"US", "AU", "GB", "DE", "FR"}
+        assert result["total"] == 5
+
+    async def test_list_countries_product_only_purges_legacy(self, tmp_db: Any):
+        """Legacy ID/VN rows are deleted from visa_countries on list."""
+        import json
+        from app.models.visa_countries import VisaCountry
+        from sqlalchemy import select
+
+        tmp_db.add(
+            VisaCountry(
+                country_code="ID",
+                country_name_zh="印度尼西亚",
+                country_name_en="Indonesia",
+                enabled=False,
+                display_order=99,
+                visa_types=json.dumps(["tourism"]),
+            )
+        )
+        await tmp_db.commit()
+        svc = AdminService(tmp_db)
+        result = await svc.list_countries(page=1, page_size=50, product_only=True)
+        codes = {c["country_code"] for c in result["items"]}
+        assert "ID" not in codes
+        assert "US" in codes
+        leftover = await tmp_db.scalar(
+            select(VisaCountry).where(VisaCountry.country_code == "ID")
+        )
+        assert leftover is None
 
     async def test_update_country_not_found_raises(self, tmp_db: Any):
         """Non-existent country raises NOT_FOUND."""

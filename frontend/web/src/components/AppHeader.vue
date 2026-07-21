@@ -372,19 +372,9 @@ const megaMenus = [
     titleKey: 'nav.mega.contact_title',
     descKey: 'nav.mega.contact_desc',
     items: [
-      // 联系菜单保留邮件入口，第二位改为产品定价。
+      // 联系菜单: 邮件 + 产品定价（电话直拨已下线）
       { to: '/contact', nameKey: 'nav.mega.contact_i1', descKey: 'nav.mega.contact_i1_d', icon: SVG_MAIL, tone: 'blue' },
-      { to: '/pricing', nameKey: 'nav.mega.pricing', descKey: 'nav.mega.pricing_i1_d', icon: SVG_FILE, tone: 'amber' },
-    ],
-  },
-  {
-    // W56: 产品定价升级为顶级 trigger — 和 Policies / Contact 平级
-    id: 'pricing',
-    triggerKey: 'nav.mega.pricing',
-    titleKey: 'nav.mega.pricing_title',
-    descKey: 'nav.mega.pricing_desc',
-    items: [
-      { to: '/pricing', nameKey: 'nav.mega.pricing_i1', descKey: 'nav.mega.pricing_i1_d', icon: SVG_FILE, tone: 'amber' },
+      { to: '/pricing', nameKey: 'nav.mega.contact_i2', descKey: 'nav.mega.contact_i2_d', icon: SVG_FILE, tone: 'amber' },
     ],
   },
 ]

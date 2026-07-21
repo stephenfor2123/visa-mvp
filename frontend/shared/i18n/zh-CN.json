@@ -163,6 +163,8 @@
       "contact_desc": "邮件咨询与产品定价,按需直达",
       "contact_i1": "邮件咨询",
       "contact_i1_d": "详细问题 / 资料审核",
+      "contact_i2": "产品定价",
+      "contact_i2_d": "各国签证服务费一览",
       "contact_i3": "微信客服",
       "contact_i3_d": "日常沟通 / 实时响应",
       "contact_i4": "WhatsApp",
@@ -716,7 +718,7 @@
     "menu_logs": "系统日志",
     "menu_cleanup": "文件清理",
     "menu_settings": "系统设置",
-    "menu_payments": "资金流",
+    "menu_payments": "资金管理",
     "menu_pricing": "价格营销",
     "orders": {
       "page_title": "订单管理",
@@ -835,7 +837,7 @@
       "portal_failed": "标记失败"
     },
     "payments": {
-      "page_title": "资金流",
+      "page_title": "资金管理",
       "page_subtitle": "独立支付流水，与订单状态分开管理",
       "stat_total": "总笔数",
       "stat_total_hint": "所有支付记录",
@@ -961,7 +963,7 @@
     "perms": {
       "dashboard": "总览",
       "orders": "订单管理",
-      "payments": "资金流",
+      "payments": "资金管理",
       "users": "账号管理",
       "countries": "国家配置",
       "settings": "系统设置",
@@ -2508,7 +2510,9 @@
     "copy": "复制",
     "copied": "已复制",
     "partner_label": "商务合作",
-    "partner_subject": "商业合作咨询"
+    "partner_subject": "商业合作咨询",
+    "support_note": "产品使用、订单与签证申请问题",
+    "partner_note": "品牌合作、渠道合作与媒体咨询"
   },
   "wizard": {
     "title": "材料收集",

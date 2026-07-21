@@ -4,6 +4,7 @@
       <header class="admin-main__head">
         <h1>{{ t('admin.countries.page_title') }}</h1>
         <p class="admin-main__sub">{{ t('admin.countries.page_subtitle') }}</p>
+        <p class="admin-main__hint">关闭开关后，首页与办签证入口将不再展示该国家。</p>
         <div class="admin-main__actions">
           <button class="btn-primary" @click="openCreate">+ {{ t('admin.countries.create') }}</button>
         </div>
@@ -215,6 +216,7 @@ onMounted(load)
 .switch input:checked + .slider { background: #3b82f6; }
 .switch input:checked + .slider::before { transform: translateX(18px); }
 .empty { grid-column: 1 / -1; text-align: center; color: #9ca3af; padding: 40px; }
+.admin-main__hint { margin: 0 0 12px; font-size: .85rem; color: #6b7280; }
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center; z-index: 1000; }
 .modal { background: #fff; border-radius: 12px; width: 90%; max-width: 480px; max-height: 90vh; overflow-y: auto; }
 .modal__head { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #e5e7eb; }

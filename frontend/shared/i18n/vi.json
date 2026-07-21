@@ -163,6 +163,8 @@
       "contact_desc": "Hỗ trợ qua email và bảng giá, truy cập ngay khi cần",
       "contact_i1": "Email",
       "contact_i1_d": "Câu hỏi chi tiết / xét duyệt",
+      "contact_i2": "Bảng giá",
+      "contact_i2_d": "Phí dịch vụ theo từng nước",
       "contact_i3": "WeChat",
       "contact_i3_d": "Hằng ngày / tức thì",
       "contact_i4": "WhatsApp",
@@ -2037,7 +2039,9 @@
     "copy": "Sao chép",
     "copied": "Đã sao chép",
     "partner_label": "Hợp tác kinh doanh",
-    "partner_subject": "Yêu cầu hợp tác"
+    "partner_subject": "Yêu cầu hợp tác",
+    "support_note": "Câu hỏi về sản phẩm, đơn hàng và hồ sơ xin thị thực",
+    "partner_note": "Hợp tác thương hiệu, phân phối và truyền thông"
   },
   "wizard": {
     "title": "Thu thập hồ sơ",

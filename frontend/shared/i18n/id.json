@@ -163,6 +163,8 @@
       "contact_desc": "Dukungan email dan harga, langsung sesuai kebutuhan",
       "contact_i1": "Email",
       "contact_i1_d": "Pertanyaan detail / tinjauan",
+      "contact_i2": "Harga",
+      "contact_i2_d": "Biaya layanan per negara",
       "contact_i3": "WeChat",
       "contact_i3_d": "Harian / instan",
       "contact_i4": "WhatsApp",
@@ -2037,7 +2039,9 @@
     "copy": "Salin",
     "copied": "Tersalin",
     "partner_label": "Bisnis",
-    "partner_subject": "Pertanyaan kemitraan"
+    "partner_subject": "Pertanyaan kemitraan",
+    "support_note": "Pertanyaan tentang produk, pesanan, dan aplikasi visa",
+    "partner_note": "Kemitraan merek, distribusi, dan pertanyaan media"
   },
   "wizard": {
     "title": "Pengumpulan Dokumen",

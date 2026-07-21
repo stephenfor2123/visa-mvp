@@ -25,7 +25,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import get_settings
 from app.core.errors import BizException, ErrorCode
 from app.core.logging import get_logger
-from app.core.product_scope import normalize_destination_code
+from app.core.product_scope import (
+    PRODUCT_DESTINATION_CODES,
+    normalize_destination_code,
+)
 from app.core.security import bump_password_changed_at, invalidate_user_sessions
 from app.middleware.admin_auth import create_admin_token
 from app.models.audit_log import AuditLog
@@ -933,20 +936,159 @@ class AdminService:
         for dest in rows:
             dest.enabled = enabled
 
+    # Product destination cards shown on homepage / apply (US·AU·GB + Schengen DE/FR)
+    _PRODUCT_COUNTRY_SEED: list[dict[str, Any]] = [
+        {
+            "country_code": "US",
+            "country_name_zh": "美国",
+            "country_name_en": "United States",
+            "flag_emoji": "🇺🇸",
+            "display_order": 1,
+            "visa_types": ["tourism", "student"],
+        },
+        {
+            "country_code": "AU",
+            "country_name_zh": "澳大利亚",
+            "country_name_en": "Australia",
+            "flag_emoji": "🇦🇺",
+            "display_order": 2,
+            "visa_types": ["tourism"],
+        },
+        {
+            "country_code": "GB",
+            "country_name_zh": "英国",
+            "country_name_en": "United Kingdom",
+            "flag_emoji": "🇬🇧",
+            "display_order": 3,
+            "visa_types": ["tourism"],
+        },
+        {
+            "country_code": "DE",
+            "country_name_zh": "德国(申根)",
+            "country_name_en": "Germany (Schengen)",
+            "flag_emoji": "🇩🇪",
+            "display_order": 4,
+            "visa_types": ["tourism"],
+        },
+        {
+            "country_code": "FR",
+            "country_name_zh": "法国(申根)",
+            "country_name_en": "France (Schengen)",
+            "flag_emoji": "🇫🇷",
+            "display_order": 5,
+            "visa_types": ["tourism"],
+        },
+    ]
+
+    async def ensure_product_countries(self) -> int:
+        """Insert missing product destination rows; purge non-product legacy rows.
+
+        Idempotent. Does not overwrite an existing product row's ``enabled`` flag.
+        Deletes ID/VN/PH/… from ``visa_countries`` — we do not file those visas.
+        Returns the number of product rows inserted.
+        """
+        from app.core.product_scope import NON_PRODUCT_DESTINATION_CODES
+
+        # Drop legacy "file these visas" rows (ID/VN/PH etc.) from admin config
+        purged = (
+            await self.db.execute(
+                select(VisaCountry).where(
+                    VisaCountry.country_code.in_(
+                        sorted(NON_PRODUCT_DESTINATION_CODES)
+                    )
+                )
+            )
+        ).scalars().all()
+        for row in purged:
+            await self.db.delete(row)
+
+        inserted = 0
+        touched = bool(purged)
+        product_norm = {
+            normalize_destination_code(c) for c in PRODUCT_DESTINATION_CODES
+        }
+        for spec in self._PRODUCT_COUNTRY_SEED:
+            code = spec["country_code"]
+            if normalize_destination_code(code) not in product_norm:
+                continue
+            existing = await self.db.scalar(
+                select(VisaCountry).where(VisaCountry.country_code == code)
+            )
+            if existing is not None:
+                # Backfill blank display fields only
+                if not existing.country_name_zh:
+                    existing.country_name_zh = spec["country_name_zh"]
+                    touched = True
+                if not existing.country_name_en:
+                    existing.country_name_en = spec["country_name_en"]
+                    touched = True
+                if not existing.flag_emoji:
+                    existing.flag_emoji = spec["flag_emoji"]
+                    touched = True
+                if not existing.visa_types:
+                    existing.visa_types = json.dumps(spec["visa_types"], ensure_ascii=False)
+                    touched = True
+                continue
+
+            # Default enabled from matching destination row when present
+            dest = await self.db.scalar(
+                select(VisaDestination).where(
+                    VisaDestination.country_code.in_(
+                        {code, "UK"} if code == "GB" else {code}
+                    )
+                )
+            )
+            enabled = bool(dest.enabled) if dest is not None else True
+            self.db.add(
+                VisaCountry(
+                    country_code=code,
+                    country_name_zh=spec["country_name_zh"],
+                    country_name_en=spec["country_name_en"],
+                    flag_emoji=spec["flag_emoji"],
+                    display_order=spec["display_order"],
+                    visa_types=json.dumps(spec["visa_types"], ensure_ascii=False),
+                    enabled=enabled,
+                )
+            )
+            inserted += 1
+            touched = True
+        if touched:
+            await self.db.commit()
+        return inserted
+
     async def list_countries(
-        self, page: int = 1, page_size: int = 50, enabled: Optional[bool] = None
+        self,
+        page: int = 1,
+        page_size: int = 50,
+        enabled: Optional[bool] = None,
+        product_only: bool = True,
     ) -> dict[str, Any]:
         """Paginated country list.
 
         Sorted by ``display_order`` ascending (then country_code as a stable
         tie-breaker) so the admin table mirrors the V2 frontend country picker.
+
+        By default ``product_only=True`` so the panel shows US/AU/GB/DE/FR.
+        Non-product legacy rows (ID/VN/PH/…) are purged on load.
         """
+        await self.ensure_product_countries()
+
         query = select(VisaCountry).order_by(
             VisaCountry.display_order.asc(),
             VisaCountry.country_code.asc(),
         )
         if enabled is not None:
             query = query.where(VisaCountry.enabled == enabled)
+        if product_only:
+            product_codes = sorted(
+                {
+                    normalize_destination_code(c)
+                    for c in PRODUCT_DESTINATION_CODES
+                }
+            )
+            # Include UK alias if present in DB
+            codes = set(product_codes) | {"UK"}
+            query = query.where(VisaCountry.country_code.in_(codes))
 
         count_query = select(func.count()).select_from(query.subquery())
         total = (await self.db.execute(count_query)).scalar() or 0
@@ -965,6 +1107,23 @@ class AdminService:
 
     async def create_country(self, data: dict[str, Any]) -> dict[str, Any]:
         """Create a new country entry."""
+        code = normalize_destination_code(data["country_code"])
+        if code in {
+            normalize_destination_code(c) for c in PRODUCT_DESTINATION_CODES
+        } | {"UK"}:
+            data = {**data, "country_code": "GB" if code == "UK" else code}
+        else:
+            from app.core.product_scope import NON_PRODUCT_DESTINATION_CODES
+
+            if code in NON_PRODUCT_DESTINATION_CODES or code in {"ID", "VN", "PH"}:
+                raise BizException(
+                    ErrorCode.BAD_REQUEST,
+                    message=(
+                        f"{code} is not a fileable visa destination "
+                        "(customer market only). Use US/AU/GB/DE/FR."
+                    ),
+                )
+
         existing = await self.db.scalar(
             select(VisaCountry).where(VisaCountry.country_code == data["country_code"])
         )

@@ -120,3 +120,43 @@ class TestDestinationAdminToggle:
         pub2 = await client.get("/api/v2/destinations")
         codes2 = {d["country_code"] for d in pub2.json()["data"]}
         assert "US" in codes2
+
+    async def test_admin_list_auto_seeds_product_countries(self, client):
+        """Admin panel should show US/AU/GB/DE/FR — not legacy ID/VN/PH."""
+        async with AsyncSessionLocal() as s:
+            existing = await s.scalar(
+                select(VisaCountry).where(VisaCountry.country_code == "ID")
+            )
+            if existing is None:
+                s.add(
+                    VisaCountry(
+                        country_code="ID",
+                        country_name_zh="印度尼西亚",
+                        country_name_en="Indonesia",
+                        enabled=False,
+                        display_order=99,
+                        visa_types=json.dumps(["tourism", "student"]),
+                    )
+                )
+                await s.commit()
+
+        token = await _admin_token(client)
+        r = await client.get(
+            "/api/v2/admin/config/countries",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert r.status_code == 200, r.text
+        items = r.json()["data"]["items"]
+        codes = {c["country_code"] for c in items}
+        assert "ID" not in codes
+        for required in ("US", "AU", "GB", "DE", "FR"):
+            assert required in codes
+        for c in items:
+            assert c["country_code"]
+            assert c["country_name_zh"] or c["country_name_en"]
+
+        async with AsyncSessionLocal() as s:
+            leftover = await s.scalar(
+                select(VisaCountry).where(VisaCountry.country_code == "ID")
+            )
+            assert leftover is None
