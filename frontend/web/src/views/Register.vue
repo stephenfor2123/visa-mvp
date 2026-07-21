@@ -59,6 +59,17 @@
             @blur="errors.confirmPassword = validateConfirmPassword(confirmPassword, password) ? t(validateConfirmPassword(confirmPassword, password)) : ''"
           />
 
+          <label class="agreement" :class="{ 'is-error': errors.ageConfirm }">
+            <input
+              v-model="ageConfirmed"
+              type="checkbox"
+              data-testid="reg-age-confirm"
+            />
+            <span class="agreement__text">{{ t('register.age_confirm') }}</span>
+          </label>
+          <p class="agreement__hint">{{ t('register.age_hint') }}</p>
+          <span v-if="errors.ageConfirm" class="agreement__error">{{ errors.ageConfirm }}</span>
+
           <label class="agreement" :class="{ 'is-error': errors.agreement }">
             <input
               v-model="agreed"
@@ -130,6 +141,7 @@ const email = ref('')
 const password = ref('')
 const confirmPassword = ref('')
 const agreed = ref(false)
+const ageConfirmed = ref(false)
 
 const submitting = ref(false)
 const errors = reactive({
@@ -137,7 +149,8 @@ const errors = reactive({
   email: '',
   password: '',
   confirmPassword: '',
-  agreement: ''
+  agreement: '',
+  ageConfirm: '',
 })
 
 // Same rules as backend pydantic validator: 8-32 chars, must contain letter + digit.
@@ -157,8 +170,9 @@ function validate() {
   errors.confirmPassword = validateConfirmPassword(confirmPassword.value, password.value)
     ? t(validateConfirmPassword(confirmPassword.value, password.value))
     : ''
+  errors.ageConfirm = !ageConfirmed.value ? t('errors.age_confirm_required') : ''
   errors.agreement = !agreed.value ? t('errors.agreement_required') : ''
-  return !errors.username && !errors.email && !errors.password && !errors.confirmPassword && !errors.agreement
+  return !errors.username && !errors.email && !errors.password && !errors.confirmPassword && !errors.agreement && !errors.ageConfirm
 }
 
 async function onSubmit() {
@@ -168,7 +182,8 @@ async function onSubmit() {
     await auth.register({
       username: username.value.trim(),
       email: email.value.trim(),
-      password: password.value
+      password: password.value,
+      ageConfirmed16: true,
     })
     // W48: tell user the welcome email is on its way (best-effort — backend
     // may still fail silently if email_service is down, but UI keeps a positive tone).
@@ -197,9 +212,19 @@ function goLogin() {
 }
 
 async function handleGoogleCredential(response) {
+  if (!ageConfirmed.value) {
+    errors.ageConfirm = t('errors.age_confirm_required')
+    toast.error(t('errors.age_confirm_required'))
+    return
+  }
+  if (!agreed.value) {
+    errors.agreement = t('errors.agreement_required')
+    toast.error(t('errors.agreement_required'))
+    return
+  }
   googleLoading.value = true
   try {
-    await auth.loginWithGoogle(response.credential)
+    await auth.loginWithGoogle(response.credential, { ageConfirmed16: true })
     toast.success(t('toast.register_success'))
     router.push('/destinations')
   } catch (e) {
@@ -276,6 +301,13 @@ const { googleBtnRef, googleEnabled } = useGoogleAuthButton({
 }
 .agreement a:hover { text-decoration: underline; }
 .agreement.is-error .agreement__text { color: var(--el-color-danger, #DC2626); }
+.agreement__hint {
+  margin: -6px 0 0;
+  padding-left: 24px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-3, #6b7280);
+}
 .agreement__error {
   margin-top: -8px;
   font-size: 12px;

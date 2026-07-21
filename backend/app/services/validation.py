@@ -573,6 +573,13 @@ class ValidationEngine:
             return None
         years = (date.today() - d).days / 365.25
         if "min_age" in p and years < float(p["min_age"]):
+            # Guardian-only minors: skip hard block when applicant is flagged as minor
+            # under a 16+ account holder (Art.8 — account age enforced at register).
+            if p.get("allow_guardian") and (
+                fields.get("is_minor")
+                or fields.get("guardian_relationship")
+            ):
+                return None
             return {
                 "code": code,
                 "severity": sev,

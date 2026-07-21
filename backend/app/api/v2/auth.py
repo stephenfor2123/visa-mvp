@@ -84,6 +84,7 @@ async def register(
         nickname=body.nickname,
         language_pref=body.language_pref,
         info=info,
+        age_confirmed_16=body.age_confirmed_16,
     )
     _log.info(
         "user.register",
@@ -205,7 +206,11 @@ async def google_auth(
 ) -> ApiResponse[TokenPair]:
     service = AuthService(db)
     info = _client_info(request, user_agent, x_device_fp)
-    result = await service.google_auth(id_token_str=body.id_token, info=info)
+    result = await service.google_auth(
+        id_token_str=body.id_token,
+        info=info,
+        age_confirmed_16=body.age_confirmed_16,
+    )
     _log.info("user.google_auth", extra={"user_id": result["user"]["id"], "event_type": "user.google_auth", "status": "success"})
     return ApiResponse[TokenPair](code="1000", message="OK", data=TokenPair(**result))
 
@@ -224,7 +229,11 @@ async def wechat_auth(
 ) -> ApiResponse[TokenPair]:
     service = AuthService(db)
     info = _client_info(request, user_agent, None)
-    result = await service.wechat_auth(code=body.code, info=info)
+    result = await service.wechat_auth(
+        code=body.code,
+        info=info,
+        age_confirmed_16=body.age_confirmed_16,
+    )
     _log.info("user.wechat_auth", extra={"user_id": result["user"]["id"], "event_type": "user.wechat_auth", "status": "success"})
     return ApiResponse[TokenPair](code="1000", message="OK", data=TokenPair(**result))
 

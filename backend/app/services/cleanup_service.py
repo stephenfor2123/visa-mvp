@@ -43,6 +43,81 @@ _log = get_logger()
 TEMP_FILE_MAX_AGE_HOURS = 24       # V2 §4.3.5
 ARCHIVE_FILE_MAX_AGE_HOURS = 180   # V2 §4.3.5
 PENDING_DESTROY_MAX_AGE_HOURS = 72 # V2 §4.1.4
+# GDPR retention (overridden by settings when available)
+MATERIALS_RETENTION_DAYS = 90
+APPLICANT_DATA_RETENTION_DAYS = 180
+
+# Payment blob keys that may hold direct identifiers — strip on scrub.
+_PAYMENT_PII_KEYS = frozenset(
+    {
+        "passport_no",
+        "passport_number",
+        "applicant_name",
+        "full_name",
+        "email",
+        "phone",
+        "id_number",
+        "national_id",
+    }
+)
+
+
+def _hash_email(email: str) -> str:
+    import hashlib
+
+    digest = hashlib.sha256(email.strip().lower().encode("utf-8")).hexdigest()[:24]
+    return f"deleted_{digest}@anon.invalid"
+
+
+def _scrub_payment_blob(raw: Optional[str]) -> Optional[str]:
+    """Keep payment status / amounts; drop direct identifiers from JSON blob."""
+    if not raw:
+        return raw
+    import json
+
+    try:
+        data = json.loads(raw)
+    except Exception:
+        return None
+    if not isinstance(data, dict):
+        return None
+    for key in list(data.keys()):
+        if key.lower() in _PAYMENT_PII_KEYS or "passport" in key.lower():
+            data.pop(key, None)
+    # Keep structural payment fields only
+    keep = {
+        k: v
+        for k, v in data.items()
+        if k
+        in {
+            "status",
+            "channel",
+            "trade_no",
+            "amount_cents",
+            "currency",
+            "paid_at",
+            "refunded_at",
+            "refund_trade_no",
+            "refund_amount_cents",
+        }
+    }
+    return json.dumps(keep, ensure_ascii=False) if keep else None
+
+
+def maybe_set_retention_anchor(order: Any, *, now: Optional[datetime] = None) -> None:
+    """Stamp retention_anchor_at once when order hits a GDPR terminal state."""
+    from app.models.order import TERMINAL_STATUSES
+
+    # Also treat approved/rejected as retention anchors (plan wording).
+    anchor_statuses = set(TERMINAL_STATUSES) | {"approved", "rejected"}
+    status = getattr(order, "status", None)
+    refund = getattr(order, "refund_status", None) or "none"
+    should_anchor = status in anchor_statuses or refund == "completed"
+    if not should_anchor:
+        return
+    if getattr(order, "retention_anchor_at", None) is not None:
+        return
+    order.retention_anchor_at = now or _utcnow_naive()
 
 
 def _utcnow_naive() -> datetime:
@@ -240,27 +315,31 @@ class CleanupService:
         actor_type: str = "system",
         actor_id: Optional[int] = None,
     ) -> dict[str, Any]:
-        """清空某用户的所有材料物理文件 + 软删订单,保留 audit_log.
+        """Hard-scrub PII for a destroyed account while keeping audit/payment shells.
 
         Steps:
-          1. 找出该用户所有 alive materials
-          2. 每条: 物理删除 + soft delete
-          3. 找出该用户所有 orders, 在 audit 里写一条 user.destroy, 不物理删 orders
-             (保留订单记录供资金流追溯,只清空 applicant_data / material_ids 关联)
+          1. Physically delete materials + clear OCR JSON
+          2. Scrub orders (applicant_data / extra / payment identifiers)
+          3. Anonymize applicants
+          4. Hash email, unlink OAuth, revoke sessions, mark destroyed
         """
+        import json
+
+        from app.models.applicant import Applicant
+        from app.models.user_session import UserSession
+        from app.core.security import invalidate_user_sessions
+
         start = time.monotonic()
         deleted_materials = 0
         freed_bytes = 0
         affected_orders = 0
+        scrubbed_applicants = 0
         errors: list[str] = []
 
-        # 1) 该用户的 alive materials
-        m_rows = (await self.db.execute(
-            select(Material).where(
-                Material.user_id == user_id,
-                Material.deleted_at.is_(None),
-            )
-        )).scalars().all()
+        # 1) Materials — all rows for user (including soft-deleted: wipe OCR)
+        m_rows = (
+            await self.db.execute(select(Material).where(Material.user_id == user_id))
+        ).scalars().all()
 
         for row in m_rows:
             try:
@@ -281,37 +360,104 @@ class CleanupService:
                 _log.warning("audit write failed for material {}: {}", row.id, exc)
                 errors.append(f"audit[mat:{row.id}]: {exc}")
 
-            try:
-                abs_path = storage.path_for(row.storage_key)
-                if abs_path.exists():
-                    abs_path.unlink()
-                    freed_bytes += row.file_size
-            except Exception as exc:
-                _log.warning("physical delete failed for {}: {}", row.storage_key, exc)
-                errors.append(f"file[mat:{row.id}]: {exc}")
+            if row.deleted_at is None:
+                try:
+                    abs_path = storage.path_for(row.storage_key)
+                    if abs_path.exists():
+                        abs_path.unlink()
+                        freed_bytes += int(row.file_size or 0)
+                except Exception as exc:
+                    _log.warning("physical delete failed for {}: {}", row.storage_key, exc)
+                    errors.append(f"file[mat:{row.id}]: {exc}")
+                row.deleted_at = _utcnow_naive()
+                deleted_materials += 1
 
-            row.deleted_at = _utcnow_naive()
-            deleted_materials += 1
+            row.ocr_result = None
+            row.original_filename = "deleted"
+            row.thumbnail_key = None
 
-        # 2) 该用户的 orders — 清空 applicant_data (PII), 保留行供审计
-        o_rows = (await self.db.execute(
-            select(Order).where(Order.user_id == user_id)
-        )).scalars().all()
+        # 2) Orders — scrub PII, keep order_no / status for finance
+        o_rows = (
+            await self.db.execute(select(Order).where(Order.user_id == user_id))
+        ).scalars().all()
         for order in o_rows:
             order.applicant_data = None
             order.material_ids = None
             order.destination_url = None
+            if hasattr(order, "ds160_code"):
+                order.ds160_code = None
+            if hasattr(order, "ds160_fingerprint"):
+                order.ds160_fingerprint = None
+            # Scrub payment / extra blobs
+            if order.extra:
+                try:
+                    blob = json.loads(order.extra)
+                    if isinstance(blob, dict):
+                        payment = blob.get("payment")
+                        if isinstance(payment, dict):
+                            blob["payment"] = json.loads(
+                                _scrub_payment_blob(json.dumps(payment)) or "{}"
+                            )
+                        for k in list(blob.keys()):
+                            if k.lower() in _PAYMENT_PII_KEYS or "passport" in k.lower():
+                                blob.pop(k, None)
+                        order.extra = json.dumps(blob, ensure_ascii=False)
+                    else:
+                        order.extra = None
+                except Exception:
+                    order.extra = _scrub_payment_blob(order.extra)
             affected_orders += 1
-            # 加一条 order_status_history 留痕
-            self.db.add(OrderStatusHistory(
-                order_id=order.id,
-                from_status=order.status,
-                to_status=order.status,
-                source="system",
-                note=f"user destroyed (user_id={user_id}) — PII scrubbed",
-            ))
+            self.db.add(
+                OrderStatusHistory(
+                    order_id=order.id,
+                    from_status=order.status,
+                    to_status=order.status,
+                    source="system",
+                    note=f"user destroyed (user_id={user_id}) — PII scrubbed",
+                )
+            )
 
-        # 3) 顶层 audit — 整个 user destroy 流程
+        # 3) Applicants — anonymize (keep row count for integrity, wipe PII)
+        a_rows = (
+            await self.db.execute(select(Applicant).where(Applicant.user_id == user_id))
+        ).scalars().all()
+        for app in a_rows:
+            app.surname = "DELETED"
+            app.given_name = "USER"
+            app.passport_no = f"X{user_id:08d}{app.id:04d}"[:32]
+            app.is_minor = False
+            app.guardian_relationship = None
+            scrubbed_applicants += 1
+
+        # 4) User identity scrub + session revoke
+        user = await self.db.get(User, user_id)
+        if user is not None:
+            if user.email and not user.email.startswith("deleted_"):
+                user.email = _hash_email(user.email)
+            user.google_sub = None
+            user.wechat_openid = None
+            user.nickname = None
+            user.avatar_url = None
+            user.email_pending = None
+            user.mfa_secret = None
+            user.mfa_enabled = False
+            user.password_hash = None
+            user.status = "destroyed"
+            user.updated_at = _utcnow_naive()
+
+        try:
+            await invalidate_user_sessions(self.db, user_id)
+        except Exception:
+            now = _utcnow_naive()
+            await self.db.execute(
+                update(UserSession)
+                .where(
+                    UserSession.user_id == user_id,
+                    UserSession.revoked_at.is_(None),
+                )
+                .values(revoked_at=now)
+            )
+
         await record_audit(
             self.db,
             actor_type=actor_type,
@@ -322,26 +468,140 @@ class CleanupService:
             payload={
                 "deleted_materials": deleted_materials,
                 "affected_orders": affected_orders,
+                "scrubbed_applicants": scrubbed_applicants,
                 "freed_bytes": freed_bytes,
             },
-        )
-
-        # 4) 设 status=destroyed
-        await self.db.execute(
-            update(User)
-            .where(User.id == user_id)
-            .values(status="destroyed", updated_at=_utcnow_naive())
         )
 
         await self.db.commit()
         duration_ms = int((time.monotonic() - start) * 1000)
         _log.info(
-            "cleanup_user_data user_id={} deleted_materials={} affected_orders={} freed={}",
-            user_id, deleted_materials, affected_orders, _human_bytes(freed_bytes),
+            "cleanup_user_data user_id={} deleted_materials={} affected_orders={} "
+            "applicants={} freed={}",
+            user_id,
+            deleted_materials,
+            affected_orders,
+            scrubbed_applicants,
+            _human_bytes(freed_bytes),
         )
         return {
             "deleted_materials": deleted_materials,
             "affected_orders": affected_orders,
+            "scrubbed_applicants": scrubbed_applicants,
+            "freed_bytes": freed_bytes,
+            "duration_ms": duration_ms,
+            "errors": errors,
+        }
+
+    # ====================================================================== #
+    # 3b) Retention purge — materials 90d / applicant_data 180d               #
+    # ====================================================================== #
+    async def run_retention_purge(
+        self, *, actor_type: str = "system", actor_id: Optional[int] = None,
+    ) -> dict[str, Any]:
+        """Purge materials and applicant_data after configured retention windows."""
+        from app.core.config import get_settings
+
+        settings = get_settings()
+        mat_days = int(getattr(settings, "retention_materials_days", MATERIALS_RETENTION_DAYS))
+        app_days = int(
+            getattr(settings, "retention_applicant_data_days", APPLICANT_DATA_RETENTION_DAYS)
+        )
+
+        start = time.monotonic()
+        now = _utcnow_naive()
+        mat_cutoff = now - timedelta(days=mat_days)
+        app_cutoff = now - timedelta(days=app_days)
+
+        deleted_materials = 0
+        freed_bytes = 0
+        scrubbed_orders = 0
+        errors: list[str] = []
+
+        # Materials linked to orders past material retention
+        order_ids_mat = (
+            await self.db.execute(
+                select(Order.id).where(
+                    Order.retention_anchor_at.is_not(None),
+                    Order.retention_anchor_at < mat_cutoff,
+                )
+            )
+        ).scalars().all()
+
+        if order_ids_mat:
+            m_rows = (
+                await self.db.execute(
+                    select(Material).where(
+                        Material.deleted_at.is_(None),
+                        Material.order_id.in_(list(order_ids_mat)),
+                    )
+                )
+            ).scalars().all()
+            # Also purge orphan materials whose order is in the set via material_ids —
+            # primary path is order_id FK above. User-owned materials without order_id
+            # are kept until account destroy.
+            for row in m_rows:
+                try:
+                    await record_audit(
+                        self.db,
+                        actor_type=actor_type,
+                        actor_id=actor_id,
+                        action="cleanup.retention.material",
+                        target_type="material",
+                        target_id=row.id,
+                        payload={"storage_key": row.storage_key, "reason": f">{mat_days}d"},
+                    )
+                except Exception as exc:
+                    errors.append(f"audit[mat:{row.id}]: {exc}")
+                try:
+                    abs_path = storage.path_for(row.storage_key)
+                    if abs_path.exists():
+                        abs_path.unlink()
+                        freed_bytes += int(row.file_size or 0)
+                except Exception as exc:
+                    errors.append(f"file[mat:{row.id}]: {exc}")
+                row.deleted_at = now
+                row.ocr_result = None
+                deleted_materials += 1
+
+        # Applicant structured data past 180d
+        o_rows = (
+            await self.db.execute(
+                select(Order).where(
+                    Order.retention_anchor_at.is_not(None),
+                    Order.retention_anchor_at < app_cutoff,
+                    Order.applicant_data.is_not(None),
+                )
+            )
+        ).scalars().all()
+        for order in o_rows:
+            order.applicant_data = None
+            if order.extra:
+                order.extra = _scrub_payment_blob(order.extra) or order.extra
+            scrubbed_orders += 1
+            self.db.add(
+                OrderStatusHistory(
+                    order_id=order.id,
+                    from_status=order.status,
+                    to_status=order.status,
+                    source="system",
+                    note=f"retention purge applicant_data after {app_days}d",
+                )
+            )
+
+        await self.db.commit()
+        CleanupService._last_run_at = now
+        duration_ms = int((time.monotonic() - start) * 1000)
+        _log.info(
+            "run_retention_purge: materials={} orders={} freed={} duration={}ms",
+            deleted_materials,
+            scrubbed_orders,
+            _human_bytes(freed_bytes),
+            duration_ms,
+        )
+        return {
+            "deleted_materials": deleted_materials,
+            "scrubbed_orders": scrubbed_orders,
             "freed_bytes": freed_bytes,
             "duration_ms": duration_ms,
             "errors": errors,

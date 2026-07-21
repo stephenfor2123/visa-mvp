@@ -226,8 +226,18 @@ async def get_current_user(
     if user is None:
         raise BizException(ErrorCode.USER_NOT_FOUND, message="User not found")
 
-    if user.status != "active":
+    # Allow pending_destroy so users can cancel deletion within the 72h window.
+    if user.status not in ("active", "pending_destroy"):
         raise BizException(ErrorCode.ACCOUNT_DISABLED, message="Account is not active")
 
     assert_token_valid_for_user(payload, user)
+    return user
+
+
+async def get_current_active_user(
+    user: User = Depends(get_current_user),
+) -> User:
+    """Like get_current_user but rejects pending_destroy accounts."""
+    if user.status != "active":
+        raise BizException(ErrorCode.ACCOUNT_DISABLED, message="Account is not active")
     return user

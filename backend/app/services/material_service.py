@@ -111,7 +111,7 @@ class MaterialService:
             sha256=sha256,
             storage_key=stored.storage_key,
             thumbnail_key=None,  # 缩略图生成留给 W3 (Pillow)
-            encryption_key_id="dev-kms-stub",
+            encryption_key_id=stored.encryption_key_id,
             ocr_status="pending",
         )
         self.db.add(row)

@@ -69,6 +69,11 @@
 
         <template v-if="googleEnabled">
           <div class="auth-divider"><span>{{ t('common.or') || '或' }}</span></div>
+          <label class="remember age-confirm" for="login-age-confirm">
+            <input id="login-age-confirm" v-model="ageConfirmed" type="checkbox" data-testid="login-age-confirm" />
+            <span>{{ t('register.age_confirm') }}</span>
+          </label>
+          <p class="age-confirm-hint">{{ t('register.age_hint') }}</p>
           <div ref="googleBtnRef" class="google-btn-wrap"></div>
         </template>
       </AppCard>
@@ -106,11 +111,16 @@ const submitting = ref(false)
 const errors = reactive({ account: '', password: '' })
 
 const googleLoading = ref(false)
+const ageConfirmed = ref(false)
 
 async function handleGoogleCredential(response) {
+  if (!ageConfirmed.value) {
+    toast.error(t('errors.age_confirm_required'))
+    return
+  }
   googleLoading.value = true
   try {
-    await auth.loginWithGoogle(response.credential)
+    await auth.loginWithGoogle(response.credential, { ageConfirmed16: true })
     track(Events.AUTH_SUCCEEDED, {
       method: 'google',
       intent: route.query.intent?.toString() || null,
@@ -251,6 +261,17 @@ onMounted(() => {
   gap: 6px;
   cursor: pointer;
   color: var(--ink-2);
+}
+.age-confirm {
+  align-items: flex-start;
+  line-height: 1.45;
+}
+.age-confirm-hint {
+  margin: -4px 0 8px;
+  padding-left: 22px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-3, #6b7280);
 }
 .auth-foot {
   margin-top: 22px;

@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import DateTime, Integer, String, func
+from sqlalchemy import Boolean, DateTime, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base
@@ -57,6 +57,11 @@ class User(Base):
     last_login_ip: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     # Tokens issued before this timestamp are rejected (password reset / admin reset).
     password_changed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
+    # GDPR Art.8 — account holder must be 16+; set when confirmed at register/OAuth.
+    age_confirmed_16_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    # GDPR Art.18 / Art.21 — block new OCR/LLM/marketing processing when True.
+    processing_restricted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), nullable=False

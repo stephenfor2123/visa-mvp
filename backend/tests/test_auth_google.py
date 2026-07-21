@@ -63,7 +63,7 @@ class TestGoogleAuth:
         with patch("google.oauth2.id_token.verify_oauth2_token", return_value=idinfo):
             r = await client.post(
                 "/api/v2/auth/google",
-                json={"id_token": "fake.jwt.token"},
+                json={"id_token": "fake.jwt.token", "age_confirmed_16": True},
             )
         assert r.status_code == 200, r.text
         body = r.json()
@@ -91,8 +91,8 @@ class TestGoogleAuth:
             name="Returning User",
         )
         with patch("google.oauth2.id_token.verify_oauth2_token", return_value=idinfo):
-            r1 = await client.post("/api/v2/auth/google", json={"id_token": "fake.jwt.1"})
-            r2 = await client.post("/api/v2/auth/google", json={"id_token": "fake.jwt.2"})
+            r1 = await client.post("/api/v2/auth/google", json={"id_token": "fake.jwt.1", "age_confirmed_16": True})
+            r2 = await client.post("/api/v2/auth/google", json={"id_token": "fake.jwt.2", "age_confirmed_16": True})
         assert r1.status_code == 200
         assert r2.status_code == 200
         assert r1.json()["data"]["user"]["id"] == r2.json()["data"]["user"]["id"]
@@ -114,6 +114,7 @@ class TestGoogleAuth:
                 "email": "linktarget@htex.test",
                 "password": "abc12345",
                 "email_code": "123456",
+                "age_confirmed_16": True,
                 "nickname": "Link Target",
             },
         )
@@ -128,7 +129,7 @@ class TestGoogleAuth:
             picture="https://example.com/pic.png",
         )
         with patch("google.oauth2.id_token.verify_oauth2_token", return_value=idinfo):
-            r = await client.post("/api/v2/auth/google", json={"id_token": "fake.jwt.3"})
+            r = await client.post("/api/v2/auth/google", json={"id_token": "fake.jwt.3", "age_confirmed_16": True})
         assert r.status_code == 200
         body = r.json()
         # Same user id — not a duplicate
@@ -150,7 +151,7 @@ class TestGoogleAuth:
             side_effect=ValueError("Token expired"),
         ):
             r = await client.post(
-                "/api/v2/auth/google", json={"id_token": "tampered.jwt.token"}
+                "/api/v2/auth/google", json={"id_token": "tampered.jwt.token", "age_confirmed_16": True}
             )
         assert r.status_code == 401
         assert r.json()["code"] == "2001"
@@ -163,7 +164,7 @@ class TestGoogleAuth:
             side_effect=ValueError("Wrong recipient"),
         ):
             r = await client.post(
-                "/api/v2/auth/google", json={"id_token": "wrong.aud.jwt"}
+                "/api/v2/auth/google", json={"id_token": "wrong.aud.jwt", "age_confirmed_16": True}
             )
         assert r.status_code == 401
         assert r.json()["code"] == "2001"
@@ -175,7 +176,7 @@ class TestGoogleAuth:
         monkeypatch.setattr(settings, "google_client_id", "")
 
         r = await client.post(
-            "/api/v2/auth/google", json={"id_token": "any.jwt.token"}
+            "/api/v2/auth/google", json={"id_token": "any.jwt.token", "age_confirmed_16": True}
         )
         # 500 / generic server error code
         assert r.status_code == 500
@@ -185,7 +186,7 @@ class TestGoogleAuth:
         """Once-registered user disabled later → google login refused."""
         idinfo = _make_idinfo(sub="eeee5555ffff6666", email="disabled@gmail.com")
         with patch("google.oauth2.id_token.verify_oauth2_token", return_value=idinfo):
-            r1 = await client.post("/api/v2/auth/google", json={"id_token": "x"})
+            r1 = await client.post("/api/v2/auth/google", json={"id_token": "x", "age_confirmed_16": True})
         assert r1.status_code == 200
         user_id = r1.json()["data"]["user"]["id"]
 
@@ -195,7 +196,7 @@ class TestGoogleAuth:
             await s.commit()
 
         with patch("google.oauth2.id_token.verify_oauth2_token", return_value=idinfo):
-            r2 = await client.post("/api/v2/auth/google", json={"id_token": "x"})
+            r2 = await client.post("/api/v2/auth/google", json={"id_token": "x", "age_confirmed_16": True})
         assert r2.status_code == 403
         assert r2.json()["code"] == "2005"
 
@@ -203,7 +204,7 @@ class TestGoogleAuth:
         """Edge case: id_token has no email (some Google scopes). Should still work."""
         idinfo = _make_idinfo(sub="ffff7777aaaa8888")  # no email, no name
         with patch("google.oauth2.id_token.verify_oauth2_token", return_value=idinfo):
-            r = await client.post("/api/v2/auth/google", json={"id_token": "x"})
+            r = await client.post("/api/v2/auth/google", json={"id_token": "x", "age_confirmed_16": True})
         assert r.status_code == 200
         body = r.json()
         # Username derived purely from google_sub
@@ -214,7 +215,7 @@ class TestGoogleAuth:
         """Google login creates a UserSession row (refresh-token bookkeeping)."""
         idinfo = _make_idinfo(sub="9999aaaabbbb8888", email="sess@gmail.com")
         with patch("google.oauth2.id_token.verify_oauth2_token", return_value=idinfo):
-            r = await client.post("/api/v2/auth/google", json={"id_token": "x"})
+            r = await client.post("/api/v2/auth/google", json={"id_token": "x", "age_confirmed_16": True})
         assert r.status_code == 200
         refresh = r.json()["data"]["refresh_token"]
 
@@ -224,6 +225,7 @@ class TestGoogleAuth:
                 select(UserSession).where(
                     UserSession.refresh_token_hash == hashlib.sha256(refresh.encode()).hexdigest()
                 )
+            )
             assert row is not None
             assert row.revoked_at is None
 
@@ -232,7 +234,7 @@ class TestGoogleAuth:
         from app.models.audit_log import AuditLog
         idinfo = _make_idinfo(sub="audit1234abcd5678", email="audit@gmail.com")
         with patch("google.oauth2.id_token.verify_oauth2_token", return_value=idinfo):
-            r = await client.post("/api/v2/auth/google", json={"id_token": "x"})
+            r = await client.post("/api/v2/auth/google", json={"id_token": "x", "age_confirmed_16": True})
         assert r.status_code == 200
 
         from sqlalchemy import select, desc

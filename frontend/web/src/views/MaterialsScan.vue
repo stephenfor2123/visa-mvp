@@ -77,6 +77,11 @@
       </button>
       <p class="scan-tip-mini">{{ hintText }}</p>
     </div>
+    <SensitiveDataConsent
+      :open="consentOpen"
+      @accept="onConsentAccept"
+      @cancel="consentOpen = false"
+    />
   </div>
 </template>
 
@@ -86,6 +91,12 @@ import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
 import { processMaterial, getMaterialTypeOptions, getAcceptTypes, getMaxBytes } from '@/api/materials'
 import { addLocalDocument, fileToDataUrl } from '@/utils/localPrivacyStorage'
+import {
+  hasLocalSensitiveConsent,
+  markLocalSensitiveConsent,
+  syncSensitiveConsentToServer,
+} from '@/utils/sensitiveConsent'
+import SensitiveDataConsent from '@/components/SensitiveDataConsent.vue'
 import { useToast } from '@/composables/useToast'
 
 const { t } = useI18n()
@@ -96,6 +107,7 @@ const toast = useToast()
 const videoEl = ref(null)
 const stream = ref(null)
 const flashOn = ref(false)
+const consentOpen = ref(false)
 const materialType = ref(route.query.type || 'passport')
 const countdown = ref(0)
 const capturing = ref(false)
@@ -177,8 +189,19 @@ function captureNow() {
   autoCapture()
 }
 
+async function onConsentAccept() {
+  markLocalSensitiveConsent()
+  await syncSensitiveConsentToServer()
+  consentOpen.value = false
+  autoCapture()
+}
+
 async function autoCapture() {
   if (capturing.value) return
+  if (!hasLocalSensitiveConsent()) {
+    consentOpen.value = true
+    return
+  }
   capturing.value = true
   try {
     const dataUrl = await grabFrame()

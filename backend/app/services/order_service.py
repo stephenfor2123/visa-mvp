@@ -662,6 +662,8 @@ class OrderService:
             )
         order.status = "cancelled"
         order.closed_at = self._utcnow()
+        from app.services.cleanup_service import maybe_set_retention_anchor
+        maybe_set_retention_anchor(order, now=order.closed_at)
         self.db.add(
             OrderStatusHistory(
                 order_id=order.id,
@@ -714,6 +716,8 @@ class OrderService:
         prev = order.status
         order.status = "cancelled"
         order.closed_at = self._utcnow()
+        from app.services.cleanup_service import maybe_set_retention_anchor
+        maybe_set_retention_anchor(order, now=order.closed_at)
         self.db.add(
             OrderStatusHistory(
                 order_id=order.id,
@@ -744,6 +748,8 @@ class OrderService:
         order.status = "completed"
         order.diagnosis_completed_at = now
         order.completed_at = now
+        from app.services.cleanup_service import maybe_set_retention_anchor
+        maybe_set_retention_anchor(order, now=now)
         self.db.add(
             OrderStatusHistory(
                 order_id=order.id,

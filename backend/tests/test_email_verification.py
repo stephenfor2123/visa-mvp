@@ -77,6 +77,7 @@ class TestSendEmailCodeEndpoint:
                 "email": "taken@htex.test",
                 "password": "abc12345",
                 "email_code": "123456",
+                "age_confirmed_16": True,
             },
         )
         r = await client.post(
@@ -99,6 +100,7 @@ class TestSendEmailCodeEndpoint:
                 "email": "coded@htex.test",
                 "password": "abc12345",
                 "email_code": code,
+                "age_confirmed_16": True,
             },
         )
         assert r.status_code == 201, r.text

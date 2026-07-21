@@ -44,6 +44,7 @@ async def _register(client, phone: str) -> str:
             "email": f"{phone}@test.local",
             "password": "Test1234",
                 "email_code": "123456",
+                "age_confirmed_16": True,
         },
     )
     r = await client.post(

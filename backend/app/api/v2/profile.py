@@ -35,7 +35,7 @@ import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, Path
+from fastapi import APIRouter, Depends, Path, Request
 from jose import JWTError, jwt
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
@@ -68,11 +68,36 @@ from app.services.email_service import (
 
 
 class AccountDeleteRequest(BaseModel):
-    """Self-service account deletion — requires password re-auth."""
+    """Self-service account deletion.
+
+    Password users must re-auth with password. Google/WeChat-only accounts
+    may omit password and set `confirm=True` (plus optional confirmation_code
+    when email confirmation is required later).
+    """
     model_config = ConfigDict(extra="forbid")
 
-    password: str = Field(..., min_length=1, max_length=128)
+    password: Optional[str] = Field(None, min_length=1, max_length=128)
     confirm: bool = Field(..., description="Must be true to proceed")
+    confirmation_code: Optional[str] = Field(
+        None, max_length=32, description="Optional email confirmation code for OAuth-only accounts"
+    )
+
+
+class ConsentGrantRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    purpose: str = Field(..., min_length=1, max_length=64)
+    version: str = Field("v1", max_length=32)
+
+
+class ConsentRevokeRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    purpose: str = Field(..., min_length=1, max_length=64)
+    version: str = Field("v1", max_length=32)
+
+
+class ProcessingRestrictionRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    restricted: bool = Field(..., description="True = Art.18/21 restrict new processing")
 
 
 router = APIRouter(prefix="/profile", tags=["profile"])
@@ -105,6 +130,8 @@ def _applicant_to_item(a: Applicant) -> ApplicantItem:
         given_name=a.given_name,
         display_name=_smart_join_name(a.surname, a.given_name),
         passport_no=a.passport_no,
+        is_minor=bool(getattr(a, "is_minor", False)),
+        guardian_relationship=getattr(a, "guardian_relationship", None),
         created_at=a.created_at,
         updated_at=a.updated_at,
     )
@@ -157,6 +184,9 @@ async def get_profile(
             "language_pref": current_user.language_pref,
             "created_at": current_user.created_at.isoformat() if current_user.created_at else None,
             "applicant_limit": APPLICANT_LIMIT_PER_USER,
+            "processing_restricted": bool(getattr(current_user, "processing_restricted", False)),
+            "has_password": bool(current_user.password_hash),
+            "privacy_support_email": get_settings().privacy_support_email,
         },
     )
 
@@ -232,6 +262,8 @@ async def create_applicant(
         surname=body.surname,
         given_name=body.given_name,
         passport_no=body.passport_no,
+        is_minor=bool(body.is_minor),
+        guardian_relationship=body.guardian_relationship if body.is_minor else None,
     )
     db.add(new_app)
     await db.commit()
@@ -304,6 +336,15 @@ async def update_applicant(
     a.surname = new_surname
     a.given_name = new_given
     a.passport_no = new_pp
+    if body.is_minor is not None:
+        a.is_minor = body.is_minor
+    if body.guardian_relationship is not None:
+        a.guardian_relationship = body.guardian_relationship or None
+    if a.is_minor and not a.guardian_relationship:
+        raise BizException(
+            ErrorCode.INVALID_PARAMS,
+            message="guardian_relationship is required for minor applicants",
+        )
     await db.commit()
     await db.refresh(a)
     _log.info(
@@ -585,11 +626,14 @@ async def delete_account(
             data={"message": "Account deletion already scheduled", "status": "pending_destroy"},
         )
 
-    if not current_user.password_hash or not verify_password(body.password, current_user.password_hash):
-        raise BizException(
-            ErrorCode.AUTH_INVALID_CREDENTIALS,
-            message="Password is incorrect",
-        )
+    has_password = bool(current_user.password_hash)
+    if has_password:
+        if not body.password or not verify_password(body.password, current_user.password_hash):
+            raise BizException(
+                ErrorCode.AUTH_INVALID_CREDENTIALS,
+                message="Password is incorrect",
+            )
+    # OAuth-only: confirm flag is sufficient (no password to verify).
 
     current_user.status = "pending_destroy"
     db.add(current_user)
@@ -607,11 +651,199 @@ async def delete_account(
         code="1000",
         message="OK",
         data={
-            "message": "Account scheduled for deletion. Data will be permanently removed after 72 hours.",
+            "message": "Account scheduled for deletion. Data will be permanently removed after 72 hours. You may cancel within that window.",
             "status": "pending_destroy",
             "support_email": get_settings().privacy_support_email,
         },
     )
+
+
+@router.post(
+    "/cancel-delete-account",
+    response_model=ApiResponse[dict],
+    summary="Cancel a pending account deletion within the 72h grace period",
+)
+async def cancel_delete_account(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> ApiResponse[dict]:
+    if current_user.status == "active":
+        return ApiResponse[dict](
+            code="1000",
+            message="OK",
+            data={"message": "Account is active", "status": "active"},
+        )
+    if current_user.status != "pending_destroy":
+        raise BizException(
+            ErrorCode.ACCOUNT_DISABLED,
+            message="Account cannot cancel deletion in current status",
+        )
+    current_user.status = "active"
+    db.add(current_user)
+    await db.commit()
+    _log.info(
+        "profile.account.delete.cancelled",
+        extra={
+            "user_id": current_user.id,
+            "event_type": "profile.account.delete.cancelled",
+            "status": "active",
+        },
+    )
+    return ApiResponse[dict](
+        code="1000",
+        message="OK",
+        data={"message": "Account deletion cancelled", "status": "active"},
+    )
+
+
+@router.get(
+    "/consents",
+    response_model=ApiResponse[dict],
+    summary="List consent records for the current user",
+)
+async def list_consents(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> ApiResponse[dict]:
+    from app.services.consent_service import ConsentService
+
+    items = await ConsentService(db).list_for_user(current_user.id)
+    return ApiResponse[dict](code="1000", message="OK", data={"items": items})
+
+
+@router.post(
+    "/consents",
+    response_model=ApiResponse[dict],
+    summary="Grant purpose-bound consent",
+)
+async def grant_consent(
+    body: ConsentGrantRequest,
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> ApiResponse[dict]:
+    from app.services.consent_service import ConsentService
+
+    ip = request.client.host if request.client else None
+    ua = request.headers.get("user-agent")
+    row = await ConsentService(db).grant(
+        current_user, body.purpose, version=body.version, ip=ip, user_agent=ua
+    )
+    await db.commit()
+    return ApiResponse[dict](
+        code="1000",
+        message="OK",
+        data={
+            "purpose": row.purpose,
+            "version": row.version,
+            "granted_at": row.granted_at.isoformat() if row.granted_at else None,
+            "active": True,
+        },
+    )
+
+
+@router.post(
+    "/consents/revoke",
+    response_model=ApiResponse[dict],
+    summary="Revoke a previously granted consent",
+)
+async def revoke_consent(
+    body: ConsentRevokeRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> ApiResponse[dict]:
+    from app.services.consent_service import ConsentService
+
+    ok = await ConsentService(db).revoke(current_user, body.purpose, version=body.version)
+    await db.commit()
+    return ApiResponse[dict](
+        code="1000",
+        message="OK",
+        data={"purpose": body.purpose, "revoked": ok},
+    )
+
+
+@router.post(
+    "/processing-restriction",
+    response_model=ApiResponse[dict],
+    summary="Set Art.18 restriction / Art.21 objection flag",
+)
+async def set_processing_restriction(
+    body: ProcessingRestrictionRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> ApiResponse[dict]:
+    current_user.processing_restricted = bool(body.restricted)
+    db.add(current_user)
+    await db.commit()
+    return ApiResponse[dict](
+        code="1000",
+        message="OK",
+        data={"processing_restricted": current_user.processing_restricted},
+    )
+
+
+@router.get(
+    "/data-export",
+    response_model=ApiResponse[dict],
+    summary="Export account data (Art.15 / Art.20 portable JSON)",
+)
+async def export_my_data(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> ApiResponse[dict]:
+    import json
+    from app.models.order import Order
+    from app.services.consent_service import ConsentService
+
+    applicants = (
+        await db.execute(select(Applicant).where(Applicant.user_id == current_user.id))
+    ).scalars().all()
+    orders = (
+        await db.execute(select(Order).where(Order.user_id == current_user.id))
+    ).scalars().all()
+    consents = await ConsentService(db).list_for_user(current_user.id)
+
+    payload = {
+        "exported_at": datetime.now(timezone.utc).isoformat(),
+        "user": {
+            "id": current_user.id,
+            "uuid": current_user.uuid,
+            "email": current_user.email,
+            "username": current_user.username,
+            "nickname": current_user.nickname,
+            "language_pref": current_user.language_pref,
+            "status": current_user.status,
+            "created_at": current_user.created_at.isoformat() if current_user.created_at else None,
+            "processing_restricted": bool(current_user.processing_restricted),
+        },
+        "applicants": [
+            {
+                "id": a.id,
+                "surname": a.surname,
+                "given_name": a.given_name,
+                "passport_no": a.passport_no,
+                "is_minor": bool(a.is_minor),
+                "guardian_relationship": a.guardian_relationship,
+                "created_at": a.created_at.isoformat() if a.created_at else None,
+            }
+            for a in applicants
+        ],
+        "orders": [
+            {
+                "order_no": o.order_no,
+                "status": o.status,
+                "destination_id": getattr(o, "destination_id", None),
+                "created_at": o.created_at.isoformat() if o.created_at else None,
+                "paid_at": o.paid_at.isoformat() if getattr(o, "paid_at", None) else None,
+                # Include applicant snapshot only as structured JSON if present
+                "applicant_data": json.loads(o.applicant_data) if o.applicant_data else None,
+            }
+            for o in orders
+        ],
+        "consents": consents,
+    }
+    return ApiResponse[dict](code="1000", message="OK", data=payload)
 
 
 # --------------------------------------------------------------------------- #

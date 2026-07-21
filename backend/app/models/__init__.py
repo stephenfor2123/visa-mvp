@@ -12,6 +12,7 @@ from app.models.destination_pricing import DestinationPricing  # noqa: F401
 from app.models.platform_pricing import PlatformPricing  # noqa: F401
 from app.models.rag import RagChunk, RagSource  # noqa: F401
 from app.models.user import User  # noqa: F401
+from app.models.user_consent import UserConsent  # noqa: F401
 from app.models.user_session import UserSession  # noqa: F401
 from app.models.visa_countries import VisaCountry  # noqa: F401
 from app.models.webhook_event import WebhookEvent  # noqa: F401

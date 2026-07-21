@@ -157,8 +157,14 @@ class AuthService:
         nickname: Optional[str],
         language_pref: Optional[str],
         info: ClientInfo,
+        age_confirmed_16: bool = False,
     ) -> dict[str, Any]:
         validate_password_strength(password)
+        if not age_confirmed_16:
+            raise BizException(
+                ErrorCode.AGE_CONFIRMATION_REQUIRED,
+                message="You must confirm you are at least 16 years old",
+            )
 
         username_clean = username.strip()
         email_clean = email.strip().lower()
@@ -186,6 +192,7 @@ class AuthService:
                 message="Username already taken",
             )
 
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
         user = User(
             username=username_clean,
             email=email_clean,
@@ -193,6 +200,7 @@ class AuthService:
             nickname=nickname or f"user_{username_clean[-4:]}",
             language_pref=language_pref or "zh-CN",
             status="active",
+            age_confirmed_16_at=now,
         )
         self.db.add(user)
         await self.db.flush()
@@ -326,7 +334,13 @@ class AuthService:
     # ------------------------------------------------------------------ #
     # Google OAuth login / auto-register                                 #
     # ------------------------------------------------------------------ #
-    async def google_auth(self, id_token_str: str, info: ClientInfo) -> dict[str, Any]:
+    async def google_auth(
+        self,
+        id_token_str: str,
+        info: ClientInfo,
+        *,
+        age_confirmed_16: bool = False,
+    ) -> dict[str, Any]:
         """Verify Google ID token and issue JWT pair. Auto-registers on first use."""
         if not self.settings.google_client_id:
             raise BizException(ErrorCode.SERVER_ERROR, message="Google login not configured")
@@ -352,10 +366,16 @@ class AuthService:
             user = await self.db.scalar(select(User).where(User.email == email))
 
         if user is None:
+            if not age_confirmed_16:
+                raise BizException(
+                    ErrorCode.AGE_CONFIRMATION_REQUIRED,
+                    message="You must confirm you are at least 16 years old",
+                )
             base_username = f"g_{google_sub[-8:]}"
             username = base_username
             if await self.db.scalar(select(User).where(User.username == username)) is not None:
                 username = f"g_{google_sub[-12:]}"
+            now = datetime.now(timezone.utc).replace(tzinfo=None)
             user = User(
                 google_sub=google_sub,
                 email=email or None,
@@ -365,6 +385,7 @@ class AuthService:
                 avatar_url=avatar or None,
                 language_pref="zh-CN",
                 status="active",
+                age_confirmed_16_at=now,
             )
             self.db.add(user)
             await self.db.flush()
@@ -373,6 +394,13 @@ class AuthService:
                 user.google_sub = google_sub
             if avatar and not user.avatar_url:
                 user.avatar_url = avatar
+            if not user.age_confirmed_16_at:
+                if not age_confirmed_16:
+                    raise BizException(
+                        ErrorCode.AGE_CONFIRMATION_REQUIRED,
+                        message="You must confirm you are at least 16 years old",
+                    )
+                user.age_confirmed_16_at = datetime.now(timezone.utc).replace(tzinfo=None)
 
         if user.status != "active":
             raise BizException(ErrorCode.ACCOUNT_DISABLED, message="Account is not active")
@@ -387,7 +415,13 @@ class AuthService:
     # ------------------------------------------------------------------ #
     # WeChat miniprogram login / auto-register                           #
     # ------------------------------------------------------------------ #
-    async def wechat_auth(self, code: str, info: ClientInfo) -> dict[str, Any]:
+    async def wechat_auth(
+        self,
+        code: str,
+        info: ClientInfo,
+        *,
+        age_confirmed_16: bool = False,
+    ) -> dict[str, Any]:
         """Exchange wx.login() code for openid, issue JWT pair. Auto-registers on first use."""
         if not self.settings.wechat_appid or not self.settings.wechat_appsecret:
             raise BizException(ErrorCode.SERVER_ERROR, message="WeChat login not configured")
@@ -418,10 +452,16 @@ class AuthService:
             select(User).where(User.wechat_openid == openid)
         )
         if user is None:
+            if not age_confirmed_16:
+                raise BizException(
+                    ErrorCode.AGE_CONFIRMATION_REQUIRED,
+                    message="You must confirm you are at least 16 years old",
+                )
             suffix = openid[-8:]
             username = f"wx_{suffix}"
             if await self.db.scalar(select(User).where(User.username == username)) is not None:
                 username = f"wx_{openid[-12:]}"
+            now = datetime.now(timezone.utc).replace(tzinfo=None)
             user = User(
                 wechat_openid=openid,
                 email=f"wx_{suffix}@htex.local",
@@ -430,9 +470,13 @@ class AuthService:
                 nickname=f"微信用户_{suffix}",
                 language_pref="zh-CN",
                 status="active",
+                age_confirmed_16_at=now,
             )
             self.db.add(user)
             await self.db.flush()
+        else:
+            if age_confirmed_16 and not user.age_confirmed_16_at:
+                user.age_confirmed_16_at = datetime.now(timezone.utc).replace(tzinfo=None)
 
         if user.status != "active":
             raise BizException(ErrorCode.ACCOUNT_DISABLED, message="Account is not active")

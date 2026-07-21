@@ -33,6 +33,33 @@ export function wrapWithExpiry(data) {
   return { _savedAt: Date.now(), data }
 }
 
+/** True when value looks like an inlined file (must never hit localStorage). */
+export function isDataUrl(value) {
+  return typeof value === 'string' && /^data:/i.test(value)
+}
+
+/**
+ * GDPR Art.32: strip full-file data URLs before persisting wizard state.
+ * Previews stay in memory only for the current session.
+ */
+export function stripDataUrlsForPersist(value) {
+  if (Array.isArray(value)) {
+    return value.map((item) => stripDataUrlsForPersist(item))
+  }
+  if (!value || typeof value !== 'object') {
+    return isDataUrl(value) ? null : value
+  }
+  const out = {}
+  for (const [k, v] of Object.entries(value)) {
+    if (k === 'fileUrl' || k === 'thumbUrl' || k === 'thumbnail_url' || k === 'download_url') {
+      out[k] = isDataUrl(v) ? null : (typeof v === 'string' && v.startsWith('blob:') ? null : v)
+      continue
+    }
+    out[k] = stripDataUrlsForPersist(v)
+  }
+  return out
+}
+
 export function loadWithExpiry(key, fallback, ttl = WIZARD_TTL_MS) {
   try {
     const raw = localStorage.getItem(key)
@@ -43,9 +70,20 @@ export function loadWithExpiry(key, fallback, ttl = WIZARD_TTL_MS) {
         localStorage.removeItem(key)
         return fallback
       }
-      return parsed.data !== undefined ? parsed.data : fallback
+      const data = parsed.data !== undefined ? parsed.data : fallback
+      return data && typeof data === 'object' ? stripDataUrlsForPersist(data) : data
     }
-    return parsed ?? fallback
+    // Legacy drafts used `savedAt` at the top level — normalize + migrate.
+    if (parsed && typeof parsed.savedAt === 'number') {
+      if (Date.now() - parsed.savedAt > ttl) {
+        localStorage.removeItem(key)
+        return fallback
+      }
+      const { savedAt: _s, ...rest } = parsed
+      saveWithExpiry(key, rest, ttl)
+      return stripDataUrlsForPersist(rest)
+    }
+    return parsed ? stripDataUrlsForPersist(parsed) : fallback
   } catch {
     return fallback
   }
@@ -54,7 +92,7 @@ export function loadWithExpiry(key, fallback, ttl = WIZARD_TTL_MS) {
 export function saveWithExpiry(key, data, ttl = WIZARD_TTL_MS) {
   void ttl
   try {
-    localStorage.setItem(key, JSON.stringify(wrapWithExpiry(data)))
+    localStorage.setItem(key, JSON.stringify(wrapWithExpiry(stripDataUrlsForPersist(data))))
   } catch { /* quota */ }
 }
 
@@ -106,6 +144,8 @@ export function listLocalDocuments() {
 
 export function addLocalDocument(doc) {
   const list = listLocalDocuments()
+  const rawThumb = doc.thumbnail_url || doc.thumbUrl || ''
+  const rawDownload = doc.download_url || doc.fileUrl || doc.thumbUrl || ''
   const entry = {
     localId: doc.localId || `doc_${Date.now()}`,
     material_id: doc.localId || doc.material_id,
@@ -113,8 +153,9 @@ export function addLocalDocument(doc) {
     file_name: doc.file_name || doc.fileName || 'file',
     file_size: doc.file_size || doc.fileSize || 0,
     material_type: doc.material_type || doc.materialType || 'other',
-    thumbnail_url: doc.thumbnail_url || doc.thumbUrl || '',
-    download_url: doc.download_url || doc.fileUrl || doc.thumbUrl || '',
+    // Never persist inlined images; keep OCR/metadata only.
+    thumbnail_url: isDataUrl(rawThumb) || (typeof rawThumb === 'string' && rawThumb.startsWith('blob:')) ? '' : rawThumb,
+    download_url: isDataUrl(rawDownload) || (typeof rawDownload === 'string' && rawDownload.startsWith('blob:')) ? '' : rawDownload,
     ocr_result: doc.ocr_result || doc.ocrResult || {},
     item_key: doc.item_key || doc.itemKey || doc.localId,
     saved_at: Date.now(),
@@ -122,7 +163,12 @@ export function addLocalDocument(doc) {
   }
   const next = [entry, ...list.filter((x) => x.localId !== entry.localId)].slice(0, 50)
   saveWithExpiry(LOCAL_DOCS_KEY, next)
-  return entry
+  // Return in-memory preview URLs for the current session UI.
+  return {
+    ...entry,
+    thumbnail_url: rawThumb || entry.thumbnail_url,
+    download_url: rawDownload || entry.download_url,
+  }
 }
 
 export function listDiagnosableMaterials() {
@@ -162,20 +208,28 @@ export function listDiagnosableMaterials() {
   return items
 }
 
+function _draftAgeMs(parsed) {
+  if (!parsed || typeof parsed !== 'object') return null
+  if (typeof parsed._savedAt === 'number') return Date.now() - parsed._savedAt
+  if (typeof parsed.savedAt === 'number') return Date.now() - parsed.savedAt
+  return null
+}
+
 export function purgeExpiredLocalVisaData(ttl = WIZARD_TTL_MS) {
   /** A-06: sweep expired TTL-wrapped keys on app start (not only on next read). */
   const toRemove = []
   for (let i = 0; i < localStorage.length; i += 1) {
     const k = localStorage.key(i)
     if (!k) continue
-    if (!(k.startsWith('visa.') || k.startsWith('wizard.orderForm.') || k === 'ordernew_draft')) {
+    if (!(k.startsWith('visa.') || k.startsWith('wizard.orderForm') || k === 'ordernew_draft')) {
       continue
     }
     try {
       const raw = localStorage.getItem(k)
       if (!raw) continue
       const parsed = JSON.parse(raw)
-      if (parsed && typeof parsed._savedAt === 'number' && Date.now() - parsed._savedAt > ttl) {
+      const age = _draftAgeMs(parsed)
+      if (age != null && age > ttl) {
         toRemove.push(k)
       }
     } catch { /* ignore */ }
@@ -194,7 +248,7 @@ export function clearAllLocalVisaData() {
     if (
       k &&
       (k.startsWith('visa.') ||
-        k.startsWith('wizard.orderForm.') ||
+        k.startsWith('wizard.orderForm') ||
         k === 'ordernew_draft')
     ) {
       lsKeys.push(k)
@@ -207,7 +261,13 @@ export function clearAllLocalVisaData() {
   const ssKeys = []
   for (let i = 0; i < sessionStorage.length; i += 1) {
     const k = sessionStorage.key(i)
-    if (k && (k.startsWith('precheck_') || k.startsWith('rpa_passport_'))) {
+    if (
+      k &&
+      (k.startsWith('precheck_') ||
+        k.startsWith('rpa_passport_') ||
+        k.startsWith('applicant_pending_') ||
+        k === 'htex.sensitive_data_consent_v1')
+    ) {
       ssKeys.push(k)
     }
   }

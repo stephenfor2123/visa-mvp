@@ -131,6 +131,18 @@ export async function processMaterial(file, materialType = 'passport', opts = {}
     }
   }
 
+  // Art.7: require explicit local consent, then sync to server before OCR.
+  const {
+    syncSensitiveConsentToServer,
+    hasLocalSensitiveConsent,
+  } = await import('@/utils/sensitiveConsent')
+  if (!hasLocalSensitiveConsent()) {
+    const err = new Error('CONSENT_REQUIRED')
+    err.code = 'CONSENT_REQUIRED'
+    throw err
+  }
+  await syncSensitiveConsentToServer()
+
   const form = new FormData()
   form.append('file', file)
   form.append('material_type', materialType)

@@ -17,7 +17,7 @@ OUTBOX = Path(__file__).resolve().parents[2] / "logs" / "email_outbox"
 async def _register(client, username: str, email: str, password: str = "Pass1234") -> str:
     r = await client.post(
         "/api/v2/auth/register",
-        json={"username": username, "email": email, "password": password, "email_code": "123456"},
+        json={"username": username, "email": email, "password": password, "email_code": "123456", "age_confirmed_16": True},
     )
     assert r.status_code == 201, r.text
     return r.json()["data"]["access_token"]

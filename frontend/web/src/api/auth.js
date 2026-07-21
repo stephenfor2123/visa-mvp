@@ -66,7 +66,9 @@ export async function register(payload) {
     email: payload.email,
     password: payload.password,
     nickname: payload.nickname || undefined,
-    language_pref: payload.languagePref || 'zh-CN'
+    language_pref: payload.languagePref || 'zh-CN',
+    email_code: payload.emailCode || payload.email_code,
+    age_confirmed_16: payload.ageConfirmed16 === true || payload.age_confirmed_16 === true,
   })
   if (envelope.code !== '1000') {
     throw new Error(envelope.message || 'Register failed')
@@ -106,7 +108,7 @@ export async function refresh(refreshToken) {
   })
 }
 
-export async function loginWithGoogle(credential) {
+export async function loginWithGoogle(credential, { ageConfirmed16 = false } = {}) {
   if (MOCK_MODE) {
     await delay()
     return {
@@ -116,7 +118,10 @@ export async function loginWithGoogle(credential) {
       expiresIn: 3600
     }
   }
-  return http.post('/v2/auth/google', { id_token: credential }).then((env) => {
+  return http.post('/v2/auth/google', {
+    id_token: credential,
+    age_confirmed_16: ageConfirmed16 === true,
+  }).then((env) => {
     if (env.code !== '1000') throw new Error(env.message || 'Google login failed')
     const d = env.data || {}
     return {

@@ -5,7 +5,6 @@
     <main class="app-container app-page contact-page__main">
       <header class="contact-page__head">
         <h1 class="contact-page__title">{{ t('contact.title') }}</h1>
-        <p class="contact-page__intro">{{ t('contact.sub') }}</p>
       </header>
 
     <ul class="contact-page__list" aria-label="Contact options">
@@ -13,7 +12,6 @@
         <div class="contact-page__row-body">
           <div class="contact-page__row-label">{{ t('contact.email') }}</div>
           <a class="contact-page__row-value" :href="`mailto:${CONTACT.support}`" data-testid="contact-email-value">{{ CONTACT.support }}</a>
-          <p class="contact-page__row-note">{{ t('contact.support_note') }}</p>
         </div>
         <button
           type="button"
@@ -26,11 +24,27 @@
         </button>
       </li>
 
+      <li class="contact-page__row" data-testid="contact-row-privacy">
+        <div class="contact-page__row-body">
+          <div class="contact-page__row-label">{{ t('contact.privacy_label') }}</div>
+          <a class="contact-page__row-value" :href="`mailto:${CONTACT.privacy}`" data-testid="contact-privacy-value">{{ CONTACT.privacy }}</a>
+          <div class="contact-page__row-note">{{ t('contact.privacy_note') }}</div>
+        </div>
+        <button
+          type="button"
+          class="contact-page__copy"
+          data-testid="contact-copy-privacy"
+          :class="{ 'is-copied': copyState === 'privacy' }"
+          @click="copyToClipboard('privacy', CONTACT.privacy)"
+        >
+          {{ copyState === 'privacy' ? t('contact.copied') : t('contact.copy') }}
+        </button>
+      </li>
+
       <li class="contact-page__row" :class="{ 'is-focused': focusPartner }" data-testid="contact-row-partner">
         <div class="contact-page__row-body">
           <div class="contact-page__row-label">{{ t('contact.partner_label') }}</div>
           <a class="contact-page__row-value" :href="`mailto:${CONTACT.business}?subject=${encodeURIComponent(t('contact.partner_subject'))}`" data-testid="contact-partner-value">{{ CONTACT.business }}</a>
-          <p class="contact-page__row-note">{{ t('contact.partner_note') }}</p>
         </div>
         <button
           type="button"
@@ -65,6 +79,7 @@ const focusPartner = computed(() => route.query.focus === 'partner')
 // W54: 只保留邮件渠道 — 电话/微信/WhatsApp 已被产品决策下线。
 const CONTACT = {
   support: 'support@htexvisa.com',
+  privacy: 'privacy@htex.app',
   business: 'business@htexvisa.com',
 }
 
@@ -139,7 +154,7 @@ async function copyToClipboard(key, value) {
     display: flex;
     align-items: center;
     gap: 18px;
-    min-height: 210px;
+    min-height: 140px;
     padding: clamp(24px, 3vw, 34px);
     border: 1px solid #e3e8f2;
     border-radius: 20px;
@@ -161,27 +176,26 @@ async function copyToClipboard(key, value) {
     gap: 8px;
   }
   &__row-label {
-    font-size: 13px;
-    color: #718096;
-    font-weight: 600;
+    font-size: clamp(18px, 2vw, 24px);
+    color: #101828;
+    font-weight: 700;
+    letter-spacing: -.02em;
   }
   &__row-value {
-    font-size: clamp(18px, 2vw, 25px);
+    font-size: clamp(15px, 1.6vw, 18px);
     font-weight: 400;
-    color: #111827;
-    font-weight: 650;
+    color: #7b8494;
     text-decoration: none;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    letter-spacing: -.03em;
+    letter-spacing: -.01em;
     &:hover { color: #4567db; }
   }
   &__row-note {
-    margin: 6px 0 0;
+    font-size: 12px;
     color: #7b8494;
-    font-size: 14px;
-    line-height: 1.5;
+    line-height: 1.4;
   }
   &__copy {
     align-self: flex-start;
@@ -210,7 +224,7 @@ async function copyToClipboard(key, value) {
     &__intro { margin-top: 14px; font-size: 15px; }
     &__list { grid-template-columns: 1fr; }
     &__row {
-      min-height: 190px;
+      min-height: 120px;
       padding: 24px 18px;
       gap: 16px;
     }

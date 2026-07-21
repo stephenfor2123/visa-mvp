@@ -83,6 +83,14 @@ class Settings(BaseSettings):
     # Image-quality + face-detection rules are gated on this until
     # OpenCV / PaddleOCR land in W3+:
     material_image_quality_enabled: bool = False
+    # Application-layer AES-GCM key (32-byte urlsafe base64, or 64 hex chars).
+    # Empty in dev → plaintext with key_id "none". Prod MUST set this.
+    material_encryption_key: str = ""
+    material_encryption_key_id: str = "local-aes-gcm-v1"
+
+    # GDPR retention (days after retention_anchor_at)
+    retention_materials_days: int = 90
+    retention_applicant_data_days: int = 180
 
     # --- Logging ---
     log_dir: str = str(BACKEND_ROOT / "logs")

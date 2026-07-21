@@ -133,10 +133,14 @@ describe('Login.vue — Google sign-in button visibility', () => {
     expect(renderButtonCalled).toBe(true)
     expect(renderButtonOpts?.locale).toBe('en')
 
-    // callback wired — exercise it to make sure it calls loginWithGoogle
+    // callback wired — exercise it to make sure it calls loginWithGoogle.
+    // Google sign-in now requires the Art.8 age-confirmation checkbox first.
     expect(capturedCallback).toBeTruthy()
+    const ageBox = wrapper.find('[data-testid="login-age-confirm"]')
+    expect(ageBox.exists()).toBe(true)
+    await ageBox.setValue(true)
     await capturedCallback({ credential: 'fake.jwt.from.google' })
     await flushPromises()
-    expect(loginWithGoogleMock).toHaveBeenCalledWith('fake.jwt.from.google')
+    expect(loginWithGoogleMock).toHaveBeenCalledWith('fake.jwt.from.google', { ageConfirmed16: true })
   })
 })

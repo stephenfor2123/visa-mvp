@@ -6,13 +6,18 @@
     @dragleave.prevent="isDragOver = false"
     @dragover.prevent
     @drop.prevent="onDrop"
-    @click="fileInput?.click()"
+    @click="onUploaderClick"
     role="button"
     tabindex="0"
     :aria-label="t('materials.upload_title')"
-    @keydown.enter="fileInput?.click()"
+    @keydown.enter="onUploaderClick"
     data-testid="material-uploader"
   >
+    <SensitiveDataConsent
+      :open="consentOpen"
+      @accept="onConsentAccept"
+      @cancel="onConsentCancel"
+    />
     <input
       ref="fileInput"
       type="file"
@@ -106,6 +111,12 @@ import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { processMaterial, preprocessImage, getAcceptTypes, getMaxBytes } from '@/api/materials'
 import { addLocalDocument, fileToDataUrl } from '@/utils/localPrivacyStorage'
+import SensitiveDataConsent from '@/components/SensitiveDataConsent.vue'
+import {
+  hasLocalSensitiveConsent,
+  markLocalSensitiveConsent,
+  syncSensitiveConsentToServer,
+} from '@/utils/sensitiveConsent'
 
 const emit = defineEmits(['uploaded'])
 
@@ -113,6 +124,8 @@ const { t } = useI18n()
 
 const fileInput = ref(null)
 const isDragOver = ref(false)
+const consentOpen = ref(false)
+let pendingPick = null
 const phase = ref('idle')          // 'idle' | 'scanning' | 'preview' | 'uploading' | 'done'
 const progress = ref(0)
 const uploadingName = ref('')
@@ -150,6 +163,39 @@ const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 
 async function pickFile(file) {
   if (!validate(file)) return
+  if (!hasLocalSensitiveConsent()) {
+    pendingPick = file
+    consentOpen.value = true
+    return
+  }
+  await startPick(file)
+}
+
+async function onConsentAccept() {
+  markLocalSensitiveConsent()
+  await syncSensitiveConsentToServer()
+  consentOpen.value = false
+  const f = pendingPick
+  pendingPick = null
+  if (f) await startPick(f)
+  else fileInput.value?.click()
+}
+
+function onConsentCancel() {
+  consentOpen.value = false
+  pendingPick = null
+}
+
+function onUploaderClick() {
+  if (!hasLocalSensitiveConsent()) {
+    pendingPick = null
+    consentOpen.value = true
+    return
+  }
+  fileInput.value?.click()
+}
+
+async function startPick(file) {
   // 功能1: 图片类型才走 preprocess; PDF 直接 upload
   if (IMAGE_TYPES.includes(file.type)) {
     await runPreprocess(file)

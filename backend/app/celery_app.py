@@ -23,7 +23,7 @@ celery_app = Celery(
     "visa_mvp",
     broker=settings.celery_broker_url,
     backend=settings.celery_result_backend,
-    include=["app.tasks.rpa_tasks", "app.tasks.rag_tasks"],
+    include=["app.tasks.rpa_tasks", "app.tasks.rag_tasks", "app.tasks.privacy_tasks"],
 )
 
 # ── Serialiser (JSON so it works across processes) ──────────────────────────
@@ -48,16 +48,23 @@ celery_app.conf.update(
 )
 
 # ── Periodic tasks (celery beat) ─────────────────────────────────────────────
-# RAG source refresh: off by default, opt-in via RAG_AUTO_REFRESH_ENABLED=1
-# (see app/core/config.py). Manual refresh via POST /api/v2/rag/refresh
-# always works regardless of this setting.
+# GDPR: destroy + retention run daily. RAG refresh remains opt-in.
+_beat: dict = {
+    "privacy-pending-destroy-users": {
+        "task": "app.tasks.privacy_tasks.run_pending_destroy_users_task",
+        "schedule": 24 * 3600.0,
+    },
+    "privacy-retention-purge": {
+        "task": "app.tasks.privacy_tasks.run_retention_purge_task",
+        "schedule": 24 * 3600.0,
+    },
+}
 if settings.rag_auto_refresh_enabled:
-    celery_app.conf.beat_schedule = {
-        "rag-refresh-visa-sources": {
-            "task": "app.tasks.rag_tasks.refresh_rag_sources_task",
-            "schedule": settings.rag_auto_refresh_interval_hours * 3600.0,
-        },
+    _beat["rag-refresh-visa-sources"] = {
+        "task": "app.tasks.rag_tasks.refresh_rag_sources_task",
+        "schedule": settings.rag_auto_refresh_interval_hours * 3600.0,
     }
+celery_app.conf.beat_schedule = _beat
 
 # ── Discover tasks from all registered packages ─────────────────────────────
 # (done automatically by `include=[]` above)

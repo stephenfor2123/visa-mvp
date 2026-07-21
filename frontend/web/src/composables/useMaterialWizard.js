@@ -849,7 +849,7 @@ export function useMaterialWizard(countryCode, visaType = 'tourism') {
     rec.error = rec.collected ? null : t('wizard.itinerary_incomplete_error')
 
     try {
-      localStorage.setItem(TRAVEL_PLAN_KEY, JSON.stringify({
+      saveCache(TRAVEL_PLAN_KEY, {
         hotel_name: [...new Set(p.days.map((d) => d.hotel).filter(Boolean))].join(', '),
         flight_no: p.flightOutNo,
         arrival_date: p.departDate,
@@ -864,7 +864,7 @@ export function useMaterialWizard(countryCode, visaType = 'tourism') {
         })),
         origin: p.origin, destination: p.destination,
         return_origin: p.returnOrigin, return_destination: p.returnDestination,
-      }))
+      })
     } catch {}
 
     return text

@@ -61,7 +61,10 @@ describe('api/auth.loginWithGoogle', () => {
     })
 
     const data = await loginWithGoogle('real.credential')
-    expect(mockPost).toHaveBeenCalledWith('/v2/auth/google', { id_token: 'real.credential' })
+    expect(mockPost).toHaveBeenCalledWith('/v2/auth/google', {
+      id_token: 'real.credential',
+      age_confirmed_16: false,
+    })
     expect(data.accessToken).toBe('real.access.jwt')
     expect(data.refreshToken).toBe('real.refresh.jwt')
     expect(data.user.email).toBe('real@gmail.com')

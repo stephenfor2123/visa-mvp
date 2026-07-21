@@ -732,6 +732,8 @@ class AdminService:
             order.diagnosis_completed_at = order.diagnosis_completed_at or now
         elif new_status == "cancelled":
             order.closed_at = order.closed_at or now
+        from app.services.cleanup_service import maybe_set_retention_anchor
+        maybe_set_retention_anchor(order, now=now)
         # Status history (was missing for admin overrides — audit 5.0
         # would have caught this in retrospect).
         self.db.add(
@@ -831,6 +833,9 @@ class AdminService:
         if action == "approve":
             order.refund_approved_at = now
             order.refund_reviewed_by = admin_id or None
+        if new_status == "completed":
+            from app.services.cleanup_service import maybe_set_retention_anchor
+            maybe_set_retention_anchor(order, now=now)
         await record_audit(
             self.db,
             actor_type="admin",

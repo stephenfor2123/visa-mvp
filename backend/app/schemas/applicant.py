@@ -11,7 +11,7 @@ import re
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 # Passport number rules (W1 — basic only).
@@ -26,6 +26,10 @@ class ApplicantCreate(BaseModel):
     surname: str = Field(..., min_length=1, max_length=64, description="Family name (as on passport)")
     given_name: str = Field(..., min_length=1, max_length=64, description="Given name (as on passport)")
     passport_no: str = Field(..., min_length=5, max_length=32, description="Passport number")
+    is_minor: bool = Field(False, description="Applicant under 16 — guardian account required")
+    guardian_relationship: Optional[str] = Field(
+        None, max_length=64, description="Relationship of account holder to minor applicant"
+    )
 
     @field_validator("surname", "given_name")
     @classmethod
@@ -48,11 +52,27 @@ class ApplicantCreate(BaseModel):
         # Store uppercase to avoid case-only dupes.
         return v.upper().replace(" ", "")
 
+    @field_validator("guardian_relationship")
+    @classmethod
+    def _validate_guardian(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        v = v.strip()
+        return v or None
+
+    @model_validator(mode="after")
+    def _minor_needs_guardian(self) -> "ApplicantCreate":
+        if self.is_minor and not self.guardian_relationship:
+            raise ValueError("guardian_relationship is required when is_minor is true")
+        return self
+
 
 class ApplicantUpdate(BaseModel):
     surname: Optional[str] = Field(None, min_length=1, max_length=64)
     given_name: Optional[str] = Field(None, min_length=1, max_length=64)
     passport_no: Optional[str] = Field(None, min_length=5, max_length=32)
+    is_minor: Optional[bool] = None
+    guardian_relationship: Optional[str] = Field(None, max_length=64)
 
     @field_validator("surname", "given_name")
     @classmethod
@@ -85,6 +105,8 @@ class ApplicantItem(BaseModel):
     given_name: str
     display_name: str = Field(..., description="surname + given_name, smart-joined")
     passport_no: str
+    is_minor: bool = False
+    guardian_relationship: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 

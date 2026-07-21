@@ -274,6 +274,11 @@ class Order(Base):
     refund_approved_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     refund_reviewed_by: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     refunded_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    # GDPR retention: set when order enters a terminal status.
+    retention_anchor_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime, nullable=True, index=True,
+        comment="Terminal-state timestamp for materials 90d / applicant_data 180d purge",
+    )
     # ==================================================================== #
 
     created_at: Mapped[datetime] = mapped_column(

@@ -45,7 +45,7 @@ async def _sms_login(client, phone: str) -> str:
     pwd = "Test1234"
     await client.post(
         "/api/v2/auth/register",
-        json={"username": uname, "email": email, "password": pwd, "email_code": "123456"},
+        json={"username": uname, "email": email, "password": pwd, "email_code": "123456", "age_confirmed_16": True},
     )
     r = await client.post(
         "/api/v2/auth/login",
@@ -239,6 +239,7 @@ class TestOrderRejectionPath:
                     OrderStatusHistory.order_id == order.id,
                     OrderStatusHistory.to_status == "rejected",
                 )
+            )
         assert row is not None
         assert rejection_note in (row.note or "")
 

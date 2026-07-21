@@ -118,7 +118,7 @@ class TestAdminAuthenticated:
         uname = f"u{uid}"
         await client.post(
             "/api/v2/auth/register",
-            json={"username": uname, "email": email, "password": "Test1234", "email_code": "123456"},
+            json={"username": uname, "email": email, "password": "Test1234", "email_code": "123456", "age_confirmed_16": True},
     )
         r = await client.post(
             "/api/v2/auth/login",
@@ -387,7 +387,7 @@ class TestAdminAuthenticated:
         # Register user via email/password
         await client.post(
             "/api/v2/auth/register",
-            json={"username": "u13999990001", "email": "13999990001@test.local", "password": "Test1234", "email_code": "123456"},
+            json={"username": "u13999990001", "email": "13999990001@test.local", "password": "Test1234", "email_code": "123456", "age_confirmed_16": True},
     )
         # Login as admin
         token = await self._admin_token(client)

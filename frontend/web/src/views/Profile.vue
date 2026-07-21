@@ -87,6 +87,32 @@
         </AppButton>
       </AppCard>
 
+      <!-- ============================== Privacy rights (DSAR) ============================== -->
+      <AppCard v-if="profile && profile.status === 'active'" class="profile-page__danger-card">
+        <template #header>
+          <h3 class="profile-page__danger-title">{{ t('profile.privacy_rights_section') }}</h3>
+        </template>
+        <p class="profile-page__danger-desc">{{ t('profile.privacy_rights_desc') }}</p>
+        <div class="profile-page__privacy-actions">
+          <AppButton variant="ghost" size="sm" :loading="exportBusy" data-testid="profile-export-data" @click="onExportData">
+            {{ t('profile.export_data_btn') }}
+          </AppButton>
+          <AppButton
+            variant="ghost"
+            size="sm"
+            :loading="restrictBusy"
+            data-testid="profile-toggle-restriction"
+            @click="onToggleRestriction"
+          >
+            {{ profile.processing_restricted ? t('profile.lift_restriction_btn') : t('profile.restrict_processing_btn') }}
+          </AppButton>
+          <AppButton variant="ghost" size="sm" data-testid="profile-revoke-consent" @click="onRevokeConsent">
+            {{ t('profile.revoke_consent_btn') }}
+          </AppButton>
+        </div>
+        <p class="profile-page__danger-hint">{{ t('profile.delete_account_hint', { email: t('agreement.privacy_contact_email') }) }}</p>
+      </AppCard>
+
       <!-- ============================== Delete account ============================== -->
       <AppCard v-if="profile && profile.status === 'active'" class="profile-page__danger-card">
         <template #header>
@@ -101,6 +127,9 @@
 
       <AppCard v-else-if="profile && profile.status === 'pending_destroy'" class="profile-page__danger-card">
         <p class="profile-page__danger-desc">{{ t('profile.delete_account_pending') }}</p>
+        <AppButton variant="primary" size="sm" :loading="cancelDeleteBusy" data-testid="profile-cancel-delete" @click="onCancelDeleteAccount">
+          {{ t('profile.cancel_delete_btn') }}
+        </AppButton>
       </AppCard>
 
       <!-- ============================== Documents shortcut card ============================== -->
@@ -185,7 +214,10 @@
               {{ avatarLetter(a) }}
             </div>
             <div class="applicant-row__body">
-              <div class="applicant-row__name">{{ a.display_name }}</div>
+              <div class="applicant-row__name">
+                {{ a.display_name }}
+                <span v-if="a.is_minor" class="applicant-row__badge">{{ t('profile.applicant_minor_badge') }}</span>
+              </div>
               <div class="applicant-row__passport">
                 <span class="applicant-row__passport-label">
                   {{ t('profile.applicant_passport_label') }}
@@ -272,6 +304,39 @@
               </span>
               <span v-else class="profile-page__field-hint">
                 {{ t('profile.applicant_passport_hint') }}
+              </span>
+            </label>
+
+            <p class="profile-page__field-hint profile-page__minor-guide">
+              {{ t('profile.applicant_minor_guide') }}
+            </p>
+
+            <label class="profile-page__check">
+              <input
+                v-model="form.is_minor"
+                type="checkbox"
+                data-testid="applicant-is-minor"
+              />
+              <span>{{ t('profile.applicant_is_minor') }}</span>
+            </label>
+
+            <label v-if="form.is_minor" class="profile-page__field">
+              <span class="profile-page__field-label">
+                {{ t('profile.applicant_guardian_relationship') }}
+              </span>
+              <select
+                v-model="form.guardian_relationship"
+                class="profile-page__input"
+                data-testid="applicant-guardian-rel"
+                @change="clearFieldError('guardian_relationship')"
+              >
+                <option value="">{{ t('profile.applicant_guardian_placeholder') }}</option>
+                <option value="parent">{{ t('profile.guardian_parent') }}</option>
+                <option value="legal_guardian">{{ t('profile.guardian_legal') }}</option>
+                <option value="other">{{ t('profile.guardian_other') }}</option>
+              </select>
+              <span v-if="errors.guardian_relationship" class="profile-page__field-err">
+                {{ errors.guardian_relationship }}
               </span>
             </label>
           </div>
@@ -384,7 +449,7 @@
           <h3 class="profile-page__modal-title">{{ t('profile.delete_account_confirm_title') }}</h3>
           <p class="profile-page__modal-desc">{{ t('profile.delete_account_confirm_desc') }}</p>
           <div class="profile-page__modal-body">
-            <label class="profile-page__field">
+            <label v-if="profile?.has_password !== false" class="profile-page__field">
               <span class="profile-page__field-label">{{ t('profile.email_change_pwd_label') }}</span>
               <input
                 v-model="deleteForm.password"
@@ -394,6 +459,8 @@
               />
               <span v-if="deleteError" class="profile-page__field-err">{{ deleteError }}</span>
             </label>
+            <p v-else class="profile-page__modal-desc">{{ t('profile.delete_account_oauth_hint') }}</p>
+            <span v-if="deleteError && profile?.has_password === false" class="profile-page__field-err">{{ deleteError }}</span>
           </div>
           <div class="profile-page__modal-foot">
             <AppButton variant="ghost" size="md" @click="deleteOpen = false" :disabled="deleteBusy">
@@ -420,13 +487,17 @@ import AppHeader from '@/components/AppHeader.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import {
+  cancelDeleteAccount,
   cancelEmailChange,
   createApplicant,
   deleteAccount,
   deleteApplicant,
+  exportMyData,
   getProfile,
   listApplicants,
   requestEmailChange,
+  revokeConsent,
+  setProcessingRestriction,
   updateApplicant,
 } from '@/api/profile'
 import { clearAllLocalVisaData } from '@/utils/localPrivacyStorage'
@@ -448,8 +519,19 @@ const formOpen = ref(false)
 const editingId = ref(null)
 const saving = ref(false)
 const surnameInput = ref(null)
-const form = reactive({ surname: '', given_name: '', passport_no: '' })
-const errors = reactive({ surname: '', given_name: '', passport_no: '' })
+const form = reactive({
+  surname: '',
+  given_name: '',
+  passport_no: '',
+  is_minor: false,
+  guardian_relationship: '',
+})
+const errors = reactive({
+  surname: '',
+  given_name: '',
+  passport_no: '',
+  guardian_relationship: '',
+})
 
 const deleting = ref(null)
 const deletingBusy = ref(false)
@@ -462,6 +544,9 @@ const emailForm = reactive({ new_email: '', password: '' })
 const deleteOpen = ref(false)
 const clearLocalOpen = ref(false)
 const deleteBusy = ref(false)
+const cancelDeleteBusy = ref(false)
+const exportBusy = ref(false)
+const restrictBusy = ref(false)
 const deleteError = ref('')
 const deleteForm = reactive({ password: '' })
 
@@ -525,6 +610,7 @@ function validateLocal() {
   errors.surname = ''
   errors.given_name = ''
   errors.passport_no = ''
+  errors.guardian_relationship = ''
 
   if (!form.surname.trim()) {
     errors.surname = t('profile.err_name_empty')
@@ -542,6 +628,10 @@ function validateLocal() {
     errors.passport_no = t('profile.err_passport_format')
     ok = false
   }
+  if (form.is_minor && !form.guardian_relationship) {
+    errors.guardian_relationship = t('profile.err_guardian_required')
+    ok = false
+  }
   return ok
 }
 
@@ -550,9 +640,12 @@ function openAddDialog() {
   form.surname = ''
   form.given_name = ''
   form.passport_no = ''
+  form.is_minor = false
+  form.guardian_relationship = ''
   errors.surname = ''
   errors.given_name = ''
   errors.passport_no = ''
+  errors.guardian_relationship = ''
   formOpen.value = true
   nextTick(() => surnameInput.value?.focus())
 }
@@ -562,9 +655,12 @@ function openEditDialog(a) {
   form.surname = a.surname
   form.given_name = a.given_name
   form.passport_no = a.passport_no
+  form.is_minor = Boolean(a.is_minor)
+  form.guardian_relationship = a.guardian_relationship || ''
   errors.surname = ''
   errors.given_name = ''
   errors.passport_no = ''
+  errors.guardian_relationship = ''
   formOpen.value = true
   nextTick(() => surnameInput.value?.focus())
 }
@@ -583,6 +679,8 @@ async function onSaveApplicant() {
         surname: form.surname.trim(),
         given_name: form.given_name.trim(),
         passport_no: form.passport_no.trim(),
+        is_minor: form.is_minor,
+        guardian_relationship: form.is_minor ? form.guardian_relationship : null,
       })
       const idx = applicants.value.findIndex((a) => a.id === updated.id)
       if (idx >= 0) applicants.value[idx] = updated
@@ -592,6 +690,8 @@ async function onSaveApplicant() {
         surname: form.surname.trim(),
         given_name: form.given_name.trim(),
         passport_no: form.passport_no.trim(),
+        is_minor: form.is_minor,
+        guardian_relationship: form.is_minor ? form.guardian_relationship : null,
       })
       applicants.value.unshift(created)
       toast.success(t('profile.saved'))
@@ -640,13 +740,14 @@ function onClearLocalData() {
 
 async function onConfirmAccountDelete() {
   deleteError.value = ''
-  if (!deleteForm.password) {
+  const needsPwd = profile.value?.has_password !== false
+  if (needsPwd && !deleteForm.password) {
     deleteError.value = t('profile.err_pwd_required')
     return
   }
   deleteBusy.value = true
   try {
-    await deleteAccount({ password: deleteForm.password })
+    await deleteAccount({ password: needsPwd ? deleteForm.password : undefined })
     deleteOpen.value = false
     profile.value = { ...profile.value, status: 'pending_destroy' }
     toast.success(t('profile.delete_account_scheduled'))
@@ -660,6 +761,65 @@ async function onConfirmAccountDelete() {
     }
   } finally {
     deleteBusy.value = false
+  }
+}
+
+async function onCancelDeleteAccount() {
+  cancelDeleteBusy.value = true
+  try {
+    await cancelDeleteAccount()
+    profile.value = { ...profile.value, status: 'active' }
+    toast.success(t('profile.cancel_delete_success'))
+  } catch (e) {
+    toast.error(e?.message || t('profile.cancel_delete_failed'))
+  } finally {
+    cancelDeleteBusy.value = false
+  }
+}
+
+async function onExportData() {
+  exportBusy.value = true
+  try {
+    const data = await exportMyData()
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `htex-data-export-${Date.now()}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.success(t('profile.export_data_success'))
+  } catch (e) {
+    toast.error(e?.message || t('profile.export_data_failed'))
+  } finally {
+    exportBusy.value = false
+  }
+}
+
+async function onToggleRestriction() {
+  restrictBusy.value = true
+  try {
+    const next = !profile.value?.processing_restricted
+    const res = await setProcessingRestriction(next)
+    profile.value = { ...profile.value, processing_restricted: res.processing_restricted }
+    toast.success(next ? t('profile.restrict_processing_on') : t('profile.restrict_processing_off'))
+  } catch (e) {
+    toast.error(e?.message || t('profile.privacy_action_failed'))
+  } finally {
+    restrictBusy.value = false
+  }
+}
+
+async function onRevokeConsent() {
+  try {
+    await revokeConsent({ purpose: 'sensitive_upload' })
+    try {
+      const { clearLocalSensitiveConsent } = await import('@/utils/sensitiveConsent')
+      clearLocalSensitiveConsent()
+    } catch { /* ignore */ }
+    toast.success(t('profile.revoke_consent_success'))
+  } catch (e) {
+    toast.error(e?.message || t('profile.privacy_action_failed'))
   }
 }
 
@@ -1005,7 +1165,18 @@ function onLogout() {
   font-size: 15px;
   font-weight: 600;
   color: var(--ink-1, #1a1a1a);
-  line-height: 1.3;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.applicant-row__badge {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--bg-2, #f3f4f6);
+  color: var(--ink-3, #6b7280);
 }
 .applicant-row__passport {
   margin-top: 2px;
@@ -1057,6 +1228,12 @@ function onLogout() {
 .profile-page__danger-btn {
   color: #b91c1c !important;
   margin-top: 8px;
+}
+.profile-page__privacy-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
 }
 
 /* ----- Modal ----- */
@@ -1143,5 +1320,23 @@ function onLogout() {
 .profile-page__field-hint {
   font-size: 12px;
   color: var(--ink-3, #6b7280);
+}
+.profile-page__minor-guide {
+  margin: 0 0 4px;
+  line-height: 1.45;
+}
+.profile-page__check {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--ink-2, #374151);
+  cursor: pointer;
+  user-select: none;
+  margin-bottom: 4px;
+}
+.profile-page__check input {
+  margin-top: 2px;
+  flex-shrink: 0;
 }
 </style>

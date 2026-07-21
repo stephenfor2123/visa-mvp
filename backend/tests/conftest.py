@@ -209,6 +209,34 @@ async def app():
     await test_engine.dispose()
 
 
+@pytest.fixture(autouse=True)
+def _bypass_sensitive_consent(request):
+    """Neutralize the GDPR sensitive-processing consent gate for flow tests.
+
+    The consent gate (materials upload / OCR / LLM) was added after most
+    integration tests were written; those tests exercise upload/order/submit
+    flows and never grant consent, so the gate would 403 them.  We no-op the
+    gate globally here.  Tests that specifically verify the gate should mark
+    themselves ``@pytest.mark.real_consent`` to run against the real logic.
+    """
+    if request.node.get_closest_marker("real_consent"):
+        yield
+        return
+
+    from app.services.consent_service import ConsentService
+
+    original = ConsentService.require_sensitive_processing
+
+    async def _noop(self, user):  # noqa: ANN001, ANN202
+        return None
+
+    ConsentService.require_sensitive_processing = _noop  # type: ignore[assignment]
+    try:
+        yield
+    finally:
+        ConsentService.require_sensitive_processing = original  # type: ignore[assignment]
+
+
 @pytest_asyncio.fixture()
 async def client(app) -> AsyncGenerator[AsyncClient, None]:
     """Async HTTP client wired to the in-process ASGI app."""

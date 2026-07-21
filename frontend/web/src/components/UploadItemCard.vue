@@ -500,17 +500,18 @@ function ruleSeverityIcon(severity) {
 // 其他材料类型 (passport / bank / form / etc.) 走原 doUpload 即可。
 const isPhoto = computed(() => props.itemKey === 'photo')
 
+import {
+  hasLocalSensitiveConsent,
+  markLocalSensitiveConsent,
+  syncSensitiveConsentToServer,
+} from '@/utils/sensitiveConsent'
+
 const SENSITIVE_KEYS = new Set(['passport', 'photo', 'bank_statement'])
-const CONSENT_KEY = 'htex.sensitive_data_consent_v1'
 const consentOpen = ref(false)
 let pendingAction = null
 
 function hasSensitiveConsent() {
-  try {
-    return sessionStorage.getItem(CONSENT_KEY) === '1'
-  } catch {
-    return false
-  }
+  return hasLocalSensitiveConsent()
 }
 
 function needsConsent() {
@@ -524,10 +525,9 @@ function ensureConsent(action) {
   return false
 }
 
-function onConsentAccept() {
-  try {
-    sessionStorage.setItem(CONSENT_KEY, '1')
-  } catch { /* ignore */ }
+async function onConsentAccept() {
+  markLocalSensitiveConsent()
+  await syncSensitiveConsentToServer()
   consentOpen.value = false
   if (pendingAction === 'file') fileInput.value?.click()
   else if (pendingAction === 'camera') startCameraInner()

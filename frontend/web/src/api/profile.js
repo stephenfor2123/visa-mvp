@@ -79,7 +79,13 @@ export async function listApplicants() {
   return resp?.data?.items || []
 }
 
-export async function createApplicant({ surname, given_name, passport_no }) {
+export async function createApplicant({
+  surname,
+  given_name,
+  passport_no,
+  is_minor = false,
+  guardian_relationship = null,
+}) {
   if (MOCK_MODE) {
     await delay()
     // duplicate name check
@@ -99,13 +105,21 @@ export async function createApplicant({ surname, given_name, passport_no }) {
       given_name,
       display_name: _smartJoin(surname, given_name),
       passport_no: passport_no.toUpperCase().replace(' ', ''),
+      is_minor: Boolean(is_minor),
+      guardian_relationship: is_minor ? guardian_relationship : null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }
     _mockApplicants.push(a)
     return a
   }
-  const resp = await http.post('/v2/profile/applicants', { surname, given_name, passport_no })
+  const resp = await http.post('/v2/profile/applicants', {
+    surname,
+    given_name,
+    passport_no,
+    is_minor: Boolean(is_minor),
+    guardian_relationship: is_minor ? guardian_relationship : null,
+  })
   if (resp?.code !== '1000') {
     const e = new Error(resp.message || 'createApplicant failed')
     e.code = resp?.code
@@ -199,21 +213,85 @@ export async function cancelEmailChange() {
   return resp.data
 }
 
-export async function deleteAccount({ password }) {
+export async function deleteAccount({ password, confirm = true } = {}) {
   if (MOCK_MODE) {
     await delay()
-    if (password !== 'Htex@2026' && password !== 'password') {
+    if (password && password !== 'Htex@2026' && password !== 'password') {
       const e = new Error('wrong password')
       e.code = '2001'
       throw e
     }
     return { message: 'Account scheduled for deletion', status: 'pending_destroy' }
   }
-  const resp = await http.post('/v2/profile/delete-account', { password, confirm: true })
+  const body = { confirm: confirm !== false }
+  if (password) body.password = password
+  const resp = await http.post('/v2/profile/delete-account', body)
   if (resp?.code !== '1000') {
     const e = new Error(resp.message || 'deleteAccount failed')
     e.code = resp?.code
     throw e
+  }
+  return resp.data
+}
+
+export async function cancelDeleteAccount() {
+  if (MOCK_MODE) {
+    await delay()
+    return { message: 'Account deletion cancelled', status: 'active' }
+  }
+  const resp = await http.post('/v2/profile/cancel-delete-account', {})
+  if (resp?.code !== '1000') {
+    throw new Error(resp.message || 'cancelDeleteAccount failed')
+  }
+  return resp.data
+}
+
+export async function grantConsent({ purpose = 'sensitive_upload', version = 'v1' } = {}) {
+  if (MOCK_MODE) {
+    await delay()
+    return { purpose, version, active: true }
+  }
+  const resp = await http.post('/v2/profile/consents', { purpose, version })
+  if (resp?.code !== '1000') {
+    throw new Error(resp.message || 'grantConsent failed')
+  }
+  return resp.data
+}
+
+export async function revokeConsent({ purpose = 'sensitive_upload', version = 'v1' } = {}) {
+  if (MOCK_MODE) {
+    await delay()
+    return { purpose, revoked: true }
+  }
+  const resp = await http.post('/v2/profile/consents/revoke', { purpose, version })
+  if (resp?.code !== '1000') {
+    throw new Error(resp.message || 'revokeConsent failed')
+  }
+  return resp.data
+}
+
+export async function setProcessingRestriction(restricted) {
+  if (MOCK_MODE) {
+    await delay()
+    return { processing_restricted: !!restricted }
+  }
+  const resp = await http.post('/v2/profile/processing-restriction', {
+    restricted: !!restricted,
+  })
+  if (resp?.code !== '1000') {
+    throw new Error(resp.message || 'setProcessingRestriction failed')
+  }
+  return resp.data
+}
+
+export async function exportMyData() {
+  if (MOCK_MODE) {
+    await delay()
+    return { exported_at: new Date().toISOString(), user: {}, applicants: [], orders: [], consents: [] }
+  }
+  const resp = await http.get('/v2/profile/data-export')
+  if (resp?.code !== '1000') {
+    throw new Error(resp.message || 'exportMyData failed')
   }
   return resp.data
 }

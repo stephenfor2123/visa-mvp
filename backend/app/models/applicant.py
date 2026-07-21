@@ -17,7 +17,9 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, UniqueConstraint, func
+from typing import Optional
+
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base
@@ -49,6 +51,10 @@ class Applicant(Base):
     # unlink + reassign later, but for W1 we just say passport_no
     # is globally unique.
     passport_no: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
+
+    # Guardian-only minors: account holder is 16+, applicant may be under 16.
+    is_minor: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    guardian_relationship: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), nullable=False

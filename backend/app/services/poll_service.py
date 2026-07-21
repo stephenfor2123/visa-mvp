@@ -244,6 +244,9 @@ class PollService:
         elif status_after in ("closed", "abnormal", "failed"):
             order.closed_at = polled_at
 
+        from app.services.cleanup_service import maybe_set_retention_anchor
+        maybe_set_retention_anchor(order, now=polled_at)
+
         self.db.add(order)
 
         # 2) Append-only history row (same table the user-facing API writes)

@@ -109,6 +109,11 @@
     </main>
 
     <QrUploadModal v-model:open="qrOpen" @received="onQrReceived" />
+    <SensitiveDataConsent
+      :open="consentOpen"
+      @accept="onConsentAccept"
+      @cancel="consentOpen = false"
+    />
   </div>
 </template>
 
@@ -118,6 +123,7 @@ import { useI18n } from 'vue-i18n'
 import AppHeader from '@/components/AppHeader.vue'
 import AppCard from '@/components/AppCard.vue'
 import QrUploadModal from '@/components/QrUploadModal.vue'
+import SensitiveDataConsent from '@/components/SensitiveDataConsent.vue'
 import {
   getMaterialTypeOptions,
   processMaterial,
@@ -127,12 +133,18 @@ import {
   fileToDataUrl,
   listLocalDocuments,
 } from '@/utils/localPrivacyStorage'
+import {
+  hasLocalSensitiveConsent,
+  markLocalSensitiveConsent,
+  syncSensitiveConsentToServer,
+} from '@/utils/sensitiveConsent'
 import { useToast } from '@/composables/useToast'
 
 const { t } = useI18n()
 const toast = useToast()
 
 const qrOpen = ref(false)
+const consentOpen = ref(false)
 const materials = ref([])
 const filterType = ref('')
 const pcInputEl = ref(null)
@@ -170,6 +182,11 @@ function loadMaterials() {
 async function onPcPick(ev) {
   const files = ev.target.files
   if (!files || !files.length) return
+  if (!hasLocalSensitiveConsent()) {
+    consentOpen.value = true
+    ev.target.value = ''
+    return
+  }
   uploading.value = true
   let ok = 0
   let fail = 0
@@ -199,6 +216,13 @@ async function onPcPick(ev) {
     loadMaterials()
   }
   if (fail > 0) toast.error(t('toast.upload_failed', { n: fail }))
+}
+
+async function onConsentAccept() {
+  markLocalSensitiveConsent()
+  await syncSensitiveConsentToServer()
+  consentOpen.value = false
+  pcInputEl.value?.click()
 }
 
 function onQrReceived(item) {

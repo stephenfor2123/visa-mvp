@@ -59,6 +59,8 @@ export const useAuthStore = defineStore('auth', () => {
     accessToken.value = ''
     refreshToken.value = ''
     try { localStorage.removeItem(STORAGE_KEY) } catch {}
+    // GDPR: session expiry must clear local PII drafts the same way logout does.
+    try { clearAllLocalVisaData() } catch { /* ignore */ }
     emitAuthExpired()
   }
 
@@ -95,8 +97,8 @@ export const useAuthStore = defineStore('auth', () => {
     return data
   }
 
-  async function loginWithGoogle(credential) {
-    const data = await apiLoginWithGoogle(credential)
+  async function loginWithGoogle(credential, opts = {}) {
+    const data = await apiLoginWithGoogle(credential, opts)
     user.value = data.user
     accessToken.value = data.accessToken
     refreshToken.value = data.refreshToken

@@ -37,6 +37,17 @@ class RegisterRequest(BaseModel):
     email_code: str = Field(..., min_length=6, max_length=6, description="6-digit verification code from email")
     nickname: Optional[str] = Field(None, max_length=64)
     language_pref: Optional[str] = Field("zh-CN", max_length=8)
+    age_confirmed_16: bool = Field(
+        ...,
+        description="GDPR Art.8 — user must confirm they are 16 or older",
+    )
+
+    @field_validator("age_confirmed_16")
+    @classmethod
+    def _v_age(cls, v: bool) -> bool:
+        if v is not True:
+            raise ValueError("You must confirm you are at least 16 years old")
+        return v
 
     @field_validator("email_code")
     @classmethod
@@ -131,13 +142,20 @@ class GoogleAuthRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     id_token: str = Field(..., min_length=1, description="Google ID token from client-side GIS/google_sign_in")
+    age_confirmed_16: bool = Field(
+        False,
+        description="Required when auto-registering a new Google user (Art.8)",
+    )
 
 
 class WechatAuthRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     code: str = Field(..., min_length=1, description="wx.login() one-time code from the miniprogram")
-
+    age_confirmed_16: bool = Field(
+        False,
+        description="Required when auto-registering a new WeChat user (Art.8)",
+    )
 
 # --------------------------------------------------------------------------- #
 # Responses                                                                  #

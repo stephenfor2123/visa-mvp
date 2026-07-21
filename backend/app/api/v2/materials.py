@@ -31,7 +31,6 @@ from fastapi import (
     Response,
     UploadFile,
 )
-from fastapi.responses import FileResponse
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -86,6 +85,7 @@ _log = get_logger()
 )
 async def process_material(
     response: Response,
+    request: Request,
     file: UploadFile = File(..., description="Binary file content"),
     material_type: str = Form(
         ..., description="passport / id_card / household / enrollment / photo / form / bank / other"
@@ -95,7 +95,12 @@ async def process_material(
         None, max_length=8, description="Destination ISO-2 for bank review rules"
     ),
     current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ) -> ApiResponse[ProcessMaterialResponse]:
+    from app.services.consent_service import ConsentService
+
+    await ConsentService(db).require_sensitive_processing(current_user)
+
     data = await file.read()
     if not data:
         raise BizException(ErrorCode.INVALID_PARAMS, message="file is empty")
@@ -156,6 +161,9 @@ async def upload_material(
             message="file_upload_disabled: use POST /api/v2/materials/process instead",
         )
 
+    from app.services.consent_service import ConsentService
+    await ConsentService(db).require_sensitive_processing(current_user)
+
     data = await file.read()
     if not data:
         raise BizException(ErrorCode.INVALID_PARAMS, message="file is empty")
@@ -194,6 +202,7 @@ async def upload_material(
     summary="Auto-scan + crop a document image (returns processed JPEG + meta)",
 )
 async def preprocess_image(
+    request: Request,
     file: UploadFile = File(..., description="Image to preprocess (JPEG/PNG/HEIC)"),
     apply_binarize: bool = Form(
         False,
@@ -201,6 +210,7 @@ async def preprocess_image(
     ),
     force_grayscale: bool = Form(False, description="Force grayscale output"),
     current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ) -> ApiResponse[PreprocessResponse]:
     """Run the document-scan pipeline on an uploaded image.
 
@@ -208,6 +218,9 @@ async def preprocess_image(
     without an extra round-trip). The frontend can then decide whether to
     upload the original or the processed version.
     """
+    from app.services.consent_service import ConsentService
+    await ConsentService(db).require_sensitive_processing(current_user)
+
     data = await file.read()
     if not data:
         raise BizException(ErrorCode.INVALID_PARAMS, message="file is empty")
@@ -405,6 +418,9 @@ async def run_material_ocr(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> ApiResponse[dict]:
+    from app.services.consent_service import ConsentService
+    await ConsentService(db).require_sensitive_processing(current_user)
+
     service = MaterialService(db)
     material = await service.get(user_id=current_user.id, material_id=material_id)
 
@@ -650,6 +666,9 @@ async def diagnose(
     Returns an overall risk score (0..1), a categorized list of issues, and
     references to the policy documents that informed the diagnosis.
     """
+    from app.services.consent_service import ConsentService
+    await ConsentService(db).require_sensitive_processing(current_user)
+
     service = MaterialService(db)
     materials: list[dict] = []
 
@@ -874,12 +893,13 @@ async def fetch_local(
         )
     try:
         abs_path = storage.path_for(key)
+        if not abs_path.exists():
+            raise FileNotFoundError(key)
+        # Decrypt at read time — files may be AES-GCM encrypted at rest, so we
+        # must NOT serve the raw file (FileResponse) or the client gets
+        # ciphertext. read_bytes transparently decrypts when a key is set.
+        content = storage.read_bytes(key)
     except FileNotFoundError:
-        raise BizException(
-            ErrorCode.MATERIAL_NOT_FOUND,
-            message="file_not_found",
-        )
-    if not abs_path.exists():
         raise BizException(
             ErrorCode.MATERIAL_NOT_FOUND,
             message="file_not_found",
@@ -887,4 +907,4 @@ async def fetch_local(
     # Best-effort mime guess from filename
     import mimetypes
     media_type, _ = mimetypes.guess_type(abs_path.name)
-    return FileResponse(abs_path, media_type=media_type or "application/octet-stream")
+    return Response(content=content, media_type=media_type or "application/octet-stream")

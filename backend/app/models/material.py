@@ -79,7 +79,7 @@ class Material(Base):
     storage_key: Mapped[str] = mapped_column(String(512), nullable=False)
     thumbnail_key: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
     encryption_key_id: Mapped[str] = mapped_column(
-        String(64), nullable=False, default="dev-kms-stub"
+        String(64), nullable=False, default="none"
     )
 
     # Async OCR / classification results (populated by Celery in W3+)

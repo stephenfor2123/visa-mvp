@@ -3,8 +3,8 @@
 
   设计:
   - 标题 + 一句话核心承诺
-  - 4 国对比表 (国家 / 使馆费 / 平台服务费 / 退款规则)
-  - 退款规则说明 block (重点突出: 平台服务费拒签可退 / 使馆费不退)
+  - 4 国对比表 (国家 / 使馆费 / 平台服务费)
+  - 使馆费旁标注「不退」；服务费旁标注「拒签可退」
   - 合规说明 bullet (退费流程 / 工作时间 / 客服)
 
   i18n: 全文案走 key — 'home.pricing.*'
@@ -26,14 +26,12 @@
           <col class="pricing__col-country" />
           <col class="pricing__col-consulate" />
           <col class="pricing__col-service" />
-          <col class="pricing__col-refund" />
         </colgroup>
         <thead>
           <tr>
             <th scope="col">{{ t('home.pricing.col_country') }}</th>
             <th scope="col">{{ t('home.pricing.col_consulate') }}</th>
             <th scope="col">{{ t('home.pricing.col_service') }}</th>
-            <th scope="col">{{ t('home.pricing.col_refund') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -43,24 +41,27 @@
               <span>{{ t(`country.${row.code}`) }}</span>
             </th>
             <td>
-              <span class="pricing__amount">{{ row.symbol }} {{ row.amount.toLocaleString() }}</span>
-              <span class="pricing__note">{{ t(`home.pricing.consulate_note_${row.currency.toLowerCase()}`) }}</span>
+              <div class="pricing__fee-cell">
+                <span class="pricing__amount">{{ row.symbol }} {{ row.amount.toLocaleString() }}</span>
+                <span class="pricing__note pricing__note--inline">
+                  {{ t(`home.pricing.consulate_note_${row.currency.toLowerCase()}`) }}
+                  <span class="pricing__pill pricing__pill--no">{{ t('home.pricing.refund_no') }}</span>
+                </span>
+              </div>
             </td>
             <td>
-              <div class="pricing__svc-cell">
-                <span v-if="isPromo" class="pricing__amount pricing__amount--list">
-                  {{ symbol }} {{ formatUsd(listPrice) }}
-                </span>
-                <span class="pricing__amount pricing__amount--svc">
-                  {{ symbol }} {{ formatUsd(displayPrice) }}
-                </span>
-                <span v-if="isPromo" class="pricing__promo-tag">{{ t('home.pricing.promo_tag') }}</span>
+              <div class="pricing__fee-cell">
+                <div class="pricing__svc-cell">
+                  <span v-if="isPromo" class="pricing__amount pricing__amount--list">
+                    {{ symbol }} {{ formatUsd(listPrice) }}
+                  </span>
+                  <span class="pricing__amount pricing__amount--svc">
+                    {{ symbol }} {{ formatUsd(displayPrice) }}
+                  </span>
+                  <span v-if="isPromo" class="pricing__promo-tag">{{ t('home.pricing.promo_tag') }}</span>
+                </div>
+                <span class="pricing__note">{{ t('home.pricing.service_note') }}</span>
               </div>
-              <span class="pricing__note">{{ t('home.pricing.service_note') }}</span>
-            </td>
-            <td class="pricing__refund">
-              <span class="pricing__pill pricing__pill--no">{{ t('home.pricing.refund_no') }}</span>
-              <span class="pricing__note">{{ t('home.pricing.refund_consulate_note') }}</span>
             </td>
           </tr>
         </tbody>
@@ -69,7 +70,7 @@
             <th scope="row" class="pricing__total-label">
               {{ t('home.pricing.total_label') }}
             </th>
-            <td class="pricing__total-cell" :colspan="3">
+            <td class="pricing__total-cell" :colspan="2">
               {{ t('home.pricing.total_note') }}
             </td>
           </tr>
@@ -147,10 +148,9 @@ onMounted(() => { load() })
   font-size: 14px;
   table-layout: fixed;
 }
-.pricing__col-country   { width: 22%; }
-.pricing__col-consulate { width: 26%; }
-.pricing__col-service   { width: 22%; }
-.pricing__col-refund    { width: 30%; }
+.pricing__col-country   { width: 28%; }
+.pricing__col-consulate { width: 36%; }
+.pricing__col-service   { width: 36%; }
 .pricing__table thead th {
   text-align: left; padding: 14px 18px;
   background: #f1f5f9;
@@ -164,7 +164,7 @@ onMounted(() => { load() })
 .pricing__table tfoot th {
   padding: 16px 18px;
   border-bottom: 1px solid #f1f5f9;
-  vertical-align: top;
+  vertical-align: middle;
   color: #1e293b;
 }
 .pricing__table tbody tr:last-child td,
@@ -178,25 +178,38 @@ onMounted(() => { load() })
 .pricing__flag {
   font-size: 22px; line-height: 1; flex-shrink: 0;
 }
+.pricing__fee-cell {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  min-height: 52px;
+}
 .pricing__amount {
   font-size: 17px; font-weight: 700; color: #0f172a;
   font-variant-numeric: tabular-nums;
+  line-height: 1.2;
 }
 .pricing__amount--svc { color: #2563eb; }
 .pricing__amount--list {
   font-size: 14px; font-weight: 600; color: #94a3b8;
   text-decoration: line-through; margin-right: 6px;
 }
-.pricing__svc-cell { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px; }
+.pricing__svc-cell { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
 .pricing__promo-tag {
   font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;
   background: #fef3c7; color: #b45309; margin-left: 4px;
 }
 .pricing__note {
-  display: block; margin-top: 4px;
+  display: block;
   font-size: 11px; color: #94a3b8; line-height: 1.5;
 }
-.pricing__refund { /* no min-width — let table-layout: fixed govern */ }
+.pricing__note--inline {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
 .pricing__pill {
   display: inline-block;
   padding: 3px 10px;

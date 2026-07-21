@@ -506,6 +506,7 @@ import { trackClick, attributeOrder, loadPendingClick, savePendingClick } from '
 import { FEATURE_RPA } from '@/config/features'
 import AppHeader from '@/components/AppHeader.vue'
 import ItineraryPreviewTable from '@/components/ItineraryPreviewTable.vue'
+import { saveWithExpiry, loadWithExpiry, WIZARD_TTL_MS } from '@/utils/localPrivacyStorage'
 
 const { t, te, locale } = useI18n()
 const router = useRouter()
@@ -958,15 +959,8 @@ const FALLBACK_DESTINATIONS = [
 //  - silent=true 不弹 toast(登录后自动恢复,无需提示)
 function restoreDraftIfAny({ silent = false } = {}) {
   try {
-    const raw = localStorage.getItem('ordernew_draft')
-    if (!raw) return false
-    const draft = JSON.parse(raw)
+    const draft = loadWithExpiry('ordernew_draft', null, WIZARD_TTL_MS)
     if (!draft || !draft.form) return false
-    // 7 天过期
-    if (Date.now() - (draft.savedAt || 0) > 7 * 24 * 3600 * 1000) {
-      localStorage.removeItem('ordernew_draft')
-      return false
-    }
     // 合并(以 draft 为主,因为是用户最后填的)
     if (draft.destination_id) form.destination_id = draft.destination_id
     if (draft.visa_type) form.visa_type = draft.visa_type
@@ -986,14 +980,13 @@ async function onSubmit() {
   if (!auth.isLoggedIn) {
     // 保存当前 form 到 localStorage,登录后自动恢复
     try {
-      localStorage.setItem('ordernew_draft', JSON.stringify({
+      saveWithExpiry('ordernew_draft', {
         destination_id: form.destination_id,
         visa_type: form.visa_type,
         material_ids: [],
         form: { ...form },
         countryCode: countryCode.value,
-        savedAt: Date.now()
-      }))
+      }, WIZARD_TTL_MS)
     } catch (e) { /* quota / privacy mode, ignore */ }
     return router.push({
       name: 'Login',

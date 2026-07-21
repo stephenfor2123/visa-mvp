@@ -15,6 +15,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends, Request
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -45,6 +46,7 @@ from app.schemas.common import ApiResponse
 
 router = APIRouter(prefix="/ds160", tags=["ds160"])
 _log = get_logger()
+_bearer_scheme = HTTPBearer(auto_error=False)
 
 DS160_MAPPING_VERSION = "2026.3"
 DS160_MAPPING_VERIFIED_DATE: Optional[str] = None
@@ -322,6 +324,9 @@ async def redeem_ds160_code(
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
     limiter: Annotated[InMemoryRateLimiter, Depends(get_default_rate_limiter)],
+    credentials: Annotated[
+        Optional[HTTPAuthorizationCredentials], Depends(_bearer_scheme)
+    ] = None,
 ) -> ApiResponse[RedeemCodeResponse]:
     ip = _client_ip(request)
     ua = request.headers.get("user-agent", "")
@@ -348,6 +353,30 @@ async def redeem_ds160_code(
         )
         await db.commit()
         raise BizException(ErrorCode.DS160_CODE_NOT_FOUND)
+
+    # If a bearer token is present, enforce order ownership (extension with session).
+    if credentials and credentials.credentials:
+        from app.core.security import TOKEN_TYPE_ACCESS, assert_token_valid_for_user, decode_token
+
+        payload = decode_token(credentials.credentials, TOKEN_TYPE_ACCESS)
+        try:
+            uid = int(payload["sub"])
+        except (KeyError, TypeError, ValueError):
+            raise BizException(ErrorCode.UNAUTHORIZED, message="Bad token subject") from None
+        user = await db.get(User, uid)
+        if user is None:
+            raise BizException(ErrorCode.UNAUTHORIZED, message="User not found")
+        assert_token_valid_for_user(payload, user)
+        if order.user_id != user.id:
+            await _audit_redeem(
+                db, order=order, ip=ip, user_agent=ua,
+                success=False, error_code="DS160_FORBIDDEN", code_prefix=code_prefix,
+            )
+            await db.commit()
+            raise BizException(
+                ErrorCode.UNAUTHORIZED,
+                message="Code does not belong to the authenticated user",
+            )
 
     digest = hash_code(code)
 

@@ -1122,7 +1122,13 @@ import { useMaterialWizard } from '@/composables/useMaterialWizard'
 import { listDestinations } from '@/api/destinations'
 import { extractApplicantDraft, createOrder, listOrders } from '@/api/orders'
 import { queryPaymentStatus } from '@/api/payment'
-import { savePrecheckSnapshot, clearAllLocalVisaData } from '@/utils/localPrivacyStorage'
+import {
+  savePrecheckSnapshot,
+  clearAllLocalVisaData,
+  saveWithExpiry,
+  loadWithExpiry,
+  WIZARD_TTL_MS,
+} from '@/utils/localPrivacyStorage'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import { FEATURE_RPA } from '@/config/features'
@@ -1690,9 +1696,8 @@ watch(() => Object.entries(dna).map(([k, v]) => `${k}:${v}`).join('|'), () => {
 })
 
 // 表单自动保存 — key 包含 countryCode+visaType,避免不同国家/签种串数据
-// TTL 7 天(跟 OrderNew 的 ordernew_draft 一致)
+// TTL 7 天(跟 OrderNew 的 ordernew_draft 一致)；统一走 _savedAt 包装
 const FORM_DRAFT_KEY = 'wizard.orderForm'
-const FORM_DRAFT_TTL_MS = 7 * 24 * 3600 * 1000
 
 function draftKey() {
   return `${FORM_DRAFT_KEY}.${countryCode || 'na'}.${visaType || 'na'}`
@@ -1700,28 +1705,21 @@ function draftKey() {
 
 function saveFormDraft() {
   try {
-    localStorage.setItem(draftKey(), JSON.stringify({
+    saveWithExpiry(draftKey(), {
       form: { ...form },
       errors: { ...errors },
       ocrMarked: { ...ocrMarked },
       activeTab: activeTab.value,
       prefillPercent: prefillPercent.value,
       itineraryText: itineraryText.value,
-      savedAt: Date.now()
-    }))
+    }, WIZARD_TTL_MS)
   } catch { /* quota / privacy mode, ignore */ }
 }
 
 function loadFormDraft() {
   try {
-    const raw = localStorage.getItem(draftKey())
-    if (!raw) return false
-    const draft = JSON.parse(raw)
+    const draft = loadWithExpiry(draftKey(), null, WIZARD_TTL_MS)
     if (!draft || !draft.form) return false
-    if (Date.now() - (draft.savedAt || 0) > FORM_DRAFT_TTL_MS) {
-      localStorage.removeItem(draftKey())
-      return false
-    }
     Object.assign(form, draft.form)
     Object.assign(errors, draft.errors || {})
     Object.assign(ocrMarked, draft.ocrMarked || {})

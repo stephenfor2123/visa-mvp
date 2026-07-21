@@ -34,10 +34,10 @@
   {
     "code": "PASSPORT_DOB_AGE_MIN_16",
     "rule_type": "age",
-    "severity": "error",
-    "params": {"field": "dob", "min_age": 16},
+    "severity": "warning",
+    "params": {"field": "dob", "min_age": 16, "allow_guardian": true},
     "enabled": true,
-    "message_key": "validation.passport.age_min_16"
+    "message_key": "validation.passport.age_min_16_guardian"
   },
   {
     "code": "IMAGE_BLUR_THRESHOLD",
