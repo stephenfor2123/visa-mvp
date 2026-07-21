@@ -16,7 +16,7 @@
             <!-- video 优先,失败 fallback 到同名 jpg;再失败显示深色兜底 -->
             <video
               v-if="s.image && /\.(mp4|webm)$/i.test(s.image) && !failedHero.has(i)"
-              :src="s.image"
+              :src="heroAsset(s.image)"
               :alt="`${t(s.captionKey)} · ${t(s.cityKey)}`"
               class="hero__slide-video"
               autoplay
@@ -28,7 +28,7 @@
             />
             <img
               v-else-if="(failedHero.has(i) && s.fallback) || (s.image && !/\.(mp4|webm)$/i.test(s.image))"
-              :src="failedHero.has(i) ? s.fallback : s.image"
+              :src="heroAsset(failedHero.has(i) ? s.fallback : s.image)"
               :alt="`${t(s.captionKey)} · ${t(s.cityKey)}`"
               class="hero__slide-video hero__slide-img"
               loading="eager"
@@ -115,20 +115,23 @@
                 {{ t('home.card.apply_through') }}
               </p>
               <!-- W28 Atlys-style: 3 列属性 TYPE / VALID / FEES -->
-              <div class="country-card__attrs" v-if="c.fee_usd != null">
+              <div class="country-card__attrs" v-if="c.fee_usd != null || c.valid_label">
                 <div class="country-card__attr">
                   <span class="country-card__attr-label">{{ t('home.card.type') || 'TYPE' }}</span>
                   <span class="country-card__attr-val">{{ c.visa_type_label }}</span>
                 </div>
                 <div class="country-card__attr">
                   <span class="country-card__attr-label">{{ t('home.card.valid') || 'VALID' }}</span>
-                  <span class="country-card__attr-val">{{ c.valid_label }}</span>
+                  <span class="country-card__attr-val">
+                    <span v-if="c.valid_label" class="country-card__from-prefix">{{ t('home.card.visa_fee_from') }}</span>
+                    {{ c.valid_label }}
+                  </span>
                 </div>
-                <!-- B3: 价格透明化 — "FROM $X 起" 风格, Atlys 范 -->
-                <div class="country-card__attr country-card__attr--price">
+                <!-- B3: 价格透明化 — "起 $X" / "from $X" 风格 -->
+                <div v-if="c.fee_usd != null" class="country-card__attr country-card__attr--price">
                   <span class="country-card__attr-label">{{ t('home.card.fees') || 'FEES' }}</span>
                   <span class="country-card__attr-val">
-                    <span class="country-card__price-from">FROM</span>
+                    <span class="country-card__price-from">{{ t('home.card.visa_fee_from') }}</span>
                     <span class="country-card__price-num">\${{ c.fee_usd }}</span>
                   </span>
                 </div>
@@ -200,6 +203,14 @@ function isMobileViewport() {
   return window.matchMedia && window.matchMedia('(max-width: 600px)').matches
 }
 
+// 换 hero 视频/封面时递增版本号,强制浏览器拉新资源(同名 mp4 会被强缓存)
+const HERO_MEDIA_VERSION = '20260721'
+function heroAsset(path) {
+  if (!path) return path
+  const sep = path.includes('?') ? '&' : '?'
+  return `${path}${sep}v=${HERO_MEDIA_VERSION}`
+}
+
 // 10 张幻灯片:每条先 mp4 视频,失败 fallback 到同名 .jpg
 const slides = [
   // t1 — 雪山 / 山野主题
@@ -243,10 +254,6 @@ function stopTimer() {
   if (timer) { clearInterval(timer); timer = null }
 }
 
-onMounted(() => {
-  startTimer()
-  applyDestinationsMeta()
-})
 onBeforeUnmount(stopTimer)
 
 // 切语种时重置,避免 caption 切换不流畅
@@ -278,86 +285,110 @@ function onImgError(code) {
   failedImages.value = next
 }
 
+// API 元数据缓存;与 heroCountries computed 合并,切换语言时标签自动刷新
+const destMetaByCode = ref({})
+
+const STICKER_VISA_COUNTRIES = new Set([
+  'US', 'SCHENGEN', 'FR', 'DE', 'IT', 'ES', 'NL', 'AT', 'BE', 'GR', 'PT',
+  'CZ', 'DK', 'FI', 'HU', 'IS', 'LU', 'NO', 'PL', 'SE', 'CH',
+])
+
+const HERO_META_FALLBACK = {
+  GB: { visa_fee_usd: 12500, valid_days: 180, process_days: 3 },
+}
+
+function resolveVisaTypeLabel(code) {
+  return STICKER_VISA_COUNTRIES.has(code)
+    ? t('home.card.type_sticker')
+    : t('home.card.type_evisa')
+}
+
+/** 首页卡有效期:申根展示最长停留 90 天,英国展示每次最长 6 个月,其余按 valid_days */
+function buildHomeValidLabel(code, validDays) {
+  if (code === 'SCHENGEN') return t('home.card.valid_schengen_stay')
+  if (code === 'GB') return t('home.card.valid_gb_stay')
+  if (!validDays) return ''
+  if (validDays % 365 === 0) {
+    const y = validDays / 365
+    return y === 1 ? t('home.card.valid_year_one') : t('home.card.valid_years', { n: y })
+  }
+  if (validDays % 30 === 0) {
+    const mo = validDays / 30
+    return mo === 1 ? t('home.card.valid_month_one') : t('home.card.valid_months', { n: mo })
+  }
+  return t('home.card.valid_days', { n: validDays })
+}
+
+function formatEtaLabel(iso) {
+  if (!iso) return ''
+  try {
+    const d = new Date(iso)
+    const dd = String(d.getUTCDate()).padStart(2, '0')
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    const mm = months[d.getUTCMonth()]
+    const hh = String(d.getUTCHours()).padStart(2, '0')
+    const mi = String(d.getUTCMinutes()).padStart(2, '0')
+    return `${dd} ${mm} ${d.getUTCFullYear()}, ${hh}:${mi}`
+  } catch (_) {
+    return ''
+  }
+}
+
 const heroCountries = computed(() =>
-  ['US', 'AU', 'SCHENGEN', 'GB'].map(code => ({
-    code,
-    flag: { US: '🇺🇸', AU: '🇦🇺', SCHENGEN: '🇪🇺', GB: '🇬🇧' }[code],
-    name: t(countryNameKeys[code]),
-    sub: t(countrySubKeys[code]),
-    image: failedImages.value.has(code) ? null : HERO_COUNTRY_IMAGES[code],
-    // W28 Atlys-style meta (filled from destinations API via applyMeta later)
-    fee_usd: null,
-    valid_days: null,
-    process_days: null,
-    eta_iso: null,
-    visa_type_label: t('home.card.type_evisa'),
-    valid_label: '',
-    eta_label: '',
-  }))
+  ['US', 'AU', 'SCHENGEN', 'GB'].map(code => {
+    const m = destMetaByCode.value[code] || {}
+    const validDays = m.valid_days ?? null
+    return {
+      code,
+      flag: { US: '🇺🇸', AU: '🇦🇺', SCHENGEN: '🇪🇺', GB: '🇬🇧' }[code],
+      name: t(countryNameKeys[code]),
+      sub: t(countrySubKeys[code]),
+      image: failedImages.value.has(code) ? null : HERO_COUNTRY_IMAGES[code],
+      fee_usd: m.fee_usd ?? null,
+      valid_days: validDays,
+      process_days: m.process_days ?? null,
+      eta_iso: m.eta_iso ?? null,
+      visa_type_label: resolveVisaTypeLabel(code),
+      valid_label: buildHomeValidLabel(code, validDays),
+      eta_label: formatEtaLabel(m.eta_iso),
+    }
+  })
 )
 
 // 把 destinations API 返回的价格/有效期/ETA 注入 heroCountries
 // 注意: heroCountries 是静态 4 国(US/AU/SCHENGEN/GB),SCHENGEN 在 API 里没有 row,
-// 用 AT/FR/DE 等价 fallback.
+// 用 FR/DE 等价 fallback;生产库英国可能为 UK 而非 GB.
 async function applyDestinationsMeta() {
   try {
     const rows = await listDestinations()
     const byCode = Object.fromEntries(rows.map(r => [r.country_code, r]))
-    // SCHENGEN 用 FR 的 ETA (代表整个申根的处理时间)
     const schengenProxy = byCode['FR'] || byCode['DE'] || byCode['IT']
+    const gbRow = byCode['GB'] || byCode['UK']
     const metaByCode = {
-      US:       byCode['US'],
-      AU:       byCode['AU'],
-      GB:       byCode['GB'],
+      US: byCode['US'],
+      AU: byCode['AU'],
+      GB: gbRow,
       SCHENGEN: schengenProxy,
     }
-    for (let i = 0; i < heroCountries.value.length; i++) {
-      const c = heroCountries.value[i]
-      const m = metaByCode[c.code]
-      if (!m) continue
-      c.fee_usd     = m.visa_fee_usd != null ? Math.round(m.visa_fee_usd / 100) : null
-      c.valid_days  = m.valid_days
-      c.process_days = m.process_days
-      c.eta_iso     = m.eta_iso
-      // visa type label: 按 country_code 硬编码实际签发方式
-      // (不能用 tourism/work/student 关键词判断 —— 那只是签证用途,不是签发方式)
-      // 2026-02-25 起英国访问类签证已全面电子化,GB 也算 E-VISA
-      const STICKER_VISA_COUNTRIES = new Set(['US', 'SCHENGEN', 'FR', 'DE', 'IT', 'ES', 'NL', 'AT', 'BE', 'GR', 'PT', 'CZ', 'DK', 'FI', 'HU', 'IS', 'LU', 'NO', 'PL', 'SE', 'CH'])
-      if (STICKER_VISA_COUNTRIES.has(c.code)) {
-        c.visa_type_label = t('home.card.type_sticker')
-      } else {
-        c.visa_type_label = t('home.card.type_evisa')
-      }
-      // valid label
-      if (m.valid_days) {
-        if (m.valid_days % 365 === 0) {
-          const y = m.valid_days / 365
-          c.valid_label = y === 1 ? '1 YEAR' : `${y} YEARS`
-        } else if (m.valid_days % 30 === 0) {
-          const mo = m.valid_days / 30
-          c.valid_label = mo === 1 ? '1 MONTH' : `${mo} MONTHS`
-        } else {
-          c.valid_label = `${m.valid_days} DAYS`
-        }
-      }
-      // ETA label - "DD MMM, HH:MM"
-      if (m.eta_iso) {
-        try {
-          const d = new Date(m.eta_iso)
-          const dd = String(d.getUTCDate()).padStart(2, '0')
-          const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-          const mm = months[d.getUTCMonth()]
-          const hh = String(d.getUTCHours()).padStart(2, '0')
-          const mi = String(d.getUTCMinutes()).padStart(2, '0')
-          c.eta_label = `${dd} ${mm} ${d.getUTCFullYear()}, ${hh}:${mi}`
-        } catch (_) { c.eta_label = '' }
+    const next = {}
+    for (const code of ['US', 'AU', 'SCHENGEN', 'GB']) {
+      const m = metaByCode[code]
+      const fb = HERO_META_FALLBACK[code] || {}
+      if (!m && !fb.visa_fee_usd) continue
+      const feeCents = m?.visa_fee_usd ?? fb.visa_fee_usd ?? null
+      next[code] = {
+        fee_usd: feeCents != null ? Math.round(feeCents / 100) : null,
+        valid_days: m?.valid_days ?? fb.valid_days ?? null,
+        process_days: m?.process_days ?? fb.process_days ?? null,
+        eta_iso: m?.eta_iso ?? null,
       }
     }
+    destMetaByCode.value = next
   } catch (e) {
-    // 静默失败,卡仍可点;只是没有价格/ETA
     console.warn('[home] destinations meta load failed:', e?.message)
   }
 }
+
 onMounted(() => {
   startTimer()
   applyDestinationsMeta()
@@ -522,12 +553,15 @@ function onCountry(countryCode) {
   color: #fff;
   border-radius: 20px;
   margin-bottom: 56px;
-  // 中性暖灰阴影(避免在浅背景下渲染出"蓝边"错觉)
-  box-shadow: 0 12px 32px rgba(50, 50, 70, .18);
+  // 纯黑阴影 + 细灰描边,避免 rgba 里偏蓝通道在白底上形成"蓝边"
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, .06),
+    0 12px 32px rgba(0, 0, 0, .14);
   overflow: hidden;
   isolation: isolate;
-  // 加载图前的深色底色(防止白屏闪 & 避免跟 box-shadow 形成蓝边)
-  background: #0f172a;
+  // 中性近黑底(非 navy),视频未就绪时也不会显蓝框
+  background: #111827;
+  border: 0;
 }
 .hero__slides {
   position: absolute;
@@ -566,12 +600,12 @@ function onCountry(countryCode) {
     linear-gradient(180deg, rgba(0,0,0,0) 55%, rgba(15,23,42,.22) 100%);
 }
 
-// 视频+jpg 都失败时的兜底底色,避免留白
+// 视频+jpg 都失败时的兜底底色 — 中性深灰,不用蓝紫渐变(会显成蓝框)
 .hero__slide-fallback {
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: linear-gradient(135deg, #1e3a8a 0%, #312e81 100%);
+  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
 }
 
 .hero__copy {
@@ -678,16 +712,19 @@ function onCountry(countryCode) {
   align-items: baseline;
   gap: 3px;
 }
+.country-card__from-prefix,
 .country-card__price-from {
   font-size: 10px;
   letter-spacing: .8px;
-  opacity: .75;
+  opacity: .85;
   font-weight: 600;
+  color: rgba(255, 255, 255, .9);
+  margin-right: 2px;
 }
 .country-card__price-num {
   font-size: 16px;
   font-weight: 700;
-  color: #1f2937;
+  color: #fff;
 }
 
 @keyframes captionIn {
@@ -810,7 +847,7 @@ function onCountry(countryCode) {
   align-items: center;
   justify-content: center;
   font-size: 100px;
-  background: linear-gradient(135deg, #3B6EF5 0%, #6E59F0 100%);
+  background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
 }
 .country-card__media-overlay {
   position: absolute;

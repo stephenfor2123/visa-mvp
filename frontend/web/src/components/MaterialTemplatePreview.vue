@@ -11,21 +11,34 @@
 <template>
   <div class="mtp" :data-testid="`mtp-${categoryKey}`">
     <!-- 标题栏（可点击折叠） -->
-    <button
-      type="button"
-      class="mtp-header"
-      :aria-expanded="expanded"
-      :aria-controls="`mtp-body-${categoryKey}`"
-      :data-testid="`mtp-toggle-${categoryKey}`"
-      @click="toggle"
-    >
-      <span class="mtp-header__icon" aria-hidden="true">📄</span>
-      <span class="mtp-header__title">
-        <span class="mtp-header__primary">{{ t('mtp.preview_title') }}</span>
-        <span class="mtp-header__secondary">{{ categoryTitle }}</span>
-      </span>
-      <span class="mtp-header__chevron" :class="{ 'is-open': expanded }" aria-hidden="true">▾</span>
-    </button>
+    <div class="mtp-toolbar">
+      <button
+        type="button"
+        class="mtp-header"
+        :aria-expanded="expanded"
+        :aria-controls="`mtp-body-${categoryKey}`"
+        :data-testid="`mtp-toggle-${categoryKey}`"
+        @click="toggle"
+      >
+        <span class="mtp-header__icon" aria-hidden="true">📄</span>
+        <span class="mtp-header__title">
+          <span class="mtp-header__primary">{{ t('mtp.preview_title') }}</span>
+          <span class="mtp-header__secondary">{{ categoryTitle }}</span>
+        </span>
+        <span class="mtp-header__chevron" :class="{ 'is-open': expanded }" aria-hidden="true">▾</span>
+      </button>
+      <button
+        v-if="props.categoryKey === 'work'"
+        type="button"
+        class="mtp-export"
+        :disabled="props.exporting"
+        data-testid="mtp-export-employment-word"
+        @click="$emit('export-word')"
+      >
+        <span aria-hidden="true">🔒</span>
+        {{ props.exporting ? t('mtp.exporting_word') : t('mtp.export_word') }}
+      </button>
+    </div>
 
     <!-- 折叠体 -->
     <div v-show="expanded" :id="`mtp-body-${categoryKey}`" class="mtp-body">
@@ -320,7 +333,13 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  exporting: {
+    type: Boolean,
+    default: false,
+  },
 })
+
+defineEmits(['export-word'])
 
 const { t, locale } = useI18n()
 const expanded = ref(props.defaultExpanded)
@@ -719,6 +738,11 @@ function renderPlaceholder(text) {
   font-size: 10px; color: #94a3b8; line-height: 1.6; white-space: pre-line;
 }
 
+.mtp-toolbar {
+  display: flex;
+  align-items: stretch;
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+}
 .mtp-header {
   width: 100%;
   display: flex;
@@ -731,7 +755,23 @@ function renderPlaceholder(text) {
   text-align: left;
   transition: background 0.18s ease;
 }
-.mtp-header:hover { background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%); }
+.mtp-header:hover { background: rgba(255, 255, 255, .22); }
+.mtp-export {
+  flex: 0 0 auto;
+  align-self: center;
+  margin: 8px 12px 8px 0;
+  padding: 8px 14px;
+  border: 1px solid #2563eb;
+  border-radius: 8px;
+  color: #1d4ed8;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.mtp-export:hover { color: #fff; background: #2563eb; }
+.mtp-export:disabled { opacity: .6; cursor: wait; }
 .mtp-header__icon { font-size: 18px; flex-shrink: 0; }
 .mtp-header__title { flex: 1; display: flex; flex-direction: column; gap: 2px; }
 .mtp-header__primary {
@@ -752,6 +792,8 @@ function renderPlaceholder(text) {
 }
 @media (max-width: 768px) {
   .mtp-lang-grid { grid-template-columns: 1fr; }
+  .mtp-toolbar { align-items: stretch; flex-direction: column; }
+  .mtp-export { align-self: flex-end; margin: 0 12px 10px; }
 }
 
 .mtp-lang-col {

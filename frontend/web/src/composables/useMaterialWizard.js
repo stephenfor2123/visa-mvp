@@ -1,9 +1,9 @@
 // useMaterialWizard — 分大类、强校验的材料收集向导
 //
-// 6 大类，按顺序解锁：身份证件 → 财力证明 → 在职/工作证明 → 行程住宿 → 旅行保险 → 信息表单。
+// 5 大类：身份证件 → 在职/工作证明 → 财力证明 → 行程住宿 → 信息表单。
 // 大类内的子项可以自由顺序上传；大类内所有必填子项收集完后调用后端
 // /materials/diagnose 做跨材料校验（护照有效期、材料完整性等），有 error/critical
-// 级别问题时阻断，不允许进入下一大类。旅行保险大类允许"稍后上传"跳过。
+// 级别问题时阻断，不允许进入下一大类。
 import { computed, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
@@ -252,19 +252,19 @@ export const CATEGORIES = [
     ],
   },
   {
-    key: 'financial',
-    labelKey: 'apply.cat_financial',
-    icon: 'financial',
-    items: [
-      { key: 'bank_statement', labelKey: 'materials.type_bank', materialType: 'bank', ocr: true, hintKey: 'wizard.item_bank_hint' },
-    ],
-  },
-  {
     key: 'work',
     labelKey: 'apply.cat_work',
     icon: 'work',
     items: [
       { key: 'employment', labelKey: 'wizard.item_employment_label', materialType: 'employment', ocr: false, hintKey: 'wizard.item_employment_hint' },
+    ],
+  },
+  {
+    key: 'financial',
+    labelKey: 'apply.cat_financial',
+    icon: 'financial',
+    items: [
+      { key: 'bank_statement', labelKey: 'materials.type_bank', materialType: 'bank', ocr: true, hintKey: 'wizard.item_bank_hint' },
     ],
   },
   {

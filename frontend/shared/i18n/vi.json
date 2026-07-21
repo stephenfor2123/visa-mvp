@@ -1596,7 +1596,14 @@
       "type_sticker": "STICKER",
       "type_visa": "VISA",
       "apply_through": "Nộp qua quốc gia này",
-      "visa_fee_from": "từ"
+      "visa_fee_from": "từ",
+      "valid_year_one": "1 năm",
+      "valid_years": "{n} năm",
+      "valid_month_one": "1 tháng",
+      "valid_months": "{n} tháng",
+      "valid_days": "{n} ngày",
+      "valid_schengen_stay": "Lưu trú tối đa 90 ngày",
+      "valid_gb_stay": "6 tháng/lần nhập cảnh"
     },
     "features": {
       "eyebrow": "Vì sao chọn Htex",
@@ -2324,7 +2331,13 @@
     "cat_work": "Mẫu Giấy Xác Nhận Công Việc",
     "country_notes_title": "Yêu Cầu Riêng Của Quốc Gia Đến",
     "warning_disclaimer": "Các mẫu này chỉ mang tính tham khảo. Vui lòng tuân theo yêu cầu mới nhất của lãnh sự / đại sứ quán. Trước khi phát hành, hãy tham khảo ngân hàng / bộ phận HR / cơ quan dịch thuật được chứng nhận.",
-    "month_label": "Tháng {n}"
+    "month_label": "Tháng {n}",
+    "export_word": "Xuất Word (trả phí)",
+    "exporting_word": "Đang tạo Word…",
+    "export_word_success": "Đã xuất giấy xác nhận công việc",
+    "export_word_error": "Hiện không thể xuất. Vui lòng thử lại.",
+    "export_word_destination_error": "Không tìm thấy điểm đến để tạo đơn thanh toán.",
+    "export_word_order_error": "Không thể tạo đơn thanh toán. Vui lòng thử lại."
   },
   "pricing_page": {
     "title": "Bảng giá minh bạch",

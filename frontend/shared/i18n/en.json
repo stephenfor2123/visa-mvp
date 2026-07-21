@@ -1992,7 +1992,14 @@
       "type_sticker": "STICKER",
       "type_visa": "VISA",
       "apply_through": "Apply through this country",
-      "visa_fee_from": "from"
+      "visa_fee_from": "from",
+      "valid_year_one": "1 year",
+      "valid_years": "{n} years",
+      "valid_month_one": "1 month",
+      "valid_months": "{n} months",
+      "valid_days": "{n} days",
+      "valid_schengen_stay": "90-day max stay",
+      "valid_gb_stay": "6 mo per visit"
     },
     "features": {
       "eyebrow": "Why Htex",
@@ -2774,7 +2781,13 @@
     "cat_work": "Employment Letter Samples",
     "country_notes_title": "Destination-Specific Requirements",
     "warning_disclaimer": "These samples are for reference only. Please follow the latest consulate/embassy requirements. Before issuing, consult your bank / HR / certified translation agency.",
-    "month_label": "Month {n}"
+    "month_label": "Month {n}",
+    "export_word": "Export Word (paid)",
+    "exporting_word": "Generating Word…",
+    "export_word_success": "Employment certificate exported",
+    "export_word_error": "Unable to export right now. Please try again.",
+    "export_word_destination_error": "Destination not found. A payment order could not be created.",
+    "export_word_order_error": "Could not create the payment order. Please try again."
   },
   "pricing_page": {
     "title": "Transparent pricing",

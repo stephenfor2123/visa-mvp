@@ -183,6 +183,19 @@ async function goNext() {
     console.warn('[payment] sync applicant_data failed', e)
   }
   const q = { orderId: orderNo.value }
+  if (nextRoute.value === 'employment-export') {
+    const { countryCode, visaType } = route.query
+    router.push({
+      name: 'MaterialWizard',
+      query: {
+        country: countryCode,
+        visa_type: visaType || 'tourism',
+        intent: 'export_employment',
+        orderNo: orderNo.value,
+      },
+    }).catch(() => router.push({ name: 'PaymentResult', query: q }))
+    return
+  }
   if (!FEATURE_RPA || nextRoute.value === 'detail') {
     const dest = postPaymentRoute(orderNo.value)
     router.push(dest).catch(() => router.push({ name: 'PaymentResult', query: q }))

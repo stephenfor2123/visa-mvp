@@ -716,7 +716,12 @@ onBeforeUnmount(() => {
 .uic__btn {
   flex: 1; padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 600;
   cursor: pointer; border: 0; transition: all .15s ease;
-  &--primary { background: linear-gradient(135deg, #3B6EF5 0%, #6E59F0 100%); color: #fff; }
+  &--primary {
+    background: #2563EB;
+    color: #fff;
+    border: 1px solid #2563EB;
+    &:hover { background: #1D4ED8; border-color: #1D4ED8; }
+  }
   &--primary:hover { box-shadow: 0 6px 16px rgba(59,110,245,.3); }
   &--ghost { background: #f1f5f9; color: #475569; }
   &--ghost:hover { background: #e2e8f0; }
@@ -727,7 +732,7 @@ onBeforeUnmount(() => {
 .uic__camera-actions { display: flex; gap: 10px; }
 
 .uic__progress-bar { height: 6px; background: #e2e8f0; border-radius: 999px; overflow: hidden; }
-.uic__progress-fill { height: 100%; background: linear-gradient(90deg, #3B6EF5, #6E59F0); transition: width .15s ease; }
+.uic__progress-fill { height: 100%; background: #2563EB; transition: width .15s ease; }
 .uic__progress-text { font-size: 12px; color: #64748b; margin-top: 6px; }
 
 .uic__done { display: flex; flex-direction: column; gap: 8px; }

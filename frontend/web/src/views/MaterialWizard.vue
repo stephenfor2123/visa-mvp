@@ -1064,6 +1064,8 @@
             v-if="['financial', 'work'].includes(wizard.activeCategoryDef.value.key)"
             :category-key="wizard.activeCategoryDef.value.key"
             :country-code="countryCode"
+            :exporting="exportingEmploymentWord"
+            @export-word="onExportEmploymentWord"
           />
         </template>
 
@@ -1118,7 +1120,8 @@ import MaterialTemplatePreview from '@/components/MaterialTemplatePreview.vue'
 import ItineraryPreviewTable from '@/components/ItineraryPreviewTable.vue'
 import { useMaterialWizard } from '@/composables/useMaterialWizard'
 import { listDestinations } from '@/api/destinations'
-import { extractApplicantDraft, createOrder } from '@/api/orders'
+import { extractApplicantDraft, createOrder, listOrders } from '@/api/orders'
+import { queryPaymentStatus } from '@/api/payment'
 import { savePrecheckSnapshot, clearAllLocalVisaData } from '@/utils/localPrivacyStorage'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
@@ -1150,6 +1153,7 @@ const isAuForm = computed(() => normalizedCountry.value === 'AU')
 
 const wizard = useMaterialWizard(countryCode, visaType)
 const clearLocalOpen = ref(false)
+const exportingEmploymentWord = ref(false)
 
 function onClearLocalData() {
   clearAllLocalVisaData()
@@ -1939,6 +1943,127 @@ const formTabMissing = computed(() => {
   return m
 })
 
+const PAID_ORDER_STATUSES = new Set(['paid', 'completed'])
+
+function isPaidOrder(order) {
+  return !!order?.paid_at || PAID_ORDER_STATUSES.has(String(order?.status || '').toLowerCase())
+}
+
+function matchesCurrentApplication(order) {
+  return normalizeDestinationCode(order?.country_code || '') === normalizedCountry.value
+    && String(order?.visa_type || '') === visaType
+}
+
+async function loadCurrentUserOrders() {
+  const result = await listOrders({ page: 1, pageSize: 100 })
+  return Array.isArray(result?.items) ? result.items : []
+}
+
+async function destinationIdForExport() {
+  if (form.destination_id) return Number(form.destination_id)
+  const rows = destinations.value.length
+    ? destinations.value
+    : await listDestinations({ lang: locale.value })
+  destinations.value = rows
+  const row = rows.find((item) => (
+    normalizeDestinationCode(item.country_code) === normalizedCountry.value
+  ))
+  return Number(row?.id || 0)
+}
+
+async function downloadEmploymentWord() {
+  const { exportEmploymentWord } = await import('@/utils/exportEmploymentWord')
+  await exportEmploymentWord(locale.value)
+  toast.success(t('mtp.export_word_success'))
+}
+
+async function clearEmploymentExportIntent() {
+  if (route.query.intent !== 'export_employment') return
+  const cleanQuery = { ...route.query }
+  delete cleanQuery.intent
+  delete cleanQuery.orderNo
+  await router.replace({ name: 'MaterialWizard', query: cleanQuery })
+}
+
+async function onExportEmploymentWord() {
+  if (exportingEmploymentWord.value) return
+  auth.hydrate()
+
+  if (!auth.isLoggedIn) {
+    const redirect = router.resolve({
+      name: 'MaterialWizard',
+      query: {
+        ...route.query,
+        country: countryCode,
+        visa_type: visaType,
+        intent: 'export_employment',
+      },
+    }).fullPath
+    return router.push({
+      name: 'Login',
+      query: { redirect, intent: 'export_employment', hint: 'login_needed' },
+    })
+  }
+
+  exportingEmploymentWord.value = true
+  try {
+    // 支付页回跳时以服务端支付状态为准。该接口校验订单归属，不能借用他人订单解锁。
+    const returnedOrderNo = String(route.query.orderNo || '')
+    if (returnedOrderNo) {
+      try {
+        const payment = await queryPaymentStatus(returnedOrderNo)
+        const status = String(payment?.data?.status || '').toLowerCase()
+        if (status === 'paid' || status === 'success') {
+          await downloadEmploymentWord()
+          await clearEmploymentExportIntent()
+          return
+        }
+      } catch {
+        // 过期/未创建支付记录时继续走订单列表和正常支付流程。
+      }
+    }
+
+    const orders = await loadCurrentUserOrders()
+    const matching = orders.filter(matchesCurrentApplication)
+    const paidOrder = matching.find(isPaidOrder)
+    if (paidOrder) {
+      await downloadEmploymentWord()
+      await clearEmploymentExportIntent()
+      return
+    }
+
+    const destinationId = await destinationIdForExport()
+    if (!destinationId) throw new Error(t('mtp.export_word_destination_error'))
+
+    const reusableOrder = matching.find((order) => (
+      ['created', 'pending'].includes(String(order?.status || '').toLowerCase())
+    ))
+    const order = reusableOrder || await createOrder({
+      destination_id: destinationId,
+      visa_type: visaType,
+      material_ids: [],
+      applicant_data: {},
+    })
+    const orderNo = order?.order_no
+    if (!orderNo) throw new Error(t('mtp.export_word_order_error'))
+
+    await router.push({
+      name: 'PaymentCheckout',
+      params: { orderNo },
+      query: {
+        from: 'template',
+        next: 'employment-export',
+        countryCode,
+        visaType,
+      },
+    })
+  } catch (error) {
+    toast.error(error?.message || t('mtp.export_word_error'))
+  } finally {
+    exportingEmploymentWord.value = false
+  }
+}
+
 // ---- 校验 ----
 function clearFormErrors() {
   Object.keys(errors).forEach((k) => { errors[k] = '' })
@@ -2111,6 +2236,10 @@ onMounted(() => {
     router.replace({ path: route.path, query: {} })
     // 等 form 状态稳定再提交
     setTimeout(() => onSubmitForm(), 200)
+  } else if (auth.isLoggedIn && route.query?.intent === 'export_employment') {
+    wizard.state.activeCategory = 'work'
+    // 支付回跳后重新读取订单状态；确认 paid/completed 才生成 Word。
+    setTimeout(() => onExportEmploymentWord(), 200)
   }
 })
 
@@ -2232,11 +2361,17 @@ const CategoryIcon = {
   padding: 12px 14px; border-radius: 12px;
   border: 1px solid #E2E8F0; background: #fff;
   cursor: pointer; transition: all .15s ease; position: relative;
+  &:hover {
+    border-color: #CBD5E1;
+    background: #F8FAFC;
+  }
+  // 选中态跟同页「护照」sub-tab 一致:深色描边,不用蓝色边框
   &.is-active {
-    border-color: #2563EB;
-    background: #EFF6FF;
-    .mw-step__icon { background: #2563EB; color: #fff; }
-    .mw-step__label { color: #2563EB; }
+    border-color: #0F172A;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, .08);
+    .mw-step__icon { background: #0F172A; color: #fff; }
+    .mw-step__label { color: #0F172A; }
   }
   &.is-done .mw-step__icon { background: #0F172A; color: #fff; }
 }

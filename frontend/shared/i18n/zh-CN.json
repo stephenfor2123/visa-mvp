@@ -1994,7 +1994,14 @@
       "type_sticker": "贴纸签",
       "type_visa": "签证",
       "apply_through": "通过此国申请",
-      "visa_fee_from": "起"
+      "visa_fee_from": "起",
+      "valid_year_one": "1 年",
+      "valid_years": "{n} 年",
+      "valid_month_one": "1 个月",
+      "valid_months": "{n} 个月",
+      "valid_days": "{n} 天",
+      "valid_schengen_stay": "最长停留 90 天",
+      "valid_gb_stay": "每次最长 6 个月"
     },
     "features": {
       "eyebrow": "为什么选 Htex",
@@ -2797,7 +2804,13 @@
     "cat_work": "工作证明参考样本",
     "country_notes_title": "目的国特殊要求",
     "warning_disclaimer": "本页样本仅供参考，实际办理请以使领馆最新要求为准；建议在开具前咨询银行 / 公司 HR / 翻译机构。",
-    "month_label": "第 {n} 个月"
+    "month_label": "第 {n} 个月",
+    "export_word": "导出 Word（付费解锁）",
+    "exporting_word": "正在生成 Word…",
+    "export_word_success": "在职证明 Word 已导出",
+    "export_word_error": "暂时无法导出，请稍后重试",
+    "export_word_destination_error": "未找到当前目的地，无法创建支付订单",
+    "export_word_order_error": "支付订单创建失败，请稍后重试"
   },
   "pricing_page": {
     "title": "产品价格透明",

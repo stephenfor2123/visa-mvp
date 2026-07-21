@@ -1596,7 +1596,14 @@
       "type_sticker": "STIKER",
       "type_visa": "VISA",
       "apply_through": "Ajukan melalui negara ini",
-      "visa_fee_from": "mulai"
+      "visa_fee_from": "mulai",
+      "valid_year_one": "1 tahun",
+      "valid_years": "{n} tahun",
+      "valid_month_one": "1 bulan",
+      "valid_months": "{n} bulan",
+      "valid_days": "{n} hari",
+      "valid_schengen_stay": "Maks. tinggal 90 hari",
+      "valid_gb_stay": "6 bln per kunjungan"
     },
     "features": {
       "eyebrow": "Kenapa Htex",
@@ -2326,7 +2333,13 @@
     "cat_work": "Contoh Surat Keterangan Kerja",
     "country_notes_title": "Persyaratan Khusus Negara Tujuan",
     "warning_disclaimer": "Contoh-contoh ini hanya untuk referensi. Mohon ikuti persyaratan konsulat/kedutaan terbaru. Sebelum diterbitkan, konsultasikan dengan bank / HR / lembaga terjemahan bersertifikat.",
-    "month_label": "Bulan {n}"
+    "month_label": "Bulan {n}",
+    "export_word": "Ekspor Word (berbayar)",
+    "exporting_word": "Membuat Word…",
+    "export_word_success": "Surat keterangan kerja berhasil diekspor",
+    "export_word_error": "Tidak dapat mengekspor sekarang. Silakan coba lagi.",
+    "export_word_destination_error": "Negara tujuan tidak ditemukan untuk membuat pesanan pembayaran.",
+    "export_word_order_error": "Pesanan pembayaran gagal dibuat. Silakan coba lagi."
   },
   "pricing_page": {
     "title": "Harga transparan",
