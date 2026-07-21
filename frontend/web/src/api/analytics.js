@@ -66,17 +66,28 @@ export function getEntrySource() {
  */
 export async function track(event, props = {}) {
   if (!event) return null
-  const body = {
-    event,
-    session_id: getSessionId(),
-    country_code: props.country_code || props.countryCode || undefined,
-    order_no: props.order_no || props.orderNo || undefined,
-    path: props.path || (typeof window !== 'undefined' ? window.location?.pathname : undefined),
-    props: {
-      entry_source: getEntrySource(),
-      ...props,
-    },
-  }
+  // Allow callers that already assembled the API body (utils/analytics).
+  const body = typeof event === 'object' && event?.event
+    ? {
+        ...event,
+        session_id: event.session_id || getSessionId(),
+        path: event.path || (typeof window !== 'undefined' ? window.location?.pathname : undefined),
+        props: {
+          entry_source: getEntrySource(),
+          ...(event.props || {}),
+        },
+      }
+    : {
+        event,
+        session_id: getSessionId(),
+        country_code: props.country_code || props.countryCode || undefined,
+        order_no: props.order_no || props.orderNo || undefined,
+        path: props.path || (typeof window !== 'undefined' ? window.location?.pathname : undefined),
+        props: {
+          entry_source: getEntrySource(),
+          ...props,
+        },
+      }
   try {
     const resp = await http.post('/v2/analytics/track', body, { __silent: true })
     if (resp?.code && resp.code !== '1000') return null
@@ -85,5 +96,8 @@ export async function track(event, props = {}) {
     return null
   }
 }
+
+/** Alias used by `@/utils/analytics`. */
+export const trackEvent = track
 
 export default track

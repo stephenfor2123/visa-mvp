@@ -2,7 +2,10 @@ import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 
-const baseURL = import.meta.env.VITE_API_BASE || '/api'
+// Empty Vercel envs used to bake "" into the production bundle, which then
+// fell through to the SPA `/api` path and caused checklist/analytics 405s.
+const configuredBase = String(import.meta.env.VITE_API_BASE || '').trim()
+const baseURL = configuredBase || (import.meta.env.PROD ? 'https://api.htexvisa.com/api' : '/api')
 
 const http = axios.create({
   baseURL,

@@ -16,7 +16,8 @@
 
 import axios from 'axios'
 
-const baseURL = import.meta.env.VITE_API_BASE || '/api'
+const configuredBase = String(import.meta.env.VITE_API_BASE || '').trim()
+const baseURL = configuredBase || (import.meta.env.PROD ? 'https://api.htexvisa.com/api' : '/api')
 const MOCK_MODE = import.meta.env.VITE_MOCK !== 'false'
 const ADMIN_TOKEN_KEY = 'admin_token'
 const ADMIN_PROFILE_KEY = 'admin_profile'
