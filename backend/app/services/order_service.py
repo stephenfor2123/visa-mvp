@@ -137,9 +137,12 @@ class OrderService:
                 normalised_aff_code = stripped.upper()
 
         # Platform service fee snapshot at order creation (not consular/visa_fee_usd).
-        pricing = await PricingService(self.db).get_current()
+        pricing = await PricingService(self.db).get_current(
+            country_code=dest.country_code,
+            visa_type=visa_type,
+        )
         order_total_usd = Decimal(str(pricing["display_price_usd"]))
-        order_currency = "USD"
+        order_currency = str(pricing.get("currency") or "USD")
 
         # A-01: unpaid (created) orders must NOT persist applicant PII.
         # Client may still send applicant_data for local UX; it is discarded here.

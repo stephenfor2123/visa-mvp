@@ -335,6 +335,107 @@ class AdminDashboardService:
             "generated_at": now,
         }
 
+    async def get_analytics(self, range_key: str = "7d", limit: int = 50) -> dict[str, Any]:
+        """Product telemetry overview for the dedicated admin analytics page."""
+        from app.models.analytics_event import AnalyticsEvent
+
+        days = _RANGE_DAYS.get(range_key, 7)
+        now = datetime.utcnow()
+        start = now - timedelta(days=days)
+        where = AnalyticsEvent.created_at >= start
+
+        total = await self._qcount(
+            select(func.count()).select_from(AnalyticsEvent).where(where)
+        )
+        unique_sessions = (
+            await self.db.scalar(
+                select(func.count(func.distinct(AnalyticsEvent.session_id))).where(
+                    where, AnalyticsEvent.session_id.isnot(None)
+                )
+            )
+        ) or 0
+        identified_users = (
+            await self.db.scalar(
+                select(func.count(func.distinct(AnalyticsEvent.user_id))).where(
+                    where, AnalyticsEvent.user_id.isnot(None)
+                )
+            )
+        ) or 0
+
+        event_rows = (
+            await self.db.execute(
+                select(AnalyticsEvent.event_name, func.count().label("count"))
+                .where(where)
+                .group_by(AnalyticsEvent.event_name)
+                .order_by(func.count().desc(), AnalyticsEvent.event_name)
+            )
+        ).all()
+        events = [
+            {
+                "event_name": name,
+                "count": count,
+                "share_pct": round(count / total * 100, 2) if total else 0.0,
+            }
+            for name, count in event_rows
+        ]
+
+        daily_rows = (
+            await self.db.execute(
+                select(
+                    func.date(AnalyticsEvent.created_at).label("day"),
+                    func.count().label("count"),
+                    func.count(func.distinct(AnalyticsEvent.session_id)).label("sessions"),
+                )
+                .where(where)
+                .group_by(func.date(AnalyticsEvent.created_at))
+                .order_by(func.date(AnalyticsEvent.created_at))
+            )
+        ).all()
+        daily_by_date = {
+            str(day): {"count": count, "unique_sessions": sessions or 0}
+            for day, count, sessions in daily_rows
+        }
+        daily = []
+        for offset in range(days - 1, -1, -1):
+            day = (now - timedelta(days=offset)).date().isoformat()
+            item = daily_by_date.get(day, {"count": 0, "unique_sessions": 0})
+            daily.append({"date": day, **item})
+
+        recent_rows = (
+            await self.db.execute(
+                select(AnalyticsEvent)
+                .where(where)
+                .order_by(AnalyticsEvent.created_at.desc(), AnalyticsEvent.id.desc())
+                .limit(limit)
+            )
+        ).scalars().all()
+        recent = [
+            {
+                "id": row.id,
+                "event_name": row.event_name,
+                "source": row.source,
+                "path": row.path,
+                "country_code": row.country_code,
+                "order_no": row.order_no,
+                # Only expose a short suffix; the full browser session id is not useful here.
+                "session_id": f"…{row.session_id[-8:]}" if row.session_id else None,
+                "created_at": row.created_at,
+            }
+            for row in recent_rows
+        ]
+
+        return {
+            "range": range_key,
+            "total_events": total,
+            "unique_sessions": unique_sessions,
+            "identified_users": identified_users,
+            "event_types": len(events),
+            "events": events,
+            "daily": daily,
+            "recent": recent,
+            "generated_at": now,
+        }
+
     # ------------------------------------------------------------------ #
     # top countries                                                        #
     # ------------------------------------------------------------------ #

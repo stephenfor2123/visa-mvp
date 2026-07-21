@@ -8,6 +8,7 @@ from app.models.destination import VisaDestination  # noqa: F401
 from app.models.email_code import EmailCode  # noqa: F401
 from app.models.material import Material  # noqa: F401
 from app.models.order import Order, OrderMessage, OrderStatusHistory  # noqa: F401
+from app.models.destination_pricing import DestinationPricing  # noqa: F401
 from app.models.platform_pricing import PlatformPricing  # noqa: F401
 from app.models.rag import RagChunk, RagSource  # noqa: F401
 from app.models.user import User  # noqa: F401

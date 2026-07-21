@@ -25,6 +25,12 @@ export const adminRoutes = [
         meta: { title: 'admin.dashboard', adminAuth: true }
       },
       {
+        path: 'analytics',
+        name: 'AdminAnalytics',
+        component: () => import('@/views/admin/AdminAnalytics.vue'),
+        meta: { title: 'admin.analytics.page_title', adminAuth: true, permission: 'dashboard.view' }
+      },
+      {
         path: 'orders',
         name: 'AdminOrders',
         component: () => import('@/views/admin/AdminOrders.vue'),

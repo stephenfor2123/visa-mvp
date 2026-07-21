@@ -80,11 +80,18 @@ from app.schemas.admin import (
     DashboardSummaryOut,
     DashboardTrendOut,
     DashboardFunnelOut,
+    AnalyticsStatsOut,
     DashboardTopCountriesOut,
     DashboardAlertsOut,
 )
 from app.schemas.common import ApiResponse
-from app.schemas.pricing import PlatformPricingAdminOut, UpdatePlatformPricingRequest
+from app.schemas.pricing import (
+    DestinationPricingListOut,
+    DestinationPricingOut,
+    PlatformPricingAdminOut,
+    UpdateDestinationPricingRequest,
+    UpdatePlatformPricingRequest,
+)
 from app.services.admin_service import AdminService
 from app.services.admin_dashboard_service import AdminDashboardService
 from app.services.pricing_service import PricingService
@@ -879,6 +886,48 @@ async def update_platform_pricing(
     return ApiResponse[PlatformPricingAdminOut](code="1000", message="OK", data=PlatformPricingAdminOut(**out))
 
 
+@router.get(
+    "/config/destination-pricing",
+    dependencies=[Depends(require_perm_any("pricing.manage", "settings"))],
+    response_model=ApiResponse[DestinationPricingListOut],
+    summary="List per-country / visa_type platform fees (+ global default)",
+)
+async def list_destination_pricing(
+    db: AsyncSession = Depends(get_db),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
+) -> ApiResponse[DestinationPricingListOut]:
+    svc = PricingService(db)
+    out = await svc.list_destination_pricing()
+    return ApiResponse[DestinationPricingListOut](
+        code="1000",
+        message="OK",
+        data=DestinationPricingListOut(
+            global_pricing=PlatformPricingAdminOut(**out["global_pricing"]),
+            items=[DestinationPricingOut(**item) for item in out["items"]],
+        ),
+    )
+
+
+@router.put(
+    "/config/destination-pricing",
+    dependencies=[Depends(require_perm_any("pricing.manage", "settings"))],
+    response_model=ApiResponse[DestinationPricingOut],
+    summary="Upsert platform fee for one country + visa_type",
+)
+async def upsert_destination_pricing(
+    body: UpdateDestinationPricingRequest,
+    db: AsyncSession = Depends(get_db),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
+) -> ApiResponse[DestinationPricingOut]:
+    svc = PricingService(db)
+    out = await svc.upsert_destination_pricing(
+        body.model_dump(), admin_id=admin.admin_id
+    )
+    return ApiResponse[DestinationPricingOut](
+        code="1000", message="OK", data=DestinationPricingOut(**out)
+    )
+
+
 # --------------------------------------------------------------------------- #
 # Audit logs                                                                 #
 # --------------------------------------------------------------------------- #
@@ -980,6 +1029,25 @@ async def get_dashboard_funnel(
     out = await svc.get_funnel(range_key=range)
     return ApiResponse[DashboardFunnelOut](
         code="1000", message="OK", data=DashboardFunnelOut(**out)
+    )
+
+
+@router.get(
+    "/stats/analytics",
+    dependencies=[Depends(require_perm("dashboard.view"))],
+    response_model=ApiResponse[AnalyticsStatsOut],
+    summary="产品埋点统计（事件分布、每日趋势、最近事件）",
+)
+async def get_analytics_stats(
+    range: str = Query("7d", pattern="^(7d|30d|90d)$"),
+    limit: int = Query(50, ge=10, le=200),
+    db: AsyncSession = Depends(get_db),
+    admin: AdminTokenData = Depends(verify_admin_token_with_db),
+) -> ApiResponse[AnalyticsStatsOut]:
+    svc = AdminDashboardService(db)
+    out = await svc.get_analytics(range_key=range, limit=limit)
+    return ApiResponse[AnalyticsStatsOut](
+        code="1000", message="OK", data=AnalyticsStatsOut(**out)
     )
 
 

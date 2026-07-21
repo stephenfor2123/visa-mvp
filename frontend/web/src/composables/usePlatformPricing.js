@@ -2,8 +2,13 @@ import { ref, computed } from 'vue'
 import { getPlatformPricing } from '@/api/pricing'
 
 const cached = ref(null)
+const cacheKey = ref('')
 const loading = ref(false)
 const error = ref('')
+
+function keyOf(params = {}) {
+  return `${params.country_code || ''}|${params.visa_type || ''}`
+}
 
 export function usePlatformPricing() {
   const pricing = computed(() => cached.value || {
@@ -23,12 +28,22 @@ export function usePlatformPricing() {
   const currency = computed(() => pricing.value.currency || 'USD')
   const symbol = computed(() => (currency.value === 'USD' ? '$' : currency.value + ' '))
 
-  async function load(force = false) {
-    if (cached.value && !force) return cached.value
+  /**
+   * @param {boolean|{ force?: boolean, country_code?: string, visa_type?: string }} [opts]
+   */
+  async function load(opts = false) {
+    const options = typeof opts === 'boolean' ? { force: opts } : (opts || {})
+    const params = {
+      country_code: options.country_code,
+      visa_type: options.visa_type,
+    }
+    const k = keyOf(params)
+    if (cached.value && cacheKey.value === k && !options.force) return cached.value
     loading.value = true
     error.value = ''
     try {
-      cached.value = await getPlatformPricing()
+      cached.value = await getPlatformPricing(params)
+      cacheKey.value = k
       return cached.value
     } catch (e) {
       error.value = e?.message || String(e)

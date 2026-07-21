@@ -127,8 +127,26 @@
     <section class="dashboard-row">
       <AppCard class="admin-panel dashboard-col">
         <template #header>
-          <h3>{{ t('admin.dashboard.funnel_title') }}</h3>
-          <span class="admin-panel__meta">{{ t('admin.dashboard.funnel_overall') }}: {{ fmtPct((funnel.overall_conversion_pct || 0) / 100) }}</span>
+          <div class="funnel-head">
+            <div>
+              <h3>{{ t('admin.dashboard.funnel_title') }}</h3>
+              <p>{{ t('admin.dashboard.funnel_help') }}</p>
+            </div>
+            <div class="funnel-head__right">
+              <div class="seg seg--sm">
+                <button
+                  v-for="r in FUNNEL_RANGES"
+                  :key="r.value"
+                  :class="['seg__btn', { 'is-active': funnelRange === r.value }]"
+                  @click="setFunnelRange(r.value)"
+                >{{ r.label }}</button>
+              </div>
+              <span class="admin-panel__meta">
+                {{ t('admin.dashboard.funnel_overall') }}:
+                <b>{{ fmtPct((funnel.overall_conversion_pct || 0) / 100) }}</b>
+              </span>
+            </div>
+          </div>
         </template>
         <FunnelChart :steps="funnel.steps" :loading="funnelLoading" />
       </AppCard>
@@ -312,6 +330,7 @@ const topLoading = ref(false)
 
 const trendMetric = ref('orders')
 const trendRange = ref('7d')
+const funnelRange = ref('7d')
 const topRange = ref('7d')
 
 // 导出配置
@@ -342,6 +361,10 @@ const RANGES = [
 ]
 const TOP_RANGES = [
   { value: '7d',  label: '7d' },
+  { value: '30d', label: '30d' },
+]
+const FUNNEL_RANGES = [
+  { value: '7d', label: '7d' },
   { value: '30d', label: '30d' },
 ]
 
@@ -376,9 +399,13 @@ async function loadTrend() {
 async function loadFunnel() {
   funnelLoading.value = true
   try {
-    const r = await getDashboardFunnel({ range: '7d' })
+    const r = await getDashboardFunnel({ range: funnelRange.value })
     funnel.value = r
   } finally { funnelLoading.value = false }
+}
+async function setFunnelRange(value) {
+  funnelRange.value = value
+  await loadFunnel()
 }
 async function loadTopCountries() {
   topLoading.value = true
@@ -624,12 +651,19 @@ const FunnelChart = {
       const max = Math.max(...steps.map(s => s.count), 1)
 
       return h('ul', { class: 'funnel' }, steps.map((s, i) => {
-        const w = Math.max(2, (s.count / max) * 100)
+        const w = s.count > 0 ? Math.max(3, (s.count / max) * 100) : 0
+        const previous = i > 0 ? steps[i - 1] : null
+        const rateText = i === 0
+          ? t('admin.dashboard.funnel_baseline')
+          : previous?.count > 0
+            ? t('admin.dashboard.funnel_vs_previous', { pct: (s.conversion_pct || 0).toFixed(1) })
+            : t('admin.dashboard.funnel_no_baseline')
         return h('li', { key: s.key, class: 'funnel__step' }, [
           h('div', { class: 'funnel__row' }, [
+            h('span', { class: 'funnel__step-index' }, String(i + 1)),
             h('span', { class: 'funnel__step-label' }, s.label),
-            h('span', { class: 'funnel__step-count' }, fmt(s.count)),
-            h('span', { class: 'funnel__step-pct' }, `${(s.conversion_pct || 0).toFixed(1)}%`),
+            h('span', { class: 'funnel__step-count' }, t('admin.dashboard.funnel_count', { count: fmt(s.count) })),
+            h('span', { class: 'funnel__step-pct' }, rateText),
           ]),
           h('div', { class: 'funnel__bar-wrap' }, [
             h('div', { class: 'funnel__bar', style: { width: w + '%' } }),
@@ -805,25 +839,36 @@ onMounted(reload)
 .dashboard-col { min-width: 0; }
 
 /* 漏斗 */
-.funnel { list-style: none; margin: 8px 0 0; padding: 0; }
-.funnel__step { margin-bottom: 14px; }
+.funnel-head { width: 100%; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.funnel-head h3 { margin: 0; }
+.funnel-head p { margin: 5px 0 0; color: #94a3b8; font-size: 11px; font-weight: 400; }
+.funnel-head__right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+.funnel-head__right b { color: #2563eb; }
+.funnel { list-style: none; margin: 12px 0 0; padding: 0; }
+.funnel__step { margin-bottom: 16px; padding: 10px 12px; background: #f8fafc; border-radius: 9px; }
 .funnel__step:last-child { margin-bottom: 0; }
 .funnel__row {
-  display: flex; align-items: baseline; gap: 10px;
+  display: grid; grid-template-columns: 24px minmax(82px, 1fr) auto minmax(112px, auto);
+  align-items: center; gap: 8px;
   font-size: 13px; margin-bottom: 4px; color: #475569;
 }
-.funnel__step-label { font-weight: 500; color: #0F172A; min-width: 90px; }
-.funnel__step-count { color: #0F172A; font-weight: 600; }
-.funnel__step-pct { color: #94a3b8; font-size: 12px; margin-left: auto; }
+.funnel__step-index {
+  width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center;
+  background: #dbeafe; color: #2563eb; font-size: 11px; font-weight: 700;
+}
+.funnel__step-label { font-weight: 600; color: #0F172A; }
+.funnel__step-count { color: #0F172A; font-weight: 700; white-space: nowrap; }
+.funnel__step-pct { color: #64748b; font-size: 11px; text-align: right; white-space: nowrap; }
 .funnel__bar-wrap {
   background: #f1f5f9;
   border-radius: 4px;
-  height: 8px;
+  height: 7px;
+  margin-left: 32px;
   overflow: hidden;
 }
 .funnel__bar {
   height: 100%;
-  background: linear-gradient(90deg, #3b6ef5, #5b85f5);
+  background: #2563eb;
   border-radius: 4px;
   transition: width .4s;
 }

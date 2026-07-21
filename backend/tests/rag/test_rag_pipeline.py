@@ -539,6 +539,15 @@ class TestRagChecklistEndpoint:
         categories = {m["category"] for m in data["materials"]}
         assert "financial" in categories
 
+    async def test_checklist_normalizes_legacy_uk_code_to_gb(self, client):
+        await _seed_curated_source("GB", "英国 Standard Visitor 签证 (curated FAQ)")
+        r = await client.get("/api/v2/rag/checklist", params={"country_code": "UK"})
+        assert r.status_code == 200, r.text
+        data = r.json()["data"]
+        assert data["country_code"] == "GB"
+        assert len(data["materials"]) > 0
+        assert data["source_name"] == "英国 Standard Visitor 签证 (curated FAQ)"
+
     async def test_checklist_extracts_fee_and_processing_time(self, client):
         await _seed_curated_source("GB", "英国 Standard Visitor 签证 (curated FAQ)")
         r = await client.get("/api/v2/rag/checklist", params={"country_code": "GB"})

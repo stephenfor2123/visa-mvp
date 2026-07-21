@@ -342,10 +342,12 @@ async function prepareCheckout() {
   loading.value = true
   loadError.value = ''
   try {
-    const [configResp, , order] = await Promise.all([
+    const order = await getOrder(orderNo.value)
+    const countryCode = order?.country_code || route.query.countryCode?.toString() || undefined
+    const visaType = order?.visa_type || route.query.visaType?.toString() || undefined
+    const [configResp] = await Promise.all([
       getPaymentConfig(),
-      loadPricing(),
-      getOrder(orderNo.value),
+      loadPricing({ country_code: countryCode, visa_type: visaType, force: true }),
     ])
     channel.value = configResp?.data?.channel || 'mock'
     stripePublishableKey = configResp?.data?.stripe_publishable_key

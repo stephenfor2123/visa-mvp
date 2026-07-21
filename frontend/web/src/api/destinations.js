@@ -63,9 +63,17 @@ function localizeName(d, lang) {
 function patchProductDestinations(list) {
   // 只保留产品线目的地; 印尼/越南/日/加/新/新西兰等一律剔除。
   // enabled 以接口/后台开关为准，不再强制 true。
-  return (list || [])
-    .filter((d) => isProductDestination(d.country_code))
-    .filter((d) => d.enabled !== false)
+  // 历史生产数据仍可能返回 UK；统一成 GB，避免 RAG / 下单按 GB
+  // 存储内容时查不到英国资料。规范化后同时去重。
+  const byCode = new Map()
+  for (const d of (list || [])) {
+    if (!isProductDestination(d.country_code) || d.enabled === false) continue
+    const countryCode = normalizeCountryCode(d.country_code)
+    if (!byCode.has(countryCode)) {
+      byCode.set(countryCode, { ...d, country_code: countryCode })
+    }
+  }
+  return [...byCode.values()]
 }
 
 export async function listDestinations({ lang = 'zh-CN', visaType } = {}) {

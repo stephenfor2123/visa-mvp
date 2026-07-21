@@ -56,6 +56,7 @@ const navItems = computed(() => {
 
   const items = [
     { path: '/admin/dashboard', label: 'admin.menu_overview', perm: 'dashboard.view' },
+    { path: '/admin/analytics', label: 'admin.menu_analytics', perm: 'dashboard.view' },
     { path: '/admin/orders', label: 'admin.menu_orders', perm: 'order.view' },
     { path: '/admin/payments', label: 'admin.menu_payments', perm: 'payment.view' },
   ]

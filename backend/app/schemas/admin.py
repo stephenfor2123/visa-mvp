@@ -783,6 +783,41 @@ class DashboardFunnelOut(BaseModel):
     generated_at: datetime
 
 
+class AnalyticsEventCountOut(BaseModel):
+    event_name: str
+    count: int = Field(..., ge=0)
+    share_pct: float = Field(..., ge=0.0, le=100.0)
+
+
+class AnalyticsDailyPointOut(BaseModel):
+    date: str
+    count: int = Field(..., ge=0)
+    unique_sessions: int = Field(..., ge=0)
+
+
+class AnalyticsRecentEventOut(BaseModel):
+    id: int
+    event_name: str
+    source: str
+    path: Optional[str] = None
+    country_code: Optional[str] = None
+    order_no: Optional[str] = None
+    session_id: Optional[str] = None
+    created_at: datetime
+
+
+class AnalyticsStatsOut(BaseModel):
+    range: str = Field(..., description="7d | 30d | 90d")
+    total_events: int = Field(..., ge=0)
+    unique_sessions: int = Field(..., ge=0)
+    identified_users: int = Field(..., ge=0)
+    event_types: int = Field(..., ge=0)
+    events: list[AnalyticsEventCountOut]
+    daily: list[AnalyticsDailyPointOut]
+    recent: list[AnalyticsRecentEventOut]
+    generated_at: datetime
+
+
 class DashboardTopCountryItem(BaseModel):
     destination_id: int
     country_code: str = Field(..., description="ISO 二字代码; 查不到时回落到 --")

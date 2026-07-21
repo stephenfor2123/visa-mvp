@@ -85,10 +85,19 @@ async def _load_owned_order(
 
 
 async def _expected_payment_cents(db: AsyncSession, order: Order) -> int:
-    """Server-side fee — order.total_amount wins; else platform pricing."""
+    """Server-side fee — order.total_amount wins; else destination/global pricing."""
     if order.total_amount and order.total_amount > 0:
         return int((order.total_amount * 100).quantize(Decimal("1")))
-    pricing = await PricingService(db).get_current()
+    from app.models.destination import VisaDestination
+
+    country_code = None
+    if order.destination_id:
+        dest = await db.get(VisaDestination, order.destination_id)
+        country_code = dest.country_code if dest else None
+    pricing = await PricingService(db).get_current(
+        country_code=country_code,
+        visa_type=order.visa_type,
+    )
     return int(pricing["display_price_cents"])
 
 

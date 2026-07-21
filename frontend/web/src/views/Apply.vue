@@ -244,6 +244,10 @@ const _META_HIGHLIGHT = {
     /\d+\s*(?:个)?\s*(?:工作日|工作天|个工作日|工作周|周|天|日|business\s*days?|working\s*days?|weeks?|days?|hari\s*kerja|hari|ngày\s*làm\s*việc|ngày|tuần)/i,
   ],
   validity: [
+    // English often uses adjectival durations: "10-year multiple-entry visa"
+    // or "2-year, 5-year and 10-year options". Capture the concise duration
+    // as the dark emphasis and leave the policy sentence as muted detail.
+    /(?:\d+\s*[-–]\s*(?:years?|months?|days?))(?:\s*,\s*\d+\s*[-–]\s*(?:years?|months?|days?))*(?:\s+(?:and|or)\s+\d+\s*[-–]\s*(?:years?|months?|days?))?(?:\s+multiple[-\s]entry\s+visa)?/i,
     /\d+\s*(?:个)?\s*(?:月|年|天|日|months?|years?|days?|tháng|năm|bulan|tahun)\s*(?:以上|以内|or\s*more|trở\s*lên)?/i,
   ],
 }
@@ -254,7 +258,10 @@ function metaHighlight(val, type) {
     const m = s.match(re)
     if (m) return m[0].replace(/\s+/g, ' ').trim()
   }
-  return ''
+  // Some official wording has no fixed number ("decided by the department",
+  // "within a few weeks"). Keep the same two-level visual hierarchy in every
+  // locale: a concise dark summary plus the original policy in muted text.
+  return t('apply.meta_official_assessment')
 }
 
 const selectedCountryName = computed(() => {

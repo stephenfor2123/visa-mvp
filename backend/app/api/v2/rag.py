@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_db
 from app.core.logging import get_logger
+from app.core.product_scope import normalize_destination_code
 from app.core.security import get_current_user
 from app.middleware.admin_auth import verify_admin_token, AdminTokenData
 from app.models.rag import RagSource
@@ -743,12 +744,21 @@ async def checklist(
     # Normalize lang → accepted bucket values
     requested_lang = (lang or "zh-CN").strip()
     is_english_lang = requested_lang.startswith("en")
+    raw_code = country_code.strip().upper()
+    lookup_code = normalize_destination_code(raw_code)
 
     # Look up the destination row for country name (pick by lang)
     from app.models.destination import VisaDestination
     import json as _json
+    # Production may still contain the historical UK code while RAG content
+    # is canonicalised under GB. Accept either row for the display name.
+    destination_codes = {raw_code, lookup_code}
+    if lookup_code == "GB":
+        destination_codes.add("UK")
     dest_row = (await db.execute(
-        select(VisaDestination).where(VisaDestination.country_code == country_code.upper()).limit(1)
+        select(VisaDestination)
+        .where(VisaDestination.country_code.in_(destination_codes))
+        .limit(1)
     )).scalar_one_or_none()
     if dest_row:
         try:
@@ -761,12 +771,12 @@ async def checklist(
                 or i18n.get(primary_fallback)
                 or i18n.get("en")
                 or i18n.get("zh-CN")
-                or country_code.upper()
+                or lookup_code
             )
         except Exception:
-            country_name = country_code.upper()
+            country_name = lookup_code
     else:
-        country_name = country_code.upper()
+        country_name = lookup_code
 
     # Pull curated chunks first (they have the materials-list structure); fall
     # back to retrieval. Filter by language so we don't return Chinese text
@@ -784,7 +794,6 @@ async def checklist(
         )
         return (await db.execute(stmt)).all()
 
-    lookup_code = country_code.upper()
     # W47d+ fallback chain: requested_lang → en → en-on-the-fly translate.
     # 之所以不直接 fallback 到 zh-CN:产品要求各语言版本只展示该语言或英文
     # (或英文翻译成该语言),不允许直接给用户看中文界面。
@@ -898,7 +907,7 @@ async def checklist(
         code="1000",
         message="OK",
         data=ChecklistOut(
-            country_code=country_code.upper(),
+            country_code=lookup_code,
             country_name=country_name,
             source_name=source_name,
             source_url=source_url,

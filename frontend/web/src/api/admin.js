@@ -614,6 +614,40 @@ export async function getDashboardFunnel({ range = '7d' } = {}) {
 }
 
 /**
+ * GET /api/v2/admin/stats/analytics?range=7d|30d|90d&limit=50
+ * Product telemetry summary, event distribution, daily trend and recent events.
+ */
+export async function getAnalyticsStats({ range = '7d', limit = 50 } = {}) {
+  if (MOCK_MODE) {
+    await _delay(80)
+    return {
+      range,
+      total_events: 128,
+      unique_sessions: 42,
+      identified_users: 16,
+      event_types: 5,
+      events: [
+        { event_name: 'page_view', count: 72, share_pct: 56.25 },
+        { event_name: 'country_selected', count: 24, share_pct: 18.75 },
+        { event_name: 'wizard_started', count: 18, share_pct: 14.06 },
+        { event_name: 'checkout_viewed', count: 9, share_pct: 7.03 },
+        { event_name: 'payment_succeeded', count: 5, share_pct: 3.91 },
+      ],
+      daily: [],
+      recent: [],
+      generated_at: new Date().toISOString(),
+    }
+  }
+  try {
+    return await _unwrap(
+      adminHttp.get('/v2/admin/stats/analytics', { params: { range, limit } })
+    )
+  } catch (err) {
+    throw normalizeError(err)
+  }
+}
+
+/**
  * GET /api/v2/admin/stats/dashboard/top-countries?range=7d|30d&limit=10
  * 热门目的地 Top N: country_code / country_name / order_count / revenue_usd / conversion_pct.
  */
@@ -808,6 +842,64 @@ export async function updatePlatformPricingAdmin(body) {
     const envelope = await adminHttp.put('/v2/admin/config/platform-pricing', body)
     if (envelope?.code && envelope.code !== '1000') {
       throw Object.assign(new Error(envelope.message || 'update pricing failed'), { code: envelope.code })
+    }
+    return envelope?.data || null
+  } catch (err) {
+    throw normalizeError(err)
+  }
+}
+
+/** GET /api/v2/admin/config/destination-pricing */
+export async function listDestinationPricingAdmin() {
+  if (MOCK_MODE) {
+    await delay(100)
+    return {
+      global_pricing: {
+        id: 1,
+        list_price_usd: 99.9,
+        promo_price_usd: 19.9,
+        currency: 'USD',
+        promo_enabled: true,
+        is_promo: true,
+        display_price_usd: 19.9,
+      },
+      items: [
+        {
+          country_code: 'US',
+          country_name: '美国',
+          visa_type: 'tourism',
+          list_price_usd: 99.9,
+          promo_price_usd: 19.9,
+          currency: 'USD',
+          promo_enabled: true,
+          is_promo: true,
+          display_price_usd: 19.9,
+          inherited: false,
+        },
+      ],
+    }
+  }
+  try {
+    const envelope = await adminHttp.get('/v2/admin/config/destination-pricing')
+    if (envelope?.code && envelope.code !== '1000') {
+      throw Object.assign(new Error(envelope.message || 'list destination pricing failed'), { code: envelope.code })
+    }
+    return envelope?.data || { global_pricing: null, items: [] }
+  } catch (err) {
+    throw normalizeError(err)
+  }
+}
+
+/** PUT /api/v2/admin/config/destination-pricing */
+export async function upsertDestinationPricingAdmin(body) {
+  if (MOCK_MODE) {
+    await delay(150)
+    return { ...body, id: 1, is_promo: true, display_price_usd: body.promo_price_usd, inherited: false }
+  }
+  try {
+    const envelope = await adminHttp.put('/v2/admin/config/destination-pricing', body)
+    if (envelope?.code && envelope.code !== '1000') {
+      throw Object.assign(new Error(envelope.message || 'upsert destination pricing failed'), { code: envelope.code })
     }
     return envelope?.data || null
   } catch (err) {
@@ -1338,6 +1430,8 @@ export default {
   updateRpaConfig,
   getPlatformPricingAdmin,
   updatePlatformPricingAdmin,
+  listDestinationPricingAdmin,
+  upsertDestinationPricingAdmin,
   getRpaStats,
   RPA_DEFAULT_CONFIG,
   listAdminOrders,

@@ -14,13 +14,20 @@ const DEFAULT = {
   promo_ends_at: '2026-08-15T23:59:59Z',
   display_price_cents: 1990,
   list_price_cents: 9990,
+  source: 'global',
 }
 
-export async function getPlatformPricing() {
+/**
+ * @param {{ country_code?: string, visa_type?: string }} [params]
+ */
+export async function getPlatformPricing(params = {}) {
   if (MOCK) {
-    return { ...DEFAULT }
+    return { ...DEFAULT, ...params }
   }
-  const envelope = await http.get('/v2/pricing/current')
+  const query = {}
+  if (params.country_code) query.country_code = params.country_code
+  if (params.visa_type) query.visa_type = params.visa_type
+  const envelope = await http.get('/v2/pricing/current', { params: query })
   if (envelope?.code && envelope.code !== '1000') {
     throw new Error(envelope.message || 'pricing fetch failed')
   }
