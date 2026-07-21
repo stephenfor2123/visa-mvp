@@ -179,7 +179,7 @@ footer{font-size:14px;color:#647087}@media(max-width:640px){header{align-items:f
 <body><header><a href="${origin}/home">Htex</a><nav class="langs" aria-label="Languages">${Object.entries(alternates).map(([code, href]) => `<a href="${href}" lang="${locales[code]?.lang || code}">${locales[code]?.label || code}</a>`).join('')}</nav></header>${body}<footer>© Htex · <a href="${origin}/agreement">Terms & privacy</a> · <a href="${origin}/llms.txt">AI site guide</a></footer></body></html>`
 }
 
-const sitemapEntries = ['/', '/home', '/destinations', '/schengen-countries', '/apply', '/diagnose', '/resources', '/resources/wiki', '/resources/policy', '/resources/templates', '/resources/faq', '/contact', '/pricing', '/agreement']
+const sitemapEntries = ['/', '/home', '/destinations', '/schengen-countries', '/apply', '/diagnose', '/resources', '/resources/wiki', '/resources/policy', '/resources/templates', '/resources/faq', '/contact', '/about', '/pricing', '/agreement']
   .map((path) => ({ path }))
 const aiCatalog = []
 

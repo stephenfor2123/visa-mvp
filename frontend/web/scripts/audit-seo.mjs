@@ -70,7 +70,7 @@ for (const asset of ['robots.txt', 'sitemap.xml', 'llms.txt', 'llms-full.txt', '
 
 const aiIndex = JSON.parse(await read(join(dist, 'ai-index.json')))
 if (aiIndex.pages.length !== 20) failures.push(`ai-index.json: expected 20 article records, got ${aiIndex.pages.length}`)
-if (urls.length !== 38) failures.push(`sitemap.xml: expected 38 URLs, got ${urls.length}`)
+if (urls.length !== 39) failures.push(`sitemap.xml: expected 39 URLs, got ${urls.length}`)
 
 if (failures.length) {
   console.error(`SEO audit failed with ${failures.length} issue(s):`)

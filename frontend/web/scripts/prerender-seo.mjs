@@ -19,6 +19,7 @@ const paths = [
   '/resources/templates',
   '/resources/faq',
   '/contact',
+  '/about',
   '/pricing',
   '/agreement',
   // Render the fallback shell last because this overwrites dist/index.html.
