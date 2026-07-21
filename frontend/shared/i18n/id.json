@@ -26,8 +26,8 @@
     "confirm": "Konfirmasi",
     "country_group_national": "Visa Nasional",
     "country_group_schengen": "Visa Schengen",
-    "w2_coming_soon": "{feature} (akan datang di W2)",
-    "auth_footer": "© 2026 Visa Assistant · demo V2 W1 · Hanya untuk demonstrasi",
+    "w2_coming_soon": "{feature} segera hadir",
+    "auth_footer": "© 2026 Htex",
     "network_error": "Kesalahan jaringan, coba lagi nanti",
     "lang_switch_aria": "Bahasa saat ini {lang}, klik untuk mengganti",
     "lang_switch_aria_menu": "Pilih bahasa",
@@ -200,14 +200,14 @@
     "cat_form": "Formulir aplikasi",
     "cat_base": "Lainnya",
     "scan": "OCR",
-    "scan_tip": "Lihat demo OCR",
-    "scan_title": "Ekstraksi cerdas OCR (demo)",
+    "scan_tip": "Lihat pengenalan OCR",
+    "scan_title": "Ekstraksi cerdas OCR",
     "scan_desc": "Htex OCR mengekstrak info kunci dari {name}:",
     "scan_passport": "No. Paspor",
     "scan_name": "Nama",
     "scan_dob": "Tgl Lahir",
     "scan_expiry": "Berlaku s.d.",
-    "scan_hint": "Data demo. Untuk melanjutkan, unggah dokumen asli di langkah berikutnya.",
+    "scan_hint": "Contoh hasil pengenalan. Unggah dokumen asli di langkah berikutnya untuk melanjutkan.",
     "scan_close": "Mengerti",
     "no_materials": "Tidak ada dokumen ditemukan. Hubungi dukungan.",
     "source": "Sumber",
@@ -608,7 +608,7 @@
     "btn_rescan": "Pindai ulang",
     "btn_rescan_hint": "Kembali ke pemindai dan ulangi bidang ini",
     "btn_continue": "Lanjut ke Pesanan",
-    "btn_continue_hint": "Hadir di W2-D3 (saat ini nonaktif)",
+    "btn_continue_hint": "Perbaiki semua error sebelum melanjutkan",
     "btn_revalidate": "Validasi ulang",
     "empty_title": "Tidak ada dokumen untuk divalidasi",
     "empty_desc": "Silakan pindai / unggah / rekam suara dokumen Anda terlebih dahulu.",
@@ -660,6 +660,7 @@
     "months_remaining": "sisa {n} bulan"
   },
   "admin": {
+    "brand": "Htex",
     "dashboard": "Konsol Admin",
     "analytics": {
       "page_title": "Analitik Produk",
@@ -790,7 +791,7 @@
       "error_network": "Kesalahan jaringan. Silakan coba lagi.",
       "error_required": "Nama pengguna dan kata sandi wajib diisi",
       "footer_tip": "Dengan masuk, Anda setuju pada pencatatan audit tindakan admin.",
-      "mock_hint": "Demo: admin / admin123"
+      "mock_hint": ""
     },
     "ratelimit": {
       "page_title": "Pengaturan Pembatasan Laju",
@@ -1006,13 +1007,13 @@
   },
   "dest": {
     "title": "Pilih Negara Tujuan",
-    "subtitle": "Peluncuran V2: US · AU · GB aktif, ditambah 26 negara Schengen. Lainnya menyusul di V3+.",
+    "subtitle": "AS, Inggris, Australia, dan destinasi Schengen utama",
     "tourism": "Wisata",
     "student": "Pelajar",
     "work": "Kerja",
     "business": "Bisnis",
     "transit": "Transit",
-    "coming_soon": "V3+ Segera Hadir",
+    "coming_soon": "Segera hadir",
     "apply_now": "Ajukan Sekarang"
   },
   "sch": {
@@ -1697,7 +1698,7 @@
   },
   "profile": {
     "page_title": "Profil",
-    "wip_notice": "W1 menampilkan kartu info dasar; W2 akan menambahkan daftar pesanan",
+    "wip_notice": "Lebih banyak fitur akun akan segera hadir",
     "user_id": "ID Pengguna",
     "language_pref": "Bahasa",
     "registered_at": "Terdaftar pada",
@@ -1973,9 +1974,9 @@
     "checkout_subtitle": "Kami akan mengajukan visa Anda setelah pembayaran selesai",
     "checkout_loading": "Menyiapkan pembayaran…",
     "checkout_pay_now": "Bayar Sekarang",
-    "checkout_mock_hint": "Saluran mock otomatis dikonfirmasi dalam ~1 detik, harap tunggu…",
+    "checkout_mock_hint": "Mengonfirmasi pembayaran, harap tunggu…",
     "checkout_stripe_load_fail": "Gagal memuat Stripe. Silakan muat ulang.",
-    "method_mock": "Pembayaran uji mock",
+    "method_mock": "Pembayaran online",
     "page_subtitle": "Pembayaran aman oleh Stripe · Dilindungi oleh VisaOps",
     "order_id": "No. Pesanan",
     "amount": "Jumlah",

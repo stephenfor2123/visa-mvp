@@ -1,4 +1,4 @@
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const GIS_SCRIPT_ID = 'google-gis-client'
@@ -78,12 +78,17 @@ export function useGoogleAuthButton({ buttonText, onCredential }) {
     })
   }
 
-  onMounted(() => {
-    if (googleEnabled) renderGoogleButton()
+  onMounted(async () => {
+    if (!googleEnabled) return
+    // v-if mount: ref may not be ready in the same tick as onMounted
+    await nextTick()
+    await renderGoogleButton()
   })
 
-  watch(locale, () => {
-    if (googleEnabled) renderGoogleButton()
+  watch(locale, async () => {
+    if (!googleEnabled) return
+    await nextTick()
+    await renderGoogleButton()
   })
 
   return { googleBtnRef, googleEnabled }

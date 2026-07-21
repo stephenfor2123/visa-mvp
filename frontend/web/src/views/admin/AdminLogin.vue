@@ -10,7 +10,7 @@
     <header class="admin-login-topbar">
       <div class="admin-login-brand">
         <span class="admin-login-mark">A</span>
-        <span class="admin-login-brand-text">{{ t('admin.dashboard') }}</span>
+        <span class="admin-login-brand-text">{{ t('admin.brand') }}</span>
       </div>
       <LangSwitch />
     </header>
@@ -62,14 +62,6 @@
           <div class="admin-login-row">
             <a href="#" @click.prevent="onForgot">{{ t('admin.login.forgot_password') }}</a>
           </div>
-
-          <p
-            v-if="showDemoHint"
-            class="admin-login-mock-hint"
-            data-testid="admin-login-mock-hint"
-          >
-            测试账号: admin / HtexAd@26
-          </p>
         </form>
       </AppCard>
 
@@ -79,7 +71,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
 import AppCard from '@/components/AppCard.vue'
@@ -98,9 +90,6 @@ const password = ref('')
 const submitting = ref(false)
 const serverError = ref('')
 const errors = reactive({ username: '', password: '' })
-const showDemoHint = computed(
-  () => import.meta.env.DEV || route.query.demo !== undefined,
-)
 
 function clearErrors() {
   errors.username = ''

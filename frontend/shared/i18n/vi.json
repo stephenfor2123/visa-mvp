@@ -26,8 +26,8 @@
     "confirm": "Xác nhận",
     "country_group_national": "Thị thực Quốc gia",
     "country_group_schengen": "Thị thực Schengen",
-    "w2_coming_soon": "{feature} (sẽ có ở W2)",
-    "auth_footer": "© 2026 Visa Assistant · demo V2 W1 · Chỉ để minh họa",
+    "w2_coming_soon": "{feature} sắp ra mắt",
+    "auth_footer": "© 2026 Htex",
     "network_error": "Lỗi mạng, vui lòng thử lại sau",
     "lang_switch_aria": "Ngôn ngữ hiện tại {lang}, nhấp để chuyển",
     "lang_switch_aria_menu": "Chọn ngôn ngữ",
@@ -200,14 +200,14 @@
     "cat_form": "Đơn xin visa",
     "cat_base": "Khác",
     "scan": "OCR",
-    "scan_tip": "Xem demo OCR",
-    "scan_title": "Trích xuất OCR thông minh (demo)",
+    "scan_tip": "Xem nhận dạng OCR",
+    "scan_title": "Trích xuất OCR thông minh",
     "scan_desc": "Htex OCR tự động trích xuất thông tin từ {name}:",
     "scan_passport": "Số hộ chiếu",
     "scan_name": "Họ tên",
     "scan_dob": "Ngày sinh",
     "scan_expiry": "Có hiệu lực đến",
-    "scan_hint": "Dữ liệu demo. Để tiếp tục, tải giấy tờ thật ở bước sau.",
+    "scan_hint": "Kết quả nhận dạng mẫu. Tải giấy tờ thật ở bước sau để tiếp tục.",
     "scan_close": "Đã hiểu",
     "no_materials": "Không tìm thấy hồ sơ. Vui lòng liên hệ hỗ trợ.",
     "source": "Nguồn",
@@ -608,7 +608,7 @@
     "btn_rescan": "Quét lại",
     "btn_rescan_hint": "Quay lại trình quét và làm lại trường này",
     "btn_continue": "Tiếp tục đến đơn hàng",
-    "btn_continue_hint": "Có trong W2-D3 (hiện đang tắt)",
+    "btn_continue_hint": "Sửa hết lỗi trước khi tiếp tục",
     "btn_revalidate": "Xác minh lại",
     "empty_title": "Không có tài liệu để xác minh",
     "empty_desc": "Vui lòng quét / tải lên / ghi âm tài liệu của bạn trước.",
@@ -660,6 +660,7 @@
     "months_remaining": "còn {n} tháng"
   },
   "admin": {
+    "brand": "Htex",
     "dashboard": "Bảng quản trị",
     "analytics": {
       "page_title": "Phân tích sản phẩm",
@@ -790,7 +791,7 @@
       "error_network": "Lỗi mạng. Vui lòng thử lại.",
       "error_required": "Vui lòng nhập tên đăng nhập và mật khẩu",
       "footer_tip": "Khi đăng nhập, bạn đồng ý với việc ghi nhận kiểm toán thao tác quản trị.",
-      "mock_hint": "Demo: admin / admin123"
+      "mock_hint": ""
     },
     "ratelimit": {
       "page_title": "Cấu hình giới hạn tốc độ",
@@ -1006,13 +1007,13 @@
   },
   "dest": {
     "title": "Pilih Quốc Gia",
-    "subtitle": "V2: US · AU · GB đã mở, cùng 26 nước Schengen. Thêm nhiều nước ở V3+.",
+    "subtitle": "Mỹ, Anh, Úc và các điểm đến Schengen chính",
     "tourism": "Du lịch",
     "student": "Du học",
     "work": "Lao động",
     "business": "Công tác",
     "transit": "Quá cảnh",
-    "coming_soon": "V3+ Sắp Mở",
+    "coming_soon": "Sắp mở",
     "apply_now": "Đăng Ký Ngay"
   },
   "sch": {
@@ -1697,7 +1698,7 @@
   },
   "profile": {
     "page_title": "Hồ sơ",
-    "wip_notice": "W1 hiển thị thẻ thông tin cơ bản; W2 sẽ thêm danh sách đơn hàng",
+    "wip_notice": "Thêm tính năng tài khoản sẽ sớm có",
     "user_id": "Mã người dùng",
     "language_pref": "Ngôn ngữ",
     "registered_at": "Đăng ký lúc",
@@ -1973,9 +1974,9 @@
     "checkout_subtitle": "Chúng tôi sẽ nộp hồ sơ visa ngay sau khi thanh toán",
     "checkout_loading": "Đang chuẩn bị thanh toán…",
     "checkout_pay_now": "Thanh toán Ngay",
-    "checkout_mock_hint": "Kênh mock tự xác nhận sau ~1 giây, vui lòng đợi…",
+    "checkout_mock_hint": "Đang xác nhận thanh toán, vui lòng đợi…",
     "checkout_stripe_load_fail": "Không tải được Stripe. Vui lòng tải lại trang.",
-    "method_mock": "Thanh toán thử mock",
+    "method_mock": "Thanh toán trực tuyến",
     "page_subtitle": "Thanh toán an toàn bởi Stripe · Được bảo vệ bởi VisaOps",
     "order_id": "Số Đơn hàng",
     "amount": "Số tiền",

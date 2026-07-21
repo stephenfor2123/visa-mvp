@@ -385,7 +385,12 @@ async function onSubmit() {
     result.value = env.data
     step.value = 3
   } catch (e) {
-    error.value = e?.message || t('diagnose.err_network')
+    const status = e?.response?.status
+    if (status === 405 || /^Request failed with status code \d+/.test(e?.message || '')) {
+      error.value = t('diagnose.err_network')
+    } else {
+      error.value = e?.message || t('diagnose.err_network')
+    }
   } finally {
     loading.value = false
   }
@@ -414,7 +419,7 @@ watch(() => locale.value, () => loadCountries())
 </script>
 
 <style scoped lang="scss">
-.diagnose-page { min-height: 100vh; background: #F8FAFC; display: flex; flex-direction: column; }
+.diagnose-page { min-height: 100vh; background: #ffffff; display: flex; flex-direction: column; }
 .diagnose-main {
   flex: 1;
   max-width: 1200px;
@@ -431,7 +436,14 @@ watch(() => locale.value, () => loadCountries())
   }
   &__sub { font-size: 15px; color: #64748B; margin: 0; }
 }
-.diagnose-section { background: #fff; border: 1px solid #F1F5F9; border-radius: 16px; padding: 24px 28px; margin-bottom: 18px; }
+.diagnose-section {
+  background: #fff;
+  border: 1px solid #e9edf5;
+  border-radius: 20px;
+  padding: 32px 34px;
+  margin-bottom: 18px;
+  box-shadow: 0 8px 28px rgba(15, 23, 42, .06);
+}
 .diagnose-section__title {
   font-size: 18px; font-weight: 600; color: #0F172A; margin: 0 0 16px;
 }
@@ -446,9 +458,10 @@ watch(() => locale.value, () => loadCountries())
 .diagnose-step2 { margin-bottom: 18px; }
 .diagnose-card {
   overflow: hidden;
-  border: 1px solid #F1F5F9;
-  border-radius: 16px;
+  border: 1px solid #e9edf5;
+  border-radius: 20px;
   background: #fff;
+  box-shadow: 0 8px 28px rgba(15, 23, 42, .06);
 }
 .diagnose-card__header { padding: 40px 40px 32px; }
 .diagnose-card__title {
@@ -495,13 +508,14 @@ watch(() => locale.value, () => loadCountries())
 }
 .diagnose-country {
   display: flex; align-items: center; gap: 10px;
-  background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px;
-  padding: 14px 16px; cursor: pointer; transition: all .15s ease;
-  font-size: 14px; color: #0F172A;
-  &:hover { border-color: #2563EB; background: #EFF6FF; }
-  &.is-selected { background: #EFF6FF; border-color: #2563EB; }
+  background: #FFFFFF; border: 1.5px solid #e9edf5; border-radius: 14px;
+  padding: 15px 16px; cursor: pointer;
+  transition: transform .18s cubic-bezier(.2,.8,.2,1), box-shadow .18s ease, border-color .18s ease, background .18s ease;
+  font-size: 14px; color: #0f172a;
+  &:hover { border-color: #93b4fb; background: #FFFFFF; transform: translateY(-2px); box-shadow: 0 10px 22px rgba(59,110,245,.12); }
+  &.is-selected { background: #FFFFFF; border-color: #3b6ef5; box-shadow: 0 8px 20px rgba(59,110,245,.16); }
   &__flag { font-size: 22px; }
-  &__name { font-weight: 500; }
+  &__name { font-weight: 600; }
 }
 
 .diagnose-form { display: flex; flex-direction: column; }
@@ -526,12 +540,12 @@ watch(() => locale.value, () => loadCountries())
 .diagnose-pill {
   min-height: 40px;
   display: inline-flex; align-items: center; justify-content: center;
-  background: #F8FAFC; border: 1px solid #E2E8F0; color: #475569;
+  background: #FFFFFF; border: 1.5px solid #e9edf5; color: #475569;
   padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer;
   transition: all .15s ease;
-  &:hover { border-color: #2563EB; color: #2563EB; background: #EFF6FF; }
+  &:hover { border-color: #93b4fb; color: #3b6ef5; background: #FFFFFF; }
   &.is-selected {
-    background: #EFF6FF; color: #2563EB; border-color: #2563EB;
+    background: #EFF6FF; color: #3b6ef5; border-color: #3b6ef5;
   }
 }
 .diagnose-extras { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
@@ -539,7 +553,7 @@ watch(() => locale.value, () => loadCountries())
   display: flex; align-items: center; gap: 8px; font-size: 13px; color: #475569;
   input {
     width: 80px; padding: 7px 10px; border: 1px solid #E2E8F0; border-radius: 8px;
-    font-size: 14px; outline: none; color: #0F172A; background: #F8FAFC;
+    font-size: 14px; outline: none; color: #0F172A; background: #FFFFFF;
     &:focus { border-color: #2563EB; }
   }
 }
@@ -633,7 +647,8 @@ watch(() => locale.value, () => loadCountries())
 .diagnose-factors { display: flex; flex-direction: column; gap: 8px; margin-bottom: 22px; }
 .diagnose-factor {
   display: flex; align-items: flex-start; gap: 12px;
-  padding: 12px 14px; border-radius: 10px; background: #f8fafc;
+  padding: 12px 14px; border-radius: 10px;
+  background: #fff; border: 1px solid #eef1f6;
   &__impact {
     font-size: 14px; font-weight: 700; min-width: 40px; text-align: center;
     padding: 4px 0; border-radius: 8px;

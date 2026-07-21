@@ -14,7 +14,7 @@
       <div class="admin-topbar__left">
         <router-link to="/admin/dashboard" class="admin-topbar__brand">
           <span class="admin-topbar__mark">A</span>
-          <span class="admin-topbar__title">{{ t('admin.dashboard') }}</span>
+          <span class="admin-topbar__title">{{ t('admin.brand') }}</span>
         </router-link>
         <span class="admin-topbar__crumb">› {{ t('admin.ratelimit.page_title') }}</span>
       </div>

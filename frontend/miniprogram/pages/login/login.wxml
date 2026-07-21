@@ -129,5 +129,5 @@
     </button>
   </view>
 
-  <view class="auth-footer">© 2026 {{t('common.app_name')}} · V2 W6b demo · 仅供演示</view>
+  <view class="auth-footer">{{t('common.auth_footer')}}</view>
 </view>

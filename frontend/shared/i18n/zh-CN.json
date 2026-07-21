@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "description": "签证项目 V2 W1 - 共用 i18n 文案 (zh-CN + en)",
+    "description": "Htex 共用 i18n 文案 (zh-CN + en)",
     "version": "0.1.0",
     "langs": [
       "zh-CN",
@@ -26,8 +26,8 @@
     "confirm": "确认",
     "country_group_national": "国别签证",
     "country_group_schengen": "申根签证",
-    "w2_coming_soon": "{feature} W2 接入",
-    "auth_footer": "© 2026 Htex · 仅供演示",
+    "w2_coming_soon": "{feature} 即将上线",
+    "auth_footer": "© 2026 Htex",
     "network_error": "网络异常,请稍后重试",
     "lang_switch_aria": "当前语言 {lang},点击切换",
     "lang_switch_aria_menu": "选择语言",
@@ -200,14 +200,14 @@
     "cat_form": "签证表格",
     "cat_base": "其他材料",
     "scan": "OCR 扫描",
-    "scan_tip": "点击查看 OCR 演示",
-    "scan_title": "OCR 智能识别演示",
+    "scan_tip": "点击查看 OCR 识别",
+    "scan_title": "OCR 智能识别",
     "scan_desc": "使用 Htex OCR 自动识别{name}中的关键信息:",
     "scan_passport": "护照号",
     "scan_name": "姓名",
     "scan_dob": "出生日期",
     "scan_expiry": "有效期至",
-    "scan_hint": "OCR 演示数据。正式办理请到下一步上传真实证件。",
+    "scan_hint": "以下为识别示例。正式办理请到下一步上传真实证件。",
     "scan_close": "我知道了",
     "no_materials": "暂无材料清单数据,建议直接联系客服。",
     "source": "数据来源",
@@ -610,7 +610,7 @@
     "btn_rescan": "重新拍摄",
     "btn_rescan_hint": "返回材料扫描页重做这一项",
     "btn_continue": "继续创建订单",
-    "btn_continue_hint": "W2-D3 接入(暂时灰显)",
+    "btn_continue_hint": "请先修正所有错误后再继续",
     "btn_revalidate": "重新校验",
     "empty_title": "暂无可校验材料",
     "empty_desc": "请先到材料页拍照 / 上传 / 语音录入",
@@ -662,6 +662,7 @@
     "months_remaining": "剩 {n} 个月"
   },
   "admin": {
+    "brand": "Htex",
     "dashboard": {
       "page_title": "运营总览",
       "hello": "欢迎回来，{name}",
@@ -1050,7 +1051,7 @@
       "error_network": "网络异常,请检查后重试",
       "error_required": "请填写账号和密码",
       "footer_tip": "登录即表示您同意后台操作审计与日志记录",
-      "mock_hint": "测试账号:admin / Admin@2024"
+      "mock_hint": ""
     },
     "loading": "加载中...",
     "error_load": "加载失败，请稍后重试",
@@ -1396,13 +1397,13 @@
   },
   "dest": {
     "title": "选择目的地",
-    "subtitle": "V2 首批上线 US · AU · GB,新增 26 个申根成员国。更多国家 V3+ 开放",
+    "subtitle": "覆盖美国、英国、澳大利亚及申根主要目的地",
     "tourism": "旅游签",
     "student": "学生签",
     "work": "工作签",
     "business": "商务签",
     "transit": "过境签",
-    "coming_soon": "V3+ 即将开放",
+    "coming_soon": "即将开放",
     "apply_now": "立即申请"
   },
   "sch": {
@@ -2096,7 +2097,7 @@
   },
   "profile": {
     "page_title": "个人中心",
-    "wip_notice": "W1 仅展示登录后的简单信息卡,W2 接入订单/申请列表",
+    "wip_notice": "更多账户功能持续完善中",
     "user_id": "用户 ID",
     "language_pref": "语言偏好",
     "registered_at": "注册时间",
@@ -2392,7 +2393,7 @@
     "checkout_subtitle": "完成支付后我们将立即为您提交签证申请",
     "checkout_loading": "正在准备支付…",
     "checkout_pay_now": "立即支付",
-    "checkout_mock_hint": "Mock 通道将在约 1 秒后自动确认，请稍候…",
+    "checkout_mock_hint": "正在确认支付，请稍候…",
     "checkout_stripe_load_fail": "Stripe 加载失败，请刷新重试",
     "checkout_entry_template_title": "解锁正式模板",
     "checkout_entry_diagnosis_title": "查看完整 AI 诊断",
@@ -2447,7 +2448,7 @@
     "checkout_data_modal_p1": "付款前：护照、流水等主要留在本机。",
     "checkout_data_modal_p2": "支付后：经你确认后，加密上传生成正式模板、诊断与插件填表所需信息。",
     "checkout_data_modal_p3": "用途：履约与客服；期限见隐私政策；可申请删除。",
-    "method_mock": "Mock 测试支付",
+    "method_mock": "在线支付",
     "page_subtitle": "Stripe 安全支付 · 由 VisaOps 提供保障",
     "order_id": "订单号",
     "amount": "金额",
