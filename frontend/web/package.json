@@ -6,7 +6,10 @@
   "description": "Htex - Visa AI Web (User-facing)",
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 5173",
+    "preflight:prod": "node scripts/preflight-prod.mjs",
+    "verify:prod-bundle": "node scripts/verify-prod-bundle.mjs",
     "build": "vite build && node scripts/prerender-seo.mjs && node scripts/generate-seo-guides.mjs && node scripts/audit-seo.mjs",
+    "build:prod": "npm run preflight:prod && npm run build && npm run verify:prod-bundle",
     "build:seo": "npm run playwright:install && npm run build",
     "playwright:install": "npx playwright install chromium",
     "seo:prerender": "node scripts/prerender-seo.mjs",

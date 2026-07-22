@@ -18,6 +18,24 @@ die() { echo "[deploy-api] ERROR: $*" >&2; exit 1; }
 [ -d "$BACKEND_DIR" ] || die "missing $BACKEND_DIR"
 [ -f "$BACKEND_DIR/.env" ] || die "missing $BACKEND_DIR/.env"
 
+# --- Release guards (prevent silent prod breakage) ---
+log "checking production .env guards..."
+set -a
+# shellcheck disable=SC1091
+source "$BACKEND_DIR/.env"
+set +a
+[ "${ENV:-}" = "prod" ] || die "ENV must be prod in $BACKEND_DIR/.env (got: ${ENV:-unset})"
+[ -n "${MATERIAL_ENCRYPTION_KEY:-}" ] || die "MATERIAL_ENCRYPTION_KEY must be set in prod (.env) or uploads will 500"
+[ -n "${JWT_SECRET:-}" ] || die "JWT_SECRET missing"
+
+if [ -f "$BACKEND_DIR/scripts/preflight_prod.py" ]; then
+  log "running preflight_prod.py --strict..."
+  if command -v python3 >/dev/null 2>&1; then
+    (cd "$BACKEND_DIR" && ENV=prod MATERIAL_ENCRYPTION_KEY="$MATERIAL_ENCRYPTION_KEY" \
+      python3 scripts/preflight_prod.py --strict) || die "backend preflight failed"
+  fi
+fi
+
 if [ "${SKIP_APT:-0}" != "1" ]; then
   log "installing packages..."
   export DEBIAN_FRONTEND=noninteractive
@@ -52,6 +70,9 @@ cd "$BACKEND_DIR"
 docker compose up -d --build
 sleep 8
 curl -fsS "http://127.0.0.1:8000/health" >/dev/null || die "health check failed — docker compose logs backend"
+# Confirm migration head applied (container entrypoint runs alembic upgrade)
+docker compose exec -T backend alembic current 2>/dev/null | tee /tmp/alembic-current.txt || true
+grep -q "(head)" /tmp/alembic-current.txt 2>/dev/null || log "WARN: could not confirm alembic (head) — check manually"
 
 log "configuring nginx (api only)..."
 cat > "$NGINX_SITE" <<'NGINX'

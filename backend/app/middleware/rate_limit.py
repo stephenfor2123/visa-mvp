@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import time
 from collections import deque
-from typing import Deque, Dict, Tuple
+from typing import Deque, Dict, Optional, Tuple
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
