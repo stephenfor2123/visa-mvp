@@ -3,6 +3,10 @@
     <AppHeader scope="login" />
     <main class="auth-shell">
       <AppCard class="auth-card">
+        <p class="auth-privacy-note" data-testid="login-privacy-note">
+          {{ t('login.privacy_note') }}
+          <a href="#" class="auth-privacy-note__link" data-testid="login-privacy-link" @click.prevent="onOpenPrivacy">{{ t('login.privacy_link') }}</a>
+        </p>
         <h1 class="auth-title">{{ t('login.title') }}</h1>
         <p class="auth-sub">{{ t('login.subtitle') }}</p>
 
@@ -129,7 +133,20 @@ async function handleGoogleCredential(response) {
     const redirect = route.query.redirect || '/destinations'
     router.push(redirect)
   } catch (e) {
-    toast.error(e?.message || t('toast.login_fail'))
+    const status = e?.response?.status
+    let msg = e?.message || t('toast.login_fail')
+    if (msg === 'Network Error' || e?.code === 'NETWORK' || e?.code === 'ERR_NETWORK') {
+      msg = t('login.error_network') || '网络异常,请稍后再试'
+    } else if (status === 401) {
+      msg = t('login.error_invalid_credentials') || '账号或密码错误'
+    } else if (status >= 500 && /google|Google/.test(String(e?.message || ''))) {
+      msg = t('login.error_google') || 'Google 登录暂不可用,请稍后再试或使用邮箱登录'
+    } else if (status >= 500) {
+      msg = t('login.error_server') || '服务暂时不可用,请稍后重试'
+    } else if (msg && /^Request failed with status code \d+/.test(msg)) {
+      msg = t('login.error_server') || '服务暂时不可用,请稍后重试'
+    }
+    toast.error(msg)
   } finally {
     googleLoading.value = false
   }
@@ -176,6 +193,10 @@ function onForgot() {
   router.push('/forgot-password')
 }
 
+function onOpenPrivacy() {
+  router.push({ path: '/agreement', query: { tab: 'privacy' } })
+}
+
 function goSignup() {
   router.push('/register')
 }
@@ -210,6 +231,18 @@ onMounted(() => {
   border: 0;
   box-shadow: none;
   background: #fff;
+}
+.auth-privacy-note {
+  margin: 0 0 14px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-3);
+}
+.auth-privacy-note__link {
+  color: var(--brand, #2563EB);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-weight: 500;
 }
 .auth-title {
   margin: 0 0 4px;

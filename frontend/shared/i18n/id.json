@@ -478,7 +478,11 @@
     "error_invalid_credentials": "Akun atau kata sandi salah",
     "error_too_many": "Terlalu banyak percobaan. Silakan coba lagi nanti",
     "error_server": "Layanan sementara tidak tersedia. Silakan coba lagi nanti",
-    "error_unknown": "Login gagal. Silakan coba lagi"
+    "error_network": "Kesalahan jaringan. Silakan coba lagi nanti",
+    "error_google": "Login Google sementara tidak tersedia. Coba lagi atau gunakan email",
+    "error_unknown": "Login gagal. Silakan coba lagi",
+    "privacy_note": "Kami melindungi data pribadi Anda sesuai komitmen privasi kami.",
+    "privacy_link": "Lihat Kebijakan Privasi"
   },
   "app_input": {
     "show_password": "Tampilkan kata sandi",

@@ -30,18 +30,19 @@ services:
     # script tags with ghcr.io/stephen/visa-api:latest separately.
     image: visa-mvp-backend:dev
     container_name: visa-mvp-backend
+    # Load secrets + prod flags from .env (GOOGLE_CLIENT_ID, CORS, ENCRYPTION, ENV=prod…).
+    # Do NOT hardcode ENV=dev here — it silently overrides production .env.
+    env_file:
+      - .env
     ports:
       - "8000:8000"
     environment:
-      ENV: dev
+      # Docker-network specifics only (override host-relative .env values).
       DATABASE_URL: sqlite+aiosqlite:////app/data/visa_mvp.db
-      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me-in-prod-visa-mvp-2026}
-      SMS_CHANNEL: mock
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/1
       LOG_DIR: /app/logs
       SMS_LOG_DIR: /app/logs
-      MOCK_SMS_WEBHOOK_URL: ${MOCK_SMS_WEBHOOK_URL:-}
     volumes:
       - ./.data:/app/data
       - ./.logs:/app/logs
@@ -55,7 +56,7 @@ services:
       retries: 5
     command: >
       sh -c "alembic upgrade head &&
-             uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+             uvicorn app.main:app --host 0.0.0.0 --port 8000"
 
   redis:
     image: redis:7-alpine

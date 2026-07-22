@@ -479,7 +479,11 @@
     "error_invalid_credentials": "Incorrect account or password",
     "error_too_many": "Too many attempts. Please try again later",
     "error_server": "Service is temporarily unavailable. Please try again later",
-    "error_unknown": "Login failed. Please try again"
+    "error_network": "Network error. Please try again later",
+    "error_google": "Google sign-in is temporarily unavailable. Please try again or use email login",
+    "error_unknown": "Login failed. Please try again",
+    "privacy_note": "We protect your personal data in line with our privacy commitments.",
+    "privacy_link": "View Privacy Policy"
   },
   "app_input": {
     "show_password": "Show password",

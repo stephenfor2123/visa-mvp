@@ -479,7 +479,11 @@
     "error_invalid_credentials": "账号或密码错误",
     "error_too_many": "尝试次数过多,请稍后再试",
     "error_server": "服务暂时不可用,请稍后重试",
-    "error_unknown": "登录失败,请重试"
+    "error_network": "网络异常,请稍后再试",
+    "error_google": "Google 登录暂不可用,请稍后再试或使用邮箱登录",
+    "error_unknown": "登录失败,请重试",
+    "privacy_note": "我们按隐私承诺保护您的个人数据。",
+    "privacy_link": "查看隐私政策"
   },
   "app_input": {
     "show_password": "显示密码",

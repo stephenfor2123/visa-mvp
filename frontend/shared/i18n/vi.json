@@ -478,7 +478,11 @@
     "error_invalid_credentials": "Tài khoản hoặc mật khẩu không đúng",
     "error_too_many": "Quá nhiều lần thử. Vui lòng thử lại sau",
     "error_server": "Dịch vụ tạm thời không khả dụng. Vui lòng thử lại sau",
-    "error_unknown": "Đăng nhập thất bại. Vui lòng thử lại"
+    "error_network": "Lỗi mạng. Vui lòng thử lại sau",
+    "error_google": "Đăng nhập Google tạm thời không khả dụng. Thử lại hoặc dùng email",
+    "error_unknown": "Đăng nhập thất bại. Vui lòng thử lại",
+    "privacy_note": "Chúng tôi bảo vệ dữ liệu cá nhân của bạn theo cam kết quyền riêng tư.",
+    "privacy_link": "Xem Chính sách Quyền riêng tư"
   },
   "app_input": {
     "show_password": "Hiện mật khẩu",
