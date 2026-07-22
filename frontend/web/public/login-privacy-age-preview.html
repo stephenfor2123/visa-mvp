@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login privacy + age (multilingual preview)</title>
+  <style>
+    :root {
+      --ink-1: #0f172a;
+      --ink-2: #334155;
+      --ink-3: #64748b;
+      --brand: #2563eb;
+      --border: #e2e8f0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f8fafc;
+      color: var(--ink-1);
+      padding: 32px 16px 48px;
+    }
+    h1 { font-size: 20px; margin: 0 0 8px; }
+    .lead { color: var(--ink-3); font-size: 13px; margin: 0 0 24px; max-width: 720px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+      max-width: 980px;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px 20px;
+    }
+    .lang {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: var(--brand);
+      background: #eff6ff;
+      border-radius: 999px;
+      padding: 3px 8px;
+      margin-bottom: 14px;
+    }
+    .title { margin: 0 0 4px; font-size: 22px; font-weight: 700; }
+    .sub { margin: 0 0 16px; font-size: 13px; color: var(--ink-3); }
+    .field {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      color: #94a3b8;
+      font-size: 14px;
+    }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      color: var(--ink-3);
+      margin: 8px 0 14px;
+    }
+    .legal {
+      margin: 0 0 12px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--ink-3);
+    }
+    .legal a {
+      color: var(--brand);
+      font-weight: 500;
+      text-underline-offset: 2px;
+    }
+    .age {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+      margin: 0 0 14px;
+      font-size: 12px;
+      line-height: 1.45;
+      color: var(--ink-2);
+    }
+    .age input { margin-top: 2px; }
+    .btn {
+      width: 100%;
+      border: 0;
+      border-radius: 10px;
+      background: var(--brand);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      padding: 12px 16px;
+    }
+    .note {
+      margin-top: 20px;
+      max-width: 980px;
+      font-size: 12px;
+      color: var(--ink-3);
+      line-height: 1.55;
+    }
+  </style>
+</head>
+<body>
+  <h1>登录页合规文案精简预览（多语言）</h1>
+  <p class="lead">
+    顶部原隐私说明移到 Log In 上方；年龄确认压缩为一句，去掉第二段长提示。
+    Google 登录仍可复用同一句年龄确认，不再单独占大块文案。
+  </p>
+
+  <div class="grid">
+    <!-- EN -->
+    <section class="card">
+      <span class="lang">EN</span>
+      <h2 class="title">Welcome Back</h2>
+      <p class="sub">Sign in with email / username + password</p>
+      <div class="field">Email / Username</div>
+      <div class="field">Password</div>
+      <div class="row">
+        <span>☐ Keep me logged in for 7 days</span>
+        <span style="color:var(--brand)">Forgot password?</span>
+      </div>
+
+      <p class="legal">
+        We protect your personal data.
+        <a href="#">Privacy Policy</a>
+      </p>
+      <label class="age">
+        <input type="checkbox" />
+        <span>I am 16+ (guardians apply for minors).</span>
+      </label>
+      <button class="btn" type="button">Log In</button>
+    </section>
+
+    <!-- ZH -->
+    <section class="card">
+      <span class="lang">ZH</span>
+      <h2 class="title">欢迎回来</h2>
+      <p class="sub">使用邮箱 / 用户名 + 密码登录</p>
+      <div class="field">邮箱 / 用户名</div>
+      <div class="field">密码</div>
+      <div class="row">
+        <span>☐ 7 天内自动登录</span>
+        <span style="color:var(--brand)">忘记密码?</span>
+      </div>
+
+      <p class="legal">
+        我们按隐私承诺保护您的个人数据。
+        <a href="#">隐私政策</a>
+      </p>
+      <label class="age">
+        <input type="checkbox" />
+        <span>我已满 16 周岁（未成年人由监护人代办）。</span>
+      </label>
+      <button class="btn" type="button">登录</button>
+    </section>
+
+    <!-- ID -->
+    <section class="card">
+      <span class="lang">ID</span>
+      <h2 class="title">Selamat Datang Kembali</h2>
+      <p class="sub">Masuk dengan email / nama pengguna + kata sandi</p>
+      <div class="field">Email / Nama Pengguna</div>
+      <div class="field">Kata Sandi</div>
+      <div class="row">
+        <span>☐ Ingat saya selama 7 hari</span>
+        <span style="color:var(--brand)">Lupa kata sandi?</span>
+      </div>
+
+      <p class="legal">
+        Kami melindungi data pribadi Anda.
+        <a href="#">Kebijakan Privasi</a>
+      </p>
+      <label class="age">
+        <input type="checkbox" />
+        <span>Saya berusia 16+ (wali mengajukan untuk anak).</span>
+      </label>
+      <button class="btn" type="button">Masuk</button>
+    </section>
+
+    <!-- VI -->
+    <section class="card">
+      <span class="lang">VI</span>
+      <h2 class="title">Chào mừng trở lại</h2>
+      <p class="sub">Đăng nhập bằng email / tên đăng nhập + mật khẩu</p>
+      <div class="field">Email / Tên đăng nhập</div>
+      <div class="field">Mật khẩu</div>
+      <div class="row">
+        <span>☐ Ghi nhớ tôi 7 ngày</span>
+        <span style="color:var(--brand)">Quên mật khẩu?</span>
+      </div>
+
+      <p class="legal">
+        Chúng tôi bảo vệ dữ liệu cá nhân của bạn.
+        <a href="#">Chính sách quyền riêng tư</a>
+      </p>
+      <label class="age">
+        <input type="checkbox" />
+        <span>Tôi đủ 16 tuổi (người giám hộ nộp hộ trẻ em).</span>
+      </label>
+      <button class="btn" type="button">Đăng nhập</button>
+    </section>
+  </div>
+
+  <p class="note">
+    设计原则：每种语言都控制在 1 行隐私 + 1 行年龄确认，避免长段落在窄屏换行过多。
+    若你确认这版，我会把登录页顶部隐私说明移除，并按此结构接到 Log In 按钮上方（Google 登录复用同一句年龄确认）。
+  </p>
+</body>
+</html>

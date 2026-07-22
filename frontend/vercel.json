@@ -8,7 +8,7 @@
       "source": "/api/:path*",
       "destination": "https://api.htexvisa.com/api/:path*"
     },
-    { "source": "/((?!api/|robots\\.txt|sitemap\\.xml|llms\\.txt|llms-full\\.txt|ai-index\\.json|feed\\.xml|favicon\\.svg|manifest\\.json|icons/|en/visa-guides/|vi/visa-guides/|id/visa-guides/|zh-cn/visa-guides/|[A-Za-z0-9_-]+\\.txt).*)", "destination": "/index.html" }
+    { "source": "/((?!api/|robots\\.txt|sitemap\\.xml|llms\\.txt|llms-full\\.txt|ai-index\\.json|feed\\.xml|favicon\\.svg|manifest\\.json|icons/|prototypes/|login-privacy-age-preview\\.html|en/visa-guides/|vi/visa-guides/|id/visa-guides/|zh-cn/visa-guides/|[A-Za-z0-9_-]+\\.txt).*)", "destination": "/index.html" }
   ],
   "headers": [
     {
