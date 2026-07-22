@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>材料收集 · Htex 照片工具箱演示</title>
+  <style>
+    :root {
+      --primary: #3B6EF5;
+      --ink-1: #0F172A;
+      --ink-2: #334155;
+      --ink-3: #64748B;
+      --muted: #94A3B8;
+      --border: #E2E8F0;
+      --bg-alt: #F8FAFC;
+      --font: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+        "Microsoft YaHei", "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      color: var(--ink-1);
+      background: #fff;
+      min-height: 100vh;
+    }
+    a { color: inherit; text-decoration: none; }
+    button { font-family: inherit; }
+
+    /* —— AppHeader —— */
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      background: #fff;
+      gap: 24px;
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      border-bottom: 1px solid transparent;
+    }
+    .header-shell {
+      border-bottom: 1px solid #F1F5F9;
+      background: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+    .app-header__brand {
+      display: flex;
+      align-items: center;
+      font-weight: 700;
+      font-size: 18px;
+      color: var(--ink-1);
+    }
+    .htex-logo {
+      display: inline-flex;
+      line-height: 0;
+    }
+    .app-header__nav {
+      display: flex;
+      gap: 8px;
+      flex: 1;
+      margin-left: 32px;
+    }
+    .mega-menu__trigger {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: transparent;
+      border: 0;
+      color: var(--ink-1);
+      font-size: 14px;
+      font-weight: 500;
+      padding: 8px 10px;
+      border-radius: 8px;
+      cursor: default;
+    }
+    .mega-menu__chevron { color: var(--ink-3); }
+    .app-header__right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .search-trigger, .trust-btn, .lang-btn, .user-trigger {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      color: var(--ink-2);
+      background: #fff;
+      cursor: default;
+    }
+    .lang-btn {
+      width: auto;
+      padding: 0 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      gap: 4px;
+    }
+    .btn-login {
+      background: #2563EB;
+      color: #fff;
+      border: 0;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: default;
+    }
+
+    /* demo banner */
+    .demo-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 8px 20px;
+      background: #EFF6FF;
+      border-bottom: 1px solid #BFDBFE;
+      font-size: 12px;
+      color: #1E40AF;
+    }
+    .demo-bar select {
+      border: 1px solid #BFDBFE;
+      border-radius: 8px;
+      padding: 5px 8px;
+      font: inherit;
+      font-size: 12px;
+      background: #fff;
+      color: var(--ink-2);
+    }
+
+    /* —— Material Wizard —— */
+    .mw-page { min-height: 100vh; background: #fff; }
+    .mw-main { max-width: 1200px; margin: 0 auto; padding: 32px 24px 80px; }
+
+    .mw-hero { text-align: left; margin-bottom: 32px; }
+    .mw-hero__title {
+      font-size: 30px; font-weight: 700; margin: 0 0 12px; letter-spacing: -.5px;
+      color: #0F172A; line-height: 1.25;
+    }
+    .mw-hero__privacy {
+      margin: 0 0 12px; max-width: 640px; font-size: 14px; color: #64748b; line-height: 1.45;
+    }
+    .mw-hero__clear {
+      border: 1px solid #E2E8F0; background: #fff; color: #475569;
+      font-size: 13px; font-weight: 500; min-height: 40px; padding: 10px 20px;
+      border-radius: 8px; cursor: default;
+    }
+
+    .mw-progress {
+      margin-bottom: 32px; padding: 20px;
+      border: 1px solid #F1F5F9; border-radius: 16px; background: #fff;
+    }
+    .mw-progress__bar { height: 8px; background: #F1F5F9; border-radius: 999px; overflow: hidden; }
+    .mw-progress__fill { height: 100%; background: #2563EB; border-radius: 999px; width: 18%; transition: width .4s ease; }
+    .mw-progress__text { font-size: 13px; font-weight: 600; color: #64748b; text-align: right; margin-top: 10px; }
+
+    .mw-steps {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .mw-step {
+      display: flex; flex-direction: row; align-items: center; gap: 10px;
+      padding: 12px 14px; border-radius: 12px;
+      border: 1px solid #E2E8F0; background: #fff;
+      cursor: default; position: relative;
+    }
+    .mw-step.is-active {
+      border-color: #0F172A;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, .08);
+    }
+    .mw-step.is-active .mw-step__icon { background: #0F172A; color: #fff; }
+    .mw-step__icon {
+      width: 36px; height: 36px; border-radius: 50%; flex: 0 0 auto;
+      background: #0F172A; color: #fff;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .mw-step__label { font-size: 13px; font-weight: 600; color: #0F172A; text-align: left; line-height: 1.3; }
+
+    .mw-panel {
+      background: #fff; border: 1px solid #E2E8F0; border-radius: 16px;
+      padding: 28px 30px;
+    }
+    .mw-panel__title { font-size: 20px; font-weight: 700; color: #0f172a; margin: 0 0 18px; }
+
+    .mw-item-tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .mw-item-tab {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; font-size: 13px; font-weight: 500;
+      background: #F8FAFC; border: 1px solid #E2E8F0;
+      border-radius: 8px; color: #64748B; cursor: pointer;
+    }
+    .mw-item-tab.on { background: #0F172A; color: #fff; border-color: #0F172A; font-weight: 600; }
+    .mw-item-tab.done { background: #EFF6FF; color: #2563EB; border-color: #BFDBFE; font-weight: 600; }
+
+    .mw-items { display: flex; flex-direction: column; gap: 14px; }
+
+    .mw-footer {
+      display: flex; gap: 12px; justify-content: flex-end;
+      margin-top: 24px; padding-top: 20px; border-top: 1px solid #F1F5F9;
+    }
+    .mw-footer__skip {
+      background: transparent; border: 1px solid #E2E8F0; color: #64748b;
+      padding: 12px 20px; border-radius: 8px; font-size: 13.5px; font-weight: 600; cursor: default;
+    }
+    .mw-footer__next {
+      background: #2563EB; color: #fff; border: 0;
+      padding: 12px 26px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer;
+    }
+    .mw-footer__next.is-disabled { background: #E2E8F0; color: #94a3b8; cursor: not-allowed; }
+
+    /* UploadItemCard */
+    .uic {
+      border: 1.5px solid #e9edf5; border-radius: 16px; padding: 18px 20px;
+      background: #fff; transition: border-color .15s ease;
+    }
+    .uic.is-done { border-color: #bbf7d0; }
+    .uic.is-error { border-color: #fecaca; background: #fef2f2; }
+    .uic__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .uic__title { font-size: 15px; font-weight: 700; color: #0f172a; }
+    .uic__check {
+      width: 22px; height: 22px; border-radius: 50%; background: #16a34a; color: #fff;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .uic__hint { font-size: 12.5px; color: #64748b; margin: 6px 0 14px; line-height: 1.5; }
+    .uic__constraints {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11.5px; color: #94a3b8; font-weight: 500;
+      margin: -8px 0 12px;
+    }
+    .uic__actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .uic__btn {
+      flex: 1; min-width: 120px; padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 600;
+      cursor: pointer; border: 0; transition: all .15s ease;
+    }
+    .uic__btn--primary {
+      background: #2563EB; color: #fff; border: 1px solid #2563EB;
+    }
+    .uic__btn--primary:hover { background: #1D4ED8; }
+    .uic__btn--ghost { background: #f1f5f9; color: #475569; }
+    .uic__btn--ghost:hover { background: #e2e8f0; }
+    .uic__btn--paid {
+      background: #0F172A; color: #fff; border: 1px solid #0F172A;
+      flex: 1.4;
+    }
+    .uic__progress-bar { height: 6px; background: #e2e8f0; border-radius: 999px; overflow: hidden; }
+    .uic__progress-fill { height: 100%; background: #2563EB; transition: width .15s ease; width: 60%; }
+    .uic__progress-text { font-size: 12px; color: #64748b; margin-top: 6px; }
+    .uic__done { display: flex; flex-direction: column; gap: 8px; }
+    .uic__file { display: flex; align-items: center; gap: 10px; }
+    .uic__thumb { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; background: #f1f5f9; }
+    .uic__filename { font-size: 13px; color: #0f172a; font-weight: 500; }
+    .uic__warn--box {
+      display: flex; flex-direction: column; gap: 4px;
+      padding: 4px 0 2px; font-size: 13px; line-height: 1.6; color: #b45309;
+    }
+    .uic__warn-line { display: flex; gap: 6px; align-items: baseline; }
+    .uic__reupload {
+      align-self: flex-start; background: transparent; border: 1px solid #cbd5e1; color: #475569;
+      font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 999px; cursor: pointer;
+    }
+    .price-tag {
+      display: inline-block;
+      margin-left: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #B45309;
+      background: #FEF3C7;
+      border-radius: 999px;
+      padding: 2px 7px;
+      vertical-align: middle;
+    }
+    .toolbox-cta {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed #FDE68A;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .toolbox-cta.is-on { display: flex; }
+    .toolbox-cta__title { font-size: 13px; font-weight: 700; color: #92400E; }
+    .toolbox-cta__desc { font-size: 12px; color: #92400E; line-height: 1.5; margin: 0; }
+    .toolbox-cta__row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    .hidden { display: none !important; }
+    input[type="file"] { display: none; }
+
+    /* —— Toolbox page —— */
+    .tb-page { display: none; min-height: 100vh; background: #fff; }
+    .tb-page.is-on { display: block; }
+    .mw-page.is-off { display: none; }
+
+    .tb-main { max-width: 1200px; margin: 0 auto; padding: 28px 24px 80px; }
+    .tb-back {
+      display: inline-flex; align-items: center; gap: 6px;
+      border: 0; background: transparent; color: #2563EB;
+      font-size: 13px; font-weight: 600; cursor: pointer; padding: 0; margin-bottom: 16px;
+    }
+    .tb-hero { margin-bottom: 24px; }
+    .tb-hero__title {
+      font-size: 28px; font-weight: 700; margin: 0 0 8px; letter-spacing: -.4px;
+    }
+    .tb-hero__sub { margin: 0; font-size: 14px; color: #64748b; line-height: 1.5; max-width: 560px; }
+    .tb-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-bottom: 10px;
+      font-size: 12px; font-weight: 650;
+      color: #92400E; background: #FEF3C7;
+      border-radius: 999px; padding: 4px 10px;
+    }
+
+    .tb-grid {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 16px;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .tb-grid { grid-template-columns: 1fr; }
+      .mw-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .app-header__nav { display: none; }
+    }
+
+    .tb-card {
+      background: #fff; border: 1px solid #E2E8F0; border-radius: 16px; padding: 22px 24px;
+    }
+    .tb-card h2 { margin: 0 0 14px; font-size: 16px; font-weight: 700; }
+
+    .stage { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 640px) { .stage { grid-template-columns: 1fr; } }
+    .pane {
+      border: 1px solid #E2E8F0; border-radius: 12px; background: #fafbfd;
+      min-height: 300px; overflow: hidden; display: flex; flex-direction: column;
+    }
+    .pane__label {
+      padding: 10px 12px; border-bottom: 1px solid #E2E8F0;
+      font-size: 12px; font-weight: 650; color: #64748b; background: #fff;
+      display: flex; justify-content: space-between;
+    }
+    .pane__body { flex: 1; display: grid; place-items: center; padding: 16px; }
+    .pane__body img { max-width: 100%; max-height: 240px; border-radius: 6px; }
+    .preview-frame {
+      position: relative;
+      width: min(100%, 210px);
+      aspect-ratio: var(--ar, 1);
+      background: #fff;
+      box-shadow: 0 0 0 1px rgba(15,23,42,.08);
+      overflow: hidden;
+    }
+    .preview-frame canvas { width: 100%; height: 100%; display: block; object-fit: cover; }
+    .guide {
+      position: absolute; inset: 0;
+      border: 2px solid rgba(37,99,235,.45);
+      pointer-events: none;
+    }
+
+    .ctrl { margin-bottom: 14px; }
+    .ctrl label {
+      display: flex; justify-content: space-between;
+      font-size: 12px; color: #64748b; font-weight: 600; margin-bottom: 6px;
+    }
+    input[type="range"] { width: 100%; accent-color: #2563EB; }
+    .locked-spec {
+      font-size: 13px; line-height: 1.7; color: #334155;
+      padding: 12px; background: #F8FAFC; border-radius: 10px; margin-bottom: 16px;
+    }
+    .locked-bg {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 12px; background: #F8FAFC; border-radius: 10px;
+      font-size: 13px; color: #334155; margin-bottom: 8px;
+    }
+    .dot {
+      width: 14px; height: 14px; border-radius: 3px;
+      background: #fff; border: 1px solid rgba(15,23,42,.12);
+    }
+    .tb-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+    .btn {
+      appearance: none; border: 1px solid #E2E8F0; background: #fff; color: #334155;
+      border-radius: 10px; padding: 11px 16px; font-size: 13px; font-weight: 650; cursor: pointer;
+    }
+    .btn--primary { background: #2563EB; border-color: #2563EB; color: #fff; }
+    .btn--primary:hover { background: #1D4ED8; }
+    .btn--success { background: #16A34A; border-color: #16A34A; color: #fff; }
+    .note { font-size: 12px; color: #64748b; line-height: 1.5; margin: 12px 0 0; }
+
+    .toast {
+      position: fixed; left: 50%; bottom: 24px;
+      transform: translateX(-50%) translateY(12px);
+      background: #0F172A; color: #fff;
+      padding: 10px 16px; border-radius: 999px;
+      font-size: 13px; font-weight: 600;
+      opacity: 0; pointer-events: none; transition: .2s; z-index: 50;
+    }
+    .toast.is-on { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+  <div class="header-shell">
+    <header class="app-header">
+      <a class="app-header__brand" href="javascript:void(0)">
+        <span class="htex-logo" aria-label="Htex">
+          <svg width="84" height="28" viewBox="0 0 96 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <text x="0" y="25" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', 'PingFang SC', Arial, sans-serif" font-size="25" font-weight="900" fill="#000" letter-spacing="-1.4">Htex</text>
+          </svg>
+        </span>
+      </a>
+      <nav class="app-header__nav">
+        <button type="button" class="mega-menu__trigger">办签证
+          <svg class="mega-menu__chevron" width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 4.5 L6 8.5 L10 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button type="button" class="mega-menu__trigger">查通过率
+          <svg class="mega-menu__chevron" width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 4.5 L6 8.5 L10 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button type="button" class="mega-menu__trigger">看政策
+          <svg class="mega-menu__chevron" width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 4.5 L6 8.5 L10 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button type="button" class="mega-menu__trigger">联系我们
+          <svg class="mega-menu__chevron" width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 4.5 L6 8.5 L10 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </nav>
+      <div class="app-header__right">
+        <button type="button" class="search-trigger" aria-label="搜索">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20 L16.5 16.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        <button type="button" class="trust-btn" aria-label="隐私保护" title="加密隐私保护">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+        <button type="button" class="lang-btn">中文</button>
+        <button type="button" class="btn-login">登录</button>
+      </div>
+    </header>
+    <div class="demo-bar">
+      <span>交互预览 · 未接入正式代码 · 布局对齐现有「材料收集」页</span>
+      <label>
+        演示申请单
+        <select id="demoOrder">
+          <option value="US">美签</option>
+          <option value="SCHENGEN">申根</option>
+          <option value="GB">英国</option>
+          <option value="AU">澳洲</option>
+        </select>
+      </label>
+    </div>
+  </div>
+
+  <!-- ========== PAGE: Material Wizard ========== -->
+  <div class="mw-page" id="pageWizard">
+    <main class="mw-main">
+      <header class="mw-hero">
+        <h1 class="mw-hero__title">材料收集</h1>
+        <p class="mw-hero__privacy">证件原件仅在本机处理，识别结果保存在浏览器（7 天有效），不会上传到服务器存档。</p>
+        <button type="button" class="mw-hero__clear">清除本机数据</button>
+      </header>
+
+      <div class="mw-progress">
+        <div class="mw-progress__bar"><div class="mw-progress__fill" id="progressFill"></div></div>
+        <div class="mw-progress__text" id="progressText">18% 完成</div>
+      </div>
+
+      <div class="mw-steps">
+        <button type="button" class="mw-step is-active">
+          <span class="mw-step__icon">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none"><rect x="3" y="5" width="18" height="14" rx="2.5" stroke="currentColor" stroke-width="1.7"/><circle cx="8.5" cy="11" r="1.8" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 16c.6-1.7 1.9-2.5 3-2.5s2.4.8 3 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M14.5 10h4M14.5 13h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </span>
+          <span class="mw-step__label">身份证明</span>
+        </button>
+        <button type="button" class="mw-step">
+          <span class="mw-step__icon">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none"><rect x="3" y="8" width="18" height="11" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M8.5 8V6.5a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2V8" stroke="currentColor" stroke-width="1.7"/><path d="M3 13h18" stroke="currentColor" stroke-width="1.5"/></svg>
+          </span>
+          <span class="mw-step__label">工作 / 在职</span>
+        </button>
+        <button type="button" class="mw-step">
+          <span class="mw-step__icon">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.7"/><path d="M9.3 9.3c0-1.1 1.1-2 2.7-2s2.7.9 2.7 2c0 2.8-5.4 1.4-5.4 4.2 0 1.1 1.2 2 2.7 2s2.7-.9 2.7-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M12 6v1.3M12 16.7V18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </span>
+          <span class="mw-step__label">财务证明</span>
+        </button>
+        <button type="button" class="mw-step">
+          <span class="mw-step__icon">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none"><path d="M13 3.5l-2.4 2.4L4 7.3l-.9 1.6 6.6 1.6-.4 4.3-1.9 1.4.2 1.6 2.9-1 1.6 2.6 1.5-.6-.5-3 4-3 1.6-4.3-1.6-1.6-3.3.9-1-2.9z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+          </span>
+          <span class="mw-step__label">行程 / 住宿</span>
+        </button>
+        <button type="button" class="mw-step">
+          <span class="mw-step__icon">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none"><path d="M7 3.5h7l4 4V19a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 6 19V5A1.5 1.5 0 0 1 7 3.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M14 3.5V8h4" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 12.5h6M9 15.5h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </span>
+          <span class="mw-step__label">签证表格</span>
+        </button>
+      </div>
+
+      <section class="mw-panel">
+        <h2 class="mw-panel__title">身份证明</h2>
+        <nav class="mw-item-tabs">
+          <button type="button" class="mw-item-tab done" id="tabPassport"><span>✓</span> 护照</button>
+          <button type="button" class="mw-item-tab on" id="tabPhoto">证件照片</button>
+        </nav>
+
+        <div class="mw-items">
+          <!-- Passport done (static context) -->
+          <div class="uic is-done" id="cardPassport">
+            <div class="uic__head">
+              <div class="uic__title">护照</div>
+              <div class="uic__check">
+                <svg viewBox="0 0 16 16" width="12" height="12"><path d="M3 8 L7 12 L13 4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+            </div>
+            <p class="uic__hint">护照资料页（含照片、姓名、护照号、有效期）</p>
+            <div class="uic__done">
+              <div class="uic__file">
+                <div class="uic__thumb uic__thumb--fallback" style="display:flex;align-items:center;justify-content:center;font-size:18px;background:#f1f5f9;border-radius:8px;width:44px;height:44px">📄</div>
+                <span class="uic__filename">passport_scan.jpg</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Photo card — interactive -->
+          <div class="uic" id="cardPhoto">
+            <div class="uic__head">
+              <div class="uic__title">证件照片</div>
+              <div class="uic__check hidden" id="photoCheck">
+                <svg viewBox="0 0 16 16" width="12" height="12"><path d="M3 8 L7 12 L13 4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+            </div>
+            <p class="uic__hint" id="photoHint">白底 2 寸证件照，近 6 个月拍摄</p>
+            <div class="uic__constraints">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
+              <span id="specConstraint">本单检测：美签 51×51mm · 白底 · 支持 JPG / PNG / WebP,单个文件不超过 10MB</span>
+            </div>
+
+            <div class="uic__actions" id="idleActions">
+              <button type="button" class="uic__btn uic__btn--primary" id="btnPick">选择图片/文件</button>
+              <button type="button" class="uic__btn uic__btn--ghost" id="btnDemoFail">演示：不合格照</button>
+              <button type="button" class="uic__btn uic__btn--ghost" id="btnDemoPass">演示：合格照</button>
+            </div>
+
+            <div class="hidden" id="checkingBlock">
+              <div class="uic__progress-bar"><div class="uic__progress-fill" id="checkBar"></div></div>
+              <div class="uic__progress-text" id="checkText">正在按本单签证规格检测…</div>
+            </div>
+
+            <div class="uic__done hidden" id="doneBlock">
+              <div class="uic__file">
+                <img class="uic__thumb" id="thumbImg" alt="" />
+                <span class="uic__filename" id="fileName">photo.jpg</span>
+              </div>
+              <div class="uic__warn--box hidden" id="warnBox"></div>
+              <div class="toolbox-cta" id="toolboxCta">
+                <div class="toolbox-cta__title">照片未达到申请要求</div>
+                <p class="toolbox-cta__desc">可使用 Htex 照片工具箱按本单规格一键剪裁换白底（增值服务，计费与模板/AI 检测同现有增值项）。也可跳过，按原流程继续上传原图。</p>
+                <div class="toolbox-cta__row">
+                  <button type="button" class="uic__btn uic__btn--paid" id="btnToolbox">
+                    使用 Htex 照片工具箱<span class="price-tag">增值服务</span>
+                  </button>
+                  <button type="button" class="uic__btn uic__btn--ghost" id="btnSkip">不使用，继续上传原图</button>
+                </div>
+              </div>
+              <button type="button" class="uic__reupload hidden" id="btnReupload">重新上传</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="mw-footer">
+          <button type="button" class="mw-footer__skip">稍后上传</button>
+          <button type="button" class="mw-footer__next is-disabled" id="btnNext" disabled>进入下一步</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ========== PAGE: Htex Photo Toolbox ========== -->
+  <div class="tb-page" id="pageToolbox">
+    <main class="tb-main">
+      <button type="button" class="tb-back" id="btnBack">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        返回材料收集
+      </button>
+      <div class="tb-hero">
+        <div class="tb-badge">增值服务 · Htex 照片工具箱</div>
+        <h1 class="tb-hero__title">照片预览编辑</h1>
+        <p class="tb-hero__sub" id="tbSub">按当前申请单规格自动剪裁与换白底，确认后写回本单证件照。</p>
+      </div>
+
+      <div class="tb-grid">
+        <section class="tb-card">
+          <h2>预览</h2>
+          <div class="stage">
+            <div class="pane">
+              <div class="pane__label"><span>原图</span><span>检测未通过</span></div>
+              <div class="pane__body"><img id="srcImg" alt="原图" /></div>
+            </div>
+            <div class="pane">
+              <div class="pane__label"><span>工具箱结果</span><span id="outMeta">—</span></div>
+              <div class="pane__body">
+                <div class="preview-frame" id="previewFrame">
+                  <canvas id="outCanvas"></canvas>
+                  <div class="guide"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="tb-actions">
+            <button type="button" class="btn btn--primary" id="btnOneClick">一键剪裁</button>
+            <button type="button" class="btn btn--success" id="btnConfirm">确认使用并上传</button>
+            <button type="button" class="btn" id="btnCancelToolbox">取消</button>
+          </div>
+        </section>
+
+        <aside class="tb-card">
+          <h2>本单规格（不可改）</h2>
+          <div class="locked-spec" id="lockedSpec"></div>
+          <div class="ctrl">
+            <label><span>缩放</span><span id="zoomVal">1.08×</span></label>
+            <input type="range" id="zoom" min="0.85" max="1.6" step="0.01" value="1.08" />
+          </div>
+          <div class="ctrl">
+            <label><span>上下</span><span id="offYVal">-6</span></label>
+            <input type="range" id="offY" min="-40" max="40" step="1" value="-6" />
+          </div>
+          <div class="ctrl">
+            <label><span>左右</span><span id="offXVal">0</span></label>
+            <input type="range" id="offX" min="-40" max="40" step="1" value="0" />
+          </div>
+          <div class="locked-bg"><span class="dot"></span>背景：白底（已锁定）</div>
+          <p class="note">计费、模板与 AI 检测逻辑与现有增值项一致。此处仅演示页面与交互。</p>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" />
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const SPECS = {
+      US: {
+        id: "US", label: "美签",
+        hint: "美签要求：51×51mm 白底证件照，近 6 个月拍摄",
+        constraint: "本单检测：美签 51×51mm · 白底 · 支持 JPG / PNG / WebP,单个文件不超过 10MB",
+        mmW: 51, mmH: 51, pxW: 600, pxH: 600,
+        fails: ["比例非正方形（美签需 51×51mm）", "背景非白底", "头部占比偏低"],
+      },
+      SCHENGEN: {
+        id: "SCHENGEN", label: "申根",
+        hint: "申根要求：35×45mm 白底证件照，近 6 个月拍摄",
+        constraint: "本单检测：申根 35×45mm · 白底 · 支持 JPG / PNG / WebP,单个文件不超过 10MB",
+        mmW: 35, mmH: 45, pxW: 413, pxH: 531,
+        fails: ["比例不符合 35×45mm", "背景非白底", "人脸未居中"],
+      },
+      GB: {
+        id: "GB", label: "英国",
+        hint: "英国签证要求：35×45mm 白底证件照，近 6 个月拍摄",
+        constraint: "本单检测：英国 35×45mm · 白底 · 支持 JPG / PNG / WebP,单个文件不超过 10MB",
+        mmW: 35, mmH: 45, pxW: 413, pxH: 531,
+        fails: ["比例不符合 35×45mm", "背景非白底"],
+      },
+      AU: {
+        id: "AU", label: "澳洲",
+        hint: "澳洲签证要求：35×40mm 白底证件照，近 6 个月拍摄",
+        constraint: "本单检测：澳洲 35×40mm · 白底 · 支持 JPG / PNG / WebP,单个文件不超过 10MB",
+        mmW: 35, mmH: 40, pxW: 413, pxH: 472,
+        fails: ["比例不符合 35×40mm", "背景非白底"],
+      },
+    };
+
+    const state = {
+      dest: "US",
+      pendingUrl: null,
+      img: null,
+      uploadedOk: false,
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const ctx = $("outCanvas").getContext("2d", { willReadFrequently: true });
+
+    function toast(msg) {
+      const el = $("toast");
+      el.textContent = msg;
+      el.classList.add("is-on");
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => el.classList.remove("is-on"), 1800);
+    }
+
+    function spec() { return SPECS[state.dest]; }
+
+    function syncOrderUI() {
+      const s = spec();
+      $("photoHint").textContent = s.hint;
+      $("specConstraint").textContent = s.constraint;
+      $("tbSub").textContent = `按${s.label}申请单规格（${s.mmW}×${s.mmH}mm 白底）自动剪裁，确认后写回本单证件照。`;
+      $("lockedSpec").innerHTML = `
+        <div><strong>${s.label}</strong> 申请</div>
+        <div>尺寸 ${s.mmW}×${s.mmH} mm</div>
+        <div>导出约 ${s.pxW}×${s.pxH} px</div>
+        <div>背景 白底</div>
+      `;
+      $("previewFrame").style.setProperty("--ar", `${s.mmW} / ${s.mmH}`);
+    }
+
+    function setProgress(pct) {
+      $("progressFill").style.width = pct + "%";
+      $("progressText").textContent = pct + "% 完成";
+    }
+
+    function resetPhotoCard() {
+      state.uploadedOk = false;
+      $("cardPhoto").classList.remove("is-done", "is-error");
+      $("photoCheck").classList.add("hidden");
+      $("idleActions").classList.remove("hidden");
+      $("checkingBlock").classList.add("hidden");
+      $("doneBlock").classList.add("hidden");
+      $("warnBox").classList.add("hidden");
+      $("toolboxCta").classList.remove("is-on");
+      $("btnReupload").classList.add("hidden");
+      $("btnNext").classList.add("is-disabled");
+      $("btnNext").disabled = true;
+      setProgress(18);
+      $("tabPhoto").classList.remove("done");
+      $("tabPhoto").classList.add("on");
+    }
+
+    function showChecking() {
+      $("idleActions").classList.add("hidden");
+      $("doneBlock").classList.add("hidden");
+      $("checkingBlock").classList.remove("hidden");
+      $("checkBar").style.width = "35%";
+      $("checkText").textContent = `正在按${spec().label}规格检测…`;
+      setTimeout(() => { $("checkBar").style.width = "78%"; }, 220);
+    }
+
+    function showFail(url) {
+      $("checkingBlock").classList.add("hidden");
+      $("doneBlock").classList.remove("hidden");
+      $("cardPhoto").classList.add("is-error");
+      $("cardPhoto").classList.remove("is-done");
+      $("thumbImg").src = url;
+      $("fileName").textContent = "visa_photo.jpg";
+      $("warnBox").classList.remove("hidden");
+      $("warnBox").innerHTML = spec().fails.map((f) =>
+        `<div class="uic__warn-line"><span>⚠️</span><span>${f}</span></div>`
+      ).join("");
+      $("toolboxCta").classList.add("is-on");
+      $("btnReupload").classList.remove("hidden");
+      $("photoCheck").classList.add("hidden");
+    }
+
+    function showPass(url, fromToolbox) {
+      state.uploadedOk = true;
+      $("checkingBlock").classList.add("hidden");
+      $("doneBlock").classList.remove("hidden");
+      $("toolboxCta").classList.remove("is-on");
+      $("warnBox").classList.add("hidden");
+      $("cardPhoto").classList.remove("is-error");
+      $("cardPhoto").classList.add("is-done");
+      $("photoCheck").classList.remove("hidden");
+      $("thumbImg").src = url;
+      $("fileName").textContent = fromToolbox ? "photo_htex_cropped.jpg" : "visa_photo.jpg";
+      $("btnReupload").classList.remove("hidden");
+      $("tabPhoto").classList.add("done");
+      $("btnNext").classList.remove("is-disabled");
+      $("btnNext").disabled = false;
+      setProgress(36);
+      showWizard();
+    }
+
+    function showWizard() {
+      $("pageWizard").classList.remove("is-off");
+      $("pageToolbox").classList.remove("is-on");
+    }
+
+    function showToolbox() {
+      $("pageWizard").classList.add("is-off");
+      $("pageToolbox").classList.add("is-on");
+      if (state.pendingUrl) $("srcImg").src = state.pendingUrl;
+      oneClick();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function makeDemoImage(pass) {
+      const c = document.createElement("canvas");
+      c.width = pass ? 600 : 720;
+      c.height = pass ? 600 : 900;
+      const g = c.getContext("2d");
+      g.fillStyle = pass ? "#FFFFFF" : "#5B8DEF";
+      g.fillRect(0, 0, c.width, c.height);
+      g.fillStyle = "#E8C4A8";
+      g.beginPath();
+      const cx = c.width / 2, cy = c.height * 0.42;
+      const rx = c.width * (pass ? 0.28 : 0.18), ry = c.height * (pass ? 0.32 : 0.16);
+      g.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+      g.fill();
+      g.fillStyle = "#333";
+      g.beginPath();
+      g.ellipse(cx - rx * 0.35, cy - ry * 0.1, rx * 0.12, ry * 0.08, 0, 0, Math.PI * 2);
+      g.ellipse(cx + rx * 0.35, cy - ry * 0.1, rx * 0.12, ry * 0.08, 0, 0, Math.PI * 2);
+      g.fill();
+      g.strokeStyle = "#C4896A";
+      g.lineWidth = 3;
+      g.beginPath();
+      g.arc(cx, cy + ry * 0.25, rx * 0.28, 0.1 * Math.PI, 0.9 * Math.PI);
+      g.stroke();
+      g.fillStyle = "#1E3A5F";
+      g.beginPath();
+      g.moveTo(cx - rx * 1.6, c.height);
+      g.quadraticCurveTo(cx, cy + ry * 1.4, cx + rx * 1.6, c.height);
+      g.fill();
+      return c.toDataURL("image/jpeg", 0.92);
+    }
+
+    function loadDataUrl(dataUrl, outcome) {
+      if (state.pendingUrl && state.pendingUrl.startsWith("blob:")) URL.revokeObjectURL(state.pendingUrl);
+      state.pendingUrl = dataUrl;
+      const img = new Image();
+      img.onload = () => {
+        state.img = img;
+        showChecking();
+        setTimeout(() => {
+          if (outcome === "fail") showFail(dataUrl);
+          else showPass(dataUrl, false);
+        }, 800);
+      };
+      img.src = dataUrl;
+    }
+
+    function loadFile(file) {
+      const url = URL.createObjectURL(file);
+      if (state.pendingUrl && state.pendingUrl.startsWith("blob:")) URL.revokeObjectURL(state.pendingUrl);
+      state.pendingUrl = url;
+      const img = new Image();
+      img.onload = () => {
+        state.img = img;
+        showChecking();
+        setTimeout(() => showFail(url), 800);
+      };
+      img.src = url;
+    }
+
+    async function detectFaceBox(img) {
+      if ("FaceDetector" in window) {
+        try {
+          const detector = new FaceDetector({ fastMode: true, maxDetectedFaces: 1 });
+          const faces = await detector.detect(img);
+          if (faces[0]) {
+            const b = faces[0].boundingBox;
+            return { x: b.x, y: b.y, w: b.width, h: b.height };
+          }
+        } catch (_) {}
+      }
+      const w = img.naturalWidth || img.width;
+      const h = img.naturalHeight || img.height;
+      return { x: w * 0.28, y: h * 0.12, w: w * 0.44, h: h * 0.42 };
+    }
+
+    function sampleBg(img) {
+      const c = document.createElement("canvas");
+      const w = Math.min(100, img.naturalWidth || img.width);
+      const h = Math.min(100, img.naturalHeight || img.height);
+      c.width = w; c.height = h;
+      const g = c.getContext("2d", { willReadFrequently: true });
+      g.drawImage(img, 0, 0, w, h);
+      const pts = [[2,2],[w-3,2],[2,h-3],[w-3,h-3],[w/2,2]];
+      let r=0,gc=0,b=0;
+      pts.forEach(([x,y]) => {
+        const d = g.getImageData(x|0,y|0,1,1).data;
+        r+=d[0]; gc+=d[1]; b+=d[2];
+      });
+      return [r/pts.length, gc/pts.length, b/pts.length];
+    }
+
+    function dist(a,b){
+      const dr=a[0]-b[0], dg=a[1]-b[1], db=a[2]-b[2];
+      return Math.sqrt(dr*dr+dg*dg+db*db);
+    }
+
+    async function renderOutput() {
+      if (!state.img) return;
+      const s = spec();
+      const img = state.img;
+      const zoom = parseFloat($("zoom").value);
+      const offX = parseFloat($("offX").value);
+      const offY = parseFloat($("offY").value);
+      $("zoomVal").textContent = zoom.toFixed(2) + "×";
+      $("offXVal").textContent = String(offX);
+      $("offYVal").textContent = String(offY);
+      $("outCanvas").width = s.pxW;
+      $("outCanvas").height = s.pxH;
+      $("previewFrame").style.setProperty("--ar", `${s.mmW} / ${s.mmH}`);
+
+      const face = await detectFaceBox(img);
+      const faceCx = face.x + face.w / 2;
+      const faceCy = face.y + face.h * 0.42;
+      const targetFaceW = s.pxW * (s.mmW === s.mmH ? 0.58 : 0.52);
+      const scale = (targetFaceW / face.w) * zoom;
+      const sx = faceCx - (s.pxW / 2) / scale + (offX / 100) * (img.naturalWidth || img.width);
+      const sy = faceCy - (s.pxH * 0.38) / scale + (offY / 100) * (img.naturalHeight || img.height);
+
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fillRect(0, 0, s.pxW, s.pxH);
+
+      const tmp = document.createElement("canvas");
+      tmp.width = s.pxW; tmp.height = s.pxH;
+      const tctx = tmp.getContext("2d", { willReadFrequently: true });
+      tctx.drawImage(img, sx, sy, s.pxW / scale, s.pxH / scale, 0, 0, s.pxW, s.pxH);
+
+      const bg = sampleBg(img);
+      const src = tctx.getImageData(0, 0, s.pxW, s.pxH);
+      const dst = ctx.getImageData(0, 0, s.pxW, s.pxH);
+      const thresh = 52;
+      for (let i = 0; i < src.data.length; i += 4) {
+        const px = [src.data[i], src.data[i+1], src.data[i+2]];
+        const d = dist(px, bg);
+        const luma = 0.299*px[0]+0.587*px[1]+0.114*px[2];
+        const nearWhite = luma > 210 && Math.abs(px[0]-px[1]) < 18 && Math.abs(px[1]-px[2]) < 18;
+        if (d < thresh || nearWhite) {
+          const a = nearWhite ? 1 : Math.min(1, (thresh - d) / thresh);
+          dst.data[i] = Math.round(px[0]*(1-a) + 255*a);
+          dst.data[i+1] = Math.round(px[1]*(1-a) + 255*a);
+          dst.data[i+2] = Math.round(px[2]*(1-a) + 255*a);
+          dst.data[i+3] = 255;
+        } else {
+          dst.data[i]=px[0]; dst.data[i+1]=px[1]; dst.data[i+2]=px[2]; dst.data[i+3]=255;
+        }
+      }
+      ctx.putImageData(dst, 0, 0);
+      $("outMeta").textContent = `${s.mmW}×${s.mmH}mm`;
+    }
+
+    function oneClick() {
+      $("zoom").value = "1.08";
+      $("offX").value = "0";
+      $("offY").value = "-6";
+      renderOutput();
+      toast("已按本单规格一键剪裁");
+    }
+
+    $("demoOrder").addEventListener("change", (e) => {
+      state.dest = e.target.value;
+      syncOrderUI();
+      resetPhotoCard();
+      showWizard();
+      toast(`演示申请单：${spec().label}`);
+    });
+
+    $("btnPick").addEventListener("click", () => $("fileInput").click());
+    $("fileInput").addEventListener("change", (e) => {
+      const f = e.target.files && e.target.files[0];
+      if (f) loadFile(f);
+      e.target.value = "";
+    });
+    $("btnDemoFail").addEventListener("click", () => loadDataUrl(makeDemoImage(false), "fail"));
+    $("btnDemoPass").addEventListener("click", () => loadDataUrl(makeDemoImage(true), "pass"));
+
+    $("btnSkip").addEventListener("click", () => {
+      showPass(state.pendingUrl, false);
+      toast("已跳过工具箱，按原流程上传");
+    });
+
+    $("btnToolbox").addEventListener("click", () => {
+      if (!state.img) {
+        const url = makeDemoImage(false);
+        state.pendingUrl = url;
+        const img = new Image();
+        img.onload = () => { state.img = img; showToolbox(); };
+        img.src = url;
+        return;
+      }
+      showToolbox();
+    });
+
+    $("btnReupload").addEventListener("click", () => {
+      resetPhotoCard();
+      $("idleActions").classList.remove("hidden");
+    });
+
+    $("btnBack").addEventListener("click", showWizard);
+    $("btnCancelToolbox").addEventListener("click", showWizard);
+    $("btnOneClick").addEventListener("click", oneClick);
+    $("btnConfirm").addEventListener("click", () => {
+      const url = $("outCanvas").toDataURL("image/jpeg", 0.92);
+      state.pendingUrl = url;
+      showPass(url, true);
+      toast("已使用工具箱结果并上传");
+    });
+
+    ["zoom","offX","offY"].forEach((id) => {
+      $(id).addEventListener("input", () => {
+        if ($("pageToolbox").classList.contains("is-on")) renderOutput();
+      });
+    });
+
+    $("btnNext").addEventListener("click", () => {
+      if (!state.uploadedOk) return;
+      toast("演示：进入下一步（工作 / 在职）");
+    });
+
+    syncOrderUI();
+  </script>
+</body>
+</html>
