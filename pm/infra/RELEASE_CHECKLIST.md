@@ -1,6 +1,13 @@
 # Htex 发版检查清单（前后端分开部署时必看）
 
+> 完整 DevOps 方案见 [`DEVOPS.md`](./DEVOPS.md)。  
 > 目标：避免再出现「Google 按钮消失 / 管理端 500 / 上传全挂」这类发完才发现的问题。
+
+发版后必跑：
+
+```bash
+bash scripts/smoke-prod.sh
+```
 
 ## 0. 铁律
 
