@@ -146,6 +146,8 @@
         </div>
       </section>
 
+      <ProductInteractiveDemo />
+
       <!-- W28 重构:Why choose us — 从"功能描述"改成"用户利益 + SVG icon" -->
       <section class="features">
         <div class="features__head">
@@ -182,6 +184,7 @@ import AppButton from '@/components/AppButton.vue'
 import LangSwitch from '@/components/LangSwitch.vue'
 import { useAuthStore } from '@/stores/auth'
 import AppHeader from '@/components/AppHeader.vue'
+import ProductInteractiveDemo from '@/components/ProductInteractiveDemo.vue'
 import { listDestinations } from '@/api/destinations'
 import { track, Events, setEntrySource } from '@/api/analytics'
 
