@@ -4,17 +4,33 @@
 
     <main class="mw-main">
       <header class="mw-hero">
-        <h1 class="mw-hero__title">{{ t('wizard.title') }}</h1>
-        <p class="mw-hero__privacy">{{ t('wizard.local_storage_hint') }}</p>
-        <button type="button" class="mw-hero__clear" data-testid="wizard-clear-local" @click="clearLocalOpen = true">
-          {{ t('privacy_local.clear_btn') }}
-        </button>
+        <div class="mw-hero__top">
+          <div>
+            <h1 class="mw-hero__title">{{ t('wizard.title') }}</h1>
+            <p class="mw-hero__privacy">{{ t('wizard.local_storage_hint') }}</p>
+          </div>
+          <div class="mw-hero__actions">
+            <span class="mw-hero__privacy-pill">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="4" y="10" width="16" height="10" rx="2" />
+                <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+              </svg>
+              {{ t('wizard.privacy_first') }}
+            </span>
+            <button type="button" class="mw-hero__clear" data-testid="wizard-clear-local" @click="clearLocalOpen = true">
+              {{ t('privacy_local.clear_btn') }}
+            </button>
+          </div>
+        </div>
       </header>
 
       <!-- 整体进度条 -->
       <div class="mw-progress">
         <div class="mw-progress__bar"><div class="mw-progress__fill" :style="{ width: wizard.overallPercent.value + '%' }" /></div>
-        <div class="mw-progress__text">{{ wizard.overallPercent.value }}% {{ t('wizard.progress_done') }}</div>
+        <div class="mw-progress__meta">
+          <span>{{ progressStatusText }}</span>
+          <strong>{{ wizard.overallPercent.value }}%</strong>
+        </div>
       </div>
 
       <!-- 分类导航 -->
@@ -43,7 +59,13 @@
 
       <!-- 当前分类内容 -->
       <section class="mw-panel" :data-testid="`mw-panel-${wizard.activeCategoryDef.value.key}`">
-        <h2 class="mw-panel__title">{{ t(wizard.activeCategoryDef.value.labelKey) }}</h2>
+        <div class="mw-panel__head">
+          <div>
+            <span class="mw-panel__step">{{ t('wizard.step_of', { current: activeCategoryIndex, total: wizard.CATEGORIES.length }) }}</span>
+            <h2 class="mw-panel__title">{{ t(wizard.activeCategoryDef.value.labelKey) }}</h2>
+          </div>
+          <span class="mw-panel__count">{{ t('wizard.items_completed', { count: activeCategoryCompleted }) }}</span>
+        </div>
 
         <!-- 签证表格：6 大类收尾 — 在同一页内直接展开 3 个 sub-tab 表单，不再跳转 OrderNew。
              旧版：mw-finish + "开始填写申请表 →" 按钮跳 /orders/new，体验跨度大。
@@ -1160,6 +1182,26 @@ const isAuForm = computed(() => normalizedCountry.value === 'AU')
 const wizard = useMaterialWizard(countryCode, visaType)
 const clearLocalOpen = ref(false)
 const exportingEmploymentWord = ref(false)
+
+const activeCategoryIndex = computed(() => {
+  const index = wizard.CATEGORIES.findIndex(cat => cat.key === wizard.activeCategoryDef.value.key)
+  return index >= 0 ? index + 1 : 1
+})
+
+const activeCategoryCompleted = computed(() => {
+  const key = wizard.activeCategoryDef.value.key
+  const items = wizard.state.categories[key]?.items || {}
+  return Object.values(items).filter(item => item?.collected).length
+})
+
+const progressStatusText = computed(() => {
+  const category = wizard.activeCategoryDef.value
+  const records = wizard.state.categories[category.key]?.items || {}
+  const nextItem = category.items?.find(item => !records[item.key]?.collected)
+  if (nextItem?.labelKey) return t('wizard.progress_next', { item: t(nextItem.labelKey) })
+  if (wizard.overallPercent.value >= 100) return t('wizard.progress_all_done')
+  return t(category.labelKey)
+})
 
 function onClearLocalData() {
   clearAllLocalVisaData()
@@ -2290,6 +2332,8 @@ const CategoryIcon = {
 .mw-main { max-width: 1200px; margin: 0 auto; padding: 32px 24px 80px; }
 
 .mw-hero { text-align: left; margin-bottom: 32px; }
+.mw-hero__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+.mw-hero__actions { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
 .mw-hero__title {
   font-size: 30px; font-weight: 700; margin: 0 0 12px; letter-spacing: -.5px;
   color: #0F172A; line-height: 1.25;
@@ -2301,15 +2345,22 @@ const CategoryIcon = {
   color: #64748b;
   line-height: 1.45;
 }
+.mw-hero__privacy-pill {
+  display: inline-flex; align-items: center; gap: 7px; flex: 0 0 auto;
+  padding: 7px 12px; border-radius: 999px;
+  background: #EFF6FF; color: #2563EB;
+  font-size: 13px; font-weight: 600;
+  animation: mw-privacy-float 3s ease-in-out infinite;
+}
 .mw-hero__clear {
   border: 1px solid #E2E8F0;
   background: #fff;
   color: #475569;
   font-size: 13px;
   font-weight: 500;
-  min-height: 40px;
-  padding: 10px 20px;
-  border-radius: 8px;
+  min-height: 32px;
+  padding: 7px 12px;
+  border-radius: 999px;
   cursor: pointer;
 }
 .mw-hero__clear:hover {
@@ -2343,10 +2394,17 @@ const CategoryIcon = {
 }
 .mw-progress__bar { height: 8px; background: #F1F5F9; border-radius: 999px; overflow: hidden; }
 .mw-progress__fill { height: 100%; background: #2563EB; border-radius: 999px; transition: width .4s ease; }
-.mw-progress__text {
-  font-size: 13px; font-weight: 600; color: #64748b;
-  text-align: right; margin-top: 10px;
+.mw-progress__fill { position: relative; overflow: hidden; }
+.mw-progress__fill::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(100deg, transparent 20%, rgba(255,255,255,.45) 50%, transparent 80%);
+  transform: translateX(-110%); animation: mw-progress-glint 2.2s ease-in-out infinite;
 }
+.mw-progress__meta {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  margin-top: 10px; color: #64748b; font-size: 13px;
+}
+.mw-progress__meta strong { color: #0f172a; font-size: 14px; font-variant-numeric: tabular-nums; }
 
 .mw-steps {
   display: grid;
@@ -2390,7 +2448,23 @@ const CategoryIcon = {
   background: #fff; border: 1px solid #E2E8F0; border-radius: 16px;
   padding: 28px 30px;
 }
-.mw-panel__title { font-size: 20px; font-weight: 700; color: #0f172a; margin: 0 0 18px; }
+.mw-panel__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 18px; }
+.mw-panel__step {
+  display: block; margin-bottom: 5px; color: #94a3b8;
+  font-size: 11px; font-weight: 600; letter-spacing: .11em; text-transform: uppercase;
+}
+.mw-panel__title { font-size: 20px; font-weight: 700; color: #0f172a; margin: 0; }
+.mw-panel__count {
+  padding: 5px 11px; border-radius: 999px;
+  background: #EFF6FF; color: #2563EB;
+  font-size: 12px; font-weight: 600;
+}
+
+@keyframes mw-progress-glint { 55%, 100% { transform: translateX(110%); } }
+@keyframes mw-privacy-float { 50% { transform: translateY(-2px); } }
+@media (prefers-reduced-motion: reduce) {
+  .mw-hero__privacy-pill, .mw-progress__fill::after { animation: none; }
+}
 
 .mw-items { display: flex; flex-direction: column; gap: 14px; }
 

@@ -16,7 +16,7 @@
           <th class="benefits__col-free">{{ t('payment.checkout_col_free') }}</th>
           <th class="benefits__col-paid">
             {{ t('payment.checkout_col_paid') }}
-            <span class="benefits__badge">{{ t('payment.checkout_badge_recommended') }}</span>
+            <span class="benefits__price">{{ price }} / {{ t('payment.checkout_price_per_application') }}</span>
           </th>
         </tr>
       </thead>
@@ -48,6 +48,10 @@ import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 
+defineProps({
+  price: { type: String, default: '$19.90' },
+})
+
 const groups = [
   {
     sectionKey: 'payment.checkout_section_basic',
@@ -61,15 +65,10 @@ const groups = [
     sectionKey: 'payment.checkout_section_paid',
     rows: [
       { key: 'template', free: 'preview', paid: 'download', highlight: true },
+      { key: 'photo', free: 'no', paid: 'yes', highlight: true },
       { key: 'report', free: 'summary', paid: 'full', highlight: true },
       { key: 'issues', free: 'no', paid: 'yes', highlight: true },
       { key: 'consistency', free: 'no', paid: 'yes', highlight: true },
-      { key: 'rerun', free: 'no', paid: 'yes' },
-    ],
-  },
-  {
-    sectionKey: 'payment.checkout_section_browser',
-    rows: [
       { key: 'fill', free: 'no', paid: 'yes', highlight: true },
       { key: 'submit', free: 'no', paid: 'yes', highlight: true },
     ],
@@ -200,11 +199,11 @@ function cellText(kind) {
   line-height: 1.35;
   white-space: pre-line;
 }
-.benefits__badge {
+.benefits__price {
   display: inline-block;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 800;
-  padding: 2px 6px;
+  padding: 3px 7px;
   border-radius: 4px;
   margin-left: 4px;
   background: rgba(255, 255, 255, 0.25);

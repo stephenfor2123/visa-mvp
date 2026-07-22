@@ -24,14 +24,7 @@
           <p class="checkout-sub" v-html="t('payment.checkout_package_sub')"></p>
         </header>
 
-        <PaymentBenefitsCompare />
-
-        <div class="price-bar">
-          <span v-if="showStrike" class="price-list">{{ symbol }}{{ formatUsd(listPrice) }}</span>
-          <span class="price-now">{{ symbol }}{{ formatUsd(chargeUsd) }}</span>
-          <span v-if="showStrike" class="price-tag">{{ t('home.pricing.promo_tag') }}</span>
-        </div>
-        <p class="price-hint">{{ t('payment.checkout_price_hint') }}</p>
+        <PaymentBenefitsCompare :price="`${symbol}${formatUsd(chargeUsd)}`" />
 
         <div class="note note--embassy">
           <p>
@@ -125,7 +118,6 @@ const router = useRouter()
 const auth = useAuthStore()
 const toast = useToast()
 const {
-  listPrice,
   displayCents,
   symbol,
   load: loadPricing,
@@ -150,10 +142,6 @@ const payButtonLabel = computed(() => (
 ))
 
 const chargeUsd = ref(0)
-const showStrike = computed(() => {
-  const list = Number(listPrice.value)
-  return list > 0 && chargeUsd.value > 0 && chargeUsd.value < list
-})
 
 const loading = ref(true)
 const loadError = ref('')
@@ -418,34 +406,6 @@ onBeforeUnmount(() => {
   font-size: 14px;
   :deep(strong) { color: #0f172a; }
 }
-
-.price-bar {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 8px 12px;
-  margin-bottom: 8px;
-}
-.price-list {
-  color: #94a3b8;
-  text-decoration: line-through;
-  font-size: 16px;
-  font-weight: 600;
-}
-.price-now {
-  font-size: 28px;
-  font-weight: 800;
-  color: #0f172a;
-}
-.price-tag {
-  font-size: 11px;
-  font-weight: 700;
-  color: #1d4ed8;
-  background: #eaf0fe;
-  padding: 2px 8px;
-  border-radius: 4px;
-}
-.price-hint { margin: 0 0 16px; font-size: 13px; color: #64748b; }
 
 .note--embassy {
   margin: 0 0 12px;

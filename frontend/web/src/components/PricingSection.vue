@@ -1,291 +1,216 @@
-<!--
-  PricingSection.vue — 首页定价透明区块 (W54)
-
-  设计:
-  - 标题 + 一句话核心承诺
-  - 4 国对比表 (国家 / 使馆费 / 平台服务费)
-  - 使馆费旁标注「不退」；服务费旁标注「拒签可退」
-  - 合规说明 bullet (退费流程 / 工作时间 / 客服)
-
-  i18n: 全文案走 key — 'home.pricing.*'
-  数据: 4 国固化在组件, 服务费统一 99 元 (按产品定价), 退款规则文案化由 i18n 控制
--->
+<!-- PricingSection — interactive pricing comparison -->
 <template>
   <section class="pricing" :class="{ 'pricing--standalone': standalone }" data-testid="home-pricing">
     <header class="pricing__head">
+      <span class="pricing__eyebrow">HTEX · TRANSPARENT PRICING</span>
       <component :is="standalone ? 'h1' : 'h2'" class="pricing__title">
         {{ t('home.pricing.title') }}
       </component>
       <p class="pricing__sub">{{ t('home.pricing.sub') }}</p>
     </header>
 
-    <!-- 对比表格: 4 国核心收费 -->
+    <div class="pricing__country-picker" role="group" :aria-label="t('home.pricing.col_country')">
+      <button
+        v-for="row in ROWS"
+        :key="row.code"
+        type="button"
+        class="pricing__country-button"
+        :class="{ 'is-active': selectedCode === row.code }"
+        :aria-pressed="selectedCode === row.code"
+        @click="selectedCode = row.code"
+      >
+        <span aria-hidden="true">{{ row.flag }}</span>
+        <span>{{ t(`country.${row.code}`) }}</span>
+      </button>
+    </div>
+
+    <!-- Flowbite-inspired decision panel; values remain driven by our own pricing API. -->
+    <div class="pricing__decision">
+      <article class="pricing__plan pricing__plan--official">
+        <div class="pricing__plan-kicker">
+          <span class="pricing__plan-icon" aria-hidden="true">{{ selectedRow.flag }}</span>
+          {{ t('home.pricing.col_consulate') }}
+        </div>
+        <div class="pricing__price">
+          <span>{{ selectedRow.symbol }}</span>{{ selectedRow.amount.toLocaleString() }}
+        </div>
+        <p>{{ t(`home.pricing.consulate_note_${selectedRow.currency.toLowerCase()}`) }}</p>
+        <div class="pricing__status pricing__status--neutral">
+          <span aria-hidden="true">×</span>{{ t('home.pricing.refund_no') }}
+        </div>
+      </article>
+
+      <article class="pricing__plan pricing__plan--featured">
+        <span v-if="isPromo" class="pricing__ribbon">{{ t('home.pricing.promo_tag') }}</span>
+        <div class="pricing__plan-kicker">
+          <span class="pricing__brand-mark" aria-hidden="true">H</span>
+          {{ t('home.pricing.col_service') }}
+        </div>
+        <div class="pricing__price pricing__price--brand">
+          <span>{{ symbol }}</span>{{ formatUsd(displayPrice) }}
+        </div>
+        <div v-if="isPromo" class="pricing__was">
+          {{ symbol }} {{ formatUsd(listPrice) }}
+        </div>
+        <p>{{ t('home.pricing.service_note') }}</p>
+        <div class="pricing__status pricing__status--ok">
+          <span aria-hidden="true">✓</span>{{ t('home.pricing.service_refund_title') }}
+        </div>
+      </article>
+
+      <article class="pricing__plan pricing__plan--promise">
+        <div class="pricing__plan-kicker">
+          <span class="pricing__shield" aria-hidden="true">✓</span>
+          {{ t('home.pricing.col_refund') }}
+        </div>
+        <div class="pricing__promise-title">{{ t('home.pricing.service_refund_title') }}</div>
+        <p>{{ t('home.pricing.service_refund_desc') }}</p>
+        <div class="pricing__status pricing__status--link">
+          {{ t('home.pricing.total_label') }} <span aria-hidden="true">→</span>
+        </div>
+      </article>
+    </div>
+
+    <div class="pricing__summary">
+      <span class="pricing__summary-dot" aria-hidden="true"></span>
+      <strong>{{ t('home.pricing.total_label') }}</strong>
+      <span>{{ t('home.pricing.total_note') }}</span>
+    </div>
+
     <div class="pricing__table-wrap">
-      <table class="pricing__table" role="table" aria-label="签证费用对比">
-        <colgroup>
-          <col class="pricing__col-country" />
-          <col class="pricing__col-consulate" />
-          <col class="pricing__col-service" />
-        </colgroup>
+      <table class="pricing__table" aria-label="签证费用对比">
         <thead>
           <tr>
             <th scope="col">{{ t('home.pricing.col_country') }}</th>
             <th scope="col">{{ t('home.pricing.col_consulate') }}</th>
             <th scope="col">{{ t('home.pricing.col_service') }}</th>
+            <th scope="col">{{ t('home.pricing.col_refund') }}</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="row in ROWS" :key="row.code">
-            <th scope="row" class="pricing__country">
-              <span class="pricing__flag" aria-hidden="true">{{ row.flag }}</span>
-              <span>{{ t(`country.${row.code}`) }}</span>
-            </th>
+          <tr
+            v-for="(row, index) in ROWS"
+            :key="row.code"
+            :class="{ 'is-selected': selectedCode === row.code }"
+            :style="{ '--row-delay': `${index * 55}ms` }"
+            @click="selectedCode = row.code"
+          >
+            <th scope="row"><span class="pricing__flag">{{ row.flag }}</span>{{ t(`country.${row.code}`) }}</th>
+            <td><strong>{{ row.symbol }} {{ row.amount.toLocaleString() }}</strong></td>
             <td>
-              <div class="pricing__fee-cell">
-                <span class="pricing__amount">{{ row.symbol }} {{ row.amount.toLocaleString() }}</span>
-                <span class="pricing__note pricing__note--inline">
-                  {{ t(`home.pricing.consulate_note_${row.currency.toLowerCase()}`) }}
-                  <span class="pricing__pill pricing__pill--no">{{ t('home.pricing.refund_no') }}</span>
-                </span>
-              </div>
+              <span v-if="isPromo" class="pricing__list-price">{{ symbol }} {{ formatUsd(listPrice) }}</span>
+              <strong class="pricing__service-price">{{ symbol }} {{ formatUsd(displayPrice) }}</strong>
             </td>
-            <td>
-              <div class="pricing__fee-cell">
-                <div class="pricing__svc-cell">
-                  <span v-if="isPromo" class="pricing__amount pricing__amount--list">
-                    {{ symbol }} {{ formatUsd(listPrice) }}
-                  </span>
-                  <span class="pricing__amount pricing__amount--svc">
-                    {{ symbol }} {{ formatUsd(displayPrice) }}
-                  </span>
-                  <span v-if="isPromo" class="pricing__promo-tag">{{ t('home.pricing.promo_tag') }}</span>
-                </div>
-                <span class="pricing__note">{{ t('home.pricing.service_note') }}</span>
-              </div>
-            </td>
+            <td><span class="pricing__check">✓</span>{{ t('home.pricing.service_note') }}</td>
           </tr>
         </tbody>
-        <tfoot>
-          <tr>
-            <th scope="row" class="pricing__total-label">
-              {{ t('home.pricing.total_label') }}
-            </th>
-            <td class="pricing__total-cell" :colspan="2">
-              {{ t('home.pricing.total_note') }}
-            </td>
-          </tr>
-        </tfoot>
       </table>
     </div>
   </section>
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { usePlatformPricing } from '@/composables/usePlatformPricing'
 
-defineProps({
-  standalone: {
-    type: Boolean,
-    default: false,
-  },
-})
+defineProps({ standalone: { type: Boolean, default: false } })
 
 const { t } = useI18n()
 const { isPromo, displayPrice, listPrice, symbol, load, formatUsd } = usePlatformPricing()
+const selectedCode = ref('us')
+
+const ROWS = [
+  { code: 'us', flag: '🇺🇸', currency: 'USD', symbol: '$', amount: 185 },
+  { code: 'gb', flag: '🇬🇧', currency: 'GBP', symbol: '£', amount: 127 },
+  { code: 'fr', flag: '🇫🇷', currency: 'EUR', symbol: '€', amount: 90 },
+  { code: 'au', flag: '🇦🇺', currency: 'AUD', symbol: 'A$', amount: 215 },
+]
+
+const selectedRow = computed(() => ROWS.find(row => row.code === selectedCode.value) || ROWS[0])
 
 onMounted(() => { load() })
-
-  const ROWS = [
-    { code: 'us', flag: '🇺🇸', currency: 'USD', symbol: '$',  amount: 185 },
-    { code: 'gb', flag: '🇬🇧', currency: 'GBP', symbol: '£', amount: 127 },
-    { code: 'fr', flag: '🇫🇷', currency: 'EUR', symbol: '€', amount: 90 },
-    { code: 'au', flag: '🇦🇺', currency: 'AUD', symbol: 'A$', amount: 215 },
-  ]
 </script>
 
 <style scoped>
 .pricing {
   margin-top: 64px;
-  padding: 56px 24px 64px;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
+  padding: 64px 28px 68px;
+  overflow: hidden;
+  color: #101828;
+  background:
+    radial-gradient(circle at 50% -20%, rgba(37, 99, 235, .09), transparent 36%),
+    linear-gradient(180deg, #fff 0%, #f8fafc 100%);
+  border: 1px solid #e4e7ec;
+  border-radius: 24px;
 }
+.pricing--standalone { margin-top: 22px; border: 0; background-color: transparent; }
+.pricing__head { max-width: 720px; margin: 0 auto 28px; text-align: center; animation: pricing-rise .55s ease both; }
+.pricing__eyebrow { display: inline-block; margin-bottom: 12px; color: #2563eb; font-size: 11px; font-weight: 800; letter-spacing: .13em; }
+.pricing__title { margin: 0 0 12px; color: #0f172a; font-size: clamp(30px, 4vw, 44px); line-height: 1.1; letter-spacing: -.045em; }
+.pricing__sub { margin: 0; color: #667085; font-size: 15px; line-height: 1.65; }
 
-/* W58: 独立页模式 — 去掉外层卡片框 / 渐变 / 圆角 / 顶部间距,
-   让定价区块在 /pricing 页面里直接铺到主区背景上 */
-.pricing--standalone {
-  margin-top: 32px;
-  padding: 32px 0 24px;
-  background: transparent;
-  border-radius: 0;
-  border: 0;
-}
+.pricing__country-picker { display: flex; width: fit-content; max-width: 100%; margin: 0 auto 22px; padding: 5px; gap: 4px; overflow-x: auto; border: 1px solid #e4e7ec; border-radius: 999px; background: rgba(255,255,255,.88); box-shadow: 0 5px 18px rgba(16,24,40,.05); }
+.pricing__country-button { display: flex; align-items: center; gap: 7px; min-width: max-content; padding: 8px 14px; border: 0; border-radius: 999px; color: #667085; background: transparent; font: inherit; font-size: 13px; font-weight: 650; cursor: pointer; transition: color .2s, background .2s, box-shadow .2s, transform .2s; }
+.pricing__country-button:hover { color: #1d4ed8; transform: translateY(-1px); }
+.pricing__country-button.is-active { color: #fff; background: #2563eb; box-shadow: 0 5px 12px rgba(37,99,235,.25); }
 
-/* 标题区 */
-.pricing__head { text-align: center; margin-bottom: 36px; }
-.pricing__title {
-  font-size: 28px; font-weight: 700; color: #0f172a;
-  margin: 0 0 10px; letter-spacing: -0.5px;
-}
-.pricing__sub {
-  font-size: 15px; color: #64748b; margin: 0; line-height: 1.6;
-  max-width: 620px; margin-left: auto; margin-right: auto;
-}
+.pricing__decision { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 1120px; margin: 0 auto; overflow: hidden; border: 1px solid #e4e7ec; border-radius: 20px 20px 0 0; background: #f9fafb; box-shadow: 0 24px 55px rgba(16,24,40,.09); animation: pricing-rise .6s .08s ease both; }
+.pricing__plan { position: relative; min-height: 310px; padding: 34px 34px 28px; border-right: 1px solid #e4e7ec; transition: background .25s, transform .25s, box-shadow .25s; }
+.pricing__plan:last-child { border-right: 0; }
+.pricing__plan:hover { z-index: 2; background: #fff; box-shadow: 0 18px 35px rgba(16,24,40,.09); transform: translateY(-4px); }
+.pricing__plan--featured { background: #fff; }
+.pricing__plan--featured::before { position: absolute; inset: 0 0 auto; height: 4px; content: ''; background: linear-gradient(90deg, #2563eb, #7c3aed); }
+.pricing__ribbon { position: absolute; top: 18px; right: 18px; padding: 5px 9px; border-radius: 999px; color: #b45309; background: #fffbeb; font-size: 10px; font-weight: 800; letter-spacing: .04em; }
+.pricing__plan-kicker { display: flex; align-items: center; gap: 9px; min-height: 28px; color: #101828; font-size: 17px; font-weight: 750; }
+.pricing__plan-icon { font-size: 24px; }
+.pricing__brand-mark, .pricing__shield { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 8px; color: #fff; background: linear-gradient(135deg, #2563eb, #7c3aed); font-size: 14px; font-weight: 900; box-shadow: 0 6px 14px rgba(37,99,235,.2); }
+.pricing__shield { border-radius: 50%; background: #12b76a; }
+.pricing__price { margin: 22px 0 18px; color: #101828; font-size: clamp(38px, 4vw, 52px); font-weight: 800; line-height: 1; letter-spacing: -.045em; font-variant-numeric: tabular-nums; }
+.pricing__price span { margin-right: 4px; font-size: .55em; vertical-align: 8px; }
+.pricing__price--brand { color: #1d4ed8; }
+.pricing__was { margin: -12px 0 10px; color: #98a2b3; font-size: 14px; font-weight: 650; text-decoration: line-through; }
+.pricing__plan p { min-height: 52px; margin: 0; color: #667085; font-size: 14px; line-height: 1.55; }
+.pricing__promise-title { margin: 24px 0 14px; color: #101828; font-size: 26px; font-weight: 780; line-height: 1.14; letter-spacing: -.035em; }
+.pricing__status { display: flex; align-items: center; width: 100%; min-height: 46px; margin-top: 22px; padding: 0 15px; gap: 9px; border: 1px solid #d0d5dd; border-radius: 9px; color: #344054; background: #fff; font-size: 13px; font-weight: 700; transition: transform .2s, box-shadow .2s; }
+.pricing__status span { font-size: 18px; }
+.pricing__status--ok { border: 0; color: #fff; background: linear-gradient(90deg, #2563eb, #4f46e5); box-shadow: 0 8px 20px rgba(37,99,235,.2); }
+.pricing__status--ok:hover { transform: translateY(-2px); box-shadow: 0 12px 25px rgba(37,99,235,.3); }
+.pricing__status--neutral span { color: #f04438; }
+.pricing__status--link { padding: 0; border: 0; color: #7c3aed; background: transparent; }
+.pricing__status--link span { transition: transform .2s; }
+.pricing__plan:hover .pricing__status--link span { transform: translateX(5px); }
 
-/* 表格容器 */
-.pricing__table-wrap {
-  max-width: 920px; margin: 0 auto 36px;
-  overflow-x: auto;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  background: #fff;
-}
-.pricing__table {
-  width: 100%; border-collapse: collapse;
-  font-size: 14px;
-  table-layout: fixed;
-}
-.pricing__col-country   { width: 28%; }
-.pricing__col-consulate { width: 36%; }
-.pricing__col-service   { width: 36%; }
-.pricing__table thead th {
-  text-align: left; padding: 14px 18px;
-  background: #f1f5f9;
-  color: #475569; font-weight: 600; font-size: 12px;
-  text-transform: uppercase; letter-spacing: 0.5px;
-  border-bottom: 1px solid #e2e8f0;
-}
-.pricing__table tbody td,
-.pricing__table tbody th,
-.pricing__table tfoot td,
-.pricing__table tfoot th {
-  padding: 16px 18px;
-  border-bottom: 1px solid #f1f5f9;
-  vertical-align: middle;
-  color: #1e293b;
-}
-.pricing__table tbody tr:last-child td,
-.pricing__table tbody tr:last-child th {
-  border-bottom: 1px solid #f1f5f9;
-}
-.pricing__country {
-  display: flex; align-items: center; gap: 8px;
-  font-weight: 600; color: #0f172a;
-}
-.pricing__flag {
-  font-size: 22px; line-height: 1; flex-shrink: 0;
-}
-.pricing__fee-cell {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 6px;
-  min-height: 52px;
-}
-.pricing__amount {
-  font-size: 17px; font-weight: 700; color: #0f172a;
-  font-variant-numeric: tabular-nums;
-  line-height: 1.2;
-}
-.pricing__amount--svc { color: #2563eb; }
-.pricing__amount--list {
-  font-size: 14px; font-weight: 600; color: #94a3b8;
-  text-decoration: line-through; margin-right: 6px;
-}
-.pricing__svc-cell { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
-.pricing__promo-tag {
-  font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;
-  background: #fef3c7; color: #b45309; margin-left: 4px;
-}
-.pricing__note {
-  display: block;
-  font-size: 11px; color: #94a3b8; line-height: 1.5;
-}
-.pricing__note--inline {
-  display: inline-flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.pricing__pill {
-  display: inline-block;
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 11px; font-weight: 600;
-  letter-spacing: 0.3px;
-  white-space: nowrap;
-}
-.pricing__pill--ok { background: #dcfce7; color: #15803d; }
-.pricing__pill--no { background: #fef3c7; color: #b45309; }
+.pricing__summary { display: flex; align-items: center; max-width: 1120px; min-height: 64px; margin: 0 auto; padding: 14px 22px; gap: 10px; border: 1px solid #e4e7ec; border-top: 0; border-radius: 0 0 20px 20px; color: #667085; background: #f2f4f7; font-size: 12.5px; line-height: 1.5; }
+.pricing__summary strong { flex: 0 0 auto; color: #344054; }
+.pricing__summary-dot { width: 9px; height: 9px; flex: 0 0 auto; border-radius: 50%; background: #12b76a; box-shadow: 0 0 0 5px rgba(18,183,106,.12); animation: pricing-pulse 2s infinite; }
 
-/* tfoot — 总说明 */
-.pricing__table tfoot th { font-weight: 600; color: #475569; background: #f8fafc; }
-.pricing__table tfoot td { font-size: 12.5px; color: #64748b; }
+.pricing__table-wrap { max-width: 1120px; margin: 34px auto 0; overflow-x: auto; border: 1px solid #e4e7ec; border-radius: 15px; background: #fff; }
+.pricing__table { width: 100%; min-width: 720px; border-collapse: collapse; table-layout: fixed; font-size: 13px; }
+.pricing__table th, .pricing__table td { padding: 16px 20px; border-bottom: 1px solid #eaecf0; text-align: left; }
+.pricing__table thead th { color: #667085; background: #f9fafb; font-size: 11px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
+.pricing__table tbody tr { cursor: pointer; animation: pricing-rise .45s var(--row-delay) ease both; transition: background .18s, box-shadow .18s; }
+.pricing__table tbody tr:last-child th, .pricing__table tbody tr:last-child td { border-bottom: 0; }
+.pricing__table tbody tr:hover, .pricing__table tbody tr.is-selected { background: #f5f8ff; box-shadow: inset 3px 0 #2563eb; }
+.pricing__flag { margin-right: 9px; font-size: 20px; vertical-align: middle; }
+.pricing__list-price { margin-right: 7px; color: #98a2b3; text-decoration: line-through; }
+.pricing__service-price { color: #2563eb; }
+.pricing__check { display: inline-grid; width: 20px; height: 20px; margin-right: 8px; place-items: center; border-radius: 50%; color: #fff; background: #12b76a; font-size: 11px; font-weight: 900; }
 
-/* 退款双卡 */
-.pricing__rules {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  max-width: 920px; margin: 0 auto 32px;
+@keyframes pricing-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pricing-pulse { 50% { box-shadow: 0 0 0 9px rgba(18,183,106,0); } }
+@media (prefers-reduced-motion: reduce) { .pricing *, .pricing *::before, .pricing *::after { animation: none !important; transition: none !important; } }
+@media (max-width: 840px) {
+  .pricing { padding: 46px 16px 52px; border-radius: 18px; }
+  .pricing__decision { grid-template-columns: 1fr; }
+  .pricing__plan { min-height: auto; border-right: 0; border-bottom: 1px solid #e4e7ec; }
+  .pricing__plan:last-child { border-bottom: 0; }
+  .pricing__plan p { min-height: 0; }
+  .pricing__summary { align-items: flex-start; flex-wrap: wrap; }
 }
-.pricing__rule {
-  display: flex; gap: 14px; align-items: flex-start;
-  padding: 18px 20px;
-  border-radius: 12px;
-  border: 1px solid;
-}
-.pricing__rule--ok {
-  background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
-  border-color: #bbf7d0;
-}
-.pricing__rule--no {
-  background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%);
-  border-color: #fde68a;
-}
-.pricing__rule-icon {
-  width: 28px; height: 28px;
-  border-radius: 999px;
-  display: inline-flex; align-items: center; justify-content: center;
-  font-size: 14px; font-weight: 700;
-  flex-shrink: 0;
-}
-.pricing__rule--ok .pricing__rule-icon { background: #16a34a; color: #fff; }
-.pricing__rule--no .pricing__rule-icon { background: #f59e0b; color: #fff; }
-.pricing__rule-title {
-  margin: 0 0 6px;
-  font-size: 15px; font-weight: 700; color: #0f172a;
-}
-.pricing__rule-desc {
-  margin: 0; font-size: 13px; color: #475569; line-height: 1.6;
-}
-
-/* 合规性 bullet */
-.pricing__notes {
-  list-style: none; padding: 0;
-  max-width: 920px; margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 12px;
-}
-.pricing__notes li {
-  position: relative; padding: 8px 12px 8px 28px;
-  font-size: 12.5px; color: #64748b; line-height: 1.6;
-}
-.pricing__notes li::before {
-  content: '·';
-  position: absolute; left: 12px; top: 4px;
-  font-size: 22px; color: #cbd5e1; line-height: 1;
-}
-
-/* 响应式 */
-@media (max-width: 768px) {
-  .pricing { padding: 40px 16px 48px; }
-  .pricing__title { font-size: 24px; }
-  .pricing__rules { grid-template-columns: 1fr; }
-  .pricing__notes { grid-template-columns: 1fr; }
+@media (max-width: 520px) {
+  .pricing__country-picker { width: 100%; justify-content: flex-start; border-radius: 14px; }
+  .pricing__plan { padding: 28px 22px 24px; }
+  .pricing__title { font-size: 30px; }
 }
 </style>

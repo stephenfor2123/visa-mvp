@@ -1,7 +1,7 @@
 <template>
   <div
     class="uic"
-    :class="{ 'is-done': record.collected, 'is-error': !!record.error, 'is-uploading': phase === 'uploading' }"
+    :class="{ 'is-done': record.collected, 'is-error': !!record.error || phase === 'photo_fail', 'is-uploading': phase === 'uploading' }"
     :data-testid="`uic-${itemKey}`"
   >
     <div class="uic__head">
@@ -28,9 +28,46 @@
     <!-- idle: 选文件 or 摄像头拍摄 -->
     <div v-if="!record.collected && phase === 'idle'" class="uic__actions">
       <button class="uic__btn uic__btn--primary" data-testid="uic-pick-file" @click="pickFile">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 16V4M7 9l5-5 5 5" />
+          <path d="M5 15v4h14v-4" />
+        </svg>
         {{ t('wizard.pick_file') }}
       </button>
       <input ref="fileInput" type="file" :accept="isPhoto ? 'image/jpeg,image/png,image/webp' : 'image/jpeg,image/png,image/webp,application/pdf'" style="display:none" @change="onFilePicked" />
+    </div>
+
+    <!-- photo check failed: offer Htex photo toolbox -->
+    <div v-else-if="phase === 'photo_fail'" class="uic__photo-fail" data-testid="uic-photo-fail">
+      <div v-if="pendingPreviewUrl" class="uic__photo-fail-preview">
+        <img :src="pendingPreviewUrl" alt="" />
+      </div>
+      <div class="uic__photo-fail-title">{{ t('wizard.photo_toolbox.fail_title') }}</div>
+      <ul v-if="photoFailReasons.length" class="uic__photo-fail-list">
+        <li v-for="(reason, i) in photoFailReasons" :key="i">{{ reason }}</li>
+      </ul>
+      <p class="uic__photo-fail-hint">{{ t('wizard.photo_toolbox.fail_hint') }}</p>
+      <div class="uic__actions">
+        <button
+          type="button"
+          class="uic__btn uic__btn--primary"
+          data-testid="uic-open-toolbox"
+          @click="openToolbox"
+        >
+          {{ t('wizard.photo_toolbox.open_cta') }}
+        </button>
+        <button
+          type="button"
+          class="uic__btn uic__btn--ghost"
+          data-testid="uic-skip-toolbox"
+          @click="skipToolboxUpload"
+        >
+          {{ t('wizard.photo_toolbox.skip_original') }}
+        </button>
+        <button type="button" class="uic__btn uic__btn--ghost" data-testid="uic-photo-repick" @click="clearPhotoFail">
+          {{ t('wizard.photo_toolbox.repick') }}
+        </button>
+      </div>
     </div>
 
     <!-- camera capture -->
@@ -50,6 +87,13 @@
 
     <!-- done -->
     <div v-if="record.collected && phase !== 'uploading' && !record.error" class="uic__done">
+      <button type="button" class="uic__uploaded-state" disabled>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 16V4M7 9l5-5 5 5" />
+          <path d="M5 15v4h14v-4" />
+        </svg>
+        {{ t('wizard.uploaded') }}
+      </button>
       <div class="uic__file">
         <button
           v-if="record.thumbUrl || record.fileUrl"
@@ -124,8 +168,16 @@
       <button class="uic__reupload" data-testid="uic-reupload" @click="reupload">{{ t('wizard.reupload') }}</button>
     </div>
 
-    <!-- error -->
-    <div v-if="record.error" class="uic__error" data-testid="uic-error">{{ record.error }}</div>
+    <!-- error (generic upload errors; photo_fail has its own panel) -->
+    <div v-if="record.error && phase !== 'photo_fail'" class="uic__error" data-testid="uic-error">{{ record.error }}</div>
+
+    <PhotoToolboxModal
+      :open="toolboxOpen"
+      :file="pendingPhotoFile"
+      :country-code="countryCode"
+      @confirm="onToolboxConfirm"
+      @cancel="toolboxOpen = false"
+    />
 
     <!-- Lightbox: 点击缩略图弹出,按 fileType 选 <img> 或 <iframe> 渲染 -->
     <Teleport to="body">
@@ -194,6 +246,7 @@ import { computed, onBeforeUnmount, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import http from '@/api/http'
 import SensitiveDataConsent from '@/components/SensitiveDataConsent.vue'
+import PhotoToolboxModal from '@/components/PhotoToolboxModal.vue'
 
 const { t, locale } = useI18n()
 
@@ -444,11 +497,58 @@ const hintParams = computed(() => {
 })
 const emit = defineEmits(['remove'])
 
-const phase = ref('idle') // idle | camera | uploading
+const phase = ref('idle') // idle | camera | uploading | photo_fail
 const progress = ref(0)
 const fileInput = ref(null)
 const videoEl = ref(null)
 let mediaStream = null
+
+const pendingPhotoFile = ref(null)
+const pendingPreviewUrl = ref('')
+const photoFailReasons = ref([])
+const toolboxOpen = ref(false)
+
+function setPendingPhoto(file) {
+  pendingPhotoFile.value = file
+  if (pendingPreviewUrl.value) URL.revokeObjectURL(pendingPreviewUrl.value)
+  pendingPreviewUrl.value = file ? URL.createObjectURL(file) : ''
+}
+
+function clearPendingPhoto() {
+  pendingPhotoFile.value = null
+  photoFailReasons.value = []
+  if (pendingPreviewUrl.value) {
+    URL.revokeObjectURL(pendingPreviewUrl.value)
+    pendingPreviewUrl.value = ''
+  }
+}
+
+function openToolbox() {
+  if (!pendingPhotoFile.value) return
+  toolboxOpen.value = true
+}
+
+async function onToolboxConfirm(file) {
+  toolboxOpen.value = false
+  clearPendingPhoto()
+  props.record.error = null
+  await doUpload(file)
+}
+
+async function skipToolboxUpload() {
+  const file = pendingPhotoFile.value
+  if (!file) return
+  clearPendingPhoto()
+  props.record.error = null
+  await doUpload(file)
+}
+
+function clearPhotoFail() {
+  toolboxOpen.value = false
+  clearPendingPhoto()
+  props.record.error = null
+  phase.value = 'idle'
+}
 
 const passportPreview = computed(() => {
   const f = props.record.ocrFields
@@ -575,20 +675,27 @@ async function runPhotoCheck(file) {
     const errs = Array.isArray(data.errors) ? data.errors : []
     const warns = Array.isArray(data.warnings) ? data.warnings : []
     if (errs.length) {
-      // 阻断:不调 doUpload,把错误写到 record.error 让卡片显示
+      // 阻断:不调 doUpload；进入 photo_fail，引导使用照片工具箱
+      setPendingPhoto(file)
+      photoFailReasons.value = errs
       props.record.error = errs.join(' / ')
+      props.record.photoWarnings = null
+      phase.value = 'photo_fail'
       return
     }
     // 警告:放进 record.photoWarnings(默认状态是 null,避免重复渲染)
     props.record.photoWarnings = warns.length ? warns : null
+    clearPendingPhoto()
     await doUpload(file)
   } catch (e) {
     // 后端 check 失败不阻塞用户(可能 cv2 还没装 / 服务重启中),降级放行
     console.warn('[upload-item-card] photo check failed, falling back to direct upload:', e?.message)
     props.record.photoWarnings = null
+    clearPendingPhoto()
     await doUpload(file)
   } finally {
-    phase.value = 'idle'
+    // photo_fail 需保留；其余路径由 doUpload 自己收尾，这里只清掉「预检中」状态
+    if (phase.value === 'uploading') phase.value = 'idle'
   }
 }
 
@@ -621,7 +728,10 @@ function capture() {
   canvas.getContext('2d').drawImage(v, 0, 0, canvas.width, canvas.height)
   teardownCamera()
   canvas.toBlob((blob) => {
-    if (blob) doUpload(new File([blob], `${props.itemKey}_scan.jpg`, { type: 'image/jpeg' }))
+    if (!blob) return
+    const file = new File([blob], `${props.itemKey}_scan.jpg`, { type: 'image/jpeg' })
+    if (isPhoto.value) runPhotoCheck(file)
+    else doUpload(file)
   }, 'image/jpeg', 0.92)
 }
 
@@ -645,6 +755,8 @@ async function doUpload(file) {
 }
 
 function reupload() {
+  toolboxOpen.value = false
+  clearPendingPhoto()
   emit('remove')
   phase.value = 'idle'
 }
@@ -684,6 +796,8 @@ onBeforeUnmount(() => {
   if (typeof window !== 'undefined') window.removeEventListener('keydown', onKeydown)
   // 兜底:组件卸载时如果 lightbox 还开着,恢复 body 滚动
   if (previewOpen.value) document.body.style.overflow = ''
+  clearPendingPhoto()
+  toolboxOpen.value = false
 })
 </script>
 
@@ -709,10 +823,11 @@ onBeforeUnmount(() => {
 }
 .uic__constraints svg { color: #cbd5e1; flex-shrink: 0; }
 
-.uic__actions { display: flex; gap: 10px; }
+.uic__actions { display: flex; gap: 10px; flex-wrap: wrap; }
 .uic__btn {
-  flex: 1; padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 600;
+  flex: 1; min-width: 120px; padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 600;
   cursor: pointer; border: 0; transition: all .15s ease;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   &--primary {
     background: #2563EB;
     color: #fff;
@@ -724,6 +839,39 @@ onBeforeUnmount(() => {
   &--ghost:hover { background: #e2e8f0; }
 }
 
+.uic__photo-fail {
+  margin-top: 4px;
+}
+.uic__photo-fail-preview {
+  width: 88px;
+  height: 110px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #fecaca;
+  background: #fff;
+  margin-bottom: 10px;
+  img { width: 100%; height: 100%; object-fit: cover; display: block; }
+}
+.uic__photo-fail-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #b91c1c;
+  margin-bottom: 6px;
+}
+.uic__photo-fail-list {
+  margin: 0 0 8px;
+  padding-left: 18px;
+  font-size: 12.5px;
+  color: #991b1b;
+  line-height: 1.5;
+}
+.uic__photo-fail-hint {
+  margin: 0 0 12px;
+  font-size: 12.5px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
 .uic__camera { display: flex; flex-direction: column; gap: 10px; }
 .uic__video { width: 100%; border-radius: 10px; background: #0f172a; aspect-ratio: 4/3; object-fit: cover; }
 .uic__camera-actions { display: flex; gap: 10px; }
@@ -733,6 +881,12 @@ onBeforeUnmount(() => {
 .uic__progress-text { font-size: 12px; color: #64748b; margin-top: 6px; }
 
 .uic__done { display: flex; flex-direction: column; gap: 8px; }
+.uic__uploaded-state {
+  width: 100%; min-height: 40px; border: 0; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: #A1A1AA; color: #fff;
+  font-size: 13px; font-weight: 600; opacity: 1; cursor: default;
+}
 .uic__file { display: flex; align-items: center; gap: 10px; }
 .uic__thumb { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; background: #f1f5f9; }
 .uic__thumb--fallback { display: flex; align-items: center; justify-content: center; font-size: 20px; }
