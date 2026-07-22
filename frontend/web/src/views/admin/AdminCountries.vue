@@ -26,11 +26,12 @@
           <div class="country-card__header">
             <span class="country-card__flag">{{ c.flag_emoji || '🏳️' }}</span>
             <span class="country-card__name">{{ c.country_name_zh || c.country_name_en }}</span>
+            <span class="region-tag">{{ regionFor(c.country_code) }}</span>
             <span class="country-card__code">{{ c.country_code }}</span>
             <span class="country-card__handle" title="拖动排序">⋮⋮</span>
           </div>
           <div class="country-card__types">
-            <span v-for="vt in (c.visa_types || [])" :key="vt" class="type-tag">{{ t(`admin.countries.type_${vt}`) }}</span>
+            <span v-for="vt in supportedVisaTypes(c.visa_types)" :key="vt" class="type-tag">{{ t(`admin.countries.type_${vt}`) }}</span>
           </div>
           <p v-if="c.description" class="country-card__desc">{{ c.description }}</p>
           <div class="country-card__footer">
@@ -64,7 +65,7 @@
             <div class="form-field"><label>{{ t('admin.countries.form_types') }}</label>
               <div class="perm-grid">
                 <label class="perm-check"><input type="checkbox" value="tourism" v-model="form.visa_types" /> {{ t('admin.countries.type_tourism') }}</label>
-                <label class="perm-check"><input type="checkbox" value="student" v-model="form.visa_types" /> {{ t('admin.countries.type_student') }}</label>
+                <span class="form-help">当前产品仅支持旅游签证；历史签种数据会保留但不再提供新增入口。</span>
               </div>
             </div>
             <div class="form-field"><label>{{ t('admin.countries.form_template') }}</label><input v-model="form.form_template_url" class="form-input" /></div>
@@ -83,6 +84,7 @@
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import axios from 'axios'
+import { adminRegionFor as regionFor, supportedAdminVisaTypes as supportedVisaTypes } from '@/utils/adminDisplay'
 
 const { t } = useI18n()
 
@@ -130,7 +132,7 @@ function openEdit(c) {
     country_name_zh: c.country_name_zh,
     flag_emoji: c.flag_emoji || '🏳️',
     capital_city: c.capital_city || '',
-    visa_types: [...(c.visa_types || [])],
+    visa_types: supportedVisaTypes(c.visa_types),
     form_template_url: c.form_template_url || '',
     description: c.description || '',
     enabled: c.enabled,
@@ -149,7 +151,7 @@ async function submit() {
       country_name_zh: form.value.country_name_zh || form.value.country_name_en,
       flag_emoji: form.value.flag_emoji,
       capital_city: form.value.capital_city || null,
-      visa_types: form.value.visa_types,
+      visa_types: supportedVisaTypes(form.value.visa_types),
       form_template_url: form.value.form_template_url || null,
       description: form.value.description || null,
       enabled: form.value.enabled,
@@ -201,6 +203,8 @@ onMounted(load)
 .country-card__flag { font-size: 1.5rem; }
 .country-card__name { font-weight: 600; flex: 1; }
 .country-card__code { font-size: .75rem; color: #9ca3af; font-family: monospace; }
+.region-tag { font-size: .68rem; color: #475569; background: #F1F5F9; padding: 2px 6px; border-radius: 999px; }
+.form-help { color: #64748B; font-size: .78rem; }
 .country-card__handle { cursor: grab; color: #d1d5db; }
 .country-card__types { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
 .type-tag { font-size: .7rem; background: #eff6ff; color: #1d4ed8; padding: 2px 8px; border-radius: 999px; }

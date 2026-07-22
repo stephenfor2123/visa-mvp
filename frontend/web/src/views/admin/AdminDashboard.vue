@@ -651,23 +651,22 @@ const FunnelChart = {
       const max = Math.max(...steps.map(s => s.count), 1)
 
       return h('ul', { class: 'funnel' }, steps.map((s, i) => {
-        const w = s.count > 0 ? Math.max(3, (s.count / max) * 100) : 0
+        const w = s.count > 0 ? Math.max(36, (s.count / max) * 100) : 36
         const previous = i > 0 ? steps[i - 1] : null
+        const lost = previous ? Math.max(0, Number(previous.count || 0) - Number(s.count || 0)) : 0
         const rateText = i === 0
           ? t('admin.dashboard.funnel_baseline')
           : previous?.count > 0
             ? t('admin.dashboard.funnel_vs_previous', { pct: (s.conversion_pct || 0).toFixed(1) })
             : t('admin.dashboard.funnel_no_baseline')
-        return h('li', { key: s.key, class: 'funnel__step' }, [
+        return h('li', { key: s.key, class: 'funnel__step', style: { width: w + '%' } }, [
           h('div', { class: 'funnel__row' }, [
             h('span', { class: 'funnel__step-index' }, String(i + 1)),
             h('span', { class: 'funnel__step-label' }, s.label),
             h('span', { class: 'funnel__step-count' }, t('admin.dashboard.funnel_count', { count: fmt(s.count) })),
             h('span', { class: 'funnel__step-pct' }, rateText),
           ]),
-          h('div', { class: 'funnel__bar-wrap' }, [
-            h('div', { class: 'funnel__bar', style: { width: w + '%' } }),
-          ]),
+          previous ? h('div', { class: 'funnel__loss' }, `流失 ${fmt(lost)} 人`) : null,
         ])
       }))
     }
@@ -845,7 +844,7 @@ onMounted(reload)
 .funnel-head__right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
 .funnel-head__right b { color: #2563eb; }
 .funnel { list-style: none; margin: 12px 0 0; padding: 0; }
-.funnel__step { margin-bottom: 16px; padding: 10px 12px; background: #f8fafc; border-radius: 9px; }
+.funnel__step { box-sizing: border-box; margin: 0 auto 20px; padding: 13px 16px; background: linear-gradient(90deg,#DBEAFE,#EFF6FF); border: 1px solid #BFDBFE; border-radius: 9px; transition: width .25s ease; position: relative; }
 .funnel__step:last-child { margin-bottom: 0; }
 .funnel__row {
   display: grid; grid-template-columns: 24px minmax(82px, 1fr) auto minmax(112px, auto);
@@ -859,19 +858,7 @@ onMounted(reload)
 .funnel__step-label { font-weight: 600; color: #0F172A; }
 .funnel__step-count { color: #0F172A; font-weight: 700; white-space: nowrap; }
 .funnel__step-pct { color: #64748b; font-size: 11px; text-align: right; white-space: nowrap; }
-.funnel__bar-wrap {
-  background: #f1f5f9;
-  border-radius: 4px;
-  height: 7px;
-  margin-left: 32px;
-  overflow: hidden;
-}
-.funnel__bar {
-  height: 100%;
-  background: #2563eb;
-  border-radius: 4px;
-  transition: width .4s;
-}
+.funnel__loss { position: absolute; left: 50%; bottom: -18px; transform: translateX(-50%); color: #B45309; font-size: 10px; white-space: nowrap; }
 
 /* 热门目的地 */
 .top-list { list-style: none; margin: 8px 0 0; padding: 0; }

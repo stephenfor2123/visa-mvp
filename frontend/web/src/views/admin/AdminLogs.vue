@@ -2,7 +2,7 @@
 <template>
 <main class="admin-main">
       <header class="admin-main__head">
-        <h1>{{ t('admin.logs.page_title') }}</h1>
+        <h1>操作日志</h1>
         <p class="admin-main__sub">{{ t('admin.logs.page_subtitle_admin_only') }}</p>
       </header>
 
@@ -18,7 +18,7 @@
           <option value="">{{ t('admin.logs.all_actions') }}</option>
           <option v-for="a in actionList" :key="a" :value="a">{{ formatAuditAction({ action: a }) }}</option>
         </select>
-        <input v-model="filter.target_type" class="form-input" placeholder="target_type" @change="reload" />
+        <input v-model="filter.target_type" class="form-input" placeholder="业务对象（订单、用户、价格）" @change="reload" />
         <button class="btn-secondary" @click="reset">{{ t('admin.logs.reset') }}</button>
       </div>
 

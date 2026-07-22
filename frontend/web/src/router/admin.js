@@ -16,7 +16,7 @@ export const adminRoutes = [
     children: [
       {
         path: '',
-        redirect: 'dashboard'
+        redirect: '/admin/dashboard'
       },
       {
         path: 'dashboard',

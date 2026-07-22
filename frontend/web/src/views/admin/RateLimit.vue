@@ -10,33 +10,11 @@
 -->
 <template>
   <div class="rate-limit-page">
-    <header class="admin-topbar">
-      <div class="admin-topbar__left">
-        <router-link to="/admin/dashboard" class="admin-topbar__brand">
-          <span class="admin-topbar__mark">A</span>
-          <span class="admin-topbar__title">{{ t('admin.brand') }}</span>
-        </router-link>
-        <span class="admin-topbar__crumb">› {{ t('admin.ratelimit.page_title') }}</span>
-      </div>
-      <div class="admin-topbar__right">
-        <span v-if="profile?.username" class="admin-topbar__user" data-testid="admin-user-name">
-          {{ profile.username }}
-        </span>
-        <LangSwitch />
-        <button
-          type="button"
-          class="admin-topbar__logout"
-          @click="onLogout"
-          data-testid="admin-logout-btn"
-        >{{ t('admin.logout') }}</button>
-      </div>
-    </header>
-
     <main class="admin-shell">
       <!-- 页面标题 -->
       <section class="page-head" data-testid="rate-limit-head">
         <div>
-          <h1 class="page-head__title">{{ t('admin.ratelimit.page_title') }}</h1>
+          <h1 class="page-head__title">RPA 运行策略</h1>
           <p class="page-head__sub">{{ t('admin.ratelimit.page_subtitle') }}</p>
         </div>
         <div class="page-head__actions">
@@ -234,7 +212,6 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
-import LangSwitch from '@/components/LangSwitch.vue'
 import { useToast } from '@/composables/useToast'
 import { useAdminStore } from '@/stores/admin'
 import {

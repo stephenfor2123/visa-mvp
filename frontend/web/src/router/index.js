@@ -264,14 +264,14 @@ const routes = [
     component: () => import('@/views/PaymentResult.vue'),
     meta: { title: 'payment.page_title', requiresAuth: true }
   },
+  // W14-11: admin sub-router mounted as a sibling module.
+  // Its own guard (adminGuard) checks admin_token independently from C-user auth.
+  ...adminRoutes,
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('@/views/NotFound.vue')
-  },
-  // W14-11: admin sub-router mounted as a sibling module.
-  // Its own guard (adminGuard) checks admin_token independently from C-user auth.
-  ...adminRoutes
+  }
 ]
 
 const router = createRouter({

@@ -85,39 +85,39 @@
       </article>
     </section>
 
-    <section class="panel recent-panel">
-      <header class="panel__head">
-        <h2>{{ t('admin.analytics.recent_events') }}</h2>
-        <span>{{ t('admin.analytics.recent_hint') }}</span>
-      </header>
+    <details class="panel recent-panel">
+      <summary class="diagnostic-summary">
+        <span>埋点质量诊断</span>
+        <small>原始事件已按事件类型与页面聚合，点击展开</small>
+      </summary>
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
-              <th>{{ t('admin.analytics.time') }}</th>
+              <th>最后上报</th>
               <th>{{ t('admin.analytics.event') }}</th>
               <th>{{ t('admin.analytics.source') }}</th>
               <th>{{ t('admin.analytics.path') }}</th>
-              <th>{{ t('admin.analytics.country') }}</th>
-              <th>{{ t('admin.analytics.session') }}</th>
+              <th>事件数</th>
+              <th>会话数</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="row in data.recent" :key="row.id">
-              <td>{{ formatTime(row.created_at) }}</td>
+            <tr v-for="row in aggregatedRecent" :key="row.key">
+              <td>{{ formatTime(row.last_at) }}</td>
               <td><span class="event-badge">{{ eventLabel(row.event_name) }}</span></td>
               <td>{{ row.source }}</td>
               <td class="path-cell">{{ row.path || '—' }}</td>
-              <td>{{ row.country_code || '—' }}</td>
-              <td>{{ row.session_id || '—' }}</td>
+              <td>{{ row.count }}</td>
+              <td>{{ row.sessions }}</td>
             </tr>
-            <tr v-if="!loading && !data.recent?.length">
+            <tr v-if="!loading && !aggregatedRecent.length">
               <td colspan="6" class="empty">{{ t('admin.analytics.no_data') }}</td>
             </tr>
           </tbody>
         </table>
       </div>
-    </section>
+    </details>
   </main>
 </template>
 
@@ -139,6 +139,18 @@ const ranges = [
 
 const maxDaily = computed(() => Math.max(1, ...data.value.daily.flatMap((p) => [p.count, p.unique_sessions])))
 const hasDailyData = computed(() => data.value.daily.some((p) => p.count > 0))
+const aggregatedRecent = computed(() => {
+  const groups = new Map()
+  for (const row of data.value.recent || []) {
+    const key = [row.event_name, row.source || '', row.path || ''].join('|')
+    const current = groups.get(key) || { key, event_name: row.event_name, source: row.source || '—', path: row.path || '', count: 0, sessionSet: new Set(), last_at: row.created_at }
+    current.count += 1
+    if (row.session_id) current.sessionSet.add(row.session_id)
+    if (String(row.created_at || '') > String(current.last_at || '')) current.last_at = row.created_at
+    groups.set(key, current)
+  }
+  return [...groups.values()].map(row => ({ ...row, sessions: row.sessionSet.size })).sort((a, b) => b.count - a.count)
+})
 const eventKeys = {
   page_view: 'page_view',
   country_selected: 'country_selected',
@@ -215,6 +227,8 @@ onMounted(load)
 .event-track { height: 6px; border-radius: 999px; background: #f1f5f9; overflow: hidden; }
 .event-track span { display: block; height: 100%; background: #2563eb; border-radius: inherit; }
 .recent-panel { padding-bottom: 8px; }
+.diagnostic-summary { cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 16px 18px; font-weight: 700; }
+.diagnostic-summary small { color: #64748B; font-weight: 400; }
 .table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-size: 12px; }
 th { text-align: left; color: #64748b; font-weight: 600; padding: 10px; border-bottom: 1px solid #e2e8f0; white-space: nowrap; }

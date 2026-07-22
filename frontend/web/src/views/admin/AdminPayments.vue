@@ -39,7 +39,7 @@
         </AppCard>
         <AppCard class="admin-card">
           <div class="admin-card__label">{{ t('admin.payments.stat_amount') }}</div>
-          <div class="admin-card__value">¥{{ fmtAmount(stats.total_amount_cents) }}</div>
+          <div class="admin-card__value">{{ money(stats.total_amount_cents, stats.currency || 'USD') }}</div>
         </AppCard>
         <AppCard v-if="viewMode === 'payment'" class="admin-card">
           <div class="admin-card__label">{{ t('admin.payments.stat_paid') }}</div>
@@ -101,9 +101,9 @@
           <tbody>
             <tr v-for="p in items" :key="p.order_id">
               <td class="admin-table__mono">{{ p.order_no }}</td>
-              <td>#{{ p.user_id }}</td>
+              <td>{{ p.user_name || maskEmail(p.user_email) || `用户 ${p.user_id}` }}</td>
               <td class="admin-table__mono">{{ p.trade_no || '—' }}</td>
-              <td>¥{{ formatAmount(p.amount_cents, p.currency) }}</td>
+              <td>{{ money(p.amount_cents, p.currency) }}</td>
               <td>
                 <span class="admin-pill" :class="`admin-pill--${p.order_status || 'created'}`">
                   {{ t(`admin.order_detail.status_${p.order_status || 'created'}`) }}
@@ -236,6 +236,17 @@ function formatAmount(cents, currency) {
 
 function fmtAmount(cents) {
   return (Number(cents || 0) / 100).toLocaleString('zh-CN', { minimumFractionDigits: 2 })
+}
+function money(cents, currency = 'USD') {
+  if (cents == null) return '—'
+  const amount = Number(cents) / 100
+  try { return new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(amount) }
+  catch { return `${currency} ${amount.toFixed(2)}` }
+}
+function maskEmail(email) {
+  if (!email) return ''
+  const [name, domain] = String(email).split('@')
+  return domain ? `${name.slice(0, 3)}***@${domain}` : email
 }
 
 function fmt(n) { return Number(n || 0).toLocaleString() }

@@ -36,6 +36,11 @@
         </button>
       </section>
 
+      <div class="orders-toolbar">
+        <input v-model.trim="query" type="search" class="orders-search" placeholder="搜索订单号、用户或国家" />
+        <span class="admin-panel__meta">默认隐藏数据库 ID，展示可识别的业务信息</span>
+      </div>
+
       <AppCard class="admin-panel">
         <template #header>
           <div class="admin-panel__head">
@@ -60,11 +65,17 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="o in items" :key="o.id" :data-testid="`admin-order-row-${o.id}`">
+            <tr v-for="o in visibleItems" :key="o.id" :data-testid="`admin-order-row-${o.id}`">
               <td class="admin-table__mono">{{ o.order_no }}</td>
-              <td>#{{ o.user_id }}</td>
-              <td>#{{ o.destination_id }} · {{ o.visa_type }}</td>
-              <td>¥{{ formatAmount(o.total_amount, o.currency) }}</td>
+              <td>
+                <strong>{{ o.user_name || maskEmail(o.user_email) || `用户 ${o.user_id}` }}</strong>
+                <small v-if="o.user_email" class="cell-sub">{{ maskEmail(o.user_email) }}</small>
+              </td>
+              <td>
+                <strong>{{ flagFor(o.country_code) }} {{ o.country_name || o.country_code || '未知目的地' }}</strong>
+                <small class="cell-sub">{{ visaLabel(o.visa_type) }}</small>
+              </td>
+              <td>{{ formatAmount(o.total_amount, o.currency) }}</td>
               <td>
                 <span class="admin-pill" :class="`admin-pill--${o.status}`">
                   {{ t(`admin.order_detail.status_${o.status}`) }}
@@ -83,6 +94,11 @@
             </tr>
           </tbody>
         </table>
+        <div v-if="totalPages > 1" class="admin-pagination">
+          <button class="admin-page-btn" :disabled="page <= 1" @click="changePage(page - 1)">上一页</button>
+          <span>{{ page }} / {{ totalPages }}</span>
+          <button class="admin-page-btn" :disabled="page >= totalPages" @click="changePage(page + 1)">下一页</button>
+        </div>
       </AppCard>
     </main>
 </template>
@@ -118,9 +134,20 @@ const total = ref(0)
 const counts = ref({})
 const loading = ref(false)
 const loadError = ref('')
+const query = ref('')
+const page = ref(1)
+const pageSize = 20
+const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize)))
+const visibleItems = computed(() => {
+  const needle = query.value.toLowerCase()
+  if (!needle) return items.value
+  return items.value.filter(o => [o.order_no, o.user_name, o.user_email, o.country_name, o.country_code, o.visa_type]
+    .filter(Boolean).some(v => String(v).toLowerCase().includes(needle)))
+})
 
 function setFilter(v) {
   activeFilter.value = v
+  page.value = 1
   router.replace({ query: { ...route.query, status: v || undefined } })
   fetchList()
 }
@@ -129,7 +156,7 @@ async function fetchList() {
   loading.value = true
   loadError.value = ''
   try {
-    const out = await listAdminOrders({ status: activeFilter.value || null, page: 1, page_size: 50 })
+    const out = await listAdminOrders({ status: activeFilter.value || null, page: page.value, page_size: pageSize })
     items.value = out.items
     total.value = out.total
     // Count chips by status across the unfiltered result
@@ -159,10 +186,35 @@ async function fetchCounts() {
   }
 }
 
-function formatAmount(cents, currency) {
+function formatAmount(cents, currency = 'USD') {
   if (cents == null) return '—'
   const n = Number(cents) / 100
-  return n.toFixed(2) + (currency ? ' ' + currency : '')
+  try {
+    return new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(n)
+  } catch {
+    return `${currency} ${n.toFixed(2)}`
+  }
+}
+
+function visaLabel(type) {
+  return ({ tourism: '旅游签证', tourist: '旅游签证', business: '商务签证' })[type] || type || '签证产品'
+}
+
+function maskEmail(email) {
+  if (!email) return ''
+  const [name, domain] = String(email).split('@')
+  if (!domain) return email
+  return `${name.slice(0, 3)}***@${domain}`
+}
+
+function flagFor(code) {
+  if (!code || code.length !== 2) return '🌐'
+  return String.fromCodePoint(...code.toUpperCase().split('').map(c => 127397 + c.charCodeAt()))
+}
+
+function changePage(next) {
+  page.value = next
+  fetchList()
 }
 
 function formatTime(iso) {
@@ -200,6 +252,12 @@ onMounted(async () => {
   gap: 8px;
   margin-bottom: 18px;
 }
+.orders-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: -6px 0 14px; }
+.orders-search { width: min(380px, 100%); border: 1px solid #CBD5E1; border-radius: 8px; padding: 9px 12px; background: #fff; }
+.cell-sub { display: block; color: #64748B; font-size: 11px; margin-top: 3px; }
+.admin-pagination { display: flex; justify-content: center; align-items: center; gap: 12px; padding: 18px 0 4px; }
+.admin-page-btn { border: 1px solid #CBD5E1; background: #fff; border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+.admin-page-btn:disabled { opacity: .45; cursor: not-allowed; }
 .admin-filter__chip {
   display: inline-flex;
   align-items: center;

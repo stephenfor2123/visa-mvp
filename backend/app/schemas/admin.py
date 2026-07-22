@@ -200,7 +200,11 @@ class OrderOut(BaseModel):
     uuid: str
     order_no: str
     user_id: int
+    user_name: Optional[str] = None
+    user_email: Optional[str] = None
     destination_id: int
+    country_code: Optional[str] = None
+    country_name: Optional[str] = None
     visa_type: str
     status: str
     total_amount: float

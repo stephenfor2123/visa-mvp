@@ -75,10 +75,21 @@
           <span class="panel__hint">{{ t('admin.pricing.dest_hint', '点击行即可编辑；继承 = 尚未单独配置，下单时用全局默认') }}</span>
         </div>
 
+        <div class="pricing-toolbar">
+          <label>区域
+            <select v-model="regionFilter" class="form-input">
+              <option value="">全部区域</option>
+              <option v-for="region in regions" :key="region" :value="region">{{ region }}</option>
+            </select>
+          </label>
+          <input v-model.trim="countryQuery" class="form-input" type="search" placeholder="搜索国家或代码" />
+        </div>
+
         <div class="table-wrap">
           <table class="price-table">
             <thead>
               <tr>
+                <th>区域</th>
                 <th>{{ t('admin.pricing.col_country', '国家') }}</th>
                 <th>{{ t('admin.pricing.col_visa', '签证类型') }}</th>
                 <th>{{ t('admin.pricing.col_list', '划线价') }}</th>
@@ -90,10 +101,11 @@
             </thead>
             <tbody>
               <tr
-                v-for="row in items"
+                v-for="row in filteredItems"
                 :key="`${row.country_code}-${row.visa_type}`"
                 :class="{ 'is-active': editingKey === rowKey(row) }"
               >
+                <td><span class="region-tag">{{ regionFor(row.country_code) }}</span></td>
                 <td>
                   <strong>{{ row.country_name || row.country_code }}</strong>
                   <span class="mono">{{ row.country_code }}</span>
@@ -115,8 +127,8 @@
                   </button>
                 </td>
               </tr>
-              <tr v-if="!items.length">
-                <td colspan="7" class="empty">{{ t('admin.pricing.empty_dest', '暂无启用中的国家，请先在「国家配置」启用目的地') }}</td>
+              <tr v-if="!filteredItems.length">
+                <td colspan="8" class="empty">{{ t('admin.pricing.empty_dest', '暂无启用中的国家，请先在「国家配置」启用目的地') }}</td>
               </tr>
             </tbody>
           </table>
@@ -179,6 +191,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAdminStore } from '@/stores/admin'
+import { adminRegionFor as regionFor } from '@/utils/adminDisplay'
 import {
   listDestinationPricingAdmin,
   updatePlatformPricingAdmin,
@@ -191,6 +204,14 @@ const admin = useAdminStore()
 const loading = ref(true)
 const loadError = ref('')
 const items = ref([])
+const regionFilter = ref('')
+const countryQuery = ref('')
+const regions = ['北美', '欧洲/申根', '英国及爱尔兰', '东亚', '东南亚', '大洋洲', '其他']
+const filteredItems = computed(() => items.value.filter(row => {
+  if (regionFilter.value && regionFor(row.country_code) !== regionFilter.value) return false
+  const needle = countryQuery.value.toLowerCase()
+  return !needle || [row.country_name, row.country_code].filter(Boolean).some(v => String(v).toLowerCase().includes(needle))
+}))
 const globalForm = reactive({
   list_price_usd: 99.9,
   promo_price_usd: 19.9,
@@ -421,6 +442,10 @@ onMounted(() => { admin.hydrate(); reload() })
 .btn-link { background: none; border: none; color: #3b6ef5; padding: 4px 8px; }
 
 .table-wrap { overflow-x: auto; }
+.pricing-toolbar { display: flex; gap: 12px; align-items: end; margin: 0 0 14px; }
+.pricing-toolbar label { color: #475569; font-size: 12px; font-weight: 600; }
+.pricing-toolbar .form-input { min-width: 180px; margin-top: 5px; }
+.region-tag { display: inline-block; padding: 3px 8px; border-radius: 999px; background: #EEF2FF; color: #4338CA; font-size: 11px; white-space: nowrap; }
 .price-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .price-table th, .price-table td {
   text-align: left; padding: 10px 12px; border-bottom: 1px solid #e2e8f0; vertical-align: middle;

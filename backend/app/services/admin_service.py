@@ -527,6 +527,26 @@ class AdminService:
         query = query.offset(offset).limit(page_size)
         rows = (await self.db.execute(query)).scalars().all()
 
+        # Add display metadata without changing any existing response fields or
+        # persistence. Older clients can keep consuming ids; the admin UI can
+        # present names instead of leaking database identifiers.
+        user_ids = {r.user_id for r in rows}
+        destination_ids = {r.destination_id for r in rows}
+        users = {}
+        destinations = {}
+        if user_ids:
+            user_rows = (
+                await self.db.execute(select(User).where(User.id.in_(user_ids)))
+            ).scalars().all()
+            users = {u.id: u for u in user_rows}
+        if destination_ids:
+            destination_rows = (
+                await self.db.execute(
+                    select(VisaDestination).where(VisaDestination.id.in_(destination_ids))
+                )
+            ).scalars().all()
+            destinations = {d.id: d for d in destination_rows}
+
         return {
             "items": [
                 {
@@ -534,7 +554,17 @@ class AdminService:
                     "uuid": r.uuid,
                     "order_no": r.order_no,
                     "user_id": r.user_id,
+                    "user_name": (
+                        users[r.user_id].nickname
+                        or users[r.user_id].username
+                        or users[r.user_id].email
+                    ) if r.user_id in users else None,
+                    "user_email": users[r.user_id].email if r.user_id in users else None,
                     "destination_id": r.destination_id,
+                    "country_code": destinations[r.destination_id].country_code
+                    if r.destination_id in destinations else None,
+                    "country_name": self._destination_display_name(destinations[r.destination_id])
+                    if r.destination_id in destinations else None,
                     "visa_type": r.visa_type,
                     "status": r.status,
                     "total_amount": float(r.total_amount),
@@ -570,6 +600,9 @@ class AdminService:
         order = (await self.db.execute(stmt)).scalar_one_or_none()
         if order is None:
             raise BizException(ErrorCode.ORDER_NOT_FOUND, message="Order not found")
+
+        user = await self.db.get(User, order.user_id)
+        destination = await self.db.get(VisaDestination, order.destination_id)
 
         # 从 order.extra JSON 解析支付信息（W34: 订单与资金流分开）
         payment_info = None
@@ -619,7 +652,11 @@ class AdminService:
             "uuid": order.uuid,
             "order_no": order.order_no,
             "user_id": order.user_id,
+            "user_name": (user.nickname or user.username or user.email) if user else None,
+            "user_email": user.email if user else None,
             "destination_id": order.destination_id,
+            "country_code": destination.country_code if destination else None,
+            "country_name": self._destination_display_name(destination) if destination else None,
             "visa_type": order.visa_type,
             "status": order.status,
             "total_amount": float(order.total_amount),

@@ -47,13 +47,16 @@
             <dt>{{ t('admin.order_detail.field_order_no') }}</dt>
             <dd class="admin-mono">{{ order.order_no }}</dd>
             <dt>{{ t('admin.order_detail.field_user') }}</dt>
-            <dd>#{{ order.user_id }}</dd>
+            <dd>
+              <strong>{{ order.user_name || `用户 ${order.user_id}` }}</strong>
+              <span v-if="order.user_email" class="admin-muted"> · {{ maskEmail(order.user_email) }}</span>
+            </dd>
             <dt>{{ t('admin.order_detail.field_country') }}</dt>
-            <dd>#{{ order.destination_id }} · {{ order.destination_url || '—' }}</dd>
+            <dd>{{ flagFor(order.country_code) }} {{ order.country_name || order.country_code || '未知目的地' }}</dd>
             <dt>{{ t('admin.order_detail.field_visa_type') }}</dt>
-            <dd>{{ t(`admin.order_detail.visa_type_${order.visa_type}`) }}</dd>
+            <dd>{{ visaLabel(order.visa_type) }}</dd>
             <dt>{{ t('admin.order_detail.field_amount') }}</dt>
-            <dd>{{ formatAmount(order.total_amount, order.currency) }}</dd>
+            <dd><strong>{{ formatMoney(order.total_amount, order.currency) }}</strong></dd>
             <dt>{{ t('admin.order_detail.field_status') }}</dt>
             <dd>
               <span class="admin-pill" :class="`admin-pill--${order.status}`">
@@ -62,27 +65,8 @@
             </dd>
             <dt>{{ t('admin.order_detail.field_aff') }}</dt>
             <dd>{{ order.aff_code || t('admin.order_detail.field_no_aff') }}</dd>
-            <dt>{{ t('admin.order_detail.field_rpa_task') }}</dt>
-            <dd class="admin-mono">{{ order.rpa_task_id || t('admin.order_detail.field_no_rpa') }}</dd>
             <dt>{{ t('admin.order_detail.field_created') }}</dt>
             <dd>{{ formatTime(order.created_at) }}</dd>
-            <dt>{{ t('admin.order_detail.field_paid') }}</dt>
-            <dd>{{ formatTime(order.paid_at) }}</dd>
-            <dt>{{ t('admin.order_detail.field_completed') }}</dt>
-            <dd>{{ formatTime(order.completed_at) }}</dd>
-            <dt>{{ t('admin.order_detail.field_portal') }}</dt>
-            <dd>
-              {{ formatTime(order.portal_submitted_at) }}
-              <span v-if="order.portal_submitted_source" class="admin-muted">
-                ({{ order.portal_submitted_source }})
-              </span>
-            </dd>
-            <dt>{{ t('admin.order_detail.field_submitted') }}</dt>
-            <dd>{{ formatTime(order.submitted_at) }}</dd>
-            <dt>{{ t('admin.order_detail.field_reviewed') }}</dt>
-            <dd>{{ formatTime(order.reviewed_at) }}</dd>
-            <dt>{{ t('admin.order_detail.field_closed') }}</dt>
-            <dd>{{ formatTime(order.closed_at) }}</dd>
           </dl>
         </AppCard>
 
@@ -93,8 +77,8 @@
           </template>
           <dl class="admin-dl">
             <template v-for="(v, k) in applicantParsed" :key="k">
-              <dt>{{ k }}</dt>
-              <dd>{{ v }}</dd>
+              <dt>{{ applicantLabel(k) }}</dt>
+              <dd>{{ formatApplicantValue(v) }}</dd>
             </template>
           </dl>
         </AppCard>
@@ -114,7 +98,7 @@
               </span>
             </dd>
             <dt>{{ t('admin.order_detail.payment_amount') }}</dt>
-            <dd>¥{{ formatAmount(order.payment.amount_cents, order.payment.currency) }}</dd>
+            <dd>{{ formatMoney(order.payment.amount_cents, order.payment.currency) }}</dd>
             <dt>{{ t('admin.order_detail.payment_paid_at') }}</dt>
             <dd>{{ order.payment.paid_at ? formatTime(order.payment.paid_at) : '—' }}</dd>
           </dl>
@@ -179,6 +163,8 @@
         </AppCard>
 
         <!-- 完整审计日志（W34: 订单流/资金流/日志三栏） -->
+        <details class="admin-advanced">
+          <summary>技术审计信息（高级）</summary>
         <AppCard class="admin-panel">
           <template #header>
             <h3>{{ t('admin.order_detail.section_audit') }}</h3>
@@ -192,6 +178,7 @@
             </li>
           </ol>
         </AppCard>
+        </details>
 
         <!-- Status timeline -->
         <AppCard class="admin-panel">
@@ -201,9 +188,9 @@
           <ol v-if="order.status_history?.length" class="admin-timeline">
             <li v-for="(h, i) in order.status_history" :key="i" class="admin-timeline__row">
               <span class="admin-pill" :class="`admin-pill--${h.to_status}`">
-                {{ h.from_status || '∅' }} → {{ h.to_status }}
+                {{ h.from_status ? statusLabel(h.from_status) : '订单创建' }} → {{ statusLabel(h.to_status) }}
               </span>
-              <span class="admin-timeline__src">{{ h.source }}</span>
+              <span class="admin-timeline__src">{{ sourceLabel(h.source) }}</span>
               <span class="admin-timeline__note">{{ h.note || '' }}</span>
               <span class="admin-timeline__time">{{ formatTime(h.created_at) }}</span>
             </li>
@@ -486,6 +473,30 @@ function formatAmount(cents, currency) {
   const n = Number(cents) / 100
   return n.toFixed(2) + (currency ? ' ' + currency : '')
 }
+function formatMoney(cents, currency = 'USD') {
+  if (cents == null) return '—'
+  const amount = Number(cents) / 100
+  try { return new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(amount) }
+  catch { return `${currency} ${amount.toFixed(2)}` }
+}
+function visaLabel(type) {
+  return ({ tourism: '旅游签证', tourist: '旅游签证', business: '商务签证' })[type] || type || '签证产品'
+}
+function maskEmail(email) {
+  if (!email) return ''
+  const [name, domain] = String(email).split('@')
+  return domain ? `${name.slice(0, 3)}***@${domain}` : email
+}
+function flagFor(code) {
+  if (!code || code.length !== 2) return '🌐'
+  return String.fromCodePoint(...code.toUpperCase().split('').map(c => 127397 + c.charCodeAt()))
+}
+function applicantLabel(key) { return key }
+function formatApplicantValue(value) {
+  if (value == null || value === '') return '—'
+  if (typeof value === 'object') return Object.values(value).filter(Boolean).join(' · ') || '—'
+  return value
+}
 function formatTime(iso) {
   if (!iso) return '—'
   try { return new Date(iso).toLocaleString('zh-CN') } catch { return iso }
@@ -498,6 +509,14 @@ function formatActor(log) {
 
 function formatAction(log) {
   return formatAuditAction(log)
+}
+function statusLabel(status) {
+  const key = `admin.order_detail.status_${status}`
+  const label = t(key)
+  return label === key ? status : label
+}
+function sourceLabel(source) {
+  return ({ admin: '管理员', user: '用户', system: '系统', rpa: 'RPA 自动处理', payment: '支付系统' })[source] || source || '系统'
 }
 
 
@@ -514,6 +533,9 @@ onMounted(() => { admin.hydrate(); fetchOrder() })
 .admin-back { font-size: 13px; color: #3B6EF5; text-decoration: none; font-weight: 600; }
 .admin-back:hover { text-decoration: underline; }
 .admin-panel { margin-bottom: 18px; }
+.admin-advanced { margin-bottom: 18px; }
+.admin-advanced > summary { cursor: pointer; color: #64748B; font-size: 13px; font-weight: 600; padding: 10px 0; }
+.admin-advanced .admin-panel { margin: 6px 0 0; }
 .admin-panel__placeholder { padding: 24px 0; text-align: center; color: #94A3B8; font-size: 13px; }
 .admin-panel__placeholder--err { color: #DC2626; }
 .admin-panel h3 { margin: 0; font-size: 15px; color: #0F172A; }

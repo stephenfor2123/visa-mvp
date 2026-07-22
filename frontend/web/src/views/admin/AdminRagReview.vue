@@ -13,7 +13,7 @@
     <main class="admin-main">
       <header class="admin-main__head">
         <div>
-          <h1>{{ t('admin.rag_review.page_title') }}</h1>
+          <h1>签证政策内容</h1>
           <p class="admin-main__sub">{{ t('admin.rag_review.page_subtitle') }}</p>
         </div>
         <div class="admin-rag-review__head-actions">

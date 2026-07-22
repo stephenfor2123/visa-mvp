@@ -5,17 +5,24 @@
         <HtexLogo :size="22" color="#F8FAFC" />
       </div>
       <nav class="admin-sidebar__nav">
-        <router-link
-          v-for="item in navItems"
-          :key="item.path"
-          :to="item.path"
-          class="admin-sidebar__link"
-          active-class="is-active"
-        >
-          {{ t(item.label) }}
-        </router-link>
+        <section v-for="group in navGroups" :key="group.key" class="admin-sidebar__group">
+          <div class="admin-sidebar__group-title">{{ group.label }}</div>
+          <router-link
+            v-for="item in group.items"
+            :key="item.path"
+            :to="item.path"
+            class="admin-sidebar__link"
+            active-class="is-active"
+          >
+            {{ t(item.label) }}
+          </router-link>
+        </section>
       </nav>
       <div class="admin-sidebar__foot">
+        <div class="admin-sidebar__profile">
+          <strong>{{ admin.profile?.username || admin.username || '管理员' }}</strong>
+          <span>{{ admin.role || '—' }}</span>
+        </div>
         <button class="admin-sidebar__logout" @click="onLogout" data-testid="admin-logout">
           {{ t('admin.logout') }}
         </button>
@@ -74,6 +81,19 @@ const navItems = computed(() => {
   if (admin.hasPermission('role.manage')) items.push({ path: '/admin/roles', label: 'admin.menu_roles', perm: 'role.manage' })
   if (admin.hasPermission('dashboard.view')) items.push({ path: '/admin/logs', label: 'admin.menu_logs', perm: 'dashboard.view' })
   return items
+})
+
+const navGroups = computed(() => {
+  const groups = [
+    { key: 'operations', label: '运营', paths: ['/admin/dashboard', '/admin/orders', '/admin/payments', '/admin/users'] },
+    { key: 'catalog', label: '商品与内容', paths: ['/admin/countries', '/admin/pricing', '/admin/ai-rules', '/admin/rag-review'] },
+    { key: 'data', label: '数据', paths: ['/admin/analytics', '/admin/logs'] },
+    { key: 'system', label: '系统', paths: ['/admin/rate-limit', '/admin/roles'] },
+  ]
+  return groups.map(group => ({
+    ...group,
+    items: navItems.value.filter(item => group.paths.includes(item.path)),
+  })).filter(group => group.items.length)
 })
 
 function onLogout() {
@@ -140,6 +160,14 @@ onMounted(() => {
   gap: 2px;
   flex: 1;
 }
+.admin-sidebar__group + .admin-sidebar__group { margin-top: 12px; }
+.admin-sidebar__group-title {
+  padding: 0 14px 5px;
+  color: #64748B;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+}
 
 .admin-sidebar__link {
   display: block;
@@ -165,6 +193,9 @@ onMounted(() => {
   padding: 12px 16px;
   border-top: 1px solid rgba(255, 255, 255, .06);
 }
+.admin-sidebar__profile { display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px; }
+.admin-sidebar__profile strong { color: #F8FAFC; font-size: 13px; }
+.admin-sidebar__profile span { color: #94A3B8; font-size: 11px; }
 
 .admin-sidebar__logout {
   width: 100%;
