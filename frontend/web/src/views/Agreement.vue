@@ -4,8 +4,7 @@
     <AppHeader scope="agreement" />
     <main class="app-container app-page agreement-shell">
       <div class="page-header">
-        <h1 class="page-title">{{ t('agreement.page_title') }}</h1>
-        <p class="page-sub">{{ t('agreement.page_subtitle') }}</p>
+        <PageHero :title="t('agreement.page_title')" :subtitle="t('agreement.page_subtitle')" />
         <p class="agreement-disclaimer">{{ t('agreement.beta_disclaimer') }}</p>
       </div>
 
@@ -118,6 +117,7 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import LangSwitch from '@/components/LangSwitch.vue'
 import AppHeader from '@/components/AppHeader.vue'
+import PageHero from '@/components/PageHero.vue'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -144,15 +144,18 @@ onMounted(() => {
   margin-bottom: 24px;
 }
 .page-title {
-  font-size: 22px;
+  font-size: 28px;
   font-weight: 700;
-  color: #1a1a2e;
-  margin: 0 0 6px;
+  color: #0F172A;
+  margin: 0 0 8px;
+  letter-spacing: -.5px;
+  line-height: 1.25;
 }
 .page-sub {
-  font-size: 14px;
-  color: #6b7280;
-  margin: 0;
+  font-size: 15px;
+  color: #64748B;
+  margin: 0 0 28px;
+  line-height: 1.5;
 }
 .agreement-disclaimer {
   margin: 12px 0 0;

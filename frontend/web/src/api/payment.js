@@ -14,8 +14,9 @@
 //   - 与 W6 stub payment 端点兼容,key = localStorage.visa.payments
 
 import http from './http'
+import { isApiMockMode } from '@/utils/mockMode'
 
-const MOCK_MODE = import.meta.env.VITE_MOCK !== 'false'
+const MOCK_MODE = isApiMockMode()
 
 function delay(ms = 280) {
   return new Promise((r) => setTimeout(r, ms))

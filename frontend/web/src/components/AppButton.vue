@@ -87,10 +87,10 @@ defineExpose({
   justify-content: center;
   gap: 6px;
   font-weight: 500;
-  border-radius: 8px;
+  border-radius: var(--radius-control, 8px);
   border: 1px solid transparent;
   cursor: pointer;
-  transition: all .15s ease;
+  transition: background-color .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease, transform .15s ease;
   white-space: nowrap;
   user-select: none;
   line-height: 1;
@@ -107,6 +107,7 @@ defineExpose({
   color: #fff;
   &:hover:not(:disabled) { background: var(--primary-hover, #2C5DE0); }
   &:active:not(:disabled) { background: var(--primary-active, #1F4DC2); }
+  &:focus-visible { outline: none; box-shadow: var(--focus-ring, 0 0 0 3px rgba(59,110,245,.18)); }
 }
 .app-btn--outline {
   background: #fff;

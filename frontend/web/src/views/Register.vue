@@ -103,6 +103,7 @@
         <template v-if="googleEnabled">
           <div class="auth-divider"><span>{{ t('common.or') || '或' }}</span></div>
           <div ref="googleBtnRef" class="google-btn-wrap"></div>
+          <p v-if="googleLoadError" class="form-error" data-testid="register-google-load-error">{{ googleLoadError }}</p>
         </template>
       </AppCard>
 
@@ -234,7 +235,7 @@ async function handleGoogleCredential(response) {
   }
 }
 
-const { googleBtnRef, googleEnabled } = useGoogleAuthButton({
+const { googleBtnRef, googleEnabled, googleLoadError } = useGoogleAuthButton({
   buttonText: 'signup_with',
   onCredential: handleGoogleCredential,
 })

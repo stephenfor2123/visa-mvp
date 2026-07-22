@@ -2,8 +2,7 @@
   <div class="validate-page">
     <AppHeader scope="materials-validate" />
     <main class="app-container app-page validate-shell">
-      <h1 class="page-title">{{ t('validation.page_title') }}</h1>
-      <p class="page-sub">{{ t('validation.page_subtitle') }}</p>
+      <PageHero :title="t('validation.page_title') " :subtitle="t('validation.page_subtitle') " />
 
       <!-- Loading -->
       <div v-if="loading" class="state-loading">
@@ -158,6 +157,7 @@ import { validateMaterials } from '@/api/materials'
 import AppButton from '@/components/AppButton.vue'
 import LangSwitch from '@/components/LangSwitch.vue'
 import AppHeader from '@/components/AppHeader.vue'
+import PageHero from '@/components/PageHero.vue'
 
 const { t, te } = useI18n()
 const router = useRouter()
@@ -349,15 +349,18 @@ watch(
 }
 
 .page-title {
-  margin: 0;
   font-size: 28px;
   font-weight: 700;
-  color: var(--ink-1, #0F172A);
+  color: #0F172A;
+  margin: 0 0 8px;
+  letter-spacing: -.5px;
+  line-height: 1.25;
 }
 .page-sub {
-  margin: 6px 0 24px;
-  font-size: 14px;
-  color: var(--ink-3, #64748B);
+  font-size: 15px;
+  color: #64748B;
+  margin: 0 0 28px;
+  line-height: 1.5;
 }
 
 .state-loading, .state-error, .state-empty {

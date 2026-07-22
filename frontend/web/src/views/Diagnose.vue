@@ -3,41 +3,20 @@
     <AppHeader scope="diagnose" />
 
     <main class="app-container app-page diagnose-main">
-      <header v-if="step !== 2" class="diagnose-hero">
-        <h1 class="diagnose-hero__title">{{ t('diagnose.title') }}</h1>
-        <p class="diagnose-hero__sub">{{ t('diagnose.sub') }}</p>
-      </header>
+      <PageHero
+        v-if="step !== 2"
+        :title="t('diagnose.title')"
+        :subtitle="t('diagnose.sub')"
+      />
 
       <!-- Step 1: 国家选 -->
       <section v-if="step === 1" class="diagnose-section" data-testid="diagnose-step-1">
         <h2 class="diagnose-section__title">{{ t('diagnose.step_country') }}</h2>
-        <div class="diagnose-countries">
-          <div
-            v-for="(group, gKey) in groupedCountries"
-            :key="gKey"
-            class="diagnose-country-group"
-            :data-testid="`diagnose-group-${gKey}`"
-          >
-            <h3 class="diagnose-country-group__title">
-              {{ t(`common.country_group_${gKey}`) }}
-              <span class="diagnose-country-group__count">{{ group.length }}</span>
-            </h3>
-            <div class="diagnose-country-group__grid">
-              <button
-                v-for="c in group"
-                :key="c.country_code"
-                type="button"
-                class="diagnose-country"
-                :class="{ 'is-selected': form.country_code === c.country_code }"
-                :data-testid="`diagnose-country-${c.country_code}`"
-                @click="selectCountry(c.country_code)"
-              >
-                <span class="diagnose-country__flag">{{ flagOf(c.country_code) }}</span>
-                <span class="diagnose-country__name">{{ countryName(c.country_code) }}</span>
-              </button>
-            </div>
-          </div>
-        </div>
+        <CountryPicker
+          :model-value="form.country_code"
+          :groups="countryPickerGroups"
+          @select="selectCountry"
+        />
       </section>
 
       <!-- Step 2: 表单（对齐 diagnose-income-redesign） -->
@@ -267,6 +246,8 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import AppHeader from '@/components/AppHeader.vue'
+import PageHero from '@/components/PageHero.vue'
+import CountryPicker from '@/components/CountryPicker.vue'
 import { listDestinations } from '@/api/destinations'
 import http from '@/api/http'
 import { groupCountriesByVisaType } from '@/utils/countries'
@@ -364,6 +345,22 @@ const groupedCountries = computed(() => {
   return { national: g.national, schengen: g.schengen }
 })
 
+const countryPickerGroups = computed(() => (
+  Object.entries(groupedCountries.value)
+    .filter(([, list]) => list?.length)
+    .map(([gKey, list]) => ({
+      key: gKey,
+      title: t(`common.country_group_${gKey}`),
+      testId: `diagnose-group-${gKey}`,
+      items: list.map((c) => ({
+        code: c.country_code,
+        flag: flagOf(c.country_code),
+        label: countryName(c.country_code),
+        testId: `diagnose-country-${c.country_code}`,
+      })),
+    }))
+))
+
 const canSubmit = computed(() => {
   return form.country_code && form.marital_status && form.income_bucket &&
     form.travel_purpose && form.travel_history && form.visa_history && form.employment
@@ -427,22 +424,13 @@ watch(() => locale.value, () => loadCountries())
   margin: 0 auto;
   padding: 32px 24px 80px;
 }
-.diagnose-hero {
-  text-align: left;
-  margin-bottom: 28px;
-  &__title {
-    font-size: 28px; font-weight: 700; color: #0F172A;
-    margin: 0 0 8px; letter-spacing: -.5px;
-  }
-  &__sub { font-size: 15px; color: #64748B; margin: 0; }
-}
 .diagnose-section {
   background: #fff;
   border: 1px solid #e9edf5;
-  border-radius: 20px;
+  border-radius: var(--radius-card, 12px);
   padding: 32px 34px;
   margin-bottom: 18px;
-  box-shadow: 0 8px 28px rgba(15, 23, 42, .06);
+  box-shadow: var(--shadow-card);
 }
 .diagnose-section__title {
   font-size: 18px; font-weight: 600; color: #0F172A; margin: 0 0 16px;
@@ -459,9 +447,9 @@ watch(() => locale.value, () => loadCountries())
 .diagnose-card {
   overflow: hidden;
   border: 1px solid #e9edf5;
-  border-radius: 20px;
+  border-radius: var(--radius-card, 12px);
   background: #fff;
-  box-shadow: 0 8px 28px rgba(15, 23, 42, .06);
+  box-shadow: var(--shadow-card);
 }
 .diagnose-card__header { padding: 40px 40px 32px; }
 .diagnose-card__title {
@@ -471,51 +459,6 @@ watch(() => locale.value, () => loadCountries())
   font-weight: 700;
   line-height: normal;
   span { color: #2563EB; }
-}
-
-.diagnose-countries {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-.diagnose-country-group {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  &__title {
-    font-size: 13px;
-    font-weight: 600;
-    color: #475569;
-    margin: 0;
-    letter-spacing: .3px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  &__count {
-    font-size: 11px;
-    color: #94a3b8;
-    font-weight: 500;
-    background: #f1f5f9;
-    padding: 2px 8px;
-    border-radius: 999px;
-  }
-  &__grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 10px;
-  }
-}
-.diagnose-country {
-  display: flex; align-items: center; gap: 10px;
-  background: #FFFFFF; border: 1.5px solid #e9edf5; border-radius: 14px;
-  padding: 15px 16px; cursor: pointer;
-  transition: transform .18s cubic-bezier(.2,.8,.2,1), box-shadow .18s ease, border-color .18s ease, background .18s ease;
-  font-size: 14px; color: #0f172a;
-  &:hover { border-color: #93b4fb; background: #FFFFFF; transform: translateY(-2px); box-shadow: 0 10px 22px rgba(59,110,245,.12); }
-  &.is-selected { background: #FFFFFF; border-color: #3b6ef5; box-shadow: 0 8px 20px rgba(59,110,245,.16); }
-  &__flag { font-size: 22px; }
-  &__name { font-weight: 600; }
 }
 
 .diagnose-form { display: flex; flex-direction: column; }

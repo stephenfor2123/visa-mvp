@@ -38,8 +38,7 @@
           <div class="mat-progress__text">{{ percent }}% COMPLETED</div>
         </div>
 
-        <h1 class="page-title">{{ t('materials.docs_title', 'The Essential Documents') }}</h1>
-        <p class="page-sub">{{ t('materials.docs_sub', 'Official requirements for your visa. Upload each item to continue.') }}</p>
+        <PageHero :title="t('materials.docs_title', 'The Essential Documents') " :subtitle="t('materials.docs_sub', 'Official requirements for your visa. Upload each item to continue.') " />
 
         <!-- 当前旅客 -->
         <div class="mat-traveler">
@@ -145,6 +144,7 @@ import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import AppHeader from '@/components/AppHeader.vue'
+import PageHero from '@/components/PageHero.vue'
 import MaterialUploader from '@/components/MaterialUploader.vue'
 import PassportUploadModal from '@/components/PassportUploadModal.vue'
 import SelfieCapture from '@/components/SelfieCapture.vue'
@@ -275,11 +275,18 @@ onMounted(() => {
   min-width: 0;
 }
 .page-title {
-  font-size: 28px; font-weight: 700; color: var(--ink-1, #0F172A);
-  margin: 24px 0 4px; letter-spacing: -0.4px;
+  font-size: 28px;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0 0 8px;
+  letter-spacing: -.5px;
+  line-height: 1.25;
 }
 .page-sub {
-  color: var(--ink-3, #64748B); font-size: 14px; margin: 0 0 24px;
+  font-size: 15px;
+  color: #64748B;
+  margin: 0 0 28px;
+  line-height: 1.5;
 }
 
 /* ── Progress bar ── */
@@ -288,7 +295,7 @@ onMounted(() => {
   height: 6px; background: #E2E8F0; border-radius: 999px; overflow: hidden;
 }
 .mat-progress__fill {
-  height: 100%; background: linear-gradient(90deg, #3B6EF5, #6E59F0);
+  height: 100%; background: var(--el-color-primary, #3B6EF5);
   border-radius: 999px;
   transition: width .4s ease;
 }
@@ -304,12 +311,12 @@ onMounted(() => {
   display: flex; align-items: center; gap: 12px;
   padding: 16px 20px;
   background: #F8FAFC;
-  border-radius: 12px;
+  border-radius: var(--radius-card, 12px);
   margin-bottom: 24px;
 }
 .mat-traveler__avatar {
   width: 36px; height: 36px; border-radius: 50%;
-  background: linear-gradient(135deg, #3B6EF5, #6E59F0);
+  background: var(--el-color-primary, #3B6EF5);
   color: #fff; font-size: 12px; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
   letter-spacing: 1px;
@@ -329,7 +336,7 @@ onMounted(() => {
   padding: 28px 20px 24px;
   background: #fff;
   border: 2px dashed #E2E8F0;
-  border-radius: 14px;
+  border-radius: var(--radius-card, 12px);
   cursor: pointer;
   text-align: center;
   transition: all .2s ease;
@@ -394,9 +401,9 @@ onMounted(() => {
 }
 .mat-footer__proceed {
   width: 100%;
-  background: linear-gradient(135deg, #3B6EF5, #6E59F0);
+  background: var(--el-color-primary, #3B6EF5);
   color: #fff;
-  border: 0; border-radius: 12px;
+  border: 0; border-radius: var(--radius-control, 8px);
   padding: 14px 24px;
   font-size: 15px; font-weight: 700;
   cursor: pointer;
@@ -417,6 +424,5 @@ onMounted(() => {
   .mat-steps { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 16px; }
   .mat-step { flex-shrink: 0; padding: 8px 12px; }
   .mat-slots { grid-template-columns: 1fr; }
-  .page-title { font-size: 22px; }
 }
 </style>

@@ -7,8 +7,7 @@
         ← {{ t('common.back') || '返回' }}
       </button>
 
-      <h1 class="page-title">{{ t('sch.title') }}</h1>
-      <p class="page-sub">{{ t('sch.subtitle') }}</p>
+      <PageHero :title="t('sch.title')" :subtitle="t('sch.subtitle')" />
 
       <!-- Top 5 popular — big cover cards -->
       <h2 class="sch-section">{{ t('sch.popular') || '热门国家' }}</h2>
@@ -74,6 +73,7 @@ import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
+import PageHero from '@/components/PageHero.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -133,11 +133,18 @@ function onPick(c) {
 .sch-back:hover { color: var(--el-color-primary, #3B6EF5); }
 
 .page-title {
-  font-size: 30px; font-weight: 700; color: var(--ink-1, #0F172A);
-  margin: 0 0 6px; letter-spacing: -0.5px;
+  font-size: 28px;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0 0 8px;
+  letter-spacing: -.5px;
+  line-height: 1.25;
 }
 .page-sub {
-  color: var(--ink-3, #64748B); font-size: 15px; margin: 0 0 32px;
+  font-size: 15px;
+  color: #64748B;
+  margin: 0 0 28px;
+  line-height: 1.5;
 }
 
 .sch-section {
@@ -264,6 +271,5 @@ function onPick(c) {
   .sch-all-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
   .sch-tile { min-height: 95px; padding: 12px 8px 10px; }
   .sch-tile__flag { font-size: 26px; }
-  .page-title { font-size: 22px; }
 }
 </style>

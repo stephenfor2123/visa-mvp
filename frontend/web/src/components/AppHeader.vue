@@ -335,7 +335,7 @@ const megaMenus = [
       // W55: 6 大产品卖点 — 替代原 1-3 步流程
       // 1. 材料清单(实时获取) 2. OCR 智能识别 3. 签证模版
       // 4. 一键生成行程单   5. 母语填写     6. 智能审核
-      { to: '/apply',           nameKey: 'nav.mega.apply_i1', descKey: 'nav.mega.apply_i1_d', icon: SVG_DOC,     tone: 'blue' },
+      { to: '/destinations',   nameKey: 'nav.mega.apply_i1', descKey: 'nav.mega.apply_i1_d', icon: SVG_DOC,     tone: 'blue' },
       { to: '/apply?step=ocr',  nameKey: 'nav.mega.apply_i2', descKey: 'nav.mega.apply_i2_d', icon: SVG_SCAN,    tone: 'indigo' },
       { to: '/resources/templates', nameKey: 'nav.mega.apply_i3', descKey: 'nav.mega.apply_i3_d', icon: SVG_FILE, tone: 'cyan' },
       { to: '/apply?step=itinerary', nameKey: 'nav.mega.apply_i4', descKey: 'nav.mega.apply_i4_d', icon: SVG_GLOBE, tone: 'amber' },

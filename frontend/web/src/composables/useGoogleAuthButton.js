@@ -48,17 +48,23 @@ export function useGoogleAuthButton({ buttonText, onCredential }) {
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
   const googleEnabled = !!clientId
   const googleBtnRef = ref(null)
-  const { locale } = useI18n()
+  const googleLoadError = ref('')
+  const { locale, t } = useI18n()
 
   async function renderGoogleButton() {
     if (!googleEnabled || !googleBtnRef.value) return
+    googleLoadError.value = ''
     const hl = appLocaleToGoogleHl(locale.value)
     try {
       await loadGisScript(hl)
     } catch {
+      googleLoadError.value = t('login.err_google_script') || 'Google Sign-In failed to load. Please refresh or use email login.'
       return
     }
-    if (!window.google?.accounts?.id) return
+    if (!window.google?.accounts?.id) {
+      googleLoadError.value = t('login.err_google_script') || 'Google Sign-In is unavailable right now.'
+      return
+    }
 
     window.google.accounts.id.initialize({
       client_id: clientId,
@@ -91,5 +97,5 @@ export function useGoogleAuthButton({ buttonText, onCredential }) {
     await renderGoogleButton()
   })
 
-  return { googleBtnRef, googleEnabled }
+  return { googleBtnRef, googleEnabled, googleLoadError }
 }

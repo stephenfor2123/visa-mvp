@@ -9,8 +9,9 @@
 //   错误 code: 2003 VOICE_AUDIO_FORMAT / 2004 VOICE_RECOGNIZE_FAILED / 2005 VOICE_TIMEOUT
 
 import http from './http'
+import { isApiMockMode } from '@/utils/mockMode'
 
-const MOCK_MODE = import.meta.env.VITE_MOCK !== 'false'
+const MOCK_MODE = isApiMockMode()
 
 function delay(ms = 400) {
   return new Promise((r) => setTimeout(r, ms))

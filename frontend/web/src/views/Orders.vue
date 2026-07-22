@@ -8,8 +8,7 @@
     <AppHeader scope="orders" />
     <main class="app-container app-page orders-shell">
       <div class="page-header">
-        <h1 class="page-title">{{ t('order_list.title') || 'My Applications' }}</h1>
-        <p class="page-sub">{{ t('order_list.subtitle') }}</p>
+        <PageHero :title="t('order_list.title') || 'My Applications'" :subtitle="t('order_list.subtitle')" />
       </div>
 
       <!-- Loading -->
@@ -200,6 +199,7 @@ import AppButton from '@/components/AppButton.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import AppHeader from '@/components/AppHeader.vue'
+import PageHero from '@/components/PageHero.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -351,15 +351,18 @@ onMounted(loadOrders)
   margin-bottom: 24px;
 }
 .page-title {
-  font-size: 22px;
+  font-size: 28px;
   font-weight: 700;
-  color: #1a1a2e;
-  margin: 0 0 6px;
+  color: #0F172A;
+  margin: 0 0 8px;
+  letter-spacing: -.5px;
+  line-height: 1.25;
 }
 .page-sub {
-  font-size: 14px;
-  color: #6b7280;
-  margin: 0;
+  font-size: 15px;
+  color: #64748B;
+  margin: 0 0 28px;
+  line-height: 1.5;
 }
 
 .state-block {

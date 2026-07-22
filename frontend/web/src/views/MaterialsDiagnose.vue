@@ -2,8 +2,10 @@
   <div class="diag-page">
     <AppHeader scope="materials-diagnose" />
     <main class="diag-shell">
-      <h1 class="page-title">{{ t('diagnose.title', 'AI 拒签风险诊断') }}</h1>
-      <p class="page-sub">{{ t('diagnose.subtitle', '系统根据你上传的材料 + 目标国签证政策,综合评估拒签风险并给出可操作的优化建议。') }}</p>
+      <PageHero
+        :title="t('diagnose.title', 'AI 拒签风险诊断')"
+        :subtitle="t('diagnose.subtitle', '系统根据你上传的材料 + 目标国签证政策,综合评估拒签风险并给出可操作的优化建议。')"
+      />
 
       <!-- Step 1: 选择国家 + 签证类型 -->
       <section class="diag-form-section" data-testid="diag-form-section">
@@ -142,6 +144,7 @@ import { listDiagnosableMaterials } from '@/utils/localPrivacyStorage'
 import AppButton from '@/components/AppButton.vue'
 import LangSwitch from '@/components/LangSwitch.vue'
 import AppHeader from '@/components/AppHeader.vue'
+import PageHero from '@/components/PageHero.vue'
 
 const { t } = useI18n()
 const auth = useAuthStore()

@@ -1,4 +1,5 @@
 import http from './http'
+import { isApiMockMode } from '@/utils/mockMode'
 
 // B 端真实端点(后端 B 跑起后):
 //   POST /api/v2/auth/login          - 密码登录(账户=email/username + password)
@@ -6,7 +7,7 @@ import http from './http'
 //   POST /api/v2/auth/refresh        - 刷新 token
 // 当前 W1: 后端未必已就绪 → 前端用 localStorage mock 兜底,跑通流程
 
-const MOCK_MODE = import.meta.env.VITE_MOCK !== 'false' // 默认走 mock
+const MOCK_MODE = isApiMockMode()
 
 function delay(ms = 250) {
   return new Promise((r) => setTimeout(r, ms))

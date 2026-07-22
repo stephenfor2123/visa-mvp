@@ -3,8 +3,7 @@
     <AppHeader />
 
     <main class="about-page__main">
-      <h1 class="about-page__title">{{ t('about.title') }}</h1>
-      <p class="about-page__lead">{{ t('about.lead') }}</p>
+      <PageHero :title="t('about.title')" :subtitle="t('about.lead')" />
 
       <section class="about-page__content">
         <article v-for="(item, index) in sections" :key="item.title" class="about-page__row">
@@ -25,6 +24,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppHeader from '@/components/AppHeader.vue'
+import PageHero from '@/components/PageHero.vue'
 
 const { t } = useI18n()
 
@@ -62,22 +62,10 @@ const sections = computed(() => [
     width: 100%;
     max-width: 980px;
     margin: 0 auto;
-    padding: 104px 28px 140px;
+    padding: 48px 28px 100px;
   }
-  &__title {
-    margin: 0 0 22px;
-    font-size: clamp(48px, 6vw, 76px);
-    font-weight: 720;
-    line-height: 1;
-    letter-spacing: -.06em;
-  }
-  &__lead {
-    max-width: 650px;
-    margin: 0 0 74px;
-    color: #7a8496;
-    font-size: 17px;
-    line-height: 1.7;
-  }
+  &__title { /* PageHero */ }
+  &__lead { /* PageHero */ margin: 0 0 40px; }
   &__content { border-top: 1px solid #cfd7e4; }
   &__row {
     display: grid;

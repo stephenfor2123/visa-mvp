@@ -27,7 +27,7 @@ describe('Agreement translations', () => {
       i18n.global.locale.value = locale
 
       const email = i18n.global.t('agreement.privacy_contact_email')
-      expect(email).toBe('privacy@htex.app')
+      expect(email).toBe('support@htexvisa.com')
 
       for (const key of expectedKeys) {
         expect(() => {

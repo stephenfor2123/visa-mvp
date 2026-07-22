@@ -218,10 +218,10 @@ onBeforeUnmount(() => {
 .ptb__panel {
   width: min(980px, 100%);
   background: #fff;
-  border-radius: 16px;
+  border-radius: var(--radius-panel, 16px);
   padding: 20px 20px 24px;
   margin: 12px auto 40px;
-  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.18);
+  box-shadow: var(--shadow-overlay, 0 24px 56px rgba(15, 23, 42, .20));
 }
 .ptb__head {
   display: flex;
@@ -355,13 +355,13 @@ onBeforeUnmount(() => {
   cursor: pointer;
 }
 .ptb__btn--primary {
-  background: #0f172a;
-  border-color: #0f172a;
+  background: var(--el-color-primary, #3B6EF5);
+  border-color: var(--el-color-primary, #3B6EF5);
   color: #fff;
 }
 .ptb__btn--success {
-  background: #2563eb;
-  border-color: #2563eb;
+  background: var(--el-color-primary, #3B6EF5);
+  border-color: var(--el-color-primary, #3B6EF5);
   color: #fff;
 }
 .ptb__btn:disabled {

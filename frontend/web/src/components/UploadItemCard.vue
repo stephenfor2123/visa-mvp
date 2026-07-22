@@ -56,14 +56,6 @@
         >
           {{ t('wizard.photo_toolbox.open_cta') }}
         </button>
-        <button
-          type="button"
-          class="uic__btn uic__btn--ghost"
-          data-testid="uic-skip-toolbox"
-          @click="skipToolboxUpload"
-        >
-          {{ t('wizard.photo_toolbox.skip_original') }}
-        </button>
         <button type="button" class="uic__btn uic__btn--ghost" data-testid="uic-photo-repick" @click="clearPhotoFail">
           {{ t('wizard.photo_toolbox.repick') }}
         </button>
@@ -530,14 +522,6 @@ function openToolbox() {
 
 async function onToolboxConfirm(file) {
   toolboxOpen.value = false
-  clearPendingPhoto()
-  props.record.error = null
-  await doUpload(file)
-}
-
-async function skipToolboxUpload() {
-  const file = pendingPhotoFile.value
-  if (!file) return
   clearPendingPhoto()
   props.record.error = null
   await doUpload(file)

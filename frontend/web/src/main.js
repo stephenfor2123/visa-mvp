@@ -7,6 +7,16 @@ import i18n, { loadLocale, onLocaleChange } from './i18n'
 import { reapplySeoForLastRoute } from '@/seo/applySeo'
 import './styles/main.scss'
 
+// Bust stale Workbox/PWA controllers that can pin old hashed bundles.
+if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations?.().then((regs) => {
+    regs.forEach((reg) => reg.unregister().catch(() => {}))
+  }).catch(() => {})
+  if (typeof caches !== 'undefined' && caches.keys) {
+    caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k)))).catch(() => {})
+  }
+}
+
 // W19 fix: 移除全量 ElementPlus 注册 — 项目不使用任何 <el-*> 组件
 // (UI 全是自写 AppButton / AppInput / AppCard), 全量注册 + resolver
 // 在 dist 里生成空 dynamic import 触发 Proxy.<anonymous> SyntaxError.

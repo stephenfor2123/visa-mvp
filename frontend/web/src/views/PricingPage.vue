@@ -34,7 +34,7 @@ const { t } = useI18n()
 <style scoped lang="scss">
 .pricing-page {
   min-height: 100vh;
-  background: var(--bg, #f9fafb);
+  background: #fff;
   display: flex;
   flex-direction: column;
 

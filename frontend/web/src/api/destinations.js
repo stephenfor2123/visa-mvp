@@ -1,7 +1,8 @@
 // /api/v2/destinations 前端 wrapper
 import http from './http'
+import { isApiMockMode } from '@/utils/mockMode'
 
-const MOCK_MODE = import.meta.env.VITE_MOCK !== 'false' // 默认 mock
+const MOCK_MODE = isApiMockMode()
 
 // 产品口径 docs/PRODUCT_SCOPE.md:
 //   客户市场 = 越南 / 印尼护照持有人

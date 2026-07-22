@@ -2335,15 +2335,15 @@ const CategoryIcon = {
 .mw-hero__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
 .mw-hero__actions { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
 .mw-hero__title {
-  font-size: 30px; font-weight: 700; margin: 0 0 12px; letter-spacing: -.5px;
+  font-size: 28px; font-weight: 700; margin: 0 0 8px; letter-spacing: -.5px;
   color: #0F172A; line-height: 1.25;
 }
 .mw-hero__privacy {
-  margin: 0 0 12px;
+  margin: 0;
   max-width: 640px;
-  font-size: 14px;
-  color: #64748b;
-  line-height: 1.45;
+  font-size: 15px;
+  color: #64748B;
+  line-height: 1.5;
 }
 .mw-hero__privacy-pill {
   display: inline-flex; align-items: center; gap: 7px; flex: 0 0 auto;
@@ -2489,9 +2489,9 @@ const CategoryIcon = {
 .mw-finish { text-align: center; padding: 20px 0; }
 .mw-finish__text { color: #475569; font-size: 14px; margin: 0 0 20px; line-height: 1.6; }
 .mw-finish__cta {
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #fff; border: 0;
-  padding: 14px 28px; border-radius: 14px; font-size: 15px; font-weight: 700; cursor: pointer;
-  box-shadow: 0 10px 24px rgba(15,23,42,.18);
+  background: var(--el-color-primary, #3B6EF5); color: #fff; border: 0;
+  padding: 14px 28px; border-radius: var(--radius-control, 8px); font-size: 15px; font-weight: 700; cursor: pointer;
+  box-shadow: none;
 }
 
 .mw-issues { margin-top: 18px; display: flex; flex-direction: column; gap: 8px; }
@@ -2512,10 +2512,10 @@ const CategoryIcon = {
   padding: 12px 20px; border-radius: 8px; font-size: 13.5px; font-weight: 600; cursor: pointer;
 }
 .mw-footer__next {
-  background: #2563EB; color: #fff; border: 0;
+  background: var(--el-color-primary, #3B6EF5); color: #fff; border: 0;
   padding: 12px 26px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer;
   &.is-disabled { background: #E2E8F0; color: #94a3b8; cursor: not-allowed; }
-  &:not(.is-disabled):hover { background: #1D4ED8; }
+  &:not(.is-disabled):hover { background: var(--primary-hover, #2C5DE0); }
 }
 
 @media (max-width: 900px) {

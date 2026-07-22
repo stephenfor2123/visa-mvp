@@ -1253,7 +1253,14 @@ watch(isLastTab, async (val) => {
 }
 .hero__country { display: flex; align-items: center; gap: 14px; }
 .hero__flag { font-size: 36px; }
-.hero__title { margin: 0; font-size: 24px; font-weight: 700; color: var(--ink-1, #0F172A); }
+.hero__title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--ink-1, #0F172A);
+  letter-spacing: -.5px;
+  line-height: 1.25;
+}
 .hero__visa { color: var(--el-color-primary, #3B6EF5); }
 .hero__ocr {
   margin: 6px 0 0; display: inline-flex; align-items: center; gap: 6px;
@@ -1298,7 +1305,7 @@ watch(isLastTab, async (val) => {
 @media (max-width: 600px) {
   .hero { gap: 10px; }
   .hero__flag { font-size: 28px; }
-  .hero__title { font-size: 18px; }
+  
   .hero__back { padding: 6px 10px; font-size: 12px; }
   .hero__import { padding: 6px 10px; font-size: 12px; }
 }

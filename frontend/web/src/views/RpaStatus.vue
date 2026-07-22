@@ -9,8 +9,7 @@
   <div class="rpa-status-page">
     <AppHeader scope="rpa-status" />
     <main class="app-container app-page rpa-status-shell">
-      <h1 class="page-title">{{ t('rpa.status_page_title') }}</h1>
-      <p class="page-sub">{{ t('rpa.status_page_subtitle') }}</p>
+      <PageHero :title="t('rpa.status_page_title') " :subtitle="t('rpa.status_page_subtitle') " />
 
       <!-- 查询表单 -->
       <section class="query-card" data-testid="rpa-query-form">
@@ -128,6 +127,7 @@ import LangSwitch from '@/components/LangSwitch.vue'
 import { useToast } from '@/composables/useToast'
 import { getRpaStatus } from '@/api/rpa'
 import AppHeader from '@/components/AppHeader.vue'
+import PageHero from '@/components/PageHero.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -255,8 +255,20 @@ onUnmounted(() => {
   padding-top: 40px;
 }
 
-.page-title { font-size: 28px; font-weight: 600; margin: 0 0 6px; color: var(--ink, #1A1D29); }
-.page-sub { color: var(--ink-2, #5A5F6D); margin: 0 0 24px; font-size: 14px; }
+.page-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0 0 8px;
+  letter-spacing: -.5px;
+  line-height: 1.25;
+}
+.page-sub {
+  font-size: 15px;
+  color: #64748B;
+  margin: 0 0 28px;
+  line-height: 1.5;
+}
 
 .query-card {
   background: #fff;

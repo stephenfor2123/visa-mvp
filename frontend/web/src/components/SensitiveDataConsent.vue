@@ -57,35 +57,35 @@ function onPrivacyClick() {
 }
 .sdc-modal {
   background: #fff;
-  border-radius: 12px;
+  border-radius: var(--radius-panel, 16px);
   max-width: 440px;
   width: 100%;
   padding: 24px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--shadow-overlay, 0 24px 56px rgba(15, 23, 42, .20));
 }
 .sdc-modal__title {
   margin: 0 0 12px;
   font-size: 17px;
   font-weight: 700;
-  color: #1a1a2e;
+  color: var(--ink-1, #0F172A);
 }
 .sdc-modal__body {
   margin: 0 0 12px;
   font-size: 14px;
   line-height: 1.6;
-  color: #4b5563;
+  color: var(--ink-2, #334155);
 }
 .sdc-modal__list {
   margin: 0 0 12px;
   padding-left: 20px;
   font-size: 13px;
-  color: #4b5563;
+  color: var(--ink-2, #334155);
   line-height: 1.7;
 }
 .sdc-modal__note {
   margin: 0 0 20px;
   font-size: 12px;
-  color: #6b7280;
+  color: var(--ink-3, #64748B);
 }
 .sdc-modal__note a {
   color: var(--color-primary, #3b6ef5);
@@ -97,7 +97,7 @@ function onPrivacyClick() {
 }
 .sdc-btn {
   padding: 10px 16px;
-  border-radius: 8px;
+  border-radius: var(--radius-control, 8px);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;

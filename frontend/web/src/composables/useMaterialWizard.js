@@ -19,6 +19,7 @@ import {
   loadWithExpiry,
   saveWithExpiry,
 } from '@/utils/localPrivacyStorage'
+import { resolveApiErrorMessage } from '@/utils/apiErrorMessage'
 
 const STORAGE_PREFIX = 'visa.wizard.'
 
@@ -633,7 +634,7 @@ export function useMaterialWizard(countryCode, visaType = 'tourism') {
       })
       if (onProgress) onProgress(100)
     } catch (e) {
-      rec.error = e?.message || i18n.global.t('wizard.err_upload_failed')
+      rec.error = resolveApiErrorMessage(e, i18n.global.t.bind(i18n.global), 'wizard')
       throw e
     }
 

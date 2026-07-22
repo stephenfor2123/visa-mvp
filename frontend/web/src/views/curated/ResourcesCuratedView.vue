@@ -4,8 +4,7 @@
 
     <main class="app-container app-page resources-main">
       <header class="resources-hero">
-        <h1 class="resources-hero__title">{{ titleText }}</h1>
-        <p class="resources-hero__sub">{{ introText }}</p>
+        <PageHero :title="titleText" :subtitle="introText" flush />
 
         <div class="resources-curated-tabs" role="tablist">
           <router-link
@@ -25,6 +24,7 @@
           <button
             v-for="cc in countryList"
             :key="cc.code"
+            type="button"
             class="resources-curated-countries__btn"
             :class="{ 'is-active': cc.code === activeCountry }"
             :data-testid="`curated-country-${cc.code}`"
@@ -127,6 +127,7 @@ import { computed, ref, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
+import PageHero from '@/components/PageHero.vue'
 import RagMaterialsChecklist from '@/components/RagMaterialsChecklist.vue'
 import { resolveChecklistCountry } from '@/utils/ragChecklist'
 
@@ -254,7 +255,7 @@ watch(activeCountry, (cc) => {
 <style scoped>
 /* 子页骨架 — 顶部 tab + 国家切换 + 列表项 */
 .resources-curated-page { background: #fff; min-height: 100vh; }
-.resources-hero { padding: 48px 0 24px; }
+.resources-hero { padding: 0 0 8px; text-align: left; }
 .resources-section__lead { color: #6b7280; margin-bottom: 24px; max-width: 720px; }
 .resources-section__title { font-size: 18px; font-weight: 600; color: #111827; margin-bottom: 16px; }
 
@@ -299,11 +300,15 @@ watch(activeCountry, (cc) => {
 }
 
 .resources-curated-countries {
-  display: flex; flex-wrap: wrap; gap: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-top: 20px;
 }
 .resources-curated-countries__btn {
-  display: inline-flex; align-items: center; gap: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 8px 14px;
   background: #fff;
   border: 1px solid #e5e7eb;
@@ -315,7 +320,9 @@ watch(activeCountry, (cc) => {
 }
 .resources-curated-countries__btn:hover { border-color: #93c5fd; }
 .resources-curated-countries__btn.is-active {
-  background: #111827; color: #fff; border-color: #111827;
+  background: #111827;
+  color: #fff;
+  border-color: #111827;
 }
 .resources-curated-countries__flag { font-size: 16px; }
 

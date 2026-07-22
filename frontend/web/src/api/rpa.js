@@ -14,8 +14,9 @@
 // Mock 模式: VITE_MOCK !== 'false' 时使用本地 mock 数据
 
 import http from './http'
+import { isApiMockMode } from '@/utils/mockMode'
 
-const MOCK_MODE = import.meta.env.VITE_MOCK !== 'false'
+const MOCK_MODE = isApiMockMode()
 
 function delay(ms = 300) {
   return new Promise((r) => setTimeout(r, ms))

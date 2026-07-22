@@ -7,6 +7,8 @@
 1. 动态定价展示模块
 2. 材料收集向导的进度、步骤与上传状态交互
 3. 单次签证申请权益对比表
+4. 目的地卡片与首页返回修正
+5. 联系支持页面重做
 
 本轮工作此前仅在本地完成，没有提交、推送或部署。
 
@@ -52,6 +54,20 @@
 - 权益包含签证照片生成、尺寸剪裁和背景替换。
 - 已删除“重新生成模板／再次诊断”。
 - “辅助填写”和“辅助提交”已并入付费权益，不再单独显示“浏览器办理（会员专享）”分组标题。
+
+### 目的地卡片与首页返回
+
+- `frontend/web/src/components/AppHeader.vue`：Htex Logo 改为返回 `/home`。
+- `frontend/web/src/views/Destinations.vue`：签种标签可选择；进入材料向导时携带实际选择的 `visa_type`；多签种国家不再用单一费用代表全部签种；英国等缺失数据的卡片保留统一结构。
+- `frontend/shared/i18n/{zh-CN,en,id,vi}.json`：增加对应文案。
+
+### 联系支持页面
+
+- `frontend/web/src/views/ContactView.vue`：加载已确认的新设计，并复用真实 `AppHeader.vue`。
+- 客户、订单、账号及个人数据请求统一使用 `support@htexvisa.com`，不再使用 `privacy@htex.app`。
+- 商务合作继续使用 `business@htexvisa.com`。
+- 保留发送邮件和复制地址交互，并提示不要通过邮件发送完整护照或银行卡资料。
+- `frontend/shared/i18n/{zh-CN,en,id,vi}.json`：补齐联系页新文案。
 
 ## 仅供查看，不要作为生产入口部署
 

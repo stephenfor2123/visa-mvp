@@ -1,5 +1,5 @@
 {
-  "buildCommand": "cd web && npm run build",
+  "buildCommand": "cd web && SKIP_SEO=1 npm run build:prod",
   "outputDirectory": "web/dist",
   "installCommand": "cd web && npm install",
   "framework": "vite",
@@ -8,13 +8,20 @@
       "source": "/api/:path*",
       "destination": "https://api.htexvisa.com/api/:path*"
     },
-    { "source": "/((?!api/|robots\\.txt|sitemap\\.xml|llms\\.txt|llms-full\\.txt|ai-index\\.json|feed\\.xml|favicon\\.svg|manifest\\.json|icons/|prototypes/|login-privacy-age-preview\\.html|en/visa-guides/|vi/visa-guides/|id/visa-guides/|zh-cn/visa-guides/|[A-Za-z0-9_-]+\\.txt).*)", "destination": "/index.html" }
+    { "source": "/((?!api/|sw\\.js|workbox-[A-Za-z0-9_-]+\\.js|robots\\.txt|sitemap\\.xml|llms\\.txt|llms-full\\.txt|ai-index\\.json|feed\\.xml|favicon\\.svg|manifest\\.json|icons/|prototypes/|login-privacy-age-preview\\.html|en/visa-guides/|vi/visa-guides/|id/visa-guides/|zh-cn/visa-guides/|[A-Za-z0-9_-]+\\.txt).*)", "destination": "/index.html" }
   ],
   "headers": [
     {
       "source": "/assets/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/sw.js",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" },
+        { "key": "Service-Worker-Allowed", "value": "/" }
       ]
     }
   ]

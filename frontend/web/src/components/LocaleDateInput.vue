@@ -107,7 +107,7 @@ function clear() {
   width: 100%;
   box-sizing: border-box;
   border: 1.5px solid #e2e8f0;
-  border-radius: 10px;
+  border-radius: var(--radius-control, 8px);
   padding: 9px 12px;
   font-size: 13.5px;
   color: #0f172a;
@@ -116,7 +116,8 @@ function clear() {
   min-height: 38px;
   &:focus {
     outline: none;
-    border-color: #3b6ef5;
+    border-color: var(--el-color-primary, #3B6EF5);
+    box-shadow: var(--focus-ring, 0 0 0 3px rgba(59, 110, 245, .18));
   }
   &.is-empty {
     color: transparent;

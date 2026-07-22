@@ -14,9 +14,11 @@
 // 当前 W2: 后端 B 1.1.1a 还在跑,默认走 mock 让 UI 截图能跑通;真后端上线后无需改前端。
 
 import http from './http'
+import { isApiMockMode } from '@/utils/mockMode'
 import { useAuthStore } from '@/stores/auth'
+import { createHttpError } from '@/utils/apiErrorMessage'
 
-const MOCK_MODE = import.meta.env.VITE_MOCK !== 'false' // 默认 mock
+const MOCK_MODE = isApiMockMode()
 
 const ACCEPT_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
 const MAX_BYTES = 10 * 1024 * 1024
@@ -155,7 +157,7 @@ export async function processMaterial(file, materialType = 'passport', opts = {}
     onProgress,
   )
   if (status < 200 || status >= 300) {
-    throw new Error(`process failed: ${status}`)
+    throw createHttpError(status, text)
   }
   let env
   try {
@@ -164,7 +166,10 @@ export async function processMaterial(file, materialType = 'passport', opts = {}
     return { _raw: text }
   }
   if (env?.code && env.code !== '1000') {
-    throw new Error(env.message || 'process failed')
+    const err = createHttpError(0, env.message || 'REQUEST_FAILED')
+    err.code = 'REQUEST_FAILED'
+    if (env.code === '1005') err.code = 'UNAUTHORIZED'
+    throw err
   }
   return env?.data || env
 }
@@ -371,7 +376,7 @@ async function _xhrPostMultipart(url, form, onProgress) {
       }
     }
     xhr.onload = () => resolve({ status: xhr.status, text: xhr.responseText })
-    xhr.onerror = () => reject(new Error('upload network error'))
+    xhr.onerror = () => reject(createHttpError(0, 'NETWORK'))
     xhr.send(form)
   })
 }

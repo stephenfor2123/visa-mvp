@@ -25,7 +25,7 @@ a:hover { text-decoration: underline; }
 
 .section-title {
   font-size: 22px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--ink-1);
   margin: 0 0 6px;
 }
@@ -34,6 +34,115 @@ a:hover { text-decoration: underline; }
   font-size: 14px;
   color: var(--ink-3);
   margin: 0 0 24px;
+}
+
+/* Canonical page hero — Diagnose baseline (tool + content pages) */
+.page-hero {
+  text-align: left;
+  margin-bottom: 28px;
+}
+.page-hero__title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0 0 8px;
+  letter-spacing: -.5px;
+  line-height: 1.25;
+}
+.page-hero__sub {
+  font-size: 15px;
+  color: #64748B;
+  margin: 0;
+  line-height: 1.5;
+}
+.page-hero--on-dark .page-hero__title {
+  color: #fff;
+}
+.page-hero--on-dark .page-hero__sub {
+  color: rgba(255, 255, 255, 0.82);
+}
+.page-hero--flush {
+  margin-bottom: 0;
+}
+
+/* Canonical country picker — Diagnose rectangular buttons, fixed 3-col */
+.country-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.country-picker__group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.country-picker__group-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  margin: 0;
+  letter-spacing: .3px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.country-picker__count {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 500;
+  background: #f1f5f9;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.country-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.country-picker__btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  border: 1.5px solid #e9edf5;
+  border-radius: var(--radius-card);
+  padding: 15px 16px;
+  cursor: pointer;
+  transition: transform .18s cubic-bezier(.2, .8, .2, 1), box-shadow .18s ease, border-color .18s ease, background .18s ease;
+  font-size: 14px;
+  color: #0f172a;
+  text-align: left;
+  font-family: inherit;
+}
+.country-picker__btn:hover {
+  border-color: #93b4fb;
+  background: #fff;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card-hover);
+}
+.country-picker__btn.is-selected {
+  background: #fff;
+  border-color: #3b6ef5;
+  box-shadow: var(--shadow-card);
+}
+.country-picker__flag {
+  font-size: 22px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.country-picker__name {
+  font-weight: 600;
+  min-width: 0;
+}
+@media (max-width: 720px) {
+  .country-picker__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 420px) {
+  .country-picker__grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .divider-text {

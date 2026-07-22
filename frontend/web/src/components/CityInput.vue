@@ -44,7 +44,7 @@ function onInput(e) {
   width: 100%;
   box-sizing: border-box;
   border: 1px solid var(--border, #E2E8F0);
-  border-radius: 8px;
+  border-radius: var(--radius-control, 8px);
   background: #ffffff;
   color: #0f172a;
   padding: 10px 12px;
@@ -54,7 +54,7 @@ function onInput(e) {
 }
 .city-input__field:focus {
   border-color: #3B6EF5;
-  box-shadow: 0 0 0 3px rgba(59, 110, 245, .15);
+  box-shadow: var(--focus-ring, 0 0 0 3px rgba(59, 110, 245, .18));
 }
 .city-input__field--sm {
   padding: 6px 10px;

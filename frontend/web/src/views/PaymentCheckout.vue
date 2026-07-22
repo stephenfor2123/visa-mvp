@@ -383,7 +383,7 @@ onBeforeUnmount(() => {
 
 <style scoped lang="scss">
 .paymentcheckout-page { min-height: 100vh; background: #fff; }
-.paymentcheckout-shell { max-width: 600px; margin: 0 auto; padding: 28px 20px 64px; }
+.paymentcheckout-shell { max-width: 680px; margin: 0 auto; padding: 32px 20px 64px; }
 
 .checkout-back {
   border: 0;
@@ -398,7 +398,7 @@ onBeforeUnmount(() => {
 
 .checkout-header {
   margin: 16px 0;
-  h1 { font-size: 22px; margin: 0 0 6px; color: #0f172a; font-weight: 700; }
+  h1 { font-size: 28px; margin: 0 0 8px; color: #0f172a; font-weight: 700; letter-spacing: -.5px; line-height: 1.25; }
 }
 .checkout-sub {
   color: #64748b;

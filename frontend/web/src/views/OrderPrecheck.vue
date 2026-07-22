@@ -20,7 +20,7 @@
   <div class="precheck-page">
     <AppHeader scope="materials-diagnose" />
     <main class="diag-shell">
-      <h1 class="page-title">{{ t('precheck.title', 'AI 拒签风险预审') }}</h1>
+      <PageHero :title="t('precheck.title', 'AI 拒签风险预审') " />
       <p class="page-sub">
         {{ t('precheck.subtitle',
           '根据你刚才提交的材料 + 美签申请表内容,综合评估一次签证风险。下面的提示仅供参考,你可以直接继续提交 RPA。'
@@ -230,6 +230,7 @@ import { completeDiagnosis } from '@/api/orders'
 import { loadPrecheckSnapshot, buildDiagnosableSnapshotFromOcrCache } from '@/utils/localPrivacyStorage'
 import AppButton from '@/components/AppButton.vue'
 import AppHeader from '@/components/AppHeader.vue'
+import PageHero from '@/components/PageHero.vue'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -407,20 +408,18 @@ function goNext() {
   padding: 32px 20px 80px;
 }
 .page-title {
-  font-size: 30px;
+  font-size: 28px;
   font-weight: 700;
-  margin: 0 0 8px;
   color: #0F172A;
-  text-align: center;
-  letter-spacing: -0.01em;
+  margin: 0 0 8px;
+  letter-spacing: -.5px;
+  line-height: 1.25;
 }
 .page-sub {
-  font-size: 14.5px;
+  font-size: 15px;
   color: #64748B;
-  text-align: center;
-  margin: 0 auto 28px;
-  line-height: 1.6;
-  max-width: 640px;
+  margin: 0 0 28px;
+  line-height: 1.5;
 }
 .state-loading {
   text-align: center;

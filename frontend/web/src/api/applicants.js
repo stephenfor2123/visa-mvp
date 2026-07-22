@@ -10,8 +10,9 @@
 //   - 只读,无 POST/PATCH/DELETE
 
 import http from './http'
+import { isApiMockMode } from '@/utils/mockMode'
 
-const MOCK_MODE = import.meta.env.VITE_MOCK !== 'false' // 默认 mock
+const MOCK_MODE = isApiMockMode()
 
 function delay(ms = 200) {
   return new Promise((r) => setTimeout(r, ms))

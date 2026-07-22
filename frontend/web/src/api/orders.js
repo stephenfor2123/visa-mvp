@@ -12,9 +12,10 @@
 //   - 真后端上线后无需改前端
 
 import http from './http'
+import { isApiMockMode } from '@/utils/mockMode'
 import { listMaterials, getMaterial } from './materials'
 
-const MOCK_MODE = import.meta.env.VITE_MOCK !== 'false' // 默认 mock
+const MOCK_MODE = isApiMockMode()
 
 function delay(ms = 320) {
   return new Promise((r) => setTimeout(r, ms))

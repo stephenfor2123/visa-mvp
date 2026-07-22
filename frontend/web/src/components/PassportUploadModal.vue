@@ -124,6 +124,7 @@ import { ref, computed, watch, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import http from '@/api/http'
 import { useMaterialsProgress } from '@/composables/useMaterialsProgress'
+import { resolveApiErrorMessage } from '@/utils/apiErrorMessage'
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -315,7 +316,7 @@ async function runOCR(file, filename) {
     setPendingPassportReview(fields, fileUrl)
     emit('uploaded', { slotKey: props.slotKey, fileUrl, ocrResult: fields })
   } catch (e) {
-    errMsg.value = e?.response?.data?.message || e?.message || 'OCR failed'
+    errMsg.value = resolveApiErrorMessage(e, t, 'wizard')
     stage.value = 'error'
   }
 }

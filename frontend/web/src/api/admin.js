@@ -15,10 +15,11 @@
 // so the front-end flow can be demoed before the backend is wired up.
 
 import axios from 'axios'
+import { isApiMockMode } from '@/utils/mockMode'
 
 const configuredBase = String(import.meta.env.VITE_API_BASE || '').trim()
 const baseURL = configuredBase || (import.meta.env.PROD ? 'https://api.htexvisa.com/api' : '/api')
-const MOCK_MODE = import.meta.env.VITE_MOCK !== 'false'
+const MOCK_MODE = isApiMockMode()
 const ADMIN_TOKEN_KEY = 'admin_token'
 const ADMIN_PROFILE_KEY = 'admin_profile'
 

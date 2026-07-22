@@ -326,9 +326,9 @@ onBeforeUnmount(cleanup)
   width: 100%;
   max-width: 360px;
   background: #fff;
-  border-radius: 16px;
+  border-radius: var(--radius-panel, 16px);
   padding: 20px 20px 16px;
-  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.18);
+  box-shadow: var(--shadow-overlay, 0 24px 56px rgba(15, 23, 42, .20));
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -365,7 +365,7 @@ onBeforeUnmount(cleanup)
 }
 .qr-upload-modal__qr-img {
   border: 1px solid #E2E8F0;
-  border-radius: 12px;
+  border-radius: var(--radius-card, 12px);
   padding: 8px;
   background: #fff;
 }
@@ -447,8 +447,8 @@ onBeforeUnmount(cleanup)
   color: #475569;
 }
 .qr-upload-modal__btn--primary {
-  background: #2563EB;
+  background: var(--el-color-primary, #3B6EF5);
   color: #fff;
-  border-color: #2563EB;
+  border-color: var(--el-color-primary, #3B6EF5);
 }
 </style>

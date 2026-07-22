@@ -3,12 +3,7 @@
     <AppHeader scope="login" />
     <main class="auth-shell">
       <AppCard class="auth-card">
-        <p class="auth-privacy-note" data-testid="login-privacy-note">
-          {{ t('login.privacy_note') }}
-          <a href="#" class="auth-privacy-note__link" data-testid="login-privacy-link" @click.prevent="onOpenPrivacy">{{ t('login.privacy_link') }}</a>
-        </p>
         <h1 class="auth-title">{{ t('login.title') }}</h1>
-        <p class="auth-sub">{{ t('login.subtitle') }}</p>
 
         <!-- W29: 从下单页被登录墙推过来时,显示提示让用户知道为什么需要登录 -->
         <div v-if="route.query.hint === 'login_needed'" class="auth-hint-banner" data-testid="login-hint-banner">
@@ -56,6 +51,16 @@
             <a href="#" @click.prevent="onForgot" :aria-label="t('login.forgot')">{{ t('login.forgot') }}</a>
           </div>
 
+          <!-- 精简合规：年龄在上，隐私在下；密码/Google 共用 -->
+          <label class="remember age-confirm" for="login-age-confirm">
+            <input id="login-age-confirm" v-model="ageConfirmed" type="checkbox" data-testid="login-age-confirm" />
+            <span>{{ t('login.age_confirm') }}</span>
+          </label>
+          <p class="auth-privacy-note" data-testid="login-privacy-note">
+            {{ t('login.privacy_note') }}
+            <a href="#" class="auth-privacy-note__link" data-testid="login-privacy-link" @click.prevent="onOpenPrivacy">{{ t('login.privacy_link') }}</a>
+          </p>
+
           <AppButton
             native-type="submit"
             variant="primary"
@@ -73,12 +78,8 @@
 
         <template v-if="googleEnabled">
           <div class="auth-divider"><span>{{ t('common.or') || '或' }}</span></div>
-          <label class="remember age-confirm" for="login-age-confirm">
-            <input id="login-age-confirm" v-model="ageConfirmed" type="checkbox" data-testid="login-age-confirm" />
-            <span>{{ t('register.age_confirm') }}</span>
-          </label>
-          <p class="age-confirm-hint">{{ t('register.age_hint') }}</p>
           <div ref="googleBtnRef" class="google-btn-wrap"></div>
+          <p v-if="googleLoadError" class="form-error" data-testid="login-google-load-error">{{ googleLoadError }}</p>
         </template>
       </AppCard>
 
@@ -152,7 +153,7 @@ async function handleGoogleCredential(response) {
   }
 }
 
-const { googleBtnRef, googleEnabled } = useGoogleAuthButton({
+const { googleBtnRef, googleEnabled, googleLoadError } = useGoogleAuthButton({
   buttonText: 'signin_with',
   onCredential: handleGoogleCredential,
 })
@@ -165,6 +166,10 @@ function validatePwd() {
 
 async function onPwdSubmit() {
   if (!validatePwd()) return
+  if (!ageConfirmed.value) {
+    toast.error(t('errors.age_confirm_required'))
+    return
+  }
   submitting.value = true
   try {
     await auth.loginByPassword({ account: account.value.trim(), password: password.value })
@@ -233,7 +238,7 @@ onMounted(() => {
   background: #fff;
 }
 .auth-privacy-note {
-  margin: 0 0 14px;
+  margin: 0;
   font-size: 12px;
   line-height: 1.5;
   color: var(--ink-3);
@@ -245,15 +250,10 @@ onMounted(() => {
   font-weight: 500;
 }
 .auth-title {
-  margin: 0 0 4px;
+  margin: 0 0 20px;
   font-size: 24px;
   font-weight: 700;
   color: var(--ink-1);
-}
-.auth-sub {
-  margin: 0 0 20px;
-  font-size: 13px;
-  color: var(--ink-3);
 }
 /* W29: 登录墙提示 banner(从下单页跳过来时显示) */
 .auth-hint-banner {
@@ -298,13 +298,7 @@ onMounted(() => {
 .age-confirm {
   align-items: flex-start;
   line-height: 1.45;
-}
-.age-confirm-hint {
-  margin: -4px 0 8px;
-  padding-left: 22px;
-  font-size: 12px;
-  line-height: 1.45;
-  color: var(--ink-3, #6b7280);
+  font-size: 13px;
 }
 .auth-foot {
   margin-top: 22px;

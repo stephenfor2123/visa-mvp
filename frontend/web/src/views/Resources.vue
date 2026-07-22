@@ -4,8 +4,7 @@
 
     <main class="app-container app-page resources-main">
       <header class="resources-hero">
-        <h1 class="resources-hero__title">{{ t('resources.title') }}</h1>
-        <p class="resources-hero__sub">{{ t('resources.sub') }}</p>
+        <PageHero :title="t('resources.title')" :subtitle="t('resources.sub')" flush />
         <div class="resources-search">
           <svg class="resources-search__icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
             <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
@@ -120,6 +119,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppHeader from '@/components/AppHeader.vue'
+import PageHero from '@/components/PageHero.vue'
 import RagMaterialsChecklist from '@/components/RagMaterialsChecklist.vue'
 import { listDestinations } from '@/api/destinations'
 import http from '@/api/http'
@@ -328,22 +328,7 @@ watch(locale, () => { loadCountries() })
   margin: 0 auto;
   padding: 32px 24px 80px;
 }
-.resources-hero {
-  text-align: center;
-  margin-bottom: 36px;
-  &__title {
-    font-size: 32px;
-    font-weight: 700;
-    color: #0f172a;
-    margin: 0 0 8px;
-    letter-spacing: -.5px;
-  }
-  &__sub {
-    font-size: 15px;
-    color: #64748b;
-    margin: 0 0 24px;
-  }
-}
+.resources-hero { text-align: left; margin-bottom: 28px; }
 .resources-search {
   display: flex;
   align-items: center;

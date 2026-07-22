@@ -5,39 +5,12 @@
     <main class="app-container app-page apply-main">
       <!-- Step 1: 国家选 -->
       <section v-if="step === 1" class="apply-section" data-testid="apply-step-1">
-        <h1 class="apply-section__title">{{ t('apply.step_country') }}</h1>
-        <div class="apply-countries">
-          <div
-            v-for="(group, gKey) in groupedCountries"
-            :key="gKey"
-            class="apply-country-group"
-            :data-testid="`apply-group-${gKey}`"
-          >
-            <h3 class="apply-country-group__title">
-              {{ t(`common.country_group_${gKey}`) }}
-              <span class="apply-country-group__count">{{ group.length }}</span>
-            </h3>
-            <div class="apply-country-group__grid">
-              <button
-                v-for="c in group"
-                :key="c.country_code"
-                type="button"
-                class="apply-country"
-                :class="{ 'is-selected': form.country_code === c.country_code }"
-                :data-testid="`apply-country-${c.country_code}`"
-                @click="selectCountry(c.country_code)"
-              >
-                <span class="apply-country__flag">{{ flagOf(c.country_code) }}</span>
-                <span class="apply-country__name">{{ c.country_name }}</span>
-                <span v-if="form.country_code === c.country_code" class="apply-country__badge">
-                  <svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true">
-                    <path d="M3 8 L7 12 L13 4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                </span>
-              </button>
-            </div>
-          </div>
-        </div>
+        <PageHero :title="t('apply.step_country')" flush />
+        <CountryPicker
+          :model-value="form.country_code"
+          :groups="countryPickerGroups"
+          @select="selectCountry"
+        />
       </section>
 
       <!-- Step 2: 材料清单(RAG 拉出) -->
@@ -162,6 +135,8 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import AppHeader from '@/components/AppHeader.vue'
+import PageHero from '@/components/PageHero.vue'
+import CountryPicker from '@/components/CountryPicker.vue'
 import { listDestinations } from '@/api/destinations'
 import http from '@/api/http'
 import { useToast } from '@/composables/useToast'
@@ -277,6 +252,22 @@ const groupedCountries = computed(() => {
   const g = groupCountriesByVisaType(visible)
   return { national: g.national, schengen: g.schengen }
 })
+
+const countryPickerGroups = computed(() => (
+  Object.entries(groupedCountries.value)
+    .filter(([, list]) => list?.length)
+    .map(([gKey, list]) => ({
+      key: gKey,
+      title: t(`common.country_group_${gKey}`),
+      testId: `apply-group-${gKey}`,
+      items: list.map((c) => ({
+        code: c.country_code,
+        flag: flagOf(c.country_code),
+        label: c.country_name,
+        testId: `apply-country-${c.country_code}`,
+      })),
+    }))
+))
 
 // W60: RAG 会把「重要：xxx」这类建议/说明也解析成材料条目 (例
 // "重要：美国 B1/B2 签证申请不需要邀请函…")。它不是要提交的材料,却被归到
@@ -408,8 +399,8 @@ onMounted(loadCountries)
 }
 .apply-section__head { margin-bottom: 22px; }
 .apply-section__title {
-  font-size: 21px; font-weight: 800; color: #0f172a; margin: 0;
-  letter-spacing: -.3px;
+  font-size: 28px; font-weight: 700; color: #0F172A;
+  margin: 0 0 8px; letter-spacing: -.5px; line-height: 1.25;
 }
 .apply-section__sub {
   font-size: 13px; color: #64748b; margin: 6px 0 0;
@@ -431,47 +422,6 @@ onMounted(loadCountries)
   margin-right: 8px; vertical-align: middle;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
-.apply-countries {
-  display: flex; flex-direction: column; gap: 22px;
-}
-.apply-country-group {
-  display: flex; flex-direction: column; gap: 12px;
-  &__title {
-    font-size: 13px; font-weight: 700; color: #475569;
-    margin: 0; letter-spacing: .3px; text-transform: uppercase;
-    display: flex; align-items: center; gap: 8px;
-  }
-  &__count {
-    font-size: 11px; color: #94a3b8; font-weight: 600;
-    background: #f1f5f9; padding: 2px 8px; border-radius: 999px;
-  }
-  &__grid {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px;
-  }
-}
-.apply-country {
-  position: relative;
-  display: flex; align-items: center; gap: 10px;
-  background: #FFFFFF; border: 1.5px solid #e9edf5; border-radius: 14px;
-  padding: 15px 16px; cursor: pointer;
-  transition: transform .18s cubic-bezier(.2,.8,.2,1), box-shadow .18s ease, border-color .18s ease, background .18s ease;
-  font-size: 14px; color: #0f172a;
-  &:hover { border-color: #93b4fb; background: #FFFFFF; transform: translateY(-2px); box-shadow: 0 10px 22px rgba(59,110,245,.12); }
-  &.is-selected {
-    background: #FFFFFF;
-    border-color: #3b6ef5;
-    box-shadow: 0 8px 20px rgba(59,110,245,.16);
-  }
-  &__flag { font-size: 23px; }
-  &__name { font-weight: 600; }
-  &__badge {
-    position: absolute; top: -7px; right: -7px;
-    width: 18px; height: 18px; border-radius: 50%;
-    background: linear-gradient(135deg, #3B6EF5 0%, #6E59F0 100%);
-    color: #fff; display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 2px 6px rgba(59,110,245,.4);
-  }
-}
 .apply-meta {
   display: flex; padding: 16px 0; margin-bottom: 24px;
   border-top: 1px solid #eef1f6; border-bottom: 1px solid #eef1f6;

@@ -5,8 +5,12 @@
       <section class="security-hero">
         <div class="security-hero__glow" aria-hidden="true" />
         <div class="security-shell security-hero__content">
-          <h1>{{ t('trust.page_title') }}</h1>
-          <p>{{ t('trust.page_intro') }}</p>
+          <PageHero
+            on-dark
+            flush
+            :title="t('trust.page_title')"
+            :subtitle="t('trust.page_intro')"
+          />
           <div class="security-hero__status">
             <span>{{ t('trust.status_local') }}</span>
             <span>{{ t('trust.status_encrypted') }}</span>
@@ -36,6 +40,7 @@
 <script setup>
 import { useI18n } from 'vue-i18n'
 import AppHeader from '@/components/AppHeader.vue'
+import PageHero from '@/components/PageHero.vue'
 
 const { t } = useI18n()
 const practices = [
@@ -54,7 +59,6 @@ const practices = [
   background: #fff;
   &__glow { display: none; }
   &__content { z-index: 1; }
-  h1 { max-width: 720px; margin: 0 0 16px; font-size: clamp(36px, 5vw, 52px); line-height: 1.14; letter-spacing: -.035em; }
   p { max-width: 650px; margin: 0; color: #475569; font-size: 16px; line-height: 1.75; }
   &__status { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; span { padding: 7px 12px; border: 1px solid #cbd5e1; border-radius: 999px; color: #334155; background: #fff; font-size: 12px; } span::before { content: '✓'; color: #3b6ef5; margin-right: 7px; font-weight: 700; } }
 }
@@ -73,7 +77,7 @@ const practices = [
 }
 @media (max-width: 760px) {
   .security-shell { width: min(100% - 32px, 1120px); }
-  .security-hero { padding: 52px 0 48px; &__glow { right: -220px; } h1 { font-size: 36px; } }
+  .security-hero { padding: 52px 0 48px; &__glow { right: -220px; }  }
   .security-body { padding: 48px 0 64px; }
   .security-grid { grid-template-columns: 1fr; }
 }

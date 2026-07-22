@@ -250,10 +250,10 @@ onUnmounted(() => teardown())
 .selfie-modal {
   position: relative;
   background: #fff;
-  border-radius: 20px;
+  border-radius: var(--radius-panel, 16px);
   padding: 32px;
   max-width: 480px; width: 100%;
-  box-shadow: 0 24px 64px rgba(15, 23, 42, .35);
+  box-shadow: var(--shadow-overlay, 0 24px 56px rgba(15, 23, 42, .20));
   min-height: 420px;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
@@ -272,7 +272,7 @@ onUnmounted(() => teardown())
 .selfie-init__title { font-size: 22px; font-weight: 700; margin: 0 0 8px; color: var(--ink-1, #0F172A); }
 .selfie-init__sub { color: var(--ink-3, #64748B); font-size: 14px; margin: 0 0 24px; }
 .selfie-init__btn {
-  background: linear-gradient(135deg, #3B6EF5, #6E59F0);
+  background: var(--el-color-primary, #3B6EF5);
   color: #fff; border: 0; border-radius: 999px;
   padding: 12px 32px; font-size: 15px; font-weight: 700;
   cursor: pointer; width: 100%;
@@ -338,7 +338,7 @@ onUnmounted(() => teardown())
   cursor: pointer;
 }
 .selfie-review__btn--ghost { background: #F1F5F9; color: var(--ink-1, #0F172A); }
-.selfie-review__btn--primary { background: linear-gradient(135deg, #3B6EF5, #6E59F0); color: #fff; }
+.selfie-review__btn--primary { background: var(--el-color-primary, #3B6EF5); color: #fff; }
 
 .selfie-check { text-align: center; width: 100%; }
 .selfie-check__title { font-size: 18px; font-weight: 700; margin: 0 0 24px; }

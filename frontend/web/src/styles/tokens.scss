@@ -47,6 +47,16 @@ $bg-disabled: #F1F5F9;
   --bg-card: #{$bg-card};
   --bg-disabled: #{$bg-disabled};
 
+  // Shared UI geometry: keep product screens visually consistent.
+  --radius-control: 8px;
+  --radius-card: 12px;
+  --radius-panel: 16px;
+  --radius-pill: 999px;
+  --shadow-card: 0 8px 24px rgba(15, 23, 42, .08);
+  --shadow-card-hover: 0 14px 32px rgba(15, 23, 42, .12);
+  --shadow-overlay: 0 24px 56px rgba(15, 23, 42, .20);
+  --focus-ring: 0 0 0 3px rgba(59, 110, 245, .18);
+
   --font-family-base: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB',
     'Microsoft YaHei', 'Segoe UI', Roboto, sans-serif;
 }
@@ -60,5 +70,5 @@ $bg-disabled: #F1F5F9;
 }
 
 .el-input__wrapper.is-focus {
-  box-shadow: 0 0 0 3px rgba(59,110,245,.18) !important;
+  box-shadow: var(--focus-ring) !important;
 }
