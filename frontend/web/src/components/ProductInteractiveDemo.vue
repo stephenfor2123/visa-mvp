@@ -1,7 +1,6 @@
 <template>
   <section class="demo" aria-labelledby="product-demo-title">
     <header class="demo-head">
-      <small>HTEX AI WORKFLOW</small>
       <h2 id="product-demo-title">{{ c.title }}</h2>
       <p>{{ c.subtitle }}</p>
     </header>
