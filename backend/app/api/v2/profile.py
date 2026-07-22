@@ -33,7 +33,7 @@ from __future__ import annotations
 import re
 import secrets
 from datetime import datetime, timedelta, timezone
-from typing import Annotated, Any
+from typing import Annotated, Any, Optional
 
 from fastapi import APIRouter, Depends, Path, Request
 from jose import JWTError, jwt
